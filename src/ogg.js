@@ -1,6 +1,16 @@
 (function() {
 //import "../build/libogg.js"
 
+var callbacks = [];
+function AVMakeCallback(fn) {
+    callbacks.push(fn);
+    return callbacks.length - 1;
+}
+
+function AVRemoveCallback(callback) {
+    callbacks.splice(callback, 1);
+}
+
 var OggDemuxer = AV.Demuxer.extend(function() {
     AV.Demuxer.register(this);
     
@@ -11,16 +21,6 @@ var OggDemuxer = AV.Demuxer.extend(function() {
     var AVOggInit = Module.cwrap('AVOggInit', '*');
     var AVOggRead = Module.cwrap('AVOggRead', null, ['*', '*', 'number']);
     var AVOggDestroy = Module.cwrap('AVOggDestroy', null, ['*']);
-
-    var callbacks = [];
-    function AVMakeCallback(fn) {
-        callbacks.push(fn);
-        return callbacks.length - 1;
-    }
-
-    function AVRemoveCallback(callback) {
-        callbacks.splice(callback, 1);
-    }
     
     this.prototype.init = function() {
         this.ogg = AVOggInit();
