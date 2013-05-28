@@ -12,7 +12,7 @@ typedef struct {
 } Vorbis;
 
 typedef int AVCallbackId;
-extern void AVCallback(AVCallbackId, unsigned char *, int);
+extern void AVCallback(AVCallbackId, void *, int);
 
 Vorbis *VorbisInit() {
     Vorbis *vorbis = calloc(1, sizeof(Vorbis));
@@ -23,6 +23,20 @@ Vorbis *VorbisInit() {
     return vorbis;
 }
 
+
 int VorbisDecode(Vorbis *vorbis, char *buffer, int buflen, AVCallbackId callback) {
+    // setup ogg packet
+    vorbis->ogg.packet = buffer;
+    vorbis->ogg.bytes = buflen;
     
+    // decode
+    if (vorbis_synthesis(&vorbis->block, &vorbis->ogg) == 0)
+        vorbis_synthesis_blockin(&vorbis->dsp, &context->block);
+        
+    int samples = 0;
+    float **pcm;
+    while ((samples = vorbis_synthesis_pcmout(&vorbis->dsp, &pcm)) > 0) {
+        vorbis_synthesis_read(&vorbis->dsp, samples);
+        AVCallback(callback, pcm, samples);
+    }
 }
