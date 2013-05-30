@@ -23,15 +23,14 @@ Vorbis *VorbisInit() {
     return vorbis;
 }
 
-
-int VorbisDecode(Vorbis *vorbis, char *buffer, int buflen, AVCallbackId callback) {
+int VorbisDecode(Vorbis *vorbis, void *buffer, int buflen, AVCallbackId callback) {
     // setup ogg packet
     vorbis->ogg.packet = buffer;
     vorbis->ogg.bytes = buflen;
     
     // decode
     if (vorbis_synthesis(&vorbis->block, &vorbis->ogg) == 0)
-        vorbis_synthesis_blockin(&vorbis->dsp, &context->block);
+        vorbis_synthesis_blockin(&vorbis->dsp, &vorbis->block);
         
     int samples = 0;
     float **pcm;
