@@ -6,7 +6,7 @@ var VorbisDecoder = AV.Decoder.extend(function() {
     //import "../build/libvorbis.js"
     //import "shared.js"
     
-    var VorbisInit = Module.cwrap('VorbisInit', '*');
+    var VorbisInit = Module.cwrap('VorbisInit', '*', ['*', 'number']);
     var VorbisHeaderDecode = Module.cwrap('VorbisHeaderDecode', 'number', ['*', '*', 'number']);
     var VorbisGetChannels = Module.cwrap('VorbisGetChannels', 'number', ['*']);
     var VorbisGetSampleRate = Module.cwrap('VorbisGetSampleRate', 'number', ['*']);
@@ -16,12 +16,22 @@ var VorbisDecoder = AV.Decoder.extend(function() {
     var VorbisDestroy = Module.cwrap('VorbisDestroy', null, ['*']);
     
     this.prototype.init = function() {
-        this.vorbis = VorbisInit();
         this.buflen = 4096;
         this.buf = _malloc(this.buflen);
+        this.headers = 1;
         
-        this.callback = AVMakeCallback(function(packet, bytes) {
-            console.log(packet, bytes);
+        this.outlen = 4096;
+        this.outbuf = _malloc(this.outlen << 2);
+        this.decodedBuffer = null;
+        
+        this.vorbis = VorbisInit(this.outbuf, this.outlen);
+        
+        var self = this;
+        var offset = self.outbuf >> 2;
+        
+        this.callback = AVMakeCallback(function(len) {
+            var samples = Module.HEAPF32.subarray(offset, offset + len);
+            self.decodedBuffer = new Float32Array(samples);
         });
     };
     
@@ -29,15 +39,21 @@ var VorbisDecoder = AV.Decoder.extend(function() {
         if (!this.stream.available(1))
             throw new AV.UnderflowError();
                 
-        var packet = this.stream.readSingleBuffer(this.stream.remainingBytes());
-        console.log('packet', packet.length, packet.data[0])
+        var list = this.stream.list;
+        var packet = list.first;
+        list.advance();
         
         if (this.buflen < packet.length) {
             this.buf = _realloc(this.buf, packet.length);
             this.buflen = packet.length;
         }
         
-        VorbisDecode(this.vorbis, this.buf, packet.length, this.callback);
+        Module.HEAPU8.set(packet.data, this.buf);
+        var status = 0;
+        if ((status = VorbisDecode(this.vorbis, this.buf, packet.length, this.callback)) !== 0)
+            throw new Error("Vorbis decoding error: " + status);
+            
+        return this.decodedBuffer;
     };
     
     // vorbis demuxer plugin for Ogg
@@ -49,6 +65,7 @@ var VorbisDecoder = AV.Decoder.extend(function() {
             this.buflen = 4096;
             this.buf = _malloc(this.buflen);
             this.headers = 3;
+            this.headerBuffers = [];
         },
     
         readHeaders: function(packet) {
@@ -61,6 +78,8 @@ var VorbisDecoder = AV.Decoder.extend(function() {
             if (VorbisHeaderDecode(this.vorbis, this.buf, packet.length) !== 0)
                 throw new Error("Invalid vorbis header");
                 
+            this.headerBuffers.push(packet);
+            
             if (--this.headers === 0) {
                 this.emit('format', {
                     formatID: 'vorbis',
@@ -81,15 +100,18 @@ var VorbisDecoder = AV.Decoder.extend(function() {
                 this.emit('metadata', this.metadata);
                 
                 VorbisDestroy(this.vorbis);
+                _free(this.buf);
                 this.vorbis = null;
+                
+                for (var i = 0; i < 3; i++)
+                    this.emit('data', new AV.Buffer(this.headerBuffers[i]));
             }
             
             return this.headers === 0;
         },
         
         readPacket: function(packet) {
-            console.log(packet.length);
-            this.emit('data', new AV.Buffer(new Uint8Array(packet)));
+            this.emit('data', new AV.Buffer(packet));
         }
     });
 });

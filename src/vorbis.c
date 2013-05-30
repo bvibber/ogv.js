@@ -9,10 +9,13 @@ typedef struct {
     vorbis_dsp_state dsp;
     vorbis_block block;
     ogg_packet ogg;
+    int headers;
+    float *outbuf;
+    int outlen;
 } Vorbis;
 
 typedef int AVCallbackId;
-extern void AVCallback(AVCallbackId, void *, int);
+extern void AVCallback(AVCallbackId, int);
 
 int VorbisProbe(void *buffer, int buflen) {
     ogg_packet ogg;
@@ -21,13 +24,13 @@ int VorbisProbe(void *buffer, int buflen) {
     return vorbis_synthesis_idheader(&ogg);
 }
 
-Vorbis *VorbisInit() {
+Vorbis *VorbisInit(float *outbuf, int outlen) {
     Vorbis *vorbis = calloc(1, sizeof(Vorbis));
     vorbis_info_init(&vorbis->info);
     vorbis_comment_init(&vorbis->comment);
-    vorbis_synthesis_init(&vorbis->dsp, &vorbis->info);
-    vorbis_block_init(&vorbis->dsp, &vorbis->block);
     vorbis->ogg.b_o_s = 1;
+    vorbis->outbuf = outbuf;
+    vorbis->outlen = outlen;
     return vorbis;
 }
 
@@ -66,28 +69,58 @@ char *VorbisGetComment(Vorbis *vorbis, int index) {
 
 int VorbisDecode(Vorbis *vorbis, void *buffer, int buflen, AVCallbackId callback) {
     // setup ogg packet
-    vorbis->ogg.b_o_s = 0;
     vorbis->ogg.packet = buffer;
     vorbis->ogg.bytes = buflen;
     
-    // decode
-    if (vorbis_synthesis(&vorbis->block, &vorbis->ogg) == 0)
-        vorbis_synthesis_blockin(&vorbis->dsp, &vorbis->block);
+    int status = 0;
+    if (vorbis->headers < 3) {
+        status = vorbis_synthesis_headerin(&vorbis->info, &vorbis->comment, &vorbis->ogg);
         
-    int samples = 0;
-    float **pcm;
-    while ((samples = vorbis_synthesis_pcmout(&vorbis->dsp, &pcm)) > 0) {
-        vorbis_synthesis_read(&vorbis->dsp, samples);
-        AVCallback(callback, pcm, samples);
+        vorbis->headers++;
+        if (status == 0 && vorbis->headers == 3) {
+            vorbis->outlen /= vorbis->info.channels;
+            
+            status = vorbis_synthesis_init(&vorbis->dsp, &vorbis->info);
+            if (status == 0)
+                status = vorbis_block_init(&vorbis->dsp, &vorbis->block);
+        }
+    } else {
+        // decode
+        status = vorbis_synthesis(&vorbis->block, &vorbis->ogg);
+        if (status == 0)
+            status = vorbis_synthesis_blockin(&vorbis->dsp, &vorbis->block);
+        
+        int samples = 0;
+        float **pcm;
+        while ((samples = vorbis_synthesis_pcmout(&vorbis->dsp, &pcm)) > 0) {            
+            // interleave
+            int channels = vorbis->info.channels;
+            int len = samples < vorbis->outlen ? samples : vorbis->outlen;
+            
+            for (int i = 0; i < channels; i++) {
+                float *buf = &vorbis->outbuf[i];
+                
+                for (int j = 0; j < len; j++) {
+                    *buf = pcm[i][j];
+                    buf += channels;
+                }
+            }
+            
+            status = vorbis_synthesis_read(&vorbis->dsp, len);
+            AVCallback(callback, len * channels);
+        }
     }
     
-    return 0;
+    if (vorbis->ogg.b_o_s)
+        vorbis->ogg.b_o_s = 0;
+    
+    return status;
 }
 
 void VorbisDestroy(Vorbis *vorbis) {
-    // vorbis_info_clear(&vorbis->info);
-    vorbis_comment_clear(&vorbis->comment);
     vorbis_dsp_clear(&vorbis->dsp);
     vorbis_block_clear(&vorbis->block);
+    vorbis_info_clear(&vorbis->info);
+    vorbis_comment_clear(&vorbis->comment);
     free(vorbis);
 }
