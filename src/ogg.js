@@ -15,7 +15,7 @@ var OggDemuxer = AV.Demuxer.extend(function() {
     var AVOggDestroy = Module.cwrap('AVOggDestroy', null, ['*']);
     
     this.plugins = [];
-    const BUFFER_SIZE = 4096;
+    const BUFFER_SIZE = 8192;
     
     this.prototype.init = function() {
         this.ogg = AVOggInit();
@@ -27,9 +27,9 @@ var OggDemuxer = AV.Demuxer.extend(function() {
         
         // copy the stream in case we override it, e.g. flac
         this._stream = this.stream;
-                
+        
         this.callback = AVMakeCallback(function(packet, bytes) {
-            var data = Module.HEAPU8.subarray(packet, packet + bytes);          
+            var data = new Uint8Array(Module.HEAPU8.subarray(packet, packet + bytes));          
             
             // find plugin for codec
             if (!plugin) {
@@ -77,7 +77,7 @@ OggDemuxer.plugins.push({
     
     readHeaders: function(packet) {
         var stream = this.stream;
-        this.list.append(new AV.Buffer(new Uint8Array(packet)));
+        this.list.append(new AV.Buffer(packet));
         
         stream.advance(5); // magic
         if (stream.readUInt8() != 1)
@@ -96,7 +96,7 @@ OggDemuxer.plugins.push({
     },
     
     readPacket: function(packet) {
-        this.list.append(new AV.Buffer(new Uint8Array(packet)));
+        this.list.append(new AV.Buffer(packet));
         this.flac.prototype.readChunk.call(this);
     }
 });

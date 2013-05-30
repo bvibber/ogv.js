@@ -20,6 +20,12 @@ AVOgg *AVOggInit() {
 }
 
 int AVOggRead(AVOgg *ogg, char *buffer, int buflen, AVCallbackId callback) {
+    // write buffer into ogg stream
+    char *oggBuf = ogg_sync_buffer(&ogg->state, buflen);
+    memcpy(oggBuf, buffer, buflen);
+    assert(!ogg_sync_wrote(&ogg->state, buflen));
+    
+    // read ogg pages
     while (ogg_sync_pageout(&ogg->state, &ogg->page) == 1) {
         int serial = ogg_page_serialno(&ogg->page);
     
@@ -28,14 +34,11 @@ int AVOggRead(AVOgg *ogg, char *buffer, int buflen, AVCallbackId callback) {
     
         assert(!ogg_stream_pagein(&ogg->stream, &ogg->page));
     
+        // read packets
         while (ogg_stream_packetout(&ogg->stream, &ogg->packet) == 1)
             AVCallback(callback, ogg->packet.packet, ogg->packet.bytes);
     }
-    
-    char *oggBuf = ogg_sync_buffer(&ogg->state, buflen);
-    memcpy(oggBuf, buffer, buflen);
-    assert(!ogg_sync_wrote(&ogg->state, buflen));
-    
+        
     return 0;
 }
 
