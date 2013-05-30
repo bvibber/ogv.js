@@ -26,4 +26,4 @@ EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
 
 # compile wrapper
 cd ..
-emcc -O2 -s ASM_JS=1 -s EXPORTED_FUNCTIONS="['_VorbisInit', '_VorbisDecode', '_VorbisDestroy']" --js-library src/callback.js -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis -I libogg/include -Llibogg/src/.libs -logg src/vorbis.c -o build/libvorbis.js
+emcc -O2 -s ASM_JS=1 -s EXPORTED_FUNCTIONS="['_VorbisProbe', '_VorbisInit', '_VorbisHeaderDecode', '_VorbisGetChannels', '_VorbisGetSampleRate', '_VorbisGetNumComments', '_VorbisGetComment', '_VorbisDecode', '_VorbisDestroy']" --js-library src/callback.js -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis -I libogg/include -Llibogg/src/.libs -logg src/vorbis.c -o build/libvorbis.js
