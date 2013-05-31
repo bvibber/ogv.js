@@ -57,10 +57,28 @@ var OpusDecoder = AV.Decoder.extend(function() {
         
         readPacket: function(packet) {
             var tag = packet.subarray(0, 8);
-            if (String.fromCharCode.apply(String, tag) === "OpusTags")
-                console.log('tag!');
-            else
+            if (String.fromCharCode.apply(String, tag) === "OpusTags") {
+                var stream = AV.Stream.fromBuffer(new AV.Buffer(packet));
+                stream.advance(8);
+                
+                var metadata = {};
+                var len = stream.readUInt32(true);
+                metadata.vendor = stream.readString(len);
+                
+                var length = stream.readUInt32(true);
+                
+                for (var i = 0; i < length; i++) {
+                    len = stream.readUInt32(true);
+                    var str = stream.readString(len, 'utf8'),
+                        idx = str.indexOf('=');
+                        
+                    metadata[str.slice(0, idx).toLowerCase()] = str.slice(idx + 1);
+                }
+                
+                this.emit('metadata', metadata);
+            } else {
                 this.emit('data', new AV.Buffer(packet));
+            }
         }
     });
 });
