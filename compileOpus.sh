@@ -3,7 +3,7 @@ cd libopus
 if [ ! -f configure ]; then
   # generate and run configuration script
   ./autogen.sh
-  emconfigure ./configure
+  emconfigure ./configure --enable-fixed-point
 fi
 
 # compile libopus
