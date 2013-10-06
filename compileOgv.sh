@@ -5,7 +5,6 @@ emcc \
   -O2 \
   -s ASM_JS=1 \
   -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy']" \
-  --js-library src/ogvjs.js \
   -I libtheora/include -Llibtheora/lib/.libs -ltheora \
   -I libvorbis/include -Llibvorbis/src/.libs -lvorbis \
   -I libogg/include -Llibogg/src/.libs -logg \
