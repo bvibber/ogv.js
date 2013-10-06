@@ -24,6 +24,4 @@ fi
 # compile libtheora
 EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
 
-# compile wrapper
 cd ..
-emcc -O2 -s ASM_JS=1 -s EXPORTED_FUNCTIONS="['_TheoraTest']" --js-library src/callback.js -I libtheora/include -Llibtheora/lib/.libs -ltheora -I libogg/include -Llibogg/src/.libs -logg src/theora.c -o build/libtheora.js
