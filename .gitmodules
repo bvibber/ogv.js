@@ -4,6 +4,6 @@
 [submodule "libvorbis"]
 	path = libvorbis
 	url = git://git.xiph.org/mirrors/vorbis.git
-[submodule "libopus"]
-	path = libopus
-	url = git://git.xiph.org/opus.git
+[submodule "libtheora"]
+	path = libtheora
+	url = git://git.xiph.org/mirrors/theora.git
