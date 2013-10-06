@@ -60,10 +60,10 @@ static void stripe_decoded(th_ycbcr_buffer _dst,th_ycbcr_buffer _src,
     int y_end;
     int y;
     yshift=pli!=0&&!(ti.pixel_fmt&2);
-    y_end=_fragy_end<<3-yshift;
+    y_end=_fragy_end<<(3-yshift);
     /*An implemention intending to display this data would need to check the
        crop rectangle before proceeding.*/
-    for(y=_fragy0<<3-yshift;y<y_end;y++){
+    for(y=_fragy0<<(3-yshift);y<y_end;y++){
       memcpy(_dst[pli].data+y*_dst[pli].stride,
        _src[pli].data+y*_src[pli].stride,_src[pli].width);
     }
@@ -127,9 +127,9 @@ static void video_write(void){
     hdec=vdec=0;
     if(!raw)fprintf(outfile, "FRAME\n");
     for(pli=0;pli<3;pli++){
-      for(i=y0>>vdec;i<(yend+vdec>>vdec);i++){
+      for(i=y0>>vdec;i<((yend+vdec)>>vdec);i++){
         fwrite(ycbcr[pli].data+ycbcr[pli].stride*i+(x0>>hdec), 1,
-         (xend+hdec>>hdec)-(x0>>hdec), outfile);
+         ((xend+hdec)>>hdec)-(x0>>hdec), outfile);
       }
       hdec=!(ti.pixel_fmt&1);
       vdec=!(ti.pixel_fmt&2);
