@@ -131,6 +131,8 @@ static void processBegin() {
 			if (theora_processing_headers) {
 				ogg_stream_packetout(&streamState, NULL);
 			}
+
+			appState = STATE_HEADERS;
 		} else {
 			printf("not theora packet\n");
 			/* whatever it is, we don't care about it */
@@ -236,7 +238,7 @@ void OgvJsProcessInput(char *buffer, int bufsize) {
 		printf("Just wrote input for %d bytes\n", bufsize);
 	}
 	while (ogg_sync_pageout(&oggSyncState, &oggPage)) {
-		printf("-- PAGE --\n");
+		printf("-- PAGE; state: %d\n", appState);
 		if (appState == STATE_BEGIN) {
 			processBegin();
 		} else if (appState == STATE_HEADERS) {
