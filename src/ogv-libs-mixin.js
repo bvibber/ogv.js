@@ -17,7 +17,7 @@ mergeInto(LibraryManager.library, {
 			var outPtr = y *4 * width;
 			for (var x = 0; x < width; x++) {
 				// quick grayscale conversion
-				var colorY = Module.getValue(inPtr++, "i8");
+				var colorY = Module.HEAPU8[inPtr++];
 				data[outPtr++] = colorY;
 				data[outPtr++] = colorY;
 				data[outPtr++] = colorY;
