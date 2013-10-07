@@ -78,11 +78,10 @@
 
 	var player = document.getElementById('player'),
 		canvas = player.querySelector('canvas'),
-		ctx = canvas.getContext('2d'),
-		videoChooser = document.getElementById('video-chooser');
+		ctx = canvas.getContext('2d');
 	
 	function showSelectedVideo() {
-		var url = videoChooser.value;
+		var url = "https://upload.wikimedia.org/wikipedia/commons/a/aa/Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv";
 		console.log("Going to try streaming data from " + url);
 
 		var stream = new StreamFile({
@@ -111,7 +110,6 @@
 			}
 		});
 	}
-	videoChooser.addEventListener('change', showSelectedVideo);
 	showSelectedVideo();
 
 })();
