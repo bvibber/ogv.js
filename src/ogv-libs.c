@@ -105,11 +105,7 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
-void OgvJsFlush() {
-  printf("Hello OgvJsFlush!\n");
-}
-
-void OgvJsProcessInput(const char *buffer, int bufsize) {
+void OgvJsProcessInput(char *buffer, int bufsize) {
   printf("Hello OgvJsProcessInput! appState is: %d\n", (int)appState);
 
   if (bufsize > 0) {
@@ -295,3 +291,9 @@ void OgvJsDestroy() {
   }
   ogg_sync_clear(&oggSyncState);
 }
+
+void OgvJsFlush() {
+  printf("Hello OgvJsFlush!\n");
+  OgvJsProcessInput(NULL, 0);
+}
+
