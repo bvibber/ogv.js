@@ -60,6 +60,15 @@
 		xhr.send();
 	}
 
+	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitAnimationFrame;
+	var scheduleNextTick;
+	if (requestAnimationFrame) {
+		scheduleNextTick = requestAnimationFrame;
+	} else {
+		scheduleNextTick = function(func) {
+			window.setTimeout(func, 0);
+		}
+	}
 
 	OgvJs.init();
 	OgvJs.onframe = function(event) {
@@ -85,12 +94,12 @@
 					console.log("ping process!");
 					if (OgvJs.process()) {
 						console.log("SCHEDULING MORE");
-						window.setTimeout(pingProcess, 50);
+						scheduleNextTick(pingProcess);
 					} else {
 						console.log("NO MORE PACKETS");
 					}
 				}
-				window.setTimeout(pingProcess, 50);
+				scheduleNextTick(pingProcess);
 			},
 			ondone: function() {
 				console.log("reading done.");
