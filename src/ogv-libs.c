@@ -48,7 +48,11 @@ static void sigint_handler (int signal) {
   got_sigint = 1;
 }
 
-extern void OgvJsOutputFrame(const char *buffer, int width, int height, int hdec, int vdec);
+extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
+                             unsigned char *bufferCb, int strideCb,
+                             unsigned char *bufferCr, int strideCr,
+                             int width, int height,
+                             int hdec, int vdec);
 
 /*Write out the planar YUV frame, uncropped.*/
 static void video_write(void){
@@ -58,7 +62,11 @@ static void video_write(void){
     int hdec = !(ti.pixel_fmt & 1);
     int vdec = !(ti.pixel_fmt & 2);
     
-	OgvJsOutputFrame(buffer, ti.frame_width, ti.frame_height, hdec, vdec);
+	OgvJsOutputFrame(ycbcr[0].data, ycbcr[0].stride,
+	                 ycbcr[1].data, ycbcr[1].stride,
+	                 ycbcr[2].data, ycbcr[3].stride,
+	                 ti.frame_width, ti.frame_height,
+	                 hdec, vdec);
 }
 
 /* dump the theora comment header */

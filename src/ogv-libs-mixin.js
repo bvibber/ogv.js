@@ -1,5 +1,10 @@
 mergeInto(LibraryManager.library, {
-	OgvJsOutputFrame: function(buffer, width, height, hdec, vdec) {
-		console.log('OgvJsOutputFrame', buffer, width, height, hdec, vdec);
+	OgvJsOutputFrame: function(bufferY, strideY,
+	                           bufferCb, strideCb,
+	                           bufferCr, strideCr,
+	                           width, height,
+	                           hdec, vdec) {
+		// YCbCr whee
+		console.log('OgvJsOutputFrame', bufferY, strideY, bufferCb, strideCb, bufferCr, strideCr, width, height, hdec, vdec);
 	}
 });
