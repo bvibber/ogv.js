@@ -105,79 +105,49 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
-void OgvJsProcessInput(char *buffer, int bufsize) {
-  printf("Hello OgvJsProcessInput! appState is: %d\n", (int)appState);
+static void processBegin() {
+	if (!ogg_page_bos(&oggPage)) {
+		/* don't leak the page; get it into the appropriate stream */
+		queue_page(&oggPage);
+	} else if (!theora_p) {
+		printf("Packet is at start of a bitstream\n");
+		int got_packet;
+		
+		// Initialize a stream state object...
+		ogg_stream_state test;
+		ogg_stream_init(&test,ogg_page_serialno(&oggPage));
+		ogg_stream_pagein(&test, &oggPage);
+		
+		got_packet = ogg_stream_packetpeek(&test, &oggPacket);
+		/* identify the codec: try theora */
+		if(got_packet && (theora_processing_headers=
+			th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket))>=0){
 
-  if (bufsize > 0) {
-	  for (int q = 0; q < 128; q++) {
-	  	printf("%d ", (int)buffer[q]);
-	  }
-	  char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
-	  memcpy(dest, buffer, bufsize);
-	  ogg_sync_wrote(&oggSyncState, bufsize);
-	  for (int q = 0; q < 128; q++) {
-	  	printf("%d ", (int)dest[q]);
-	  }
-	  printf("Just wrote input for %d bytes\n", bufsize);
-  }
+			/* it is theora -- save this stream state */
+			printf("found theora stream!\n");
+			memcpy(&streamState, &test, sizeof(test));
+			theora_p=1;
+			/*Advance past the successfully processed header.*/
+			if (theora_processing_headers) {
+				ogg_stream_packetout(&streamState, NULL);
+			}
+		} else {
+			printf("not theora packet\n");
+			/* whatever it is, we don't care about it */
+			ogg_stream_clear(&test);
+		}
+	}
+}
 
-  if (appState == STATE_BEGIN) {
-  	printf("STATE_BEGIN {{{\n");
-    /*Ogg file open; parse the headers.
-      Theora (like Vorbis) depends on some initial header packets for decoder
-       setup and initialization.
-      We retrieve these first before entering the main decode loop.*/
-
-	int po = ogg_sync_pageout(&oggSyncState,&oggPage);
-	printf("ogg_sync_pageout %d\n", po);
-	
-	
-
-    /* Only interested in Theora streams */
-    while(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
-       printf("in the loop\n");
-      int got_packet;
-      ogg_stream_state test;
-
-      /* is this a mandated initial header? If not, stop parsing */
-      if(!ogg_page_bos(&oggPage)){
-       printf("!ogg_page_bos()\n");
-        /* don't leak the page; get it into the appropriate stream */
-        queue_page(&oggPage);
-        appState = STATE_HEADERS;
-        break;
-      }
-
-      ogg_stream_init(&test,ogg_page_serialno(&oggPage));
-      ogg_stream_pagein(&test,&oggPage);
-      got_packet = ogg_stream_packetpeek(&test,&oggPacket);
-
-      /* identify the codec: try theora */
-      if((got_packet==1) && !theora_p && (theora_processing_headers=
-       th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket))>=0){
-       printf("is theora packet\n");
-        /* it is theora -- save this stream state */
-        memcpy(&streamState,&test,sizeof(test));
-        theora_p=1;
-        /*Advance past the successfully processed header.*/
-        if(theora_processing_headers)ogg_stream_packetout(&streamState,NULL);
-      }else{
-       printf("not theora packet\n");
-        /* whatever it is, we don't care about it */
-        ogg_stream_clear(&test);
-      }
-    }
-    /* fall through to non-bos page parsing */
-  	printf("STATE_BEGIN }}}\n");
-  } else if (appState == STATE_HEADERS) {
-  	printf("STATE_HEADERS {{{\n");
-
+static void processHeaders() {
 	  /* we're expecting more header packets. */
-	  while(theora_p && theora_processing_headers){
+	  while(theora_processing_headers){
+	    printf("in theora header loop\n");
 		int ret;
 
 		/* look for further theora headers */
 		while(theora_processing_headers&&(ret=ogg_stream_packetpeek(&streamState,&oggPacket))){
+	      printf("in theora header loop second: %d\n", ret);
 		  if(ret<0)continue;
 		  theora_processing_headers=th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket);
 		  if(theora_processing_headers<0){
@@ -202,6 +172,7 @@ void OgvJsProcessInput(char *buffer, int bufsize) {
 		   care about, or the stream is not obeying spec */
 
 		if(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
+	      printf("requeueing non-theora packet\n");
 		  queue_page(&oggPage); /* demux into the appropriate stream */
 		}else{
 			// fixme we might run out of data here
@@ -229,40 +200,19 @@ void OgvJsProcessInput(char *buffer, int bufsize) {
 	  /*Either way, we're done with the codec setup data.*/
 	  th_setup_free(theoraSetupInfo);
 
-	  /*Finally the main decode loop.
-
-		It's one Theora packet per frame, so this is pretty straightforward if
-		 we're not trying to maintain sync with other multiplexed streams.
-
-		The videobuf_ready flag is used to maintain the input buffer in the libogg
-		 stream state.
-		If there's no output frame available at the end of the decode step, we must
-		 need more input data.
-		We could simplify this by just using the return code on
-		 ogg_page_packetout(), but the flag system extends easily to the case where
-		 you care about more than one multiplexed stream (like with audio
-		 playback).
-		In that case, just maintain a flag for each decoder you care about, and
-		 pull data when any one of them stalls.
-
-		videobuf_time holds the presentation time of the currently buffered video
-		 frame.
-		We ignore this value.*/
-
-	  /* queue any remaining pages from data we buffered but that did not
-		  contain headers */
+	  /* Finally move on to the main decode loop... */
 	  while(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
 		queue_page(&oggPage);
 	  }
-  	printf("STATE_HEADERS {{{\n");
-  } else if (appState == STATE_DECODING) {
-  	printf("STATE_DECODING {{{\n");
+	  appState = STATE_DECODING;
+}
 
-    while(theora_p && !videobuf_ready){
+static void processDecoding() {
+    while(!videobuf_ready){
       /* theora is one in, one out... */
-      if(ogg_stream_packetout(&streamState,&oggPacket)>0){
+      if (ogg_stream_packetout(&streamState, &oggPacket) > 0 ){
 
-        if(th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
+        if (th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
           videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
           videobuf_ready=1;
           frames++;
@@ -276,11 +226,27 @@ void OgvJsProcessInput(char *buffer, int bufsize) {
     	video_write();
 	    videobuf_ready=0;
     }
-
-  	printf("STATE_DECODING }}}\n");
-  }
-  printf("end processInput.\n");
 }
+
+void OgvJsProcessInput(char *buffer, int bufsize) {
+	if (bufsize > 0) {
+		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
+		memcpy(dest, buffer, bufsize);
+		ogg_sync_wrote(&oggSyncState, bufsize);
+		printf("Just wrote input for %d bytes\n", bufsize);
+	}
+	while (ogg_sync_pageout(&oggSyncState, &oggPage)) {
+		printf("-- PAGE --\n");
+		if (appState == STATE_BEGIN) {
+			processBegin();
+		} else if (appState == STATE_HEADERS) {
+			processHeaders();
+		} else if (appState == STATE_DECODING) {
+			processDecoding();
+		}
+	}
+}
+
 
 void OgvJsDestroy() {
   if(theora_p){
