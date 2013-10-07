@@ -206,14 +206,17 @@ static void processHeaders() {
 	  th_setup_free(theoraSetupInfo);
 
 	  /* Finally move on to the main decode loop... */
+	  /*
 	  while(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
 		queue_page(&oggPage);
 	  }
+	  */
 	  appState = STATE_DECODING;
+	  printf("Done with headers step\n");
 }
 
 static void processDecoding() {
-    while(!videobuf_ready){
+    if(!videobuf_ready){
       /* theora is one in, one out... */
       if (ogg_stream_packetout(&streamState, &oggPacket) > 0 ){
 
@@ -252,6 +255,7 @@ int OgvJsProcess() {
 		} else if (appState == STATE_DECODING) {
 			processDecoding();
 		}
+		queue_page(&oggPage);
 		return 1;
 	}
 	return 0;
