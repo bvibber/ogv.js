@@ -1,4 +1,4 @@
-ogg.js
+ogv.js
 ======
 
 libogg, libvorbis, and theora compiled to JavaScript with Emscripten, based on an audio codec version for [Aurora.js](https://github.com/audiocogs/aurora.js).
@@ -14,7 +14,6 @@ See a sample web page in demos/
 
 ## License
 
-libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo
-for Aurora.js is licensed under MIT.
+libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
 
 Based on wrapper scripts from https://github.com/devongovett/ogg.js
