@@ -85,11 +85,12 @@
 			},
 			ondone: function() {
 				console.log("reading done.");
-				OgvJs.destroy();
+				OgvJs.flush();
+				//OgvJs.destroy();
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
-				OgvJs.destroy();
+				//OgvJs.destroy();
 			}
 		});
 	}

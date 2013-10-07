@@ -73,15 +73,13 @@ static void video_write(void){
 static int dump_comments(th_comment *_tc){
   int   i;
   int   len;
-  FILE *out;
-  out=stderr;
-  fprintf(out,"Encoded by %s\n",_tc->vendor);
+  printf("Encoded by %s\n",_tc->vendor);
   if(_tc->comments){
-    fprintf(out,"theora comment header:\n");
+    printf("theora comment header:\n");
     for(i=0;i<_tc->comments;i++){
       if(_tc->user_comments[i]){
         len=_tc->comment_lengths[i]<INT_MAX?_tc->comment_lengths[i]:INT_MAX;
-        fprintf(out,"\t%.*s\n",len,_tc->user_comments[i]);
+        printf("\t%.*s\n",len,_tc->user_comments[i]);
       }
     }
   }
@@ -173,7 +171,7 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 		  if(ret<0)continue;
 		  theora_processing_headers=th_decode_headerin(&ti,&tc,&ts,&op);
 		  if(theora_processing_headers<0){
-			fprintf(stderr,"Error parsing Theora stream headers; "
+			printf("Error parsing Theora stream headers; "
 			 "corrupt stream?\n");
 			exit(1);
 		  }
@@ -198,7 +196,7 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 		}else{
 			// fixme we might run out of data here
 			// if so we need to be able to halt here and save state.
-			fprintf(stderr,"Ran out of input while searching for codec headers.\n");
+			printf("Ran out of input while searching for codec headers.\n");
 			exit(1);
 		}
 	  }
@@ -207,7 +205,7 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 	  if(theora_p){
 		dump_comments(&tc);
 		td=th_decode_alloc(&ti,ts);
-		fprintf(stderr,"Ogg logical stream %lx is Theora %dx%d %.02f fps video\n"
+		printf("Ogg logical stream %lx is Theora %dx%d %.02f fps video\n"
 		 "Encoded frame content is %dx%d with %dx%d offset\n",
 		 to.serialno,ti.frame_width,ti.frame_height,
 		 (double)ti.fps_numerator/ti.fps_denominator,

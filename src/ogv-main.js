@@ -1,6 +1,12 @@
 var OgvJs = (function() {
     
-    var Module = {};
+    var Module = {
+    	noInitialRun: true,
+    	noExitRuntime: true,
+    	print: function(str) {
+    		console.log("OgvJs: " + str);
+    	}
+    };
     //import "../build/ogv-libs.js"
     
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', []);
@@ -41,7 +47,9 @@ var OgvJs = (function() {
 			var buffer = reallocInputBuffer(blob.size);
 			Module.HEAPU8.set(new Uint8Array(blob), buffer);
 
+			console.log("processing! " + buffer + "; " + blob.size);
 			OgvJsProcessInput(buffer, blob.size);
+			console.log("processed...?");
 		}
 	};
 })();
