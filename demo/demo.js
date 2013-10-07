@@ -13,7 +13,7 @@
 			ondone = options.ondone,
 			onerror = options.onerror,
 			xhr = new XMLHttpRequest(),
-			bufferSize = 16384,
+			bufferSize = options.bufferSize || 1024 * 1024,
 			bufferDelay = 250,
 			lastPosition = 0;
 
@@ -78,13 +78,19 @@
 
 		var stream = new StreamFile({
 			url: url,
-			bufferSize: 8192, // ???
 			onread: function(data) {
 				console.log("We have a buffer of size " + data.byteLength);
 				OgvJs.receiveInput(data);
-				while (OgvJs.process()) {
-					//
+				function pingProcess() {
+					console.log("ping process!");
+					if (OgvJs.process()) {
+						console.log("SCHEDULING MORE");
+						window.setTimeout(pingProcess, 50);
+					} else {
+						console.log("NO MORE PACKETS");
+					}
 				}
+				window.setTimeout(pingProcess, 50);
 			},
 			ondone: function() {
 				console.log("reading done.");
