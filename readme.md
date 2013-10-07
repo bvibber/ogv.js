@@ -1,19 +1,20 @@
 ogg.js
 ======
 
-libogg, libvorbis, and libopus compiled to JavaScript with Emscripten for [Aurora.js](https://github.com/audiocogs/aurora.js).
+libogg, libvorbis, and theora compiled to JavaScript with Emscripten, based on an audio codec version for [Aurora.js](https://github.com/audiocogs/aurora.js).
 
 ## Building
 
 1. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
 2. Clone git submodules
-3. Run `compileOgg.sh` to configure and build libogg and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
-4. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
-5. Run `importer src/ogg.js build/ogg.js` to generate a JavaScript file with libogg and the Aurora.js wrapper, or to run a development server use `importer src/ogg.js -p 5000` for example.
+3. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
+4. Run `make` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
-The steps to build libvorbis and libopus are the same, just using their respective compilation scripts and modified `importer` filenames.
+See a sample web page in demos/
 
 ## License
 
-libogg, libvorbis, and libopus are available under their respective licenses, and the JavaScript and C wrapper code in this repo
+libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo
 for Aurora.js is licensed under MIT.
+
+Based on wrapper scripts from https://github.com/devongovett/ogg.js
