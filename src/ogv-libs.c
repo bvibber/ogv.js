@@ -12,14 +12,6 @@
 #include <theora/codec.h>
 #include <theora/theoradec.h>
 
-/* Helper; just grab some more compressed bitstream and sync it for
-   page extraction */
-int buffer_data(const char *src, int nbytes, ogg_sync_state *oggSyncState) {
-  char *dest = ogg_sync_buffer(oggSyncState, nbytes);
-  memcpy(dest, src, nbytes);
-  ogg_sync_wrote(oggSyncState, nbytes);
-  return(nbytes);
-}
 
 /* never forget that globals are a one-way ticket to Hell */
 /* Ogg and codec state for demux/decode */
@@ -119,13 +111,31 @@ void OgvJsFlush() {
 
 void OgvJsProcessInput(const char *buffer, int bufsize) {
   printf("Hello OgvJsProcessInput! appState is: %d\n", (int)appState);
-  int ret=buffer_data(buffer, bufsize, &oggSyncState);
+
+  if (bufsize > 0) {
+	  for (int q = 0; q < 128; q++) {
+	  	printf("%d ", (int)buffer[q]);
+	  }
+	  char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
+	  memcpy(dest, buffer, bufsize);
+	  ogg_sync_wrote(&oggSyncState, bufsize);
+	  for (int q = 0; q < 128; q++) {
+	  	printf("%d ", (int)dest[q]);
+	  }
+	  printf("Just wrote input for %d bytes\n", bufsize);
+  }
+
   if (appState == STATE_BEGIN) {
   	printf("STATE_BEGIN {{{\n");
     /*Ogg file open; parse the headers.
       Theora (like Vorbis) depends on some initial header packets for decoder
        setup and initialization.
       We retrieve these first before entering the main decode loop.*/
+
+	int po = ogg_sync_pageout(&oggSyncState,&oggPage);
+	printf("ogg_sync_pageout %d\n", po);
+	
+	
 
     /* Only interested in Theora streams */
     while(ogg_sync_pageout(&oggSyncState,&oggPage)>0){

@@ -18,13 +18,13 @@
 			lastPosition = 0;
 
 		function dataRemaining() {
-			return xhr.response.size > lastPosition;
+			return xhr.response.byteLength > lastPosition;
 		}
 
 		function readChunk() {
 			if (dataRemaining()) {
 				var chunk = xhr.response.slice(lastPosition, lastPosition + bufferSize);
-				lastPosition = lastPosition + chunk.size;
+				lastPosition = lastPosition + chunk.byteLength;
 				onread(chunk);
 			}
 		}
@@ -40,7 +40,7 @@
 		}
 		
 		xhr.open("GET", url);
-		xhr.responseType = "blob";
+		xhr.responseType = "arraybuffer";
 		xhr.onreadystatechange = function(event) {
 			if (xhr.readyState == 2) {
 				if (xhr.status >= 400) {
@@ -79,9 +79,9 @@
 		var stream = new StreamFile({
 			url: url,
 			bufferSize: 8192, // ???
-			onread: function(blob) {
-				console.log("We have a blob of size " + blob.size);
-				OgvJs.processInput(blob);
+			onread: function(data) {
+				console.log("We have a buffer of size " + data.byteLength);
+				OgvJs.processInput(data);
 			},
 			ondone: function() {
 				console.log("reading done.");

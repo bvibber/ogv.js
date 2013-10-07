@@ -43,13 +43,17 @@ var OgvJs = (function() {
 			console.log("ogv.js destroyed");
 		},
 		
-		processInput: function(blob) {
+		/**
+		 * @param ArrayBuffer data
+		 */
+		processInput: function(data) {
 			// Map the blob into a buffer in emscripten's runtime heap
-			var buffer = reallocInputBuffer(blob.size);
-			Module.HEAPU8.set(new Uint8Array(blob), buffer);
+			var len = data.byteLength;
+			var buffer = reallocInputBuffer(len);
+			Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-			console.log("processing! " + buffer + "; " + blob.size);
-			OgvJsProcessInput(buffer, blob.size);
+			console.log("processing! " + buffer + "; " + len);
+			OgvJsProcessInput(buffer, len);
 			console.log("processed...?");
 		},
 		
