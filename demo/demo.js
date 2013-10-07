@@ -13,8 +13,8 @@
 			ondone = options.ondone,
 			onerror = options.onerror,
 			xhr = new XMLHttpRequest(),
-			bufferSize = 65536 * 10,
-			bufferDelay = 0,
+			bufferSize = 16384,
+			bufferDelay = 250,
 			lastPosition = 0;
 
 		function dataRemaining() {
