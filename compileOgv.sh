@@ -10,4 +10,5 @@ emcc \
   -I libogg/include -Llibogg/src/.libs -logg \
   -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis \
   -I libtheora/include -Llibtheora/lib/.libs -ltheora -ltheoradec \
+  --js-library src/ogv-libs-mixin.js \
   src/ogv-libs.c -o build/ogv-libs.js
