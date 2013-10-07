@@ -13,7 +13,7 @@
 			ondone = options.ondone,
 			onerror = options.onerror,
 			xhr = new XMLHttpRequest(),
-			bufferSize = 65536,
+			bufferSize = 65536 * 10,
 			bufferDelay = 0,
 			lastPosition = 0;
 

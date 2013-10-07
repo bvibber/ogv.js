@@ -12,6 +12,7 @@ var OgvJs = (function() {
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', []);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
     var OgvJsProcessInput = Module.cwrap('OgvJsProcessInput', 'void', ['*', 'number']);
+    var OgvJsFlush = Module.cwrap('OgvJsFlush', 'void', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -50,6 +51,10 @@ var OgvJs = (function() {
 			console.log("processing! " + buffer + "; " + blob.size);
 			OgvJsProcessInput(buffer, blob.size);
 			console.log("processed...?");
+		},
+		
+		flush: function() {
+			OgvJsFlush();
 		}
 	};
 })();

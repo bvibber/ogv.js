@@ -14,27 +14,25 @@
 
 /* Helper; just grab some more compressed bitstream and sync it for
    page extraction */
-int buffer_data(const char *src, int nbytes, ogg_sync_state *oy) {
-  char *dest = ogg_sync_buffer(oy, nbytes);
+int buffer_data(const char *src, int nbytes, ogg_sync_state *oggSyncState) {
+  char *dest = ogg_sync_buffer(oggSyncState, nbytes);
   memcpy(dest, src, nbytes);
-  ogg_sync_wrote(oy, nbytes);
+  ogg_sync_wrote(oggSyncState, nbytes);
   return(nbytes);
 }
 
 /* never forget that globals are a one-way ticket to Hell */
 /* Ogg and codec state for demux/decode */
-ogg_sync_state    oy;
-ogg_page          og;
-ogg_stream_state  vo;
-ogg_stream_state  to;
-th_info           ti;
-th_comment        tc;
-th_setup_info    *ts;
-th_dec_ctx       *td;
+ogg_sync_state    oggSyncState;
+ogg_page          oggPage;
+ogg_stream_state  streamState;
+th_info           theoraInfo;
+th_comment        theoraComment;
+th_setup_info    *theoraSetupInfo;
+th_dec_ctx       *theoraDecoderContext;
 
 int              theora_p=0;
 int              theora_processing_headers;
-int              stateflag=0;
 
 /* single frame video buffering */
 int          videobuf_ready=0;
@@ -57,15 +55,15 @@ extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
 /*Write out the planar YUV frame, uncropped.*/
 static void video_write(void){
     th_ycbcr_buffer ycbcr;
-    th_decode_ycbcr_out(td,ycbcr);
+    th_decode_ycbcr_out(theoraDecoderContext,ycbcr);
 
-    int hdec = !(ti.pixel_fmt & 1);
-    int vdec = !(ti.pixel_fmt & 2);
+    int hdec = !(theoraInfo.pixel_fmt & 1);
+    int vdec = !(theoraInfo.pixel_fmt & 2);
     
 	OgvJsOutputFrame(ycbcr[0].data, ycbcr[0].stride,
 	                 ycbcr[1].data, ycbcr[1].stride,
 	                 ycbcr[2].data, ycbcr[3].stride,
-	                 ti.frame_width, ti.frame_height,
+	                 theoraInfo.frame_width, theoraInfo.frame_height,
 	                 hdec, vdec);
 }
 
@@ -90,26 +88,22 @@ static int dump_comments(th_comment *_tc){
 /* this can be done blindly; a stream won't accept a page
                 that doesn't belong to it */
 static int queue_page(ogg_page *page){
-  if(theora_p)ogg_stream_pagein(&to,page);
+  if(theora_p)ogg_stream_pagein(&streamState,page);
   return 0;
 }
 
 
-  ogg_packet op;
+  ogg_packet oggPacket;
 
-  struct timeb start;
-  struct timeb after;
-  struct timeb last;
-  int fps_only=0;
   int frames = 0;
 
 void OgvJsInit() {
   /* start up Ogg stream synchronization layer */
-  ogg_sync_init(&oy);
+  ogg_sync_init(&oggSyncState);
 
   /* init supporting Theora structures needed in header parsing */
-  th_comment_init(&tc);
-  th_info_init(&ti);
+  th_comment_init(&theoraComment);
+  th_info_init(&theoraInfo);
 }
 
 
@@ -119,57 +113,67 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
+void OgvJsFlush() {
+  printf("Hello OgvJsFlush!\n");
+}
 
 void OgvJsProcessInput(const char *buffer, int bufsize) {
-  int ret=buffer_data(buffer, bufsize, &oy);
+  printf("Hello OgvJsProcessInput! appState is: %d\n", (int)appState);
+  int ret=buffer_data(buffer, bufsize, &oggSyncState);
   if (appState == STATE_BEGIN) {
+  	printf("STATE_BEGIN {{{\n");
     /*Ogg file open; parse the headers.
       Theora (like Vorbis) depends on some initial header packets for decoder
        setup and initialization.
       We retrieve these first before entering the main decode loop.*/
 
     /* Only interested in Theora streams */
-    while(ogg_sync_pageout(&oy,&og)>0){
+    while(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
+       printf("in the loop\n");
       int got_packet;
       ogg_stream_state test;
 
       /* is this a mandated initial header? If not, stop parsing */
-      if(!ogg_page_bos(&og)){
+      if(!ogg_page_bos(&oggPage)){
+       printf("!ogg_page_bos()\n");
         /* don't leak the page; get it into the appropriate stream */
-        queue_page(&og);
-        stateflag=1;
+        queue_page(&oggPage);
         appState = STATE_HEADERS;
         break;
       }
 
-      ogg_stream_init(&test,ogg_page_serialno(&og));
-      ogg_stream_pagein(&test,&og);
-      got_packet = ogg_stream_packetpeek(&test,&op);
+      ogg_stream_init(&test,ogg_page_serialno(&oggPage));
+      ogg_stream_pagein(&test,&oggPage);
+      got_packet = ogg_stream_packetpeek(&test,&oggPacket);
 
       /* identify the codec: try theora */
       if((got_packet==1) && !theora_p && (theora_processing_headers=
-       th_decode_headerin(&ti,&tc,&ts,&op))>=0){
+       th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket))>=0){
+       printf("is theora packet\n");
         /* it is theora -- save this stream state */
-        memcpy(&to,&test,sizeof(test));
+        memcpy(&streamState,&test,sizeof(test));
         theora_p=1;
         /*Advance past the successfully processed header.*/
-        if(theora_processing_headers)ogg_stream_packetout(&to,NULL);
+        if(theora_processing_headers)ogg_stream_packetout(&streamState,NULL);
       }else{
+       printf("not theora packet\n");
         /* whatever it is, we don't care about it */
         ogg_stream_clear(&test);
       }
     }
     /* fall through to non-bos page parsing */
+  	printf("STATE_BEGIN }}}\n");
   } else if (appState == STATE_HEADERS) {
+  	printf("STATE_HEADERS {{{\n");
 
 	  /* we're expecting more header packets. */
 	  while(theora_p && theora_processing_headers){
 		int ret;
 
 		/* look for further theora headers */
-		while(theora_processing_headers&&(ret=ogg_stream_packetpeek(&to,&op))){
+		while(theora_processing_headers&&(ret=ogg_stream_packetpeek(&streamState,&oggPacket))){
 		  if(ret<0)continue;
-		  theora_processing_headers=th_decode_headerin(&ti,&tc,&ts,&op);
+		  theora_processing_headers=th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket);
 		  if(theora_processing_headers<0){
 			printf("Error parsing Theora stream headers; "
 			 "corrupt stream?\n");
@@ -177,7 +181,7 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 		  }
 		  else if(theora_processing_headers>0){
 			/*Advance past the successfully processed header.*/
-			ogg_stream_packetout(&to,NULL);
+			ogg_stream_packetout(&streamState,NULL);
 		  }
 		  theora_p++;
 		}
@@ -191,8 +195,8 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 		/* The header pages/packets will arrive before anything else we
 		   care about, or the stream is not obeying spec */
 
-		if(ogg_sync_pageout(&oy,&og)>0){
-		  queue_page(&og); /* demux into the appropriate stream */
+		if(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
+		  queue_page(&oggPage); /* demux into the appropriate stream */
 		}else{
 			// fixme we might run out of data here
 			// if so we need to be able to halt here and save state.
@@ -203,29 +207,21 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 
 	  /* and now we have it all.  initialize decoders */
 	  if(theora_p){
-		dump_comments(&tc);
-		td=th_decode_alloc(&ti,ts);
+		dump_comments(&theoraComment);
+		theoraDecoderContext=th_decode_alloc(&theoraInfo,theoraSetupInfo);
 		printf("Ogg logical stream %lx is Theora %dx%d %.02f fps video\n"
 		 "Encoded frame content is %dx%d with %dx%d offset\n",
-		 to.serialno,ti.frame_width,ti.frame_height,
-		 (double)ti.fps_numerator/ti.fps_denominator,
-		 ti.pic_width,ti.pic_height,ti.pic_x,ti.pic_y);
+		 streamState.serialno,theoraInfo.frame_width,theoraInfo.frame_height,
+		 (double)theoraInfo.fps_numerator/theoraInfo.fps_denominator,
+		 theoraInfo.pic_width,theoraInfo.pic_height,theoraInfo.pic_x,theoraInfo.pic_y);
 
-		/*{
-		  int arg = 0xffff;
-		  th_decode_ctl(td,TH_DECCTL_SET_TELEMETRY_MBMODE,&arg,sizeof(arg));
-		  th_decode_ctl(td,TH_DECCTL_SET_TELEMETRY_MV,&arg,sizeof(arg));
-		  th_decode_ctl(td,TH_DECCTL_SET_TELEMETRY_QI,&arg,sizeof(arg));
-		  arg=10;
-		  th_decode_ctl(td,TH_DECCTL_SET_TELEMETRY_BITS,&arg,sizeof(arg));
-		}*/
 	  }else{
 		/* tear down the partial theora setup */
-		th_info_clear(&ti);
-		th_comment_clear(&tc);
+		th_info_clear(&theoraInfo);
+		th_comment_clear(&theoraComment);
 	  }
 	  /*Either way, we're done with the codec setup data.*/
-	  th_setup_free(ts);
+	  th_setup_free(theoraSetupInfo);
 
 	  /*Finally the main decode loop.
 
@@ -247,20 +243,21 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 		 frame.
 		We ignore this value.*/
 
-	  stateflag=0; /* playback has not begun */
 	  /* queue any remaining pages from data we buffered but that did not
 		  contain headers */
-	  while(ogg_sync_pageout(&oy,&og)>0){
-		queue_page(&og);
+	  while(ogg_sync_pageout(&oggSyncState,&oggPage)>0){
+		queue_page(&oggPage);
 	  }
+  	printf("STATE_HEADERS {{{\n");
   } else if (appState == STATE_DECODING) {
+  	printf("STATE_DECODING {{{\n");
 
     while(theora_p && !videobuf_ready){
       /* theora is one in, one out... */
-      if(ogg_stream_packetout(&to,&op)>0){
+      if(ogg_stream_packetout(&streamState,&oggPacket)>0){
 
-        if(th_decode_packetin(td,&op,&videobuf_granulepos)>=0){
-          videobuf_time=th_granule_time(td,videobuf_granulepos);
+        if(th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
+          videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
           videobuf_ready=1;
           frames++;
         }
@@ -274,15 +271,17 @@ void OgvJsProcessInput(const char *buffer, int bufsize) {
 	    videobuf_ready=0;
     }
 
+  	printf("STATE_DECODING }}}\n");
   }
+  printf("end processInput.\n");
 }
 
 void OgvJsDestroy() {
   if(theora_p){
-    ogg_stream_clear(&to);
-    th_decode_free(td);
-    th_comment_clear(&tc);
-    th_info_clear(&ti);
+    ogg_stream_clear(&streamState);
+    th_decode_free(theoraDecoderContext);
+    th_comment_clear(&theoraComment);
+    th_info_clear(&theoraInfo);
   }
-  ogg_sync_clear(&oy);
+  ogg_sync_clear(&oggSyncState);
 }
