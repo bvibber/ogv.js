@@ -233,14 +233,17 @@ static void processDecoding() {
     }
 }
 
-void OgvJsProcessInput(char *buffer, int bufsize) {
+void OgvJsReceiveInput(char *buffer, int bufsize) {
 	if (bufsize > 0) {
 		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
 		memcpy(dest, buffer, bufsize);
 		ogg_sync_wrote(&oggSyncState, bufsize);
 		printf("Just wrote input for %d bytes\n", bufsize);
 	}
-	while (ogg_sync_pageout(&oggSyncState, &oggPage)) {
+}
+
+int OgvJsProcess() {
+	if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 		printf("-- PAGE; state: %d\n", appState);
 		if (appState == STATE_BEGIN) {
 			processBegin();
@@ -249,7 +252,9 @@ void OgvJsProcessInput(char *buffer, int bufsize) {
 		} else if (appState == STATE_DECODING) {
 			processDecoding();
 		}
+		return 1;
 	}
+	return 0;
 }
 
 
@@ -262,9 +267,3 @@ void OgvJsDestroy() {
   }
   ogg_sync_clear(&oggSyncState);
 }
-
-void OgvJsFlush() {
-  printf("Hello OgvJsFlush!\n");
-  OgvJsProcessInput(NULL, 0);
-}
-

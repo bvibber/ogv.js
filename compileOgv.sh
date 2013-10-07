@@ -6,7 +6,7 @@ emcc \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
-  -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsProcessInput', '_OgvJsFlush']" \
+  -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
   -I libogg/include -Llibogg/src/.libs -logg \
   -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis \
   -I libtheora/include -Llibtheora/lib/.libs -ltheora -ltheoradec \

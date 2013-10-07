@@ -11,8 +11,8 @@ var OgvJs = (function() {
     
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', []);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
-    var OgvJsProcessInput = Module.cwrap('OgvJsProcessInput', 'void', ['*', 'number']);
-    var OgvJsFlush = Module.cwrap('OgvJsFlush', 'void', []);
+    var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
+    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -46,19 +46,19 @@ var OgvJs = (function() {
 		/**
 		 * @param ArrayBuffer data
 		 */
-		processInput: function(data) {
+		receiveInput: function(data) {
 			// Map the blob into a buffer in emscripten's runtime heap
 			var len = data.byteLength;
 			var buffer = reallocInputBuffer(len);
 			Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-			console.log("processing! " + buffer + "; " + len);
-			OgvJsProcessInput(buffer, len);
-			console.log("processed...?");
+			console.log("receiving! " + buffer + "; " + len);
+			OgvJsReceiveInput(buffer, len);
+			console.log("received...?");
 		},
 		
-		flush: function() {
-			OgvJsFlush();
+		process: function() {
+			return OgvJsProcess();
 		}
 	};
 })();

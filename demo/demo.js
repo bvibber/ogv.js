@@ -81,11 +81,13 @@
 			bufferSize: 8192, // ???
 			onread: function(data) {
 				console.log("We have a buffer of size " + data.byteLength);
-				OgvJs.processInput(data);
+				OgvJs.receiveInput(data);
+				while (OgvJs.process()) {
+					//
+				}
 			},
 			ondone: function() {
 				console.log("reading done.");
-				OgvJs.flush();
 				//OgvJs.destroy();
 			},
 			onerror: function(err) {
