@@ -105,6 +105,8 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
+static void processHeaders();
+
 static void processBegin() {
 	if (!ogg_page_bos(&oggPage)) {
 		/* don't leak the page; get it into the appropriate stream */
@@ -133,6 +135,7 @@ static void processBegin() {
 			}
 
 			appState = STATE_HEADERS;
+			processHeaders();
 		} else {
 			printf("not theora packet\n");
 			/* whatever it is, we don't care about it */
