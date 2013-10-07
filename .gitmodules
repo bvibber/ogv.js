@@ -6,4 +6,4 @@
 	url = git://git.xiph.org/mirrors/vorbis.git
 [submodule "libtheora"]
 	path = libtheora
-	url = git://git.xiph.org/mirrors/theora.git
+	url = https://github.com/brion/theora.git
