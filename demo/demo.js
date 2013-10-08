@@ -23,7 +23,17 @@
 
 		function readChunk() {
 			if (dataRemaining()) {
-				var chunk = xhr.response.slice(lastPosition, lastPosition + bufferSize);
+				var chunk;
+				if (lastPosition == 0 && xhr.response.byteLength <= bufferSize) {
+					// quick hack for IE demos -- don't use slice() on first chunk
+					// so we can still render it out :P
+					chunk = xhr.response;
+				} else {
+					// To stream for real, we'd want a chunked mode that only
+					// puts the current chunk into xhr.response. This isn't
+					// standard yet, however.
+					chunk = xhr.response.slice(lastPosition, lastPosition + bufferSize);
+				}
 				lastPosition = lastPosition + chunk.byteLength;
 				onread(chunk);
 			}
