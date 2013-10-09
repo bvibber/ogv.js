@@ -54,7 +54,7 @@ static void video_write(void){
     
 	OgvJsOutputFrame(ycbcr[0].data, ycbcr[0].stride,
 	                 ycbcr[1].data, ycbcr[1].stride,
-	                 ycbcr[2].data, ycbcr[3].stride,
+	                 ycbcr[2].data, ycbcr[2].stride,
 	                 theoraInfo.frame_width, theoraInfo.frame_height,
 	                 hdec, vdec);
 }
