@@ -6,7 +6,7 @@ libogg, libvorbis, and theora compiled to JavaScript with Emscripten.
 
 ## Current status
 
-A demo is included which runs some brief grayscale video output in the browser.
+A demo is included which runs some brief video output in the browser.
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
@@ -42,6 +42,9 @@ Early versions have only been spot-checked with a couple of small sample files o
 Note that on iOS, Safari performs *much* better than Chrome or other "alternative" browsers that use the system UIWebView but are unable to enable the JIT due to iOS limitations on third-party developers.
 
 It would also be good to compare performance of Theora vs VP8/VP9 decoders.
+
+YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if that makes a measurable difference.
+
 
 ## Difficulties
 
