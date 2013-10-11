@@ -17,30 +17,24 @@
 	}
 	
 	/**
-	 * Make a call to Commons API
+	 * Make a call to Commons API over JSONP
 	 *
 	 * @param object params
-	 * @param function(jsonData, errorString) callback
+	 * @param function(jsonData) callback
 	 */
 	function commonsApi(params, callback) {
-		var xhr = new XMLHttpRequest();
+		var callbackId = 'jsonpCallback' + (Math.random() + '').replace('.', '');
+		window[callbackId] = function(data) {
+			window[callbackId] = undefined;
+			callback(data);
+		};
 		var baseUrl = 'https://commons.wikimedia.org/w/api.php';
-		var url = baseUrl + '?' + arrayToCgi(params) + '&format=json';
-		xhr.onreadystatechange = function(event) {
-			if (xhr.readyState == 2) {
-				if (xhr.status >= 400) {
-					// errrorrrrrrr
-					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
-					xhr.abort();
-					xhr = null;
-				}
-			} else if (xhr.readyState == 4) {
-				var jsonData = JSON.parse(xhr.responseText);
-				callback(jsonData, null);
-			}
-		}
-		xhr.open("GET", url);
-		xhr.send();
+		var url = baseUrl + '?' + arrayToCgi(params) + '&format=json&callback=' + callbackId;
+
+		// Whee jsonp load
+		var script = document.createElement('script');
+		script.src = url;
+		document.querySelector('head').appendChild(script);
 	}
 	
 	
