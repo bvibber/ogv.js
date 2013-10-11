@@ -1,5 +1,7 @@
 (function() {
 
+	var codec;
+
 	/**
 	 * Quickie wrapper around XHR to fetch a file as blob chunks.
 	 * Does not yet actually deliver during download, however.
@@ -80,12 +82,6 @@
 		}
 	}
 
-	OgvJs.init();
-	OgvJs.onframe = function(event) {
-		console.log("got frame event");
-		console.log(event);
-	};
-
 	var player = document.getElementById('player'),
 		canvas = player.querySelector('canvas'),
 		ctx = canvas.getContext('2d');
@@ -96,14 +92,20 @@
 		//var url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/b/b7/How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv/How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv.480p.ogv";
 		console.log("Going to try streaming data from " + url);
 
+		if (codec) {
+			// kill the previous video if any
+			codec.destroy();
+		}
+		codec = new OgvJs();
+		codec.init();
 		var stream = new StreamFile({
 			url: url,
 			onread: function(data) {
 				console.log("We have a buffer of size " + data.byteLength);
-				OgvJs.receiveInput(data);
+				codec.receiveInput(data);
 				function pingProcess() {
 					console.log("ping process!");
-					if (OgvJs.process()) {
+					if (codec.process()) {
 						console.log("SCHEDULING MORE");
 						scheduleNextTick(pingProcess);
 					} else {
@@ -114,11 +116,9 @@
 			},
 			ondone: function() {
 				console.log("reading done.");
-				//OgvJs.destroy();
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
-				//OgvJs.destroy();
 			}
 		});
 	}

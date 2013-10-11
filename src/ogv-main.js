@@ -1,4 +1,4 @@
-var OgvJs = (function() {
+OgvJs = (function() {
     
     var Module = {
     	noInitialRun: true,
@@ -61,4 +61,4 @@ var OgvJs = (function() {
 			return OgvJsProcess();
 		}
 	};
-})();
+});
