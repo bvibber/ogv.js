@@ -6,9 +6,7 @@ mergeInto(LibraryManager.library, {
 	                           hdec, vdec) {
 		// YCbCr whee
 		var HEAPU8 = Module.HEAPU8;
-		var canvas = document.querySelector('canvas');
-		var ctx = canvas.getContext('2d');
-		var imageData = ctx.createImageData(width, height);
+		var imageData = OgvJsImageData(width, height);
 		var data = imageData.data;
 		var YPtr, CbPtr, CrPtr, outPtr;
 		var xdec, ydec;
@@ -52,6 +50,6 @@ mergeInto(LibraryManager.library, {
 				data[outPtr++] = 255;
 			}
 		}
-		ctx.putImageData(imageData, 0, 0);
+		OgvJsFrameCallback(imageData);
 	}
 });

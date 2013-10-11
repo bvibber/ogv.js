@@ -255,11 +255,14 @@
 				// kill the previous video if any
 				codec.destroy();
 			}
-			codec = new OgvJs();
-			codec.init();
 
 			canvas.width = selected.width;
 			canvas.height = selected.height;
+
+			codec = new OgvJs(canvas);
+			codec.onframe = function(imageData) {
+				ctx.putImageData(imageData, 0, 0);
+			};
 
 			var stream = new StreamFile({
 				url: url,
