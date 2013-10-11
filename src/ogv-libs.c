@@ -247,7 +247,6 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 
 int OgvJsProcess() {
 	if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-		printf("-- PAGE; state: %d\n", appState);
 		if (appState == STATE_BEGIN) {
 			processBegin();
 		} else if (appState == STATE_HEADERS) {
