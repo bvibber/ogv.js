@@ -270,8 +270,11 @@
 
 	var player = document.getElementById('player'),
 		canvas = player.querySelector('canvas'),
+		nativePlayer = document.getElementById('native'),
+		nativeVideo = nativePlayer.querySelector('video'),
 		ctx = canvas.getContext('2d'),
-		videoChooser = document.getElementById('video-chooser');
+		videoChooser = document.getElementById('video-chooser'),
+		selectedUrl = null;
 	
 	function showSelectedVideo() {
 		var filename = videoChooser.value;
@@ -293,45 +296,63 @@
 				throw new Error("No ogv source found.");
 			}
 			
-			var url = selected.url;
-			console.log("Going to try streaming data from " + url);
+			selectedUrl = selected.url;
+			console.log("Going to try streaming data from " + selectedUrl);
 
 			if (codec) {
 				// kill the previous video if any
 				codec.destroy();
+				codec = null;
 			}
 
 			canvas.width = selected.width;
 			canvas.height = selected.height;
+			
+			nativeVideo.width = selected.width;
+			nativeVideo.height = selected.height;
+			nativeVideo.src = selectedUrl;
 
-			codec = new OgvJs(canvas);
-			codec.onframe = function(imageData) {
-				ctx.putImageData(imageData, 0, 0);
-			};
-
-			var stream = new StreamFile({
-				url: url,
-				onread: function(data) {
-					codec.receiveInput(data);
-					function pingProcess() {
-						if (codec.process()) {
-							scheduleNextTick(pingProcess);
-						} else {
-							console.log("NO MORE PACKETS");
-						}
-					}
-					scheduleNextTick(pingProcess);
-				},
-				ondone: function() {
-					console.log("reading done.");
-				},
-				onerror: function(err) {
-					console.log("reading encountered error: " + err);
-				}
-			});
 		});
 	}
 	videoChooser.addEventListener('change', showSelectedVideo);
 	showSelectedVideo();
+	
+	player.querySelector('.play').addEventListener('click', function() {
+		if (codec) {
+			// kill the previous video if any
+			codec.destroy();
+		}
+
+		codec = new OgvJs(canvas);
+		codec.onframe = function(imageData) {
+			ctx.putImageData(imageData, 0, 0);
+		};
+
+		var stream = new StreamFile({
+			url: selectedUrl,
+			onread: function(data) {
+				codec.receiveInput(data);
+				function pingProcess() {
+					if (codec.process()) {
+						scheduleNextTick(pingProcess);
+					} else {
+						console.log("NO MORE PACKETS");
+					}
+				}
+				scheduleNextTick(pingProcess);
+			},
+			ondone: function() {
+				console.log("reading done.");
+			},
+			onerror: function(err) {
+				console.log("reading encountered error: " + err);
+			}
+		});
+	});
+
+	nativePlayer.querySelector('.play').addEventListener('click', function() {
+		nativeVideo.play();
+	});
+	
 
 })();

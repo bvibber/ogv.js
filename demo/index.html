@@ -17,11 +17,24 @@
 		</select>
 	</div>
 
-	<div id="player" class="ogvjs-player">
-		<canvas width=480 height=272>
-		</canvas>
-	</div>
-
+	<fieldset>
+		<legend>ogv.js player</legend>
+		<div id="player" class="ogvjs-player">
+			<canvas width=480 height=272></canvas>
+			<br>
+			<button class="play">Play</button>
+		</div>
+	</fieldset>
+	
+	<fieldset>
+		<legend>Native player</legend>
+		<div id="native" class="native-player">
+			<video width=480 height=272></video>
+			<br>
+			<button class="play">Play</button>
+		</div>
+	</fieldset>
+	
 	<ul>
 		<li><a href="https://github.com/brion/ogv.js">Player source repository and README</a></li>
 	</ul>
