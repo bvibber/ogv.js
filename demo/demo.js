@@ -92,8 +92,6 @@
 				imageinfo = page.imageinfo[0],
 				transcodestatus = page.transcodestatus;
 			
-			console.log(page);
-			console.log(imageinfo);
 			// Build an entry for the original media
 			var ext = getExtension(imageinfo.url),
 				format;
@@ -266,12 +264,9 @@
 			var stream = new StreamFile({
 				url: url,
 				onread: function(data) {
-					console.log("We have a buffer of size " + data.byteLength);
 					codec.receiveInput(data);
 					function pingProcess() {
-						console.log("ping process!");
 						if (codec.process()) {
-							console.log("SCHEDULING MORE");
 							scheduleNextTick(pingProcess);
 						} else {
 							console.log("NO MORE PACKETS");

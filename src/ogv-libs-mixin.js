@@ -5,8 +5,6 @@ mergeInto(LibraryManager.library, {
 	                           width, height,
 	                           hdec, vdec) {
 		// YCbCr whee
-		console.log('OgvJsOutputFrame', bufferY, strideY, bufferCb, strideCb, bufferCr, strideCr, width, height, hdec, vdec);
-		
 		var HEAPU8 = Module.HEAPU8;
 		var canvas = document.querySelector('canvas');
 		var ctx = canvas.getContext('2d');
