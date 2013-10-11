@@ -144,73 +144,118 @@
 	}
 
 	/**
-	 * Quickie wrapper around XHR to fetch a file as blob chunks.
+	 * Quickie wrapper around XHR to fetch a file as array buffer chunks.
 	 * Does not yet actually deliver during download, however.
 	 * Safari doesn't seem to currently support a streaming/progressive
 	 * XHR option that I can see. :( May have to do multiple partial reqs.
 	 */
 	function StreamFile(options) {
 		var url = options.url,
-			reader = new XMLHttpRequest(),
 			onread = options.onread,
 			ondone = options.ondone,
 			onerror = options.onerror,
-			xhr = new XMLHttpRequest(),
-			bufferSize = options.bufferSize || 1024 * 1024,
-			bufferDelay = 250,
-			lastPosition = 0;
+			bufferSize = options.bufferSize || 1024 * 1024;
+		
+		function fetchLength(callback) {
+			callback(bufferSize, null);
+			return;
+			//
+			var xhr = new XMLHttpRequest();
+			xhr.open("HEAD", url);
+			xhr.onreadystatechange = function(event) {
+				if (xhr.readyState == 2) {
+					if (xhr.status >= 400) {
+						// errrorrrrrrr
+						var err = "HTTP " + xhr.status + ": " + xhr.statusText;
+						xhr.abort();
+						callback(null, err);
+					}
+				} else if (xhr.readyState == 4) {
+					var len = null,
+						err = null,
+						lengthHeader = xhr.getResponseHeader('Content-Length');
 
-		function dataRemaining() {
-			return xhr.response.byteLength > lastPosition;
-		}
-
-		function readChunk() {
-			if (dataRemaining()) {
-				var chunk;
-				if (lastPosition == 0 && xhr.response.byteLength <= bufferSize) {
-					// quick hack for IE demos -- don't use slice() on first chunk
-					// so we can still render it out :P
-					chunk = xhr.response;
-				} else {
-					// To stream for real, we'd want a chunked mode that only
-					// puts the current chunk into xhr.response. This isn't
-					// standard yet, however.
-					chunk = xhr.response.slice(lastPosition, lastPosition + bufferSize);
+					if (lengthHeader == null) {
+						err = "could not get Content-Length header";
+					} else {
+						try {
+							len = parseInt(lengthHeader);
+						} catch (e) {
+							err = "Content-Length value not an integer";
+						}
+					}
+					callback(len, err);
 				}
-				lastPosition = lastPosition + chunk.byteLength;
-				onread(chunk);
-			}
-		}
-
-		function asyncProcessChunk() {
-			if (dataRemaining()) {
-				readChunk();
-				window.setTimeout(asyncProcessChunk, bufferDelay);
-			} else {
-				ondone();
-				xhr = null;
-			}
+			};
+			xhr.send();
 		}
 		
-		xhr.open("GET", url);
-		xhr.responseType = "arraybuffer";
-		xhr.onreadystatechange = function(event) {
-			if (xhr.readyState == 2) {
-				if (xhr.status >= 400) {
-					// errrorrrrrrr
-					onerror("HTTP " + xhr.status + ": " +xhr.statusText);
-					xhr.abort();
-					xhr = null;
-				}
-			} else if (xhr.readyState == 3) {
-				// partial data...
-				// on Firefox we can use 'moz-blob' but there's no equivalent in Safari.
-				// figure out later
-			} else if (xhr.readyState == 4) {
-				asyncProcessChunk();
+		fetchLength(function(fileLength, err) {
+			var lastPosition = 0,
+				useRange;
+			if (err) {
+				// Preflight OPTIONS fails in Safari, IE?
+				useRange = false;
+				fileLength = 0;
+				console.log("Can't use range requests -- fetching full file :(");
+			} else {
+				// Preflight w/ Range won't work -- https://bugzilla.wikimedia.org/show_bug.cgi?id=55622
+				useRange = false;
 			}
-		};
-		xhr.send();
+
+			function fetchChunk(position, callback) {
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", url);
+				xhr.responseType = "arraybuffer";
+				xhr.onreadystatechange = function(event) {
+					if (xhr.readyState == 2) {
+						if (xhr.status >= 400) {
+							// errrorrrrrrr
+							callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+							onerror();
+							xhr.abort();
+						}
+					} else if (xhr.readyState == 4) {
+						callback(xhr.response, null);
+					}
+				};
+				if (useRange) {
+					xhr.setRequestHeader("range", "bytes=" + position + "-" + endPosition);
+					var endPosition = position + bufferSize;
+					if (endPosition >= fileLength) {
+						// Don't try to request past the end of the file!
+						endPosition = fileLength - 1;
+					}
+					xhr.send();
+				} else if (position > 0) {
+					callback(null, "Can't fetch more chunks without CORS range support");
+				} else {
+					xhr.send();
+				}
+			}
+	
+			function process() {
+				fetchChunk(lastPosition, function(data, err) {
+					if (data) {
+						console.log("chunk read: " + data.byteLength);
+						onread(data);
+
+						// fixme cleanly handle running out of data, call ondone()
+						lastPosition += data.byteLength;
+						if (lastPosition >= fileLength) {
+							ondone();
+						} else {
+							process();
+						}
+					} else {
+						console.log("chunk fail: " + err);
+						onerror(err);
+					}
+				});
+			}
+
+			process();
+		});
 	}
 
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitAnimationFrame;
