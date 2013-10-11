@@ -84,12 +84,11 @@
 
 	var player = document.getElementById('player'),
 		canvas = player.querySelector('canvas'),
-		ctx = canvas.getContext('2d');
+		ctx = canvas.getContext('2d'),
+		videoChooser = document.getElementById('video-chooser');
 	
 	function showSelectedVideo() {
-		var url = "https://upload.wikimedia.org/wikipedia/commons/a/aa/Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv";
-		//var url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/5/54/Great_Eastern_Highway_down_Greenmount.ogv/Great_Eastern_Highway_down_Greenmount.ogv.480p.ogv";
-		//var url = "https://upload.wikimedia.org/wikipedia/commons/transcoded/b/b7/How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv/How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv.480p.ogv";
+		var url = videoChooser.value;
 		console.log("Going to try streaming data from " + url);
 
 		if (codec) {
@@ -122,6 +121,7 @@
 			}
 		});
 	}
+	videoChooser.addEventListener('change', showSelectedVideo);
 	showSelectedVideo();
 
 })();
