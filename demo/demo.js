@@ -111,6 +111,7 @@
 			}
 			sources.push({
 				format: format,
+				width: imageinfo.width,
 				height: imageinfo.height,
 				url: imageinfo.url,
 				bitrate: 0 // todo: calculate
@@ -128,6 +129,7 @@
 								format = matches[2];
 							sources.push({
 								format: format,
+								width: Math.round(imageinfo.width * height / imageinfo.height),
 								height: height,
 								url: transcodeUrl(imageinfo.url, height, format),
 								bitrate: parseInt(transcode.final_bitrate)
@@ -257,6 +259,10 @@
 			}
 			codec = new OgvJs();
 			codec.init();
+
+			canvas.width = selected.width;
+			canvas.height = selected.height;
+
 			var stream = new StreamFile({
 				url: url,
 				onread: function(data) {
