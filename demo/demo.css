@@ -55,6 +55,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .media-item {
+	min-height: 32px;
+
 	width: 100%;
 	overflow: hidden;
 	white-space: nowrap;
@@ -62,8 +64,9 @@ h1, h2, h3, h4, h5, h6 {
 	
 	background: white;
 	border-top: solid 1px #eee;
+
+	cursor: pointer;
 }
 .media-item img {
 	vertical-align: middle;
-	cursor: pointer;
 }

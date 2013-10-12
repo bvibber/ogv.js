@@ -409,8 +409,7 @@
 	
 	function addMediaSelector(title, imageinfo) {
 		var item = document.createElement('div'),
-			img = document.createElement('img'),
-			link = document.createElement('a');
+			img = document.createElement('img');
 		
 		item.className = 'media-item';
 		
@@ -418,18 +417,15 @@
 		img.title = "Play video"
 		img.width = imageinfo.thumbwidth;
 		img.height = imageinfo.thumbheight;
-		img.addEventListener('click', function() {
-			document.location.hash = "#" + encodeURIComponent(title.replace("File:", ""));
+		
+		item.appendChild(img);
+		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace('_', ' ')));
+		item.addEventListener('click', function() {
+			document.location.hash = "#" + encodeURIComponent(title.replace("File:", "").replace(' ', '_'));
 			window.scrollTo(0, 0);
 			showVideo(title);
 		});
-		
-		link.href = imageinfo.descriptionurl;
-		link.innerText = title.replace('File:', '').replace('_', ' ');
-		
-		item.appendChild(img);
-		item.appendChild(document.createTextNode(' '));
-		item.appendChild(link);
+
 		mediaList.appendChild(item);
 	}
 	
