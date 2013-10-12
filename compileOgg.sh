@@ -16,7 +16,6 @@ if [ ! -f configure ]; then
 fi
 
 # compile libogg
-#EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
-emmake make
+EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
 
 cd ..

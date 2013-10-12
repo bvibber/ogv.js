@@ -112,6 +112,10 @@ void OgvJsInit() {
   /* start up Ogg stream synchronization layer */
   ogg_sync_init(&oggSyncState);
 
+  /* init supporting Vorbis structures needed in header parsing */
+  vorbis_info_init(&vi);
+  vorbis_comment_init(&vc);
+
   /* init supporting Theora structures needed in header parsing */
   th_comment_init(&theoraComment);
   th_info_init(&theoraInfo);
@@ -137,9 +141,10 @@ static void processBegin() {
 			printf("found theora stream!\n");
 			memcpy(&theoraStreamState, &test, sizeof(test));
 			theora_p=1;
-		} else if (0 && !vorbis_p && got_packet && (vorbis_synthesis_headerin(&vi,&vc,&oggPacket)>=0)) {
+		} else if (!vorbis_p && (vorbis_synthesis_headerin(&vi,&vc,&oggPacket)>=0)) {
 			// it's vorbis!
 			// save this as our audio stream...
+			printf("found vorbis stream!\n");
 			memcpy(&vo, &test, sizeof(test));
 			vorbis_p = 1;
 		} else {
@@ -156,10 +161,7 @@ static void processBegin() {
 
 static void processHeaders() {
 	queue_page(&oggPage);
-	printf("processHeaders()\n");
 	if ((theora_p && theora_p < 3) || (vorbis_p && vorbis_p < 3)) {
-	  /* we're expecting more header packets. */
-	    printf("in theora header loop\n");
 		int ret;
 
 		/* look for further theora headers */
@@ -185,7 +187,10 @@ static void processHeaders() {
 				exit(1);
 			}
 			vorbis_p++;
-			if (vorbis_p == 3) break;
+			if (vorbis_p == 3) {
+				printf("Vorbis headers done.\n");
+				break;
+			}
 		}		
 
 		/* The header pages/packets will arrive before anything else we
@@ -214,24 +219,24 @@ static void processHeaders() {
 		 theoraInfo.pic_width,theoraInfo.pic_height,theoraInfo.pic_x,theoraInfo.pic_y);
 	  }
 
+		if (vorbis_p) {
+			vorbis_synthesis_init(&vd,&vi);
+			vorbis_block_init(&vd,&vb);
+		}
+
 		  appState = STATE_DECODING;
 		  printf("Done with headers step\n");
 	}
 }
 
 static void processDecoding() {
-	printf("DECODING\n");
 	queue_page(&oggPage);
 	if (theora_p) {
-		printf("HAVE THEORA\n");
 		if(!videobuf_ready){
 		  /* theora is one in, one out... */
-		  printf("LOOKING FOR THEORA PACKET\n");
 		  if (ogg_stream_packetout(&theoraStreamState, &oggPacket) > 0 ){
 
-		    printf("DECODING THEORA PACKET\n");
 			if (th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
-			  printf("READ A THEORA PACKET\n");
 			  videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
 			  videobuf_ready=1;
 			  frames++;
@@ -246,6 +251,12 @@ static void processDecoding() {
 			videobuf_ready=0;
 		}
 	}
+	
+	if (vorbis_p) {
+		if (ogg_stream_packetout(&vo, &oggPacket) > 0) {
+			printf("ignoring audio packet\n");
+		}
+	}
 }
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {
@@ -257,23 +268,16 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 }
 
 int OgvJsProcess() {
-	printf("OgvJsProcess()\n");
 	if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-		printf("OgvJsProcess() got a page\n");
 		if (appState == STATE_BEGIN) {
-			printf("xx BEGIN\n");
 			processBegin();
 		} else if (appState == STATE_HEADERS) {
-			printf("xx HEADERS\n");
 			processHeaders();
 		} else if (appState == STATE_DECODING) {
-			printf("xx DECODING\n");
 			processDecoding();
 		}
-		printf("OgvJsProcess done (page)\n");
 		return 1;
 	}
-	printf("OgvJsProcess done (nothing)\n");
 	return 0;
 }
 
