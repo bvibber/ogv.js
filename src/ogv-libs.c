@@ -241,7 +241,6 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
 		memcpy(dest, buffer, bufsize);
 		ogg_sync_wrote(&oggSyncState, bufsize);
-		printf("Just wrote input for %d bytes\n", bufsize);
 	}
 }
 

@@ -76,9 +76,7 @@ OgvJs = (function(canvas) {
 		var buffer = reallocInputBuffer(len);
 		Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-		console.log("receiving! " + buffer + "; " + len);
 		OgvJsReceiveInput(buffer, len);
-		console.log("received...?");
 	};
 	
 	/**
