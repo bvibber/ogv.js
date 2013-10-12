@@ -430,6 +430,9 @@
 	}
 	
 	function showVideo(filename) {
+		var pagelink = document.getElementById('pagelink');
+		pagelink.innerText = 'Open this file on Wikimedia Commons';
+		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(filename);
 		findSourcesForMedia(filename, function(sources) {
 			// Find the smallest ogv stream
 			var selected = null;
