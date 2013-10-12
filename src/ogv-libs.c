@@ -246,6 +246,7 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 
 int OgvJsProcess() {
 	if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
 		if (appState == STATE_BEGIN) {
 			processBegin();
 		} else if (appState == STATE_HEADERS) {
@@ -253,7 +254,6 @@ int OgvJsProcess() {
 		} else if (appState == STATE_DECODING) {
 			processDecoding();
 		}
-		queue_page(&oggPage);
 		return 1;
 	}
 	return 0;
