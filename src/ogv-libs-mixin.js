@@ -61,15 +61,25 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 	
-	OgvJsAudioCallback: function(buffer, bufSize) {
+	OgvJsOutputAudio: function(buffers, channels, sampleCount) {
+		// buffers is an array of pointers to float arrays for each channel
 		var HEAPU8 = Module.HEAPU8;
-		var data = new ArrayBuffer(bufSize);
-		// fixme copy more efficiently than this
-		var outBytes = new UIntArray(data);
-		for (var i = 0; i < bufSize; i++) {
-			outBytes[i] = HEAPU8[buffer + i];
+		var HEAPU32 = Module.HEAPU32;
+		var HEAPF32 = Module.HEAPF32;
+		
+		var outputBuffers = [];
+		var inBuffer, outBuffer, outArray, i;
+		for (var channel = 0; channel < channels; channel++) {
+			inBuffer = HEAPU32[buffers / 4 + channel];
+			outBuffer = new ArrayBuffer(sampleCount * 4);
+			outArray = new Float32Array(outBuffer);
+			for (i = 0; i < sampleCount; i++) {
+				outArray[i] = HEAPF32[inBuffer / 4 + i];
+			}
+			outputBuffers.push(outArray);
 		}
-		OgvJsAudioCallback(data);
+
+		OgvJsAudioCallback(outputBuffers);
 	}
 
 });

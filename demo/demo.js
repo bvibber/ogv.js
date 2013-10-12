@@ -594,6 +594,12 @@
 			ctx.putImageData(imageData, 0, 0);
 			framesSeen++;
 		};
+		codec.onaudio = function(channels) {
+			console.log('Audio data:');
+			for (var i = 0; i < channels.length; i++) {
+				console.log(channels[i]);
+			}
+		}
 
 		var processingScheduled = false;
 		function pingProcess() {

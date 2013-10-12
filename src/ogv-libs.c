@@ -49,18 +49,20 @@ static void sigint_handler (int signal) {
   got_sigint = 1;
 }
 
+extern void OgvJsInitVideo(int frameWidth, int frameHeight,
+                           double fps,
+                           int picWidth, int picHeight,
+                           int picX, int picY);
+
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
                              int width, int height,
                              int hdec, int vdec);
 
-extern void OgvJsInitVideo(int frameWidth, int frameHeight,
-                           double fps,
-                           int picWidth, int picHeight,
-                           int picX, int picY);
-
 extern void OgvJsInitAudio(int channels, int rate);
+
+extern void OgvJsOutputAudio(float **buffers, int channels, int sampleCount);
 
 /*Write out the planar YUV frame, uncropped.*/
 static void video_write(void){
@@ -271,6 +273,7 @@ static void processHeaders() {
 
 static void processDecoding() {
 	if (theora_p) {
+		// fixme -- don't decode next frame until the time is right
 		if(!videobuf_ready){
 		  /* theora is one in, one out... */
 		  if (ogg_stream_packetout(&theoraStreamState, &oggPacket) > 0 ){
@@ -293,7 +296,11 @@ static void processDecoding() {
 	
 	if (vorbis_p) {
 		if (ogg_stream_packetout(&vo, &oggPacket) > 0) {
-			printf("ignoring audio packet\n");
+			// fixme -- timing etc!
+			float **pcm;
+			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+			OgvJsOutputAudio(pcm, vi.channels, sampleCount);
+			vorbis_synthesis_read(&vd, sampleCount);
 		}
 	}
 }
