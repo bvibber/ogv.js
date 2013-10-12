@@ -524,6 +524,10 @@
 		}
 		clearBenchmark();
 
+		var status = document.getElementById('status-view');
+		status.className = 'status-invisible';
+		status.innerHTML = '';
+
 		function errorHandler(event) {
 			if (stream) {
 				stream.abort();
@@ -535,7 +539,6 @@
 			} else {
 				str = "halted due to script error";
 			}
-			var status = document.getElementById('status-view');
 			status.className = 'status-visible';
 			status.innerHTML = '';
 			status.appendChild(document.createTextNode(str));
