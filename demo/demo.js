@@ -524,11 +524,22 @@
 		}
 		clearBenchmark();
 
-		function errorHandler() {
+		function errorHandler(event) {
 			if (stream) {
 				stream.abort();
 				stream = null;
 			}
+			var str;
+			if ('message' in event) {
+				str = event.message;
+			} else {
+				str = "halted due to script error";
+			}
+			var status = document.getElementById('status-view');
+			status.className = 'status-visible';
+			status.innerHTML = '';
+			status.appendChild(document.createTextNode(str));
+			console.log(event);
 		}
 		window.addEventListener('error', errorHandler);
 
