@@ -3,24 +3,28 @@
 <head>
 	<meta charset="UTF-8">
 	<title>ogv.js demo/test</title>
+	<link rel="stylesheet" type="text/css" href="demo.css">
 
 <body>
 
 	<h1>ogv.js demo/test</h1>
 
-	<div>
-		<select id="video-chooser">
-			<option selected value="Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv">Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003</option>
-			<option value="HowaWatchWork1949.ogv">HowaWatchWork1949</option>
-			<option value="Great Eastern Highway down Greenmount.ogv">Great Eastern Highway down Greenmount</option>
-			<option value="Malta - Mellieha - Misrah iz-Zjara tal-Papa Gwanni Pawlu II 01 (0) ies.ogv">Malta - Mellieha - Misrah iz-Zjara tal-Papa Gwanni Pawlu II 01 (0) ies</option>
-		</select>
-	</div>
+	<ul>
+		<li><a href="https://github.com/brion/ogv.js">Player source repository and README</a></li>
+	</ul>
 
-	<fieldset>
+	<fieldset id="media-chooser">
+		<legend><a href="http://commons.wikimedia.org/wiki/Commons:Media_of_the_day">Wikimedia Commons Media of the Day</a></legend>
+		<input id=filter type=search placeholder="Filter">
+		<div id="media-list">
+			<!-- ... -->
+		</div>
+	</fieldset>
+
+	<fieldset id="main-player">
 		<legend>ogv.js player</legend>
 		<div id="player" class="ogvjs-player">
-			<canvas width=480 height=272></canvas>
+			<canvas width=640 height=360</canvas>
 			<br>
 			<button class="play">Play</button>
 		</div>
@@ -39,9 +43,6 @@
 	</fieldset>
 	-->
 	
-	<ul>
-		<li><a href="https://github.com/brion/ogv.js">Player source repository and README</a></li>
-	</ul>
-
 	<script src="ogv.js"></script>
+	<script src="motd.js"></script>
 	<script src="demo.js"></script>

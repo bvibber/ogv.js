@@ -152,7 +152,7 @@
 		commonsApi({
 			action: 'query',
 			prop: 'imageinfo|transcodestatus',
-			titles: 'File:' + media,
+			titles: media,
 			iiprop: 'url|size'
 		}, function(data, err) {
 
@@ -285,7 +285,12 @@
 							xhr.abort();
 						}
 					} else if (xhr.readyState == 4) {
-						callback(xhr.response, null);
+						var blob = xhr.response;
+						// hack
+						if (blob.byteLength > bufferSize) {
+							blob = blob.slice(0, bufferSize);
+						}
+						callback(blob, null);
 					}
 				};
 				if (useRange) {
@@ -345,8 +350,87 @@
 		videoChooser = document.getElementById('video-chooser'),
 		selectedUrl = null;
 	
-	function showSelectedVideo() {
-		var filename = videoChooser.value;
+	var mediaList = document.getElementById('media-list'),
+		filter = document.getElementById('filter');
+
+	function showChooser() {
+		var filterString = filter.value.toLowerCase();
+		
+		var max = 20, list = [];
+		for (var day in motd) {
+			if (motd.hasOwnProperty(day)) {
+				var title = motd[day];
+				if (filterString == '' || title.toLowerCase().indexOf(filterString) != -1) {
+					list.push('File:' + motd[day]);
+				}
+			}
+		}
+		var selection = list.reverse().slice(0, max);
+		console.log(selection);
+		
+		mediaList.innerText = '';
+				
+		if (selection.length == 0) {
+			mediaList.appendChild(document.createTextNode('No matches'));
+			return;
+		}
+		
+		commonsApi({
+			action: 'query',
+			prop: 'imageinfo',
+			iiprop: 'url|size',
+			iiurlwidth: 128,
+			iiurlheight: 128,
+			titles: selection.join('|')
+		}, function(data) {
+			var pages = data.query.pages,
+				mediaItems = {};
+			for (var pageId in pages) {
+				if (pages.hasOwnProperty(pageId)) {
+					var page = pages[pageId];
+					var imageinfo = page.imageinfo[0];
+					if (imageinfo) {
+						//addMediaSelector(page.title, imageinfo);
+						mediaItems[page.title] = imageinfo;
+					}
+				}
+			}
+			selection.forEach(function(title) {
+				var imageinfo = mediaItems[title];
+				addMediaSelector(title, imageinfo);
+			});
+		});
+	}
+	filter.addEventListener('change', showChooser);
+	filter.addEventListener('delete', showChooser);
+	filter.addEventListener('cut', showChooser);
+	filter.addEventListener('paste', showChooser);
+	showChooser();
+	
+	function addMediaSelector(title, imageinfo) {
+		var item = document.createElement('div'),
+			img = document.createElement('img'),
+			link = document.createElement('a');
+		
+		item.className = 'media-item';
+		
+		img.src = imageinfo.thumburl;
+		img.width = imageinfo.thumbwidth;
+		img.height = imageinfo.thumbheight;
+		img.addEventListener('click', function() {
+			showVideo(title);
+		});
+		
+		link.href = imageinfo.descriptionurl;
+		link.innerText = title.replace('File:', '').replace('_', ' ');
+		
+		item.appendChild(img);
+		item.appendChild(document.createTextNode(' - '));
+		item.appendChild(link);
+		mediaList.appendChild(item);
+	}
+	
+	function showVideo(filename) {
 		findSourcesForMedia(filename, function(sources) {
 			// Find the smallest ogv stream
 			var selected = null;
@@ -384,8 +468,7 @@
 			playVideo();
 		});
 	}
-	videoChooser.addEventListener('change', showSelectedVideo);
-	showSelectedVideo();
+	showVideo('File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv');
 	
 	function playVideo() {
 		if (codec) {
