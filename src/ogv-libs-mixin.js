@@ -11,8 +11,7 @@ mergeInto(LibraryManager.library, {
 		var YPtr, CbPtr, CrPtr, outPtr;
 		var xdec, ydec;
 		var colorY, colorCb, colorCr;
-		var t1, t2, t3, t4;
-		var r, g, b;
+		var multY;
 		for (var y = 0; y < height; y++) {
 			ydec = y >> vdec;
 			YPtr = bufferY + y * strideY;
@@ -25,28 +24,12 @@ mergeInto(LibraryManager.library, {
 				colorCb = HEAPU8[CbPtr + xdec];
 				colorCr = HEAPU8[CrPtr + xdec];
 				
-				/*
-				// Grayscale :)
-				data[outPtr++] = colorY;
-				data[outPtr++] = colorY;
-				data[outPtr++] = colorY;
-				data[outPtr++] = 255;
-				*/
-				
 				// Quickie YUV conversion
-				// adapted from Cortado :)
-				t1 = 298 * (colorY - 16);
-				t2 = 409 * colorCr - 309*128 + 128;
-				t3 = (100 * colorCb) + (208 * colorCr) - 100*128 - 208*128 - 128;
-				t4 = 516 * colorCb - 516*128 + 128;
-				
-				r = (t1 + t2);
-				g = (t1 - t3);
-				b = (t1 + t4);
-				
-				data[outPtr++] = r >> 8; // assuming the array clamps; is that right?
-				data[outPtr++] = g >> 8;
-				data[outPtr++] = b >> 8;
+				// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
+				multY = (298.082 * colorY) / 256;
+				data[outPtr++] = multY + (408.583 * colorCr) / 256 - 222.921;
+				data[outPtr++] = multY - (100.291 * colorCb) / 256 - (208.120 * colorCr) / 256 + 135.576;
+				data[outPtr++] = multY + (516.412 * colorCb) / 256 - 276.836;
 				data[outPtr++] = 255;
 			}
 		}
