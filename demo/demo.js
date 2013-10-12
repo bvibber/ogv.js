@@ -212,6 +212,17 @@
 		});
 	}
 
+	// Is there a better way to do this conversion? :(
+	function stringToArrayBuffer(chunk) {
+		var len = chunk.length,
+			buffer = new ArrayBuffer(len),
+			bytes = new Uint8Array(buffer);
+		for (var i = 0; i < len; i++) {
+			bytes[i] = chunk.charCodeAt(i);
+		}
+		return buffer;
+	}
+
 	/**
 	 * Quickie wrapper around XHR to fetch a file as array buffer chunks.
 	 * Does not yet actually deliver during download, however.
@@ -223,113 +234,51 @@
 			onread = options.onread,
 			ondone = options.ondone,
 			onerror = options.onerror,
-			bufferSize = options.bufferSize || 1024 * 1024;
+			bufferSize = options.bufferSize || 1024 * 1024,
+			lastPosition = 0;
 		
-		function fetchLength(callback) {
-			callback(bufferSize, null);
-			return;
-			//
-			var xhr = new XMLHttpRequest();
-			xhr.open("HEAD", url);
-			xhr.onreadystatechange = function(event) {
-				if (xhr.readyState == 2) {
-					if (xhr.status >= 400) {
-						// errrorrrrrrr
-						var err = "HTTP " + xhr.status + ": " + xhr.statusText;
-						xhr.abort();
-						callback(null, err);
-					}
-				} else if (xhr.readyState == 4) {
-					var len = null,
-						err = null,
-						lengthHeader = xhr.getResponseHeader('Content-Length');
-
-					if (lengthHeader == null) {
-						err = "could not get Content-Length header";
-					} else {
-						try {
-							len = parseInt(lengthHeader);
-						} catch (e) {
-							err = "Content-Length value not an integer";
-						}
-					}
-					callback(len, err);
-				}
-			};
-			xhr.send();
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", url);
+		
+		// We really want chunked-arraybuffer for progressive streaming,
+		// but it's not available except in Firefox with moz- prefix.
+		// Use old binary string method since we can read reponseText
+		// progressively and extract ArrayBuffers from that.
+		xhr.responseType = "text";
+		xhr.overrideMimeType('text/plain; charset=x-user-defined');
+		
+		function processInput() {
+			var chunk = xhr.responseText.slice(lastPosition);
+			lastPosition += chunk.length;
+			
+			if (chunk.length > 0) {
+				var buffer = stringToArrayBuffer(chunk);
+				onread(buffer);
+			}
 		}
 		
-		fetchLength(function(fileLength, err) {
-			var lastPosition = 0,
-				useRange;
-			if (err) {
-				// Preflight OPTIONS fails in Safari, IE?
-				useRange = false;
-				fileLength = 0;
-				console.log("Can't use range requests -- fetching full file :(");
-			} else {
-				// Preflight w/ Range won't work -- https://bugzilla.wikimedia.org/show_bug.cgi?id=55622
-				useRange = false;
-			}
-
-			function fetchChunk(position, callback) {
-				var xhr = new XMLHttpRequest();
-				xhr.open("GET", url);
-				xhr.responseType = "arraybuffer";
-				xhr.onreadystatechange = function(event) {
-					if (xhr.readyState == 2) {
-						if (xhr.status >= 400) {
-							// errrorrrrrrr
-							callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
-							onerror();
-							xhr.abort();
-						}
-					} else if (xhr.readyState == 4) {
-						var blob = xhr.response;
-						// hack
-						if (blob.byteLength > bufferSize) {
-							blob = blob.slice(0, bufferSize);
-						}
-						callback(blob, null);
-					}
-				};
-				if (useRange) {
-					xhr.setRequestHeader("range", "bytes=" + position + "-" + endPosition);
-					var endPosition = position + bufferSize;
-					if (endPosition >= fileLength) {
-						// Don't try to request past the end of the file!
-						endPosition = fileLength - 1;
-					}
-					xhr.send();
-				} else if (position > 0) {
-					callback(null, "Can't fetch more chunks without CORS range support");
-				} else {
-					xhr.send();
+		xhr.onreadystatechange = function(event) {
+			if (xhr.readyState == 2) {
+				if (xhr.status >= 400) {
+					// errrorrrrrrr
+					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+					onerror();
+					xhr.abort();
 				}
+			} else if (xhr.readyState == 3) {
+				// Partial content
+				processInput();
+			} else if (xhr.readyState == 4) {
+				// Complete.
+				processInput();
+				ondone();
 			}
-	
-			function process() {
-				fetchChunk(lastPosition, function(data, err) {
-					if (data) {
-						console.log("chunk read: " + data.byteLength);
-						onread(data);
-
-						// fixme cleanly handle running out of data, call ondone()
-						lastPosition += data.byteLength;
-						if (lastPosition >= fileLength) {
-							ondone();
-						} else {
-							process();
-						}
-					} else {
-						console.log("chunk fail: " + err);
-						onerror(err);
-					}
-				});
-			}
-
-			process();
-		});
+		};
+		xhr.send();
+		
+		this.abort = function() {
+			xhr.abort();
+		};
 	}
 
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitAnimationFrame;
@@ -484,35 +433,58 @@
 			// kill the previous video if any
 			codec.destroy();
 		}
+		clearBenchmark();
+
+		var stream;
+		function errorHandler() {
+			if (stream) {
+				stream.abort();
+			}
+		}
+		window.addEventListener('error', errorHandler);
 
 		codec = new OgvJs(canvas);
 		codec.onframe = function(imageData) {
 			ctx.putImageData(imageData, 0, 0);
 		};
 
-		clearBenchmark();
-		var stream = new StreamFile({
-			url: selectedUrl,
-			onread: function(data) {
-				codec.receiveInput(data);
-				function pingProcess() {
+		var processingScheduled = false;
+		function pingProcess() {
+			if (!processingScheduled) {
+				processingScheduled = true;
+
+				scheduleNextTick(function() {
+					processingScheduled = false;
 					var start = getTimestamp();
 					var more = codec.process();
 					recordBenchmarkPoint(getTimestamp() - start);
 					if (more) {
-						scheduleNextTick(pingProcess);
+						pingProcess();
 					} else {
 						console.log("NO MORE PACKETS");
 						showBenchmark();
 					}
-				}
-				scheduleNextTick(pingProcess);
+				});
+			}
+		}
+
+		stream = new StreamFile({
+			url: selectedUrl,
+			onread: function(data) {
+				// Pass chunk into the codec's buffer
+				codec.receiveInput(data);
+				
+				// Process the next frame in the buffer on the next
+				// animation redraw pass.
+				pingProcess();
 			},
 			ondone: function() {
 				console.log("reading done.");
+				window.removeEventListener('error', errorHandler);
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
+				window.removeEventListener('error', errorHandler);
 			}
 		});
 	}
