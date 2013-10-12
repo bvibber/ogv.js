@@ -54,7 +54,9 @@ YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if 
 
 In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data progressively into ArrayBuffer objects.
 
-Currently in Safari, streaming is done by using a 'binary string' read; this may buffer up to twice the size of the original file in addition to the codec buffers, but allows us to read the data during download.
+In Firefox, the 'moz-chunked-array' responseType on XHR is used similarly.
+
+Currently in Safari, streaming is done by using a 'binary string' read. This may buffer up to twice the size of the original file in addition to the codec's buffer, but seems to be the only way in Safari to do reads during download.
 
 Note that the C heap has been locked to 128M to ensure there's room for files to buffer fully.
 
