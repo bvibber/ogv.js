@@ -1,7 +1,76 @@
 (function() {
 
 	var codec;
+	
+	var getTimestamp;
+	if (window.performance === undefined) {
+		console.log("window.performance is not available; using Date.now() for benchmarking");
+		getTimestamp = function() {
+			return Date.now();
+		}
+	} else {
+		console.log("window.performance is available; using window.performance.now() for benchmarking");
+		getTimestamp = function() {
+			return window.performance.now();
+		}
+	}
 
+	var benchmarkData = [];
+	function clearBenchmark() {
+		benchmarkData = [];
+	}
+	function recordBenchmarkPoint(ms) {
+		benchmarkData.push(ms);
+	}
+	function showBenchmark() {
+		console.log(benchmarkData);
+		var canvas = document.getElementById('benchmark'),
+			width = canvas.width,
+			height = canvas.height,
+			ctx = canvas.getContext('2d'),
+			i,
+			fps30 = 1000.0 / 30.0,
+			fps60 = 1000.0 / 60.0,
+			maxTime = fps30,
+			maxItems = benchmarkData.length;
+		
+		// Find the tallest data point
+		for (i = 0; i < maxItems; i++) {
+			maxTime = Math.max(maxTime, benchmarkData[i]);
+		}
+		
+		// Draw!
+		
+		ctx.clearRect(0, 0, width, height);
+		
+		function x(i) {
+			return i * (width - 1) / maxItems;
+		}
+		function y(ms) {
+			return (height - 1) - ms * (height - 1) / maxTime;
+		}
+		
+		ctx.beginPath();
+		ctx.strokeStyle = 'green';
+		ctx.moveTo(x(0), y(fps30));
+		ctx.lineTo(x(maxItems - 1), y(fps30));
+		ctx.stroke();
+		
+		ctx.beginPath();
+		ctx.strokeStyle = 'blue';
+		ctx.moveTo(x(0), y(fps60));
+		ctx.lineTo(x(maxItems - 1), y(fps60));
+		ctx.stroke();
+		
+		ctx.beginPath();
+		ctx.strokeStyle = 'black';
+		ctx.moveTo(0, (height - 1) - benchmarkData[0] * (height - 1) / maxTime);
+		for (i = 1; i < maxItems; i++) {
+			ctx.lineTo(x(i), y(benchmarkData[i]));
+		}
+		ctx.stroke();
+	}
+	
 	/**
 	 * dictionary -> URL query string params
 	 */
@@ -270,8 +339,8 @@
 
 	var player = document.getElementById('player'),
 		canvas = player.querySelector('canvas'),
-		nativePlayer = document.getElementById('native'),
-		nativeVideo = nativePlayer.querySelector('video'),
+		//nativePlayer = document.getElementById('native'),
+		//nativeVideo = nativePlayer.querySelector('video'),
 		ctx = canvas.getContext('2d'),
 		videoChooser = document.getElementById('video-chooser'),
 		selectedUrl = null;
@@ -308,16 +377,17 @@
 			canvas.width = selected.width;
 			canvas.height = selected.height;
 			
-			nativeVideo.width = selected.width;
-			nativeVideo.height = selected.height;
-			nativeVideo.src = selectedUrl;
-
+			//nativeVideo.width = selected.width;
+			//nativeVideo.height = selected.height;
+			//nativeVideo.src = selectedUrl;
+			
+			playVideo();
 		});
 	}
 	videoChooser.addEventListener('change', showSelectedVideo);
 	showSelectedVideo();
 	
-	player.querySelector('.play').addEventListener('click', function() {
+	function playVideo() {
 		if (codec) {
 			// kill the previous video if any
 			codec.destroy();
@@ -328,15 +398,20 @@
 			ctx.putImageData(imageData, 0, 0);
 		};
 
+		clearBenchmark();
 		var stream = new StreamFile({
 			url: selectedUrl,
 			onread: function(data) {
 				codec.receiveInput(data);
 				function pingProcess() {
-					if (codec.process()) {
+					var start = getTimestamp();
+					var more = codec.process();
+					recordBenchmarkPoint(getTimestamp() - start);
+					if (more) {
 						scheduleNextTick(pingProcess);
 					} else {
 						console.log("NO MORE PACKETS");
+						showBenchmark();
 					}
 				}
 				scheduleNextTick(pingProcess);
@@ -348,11 +423,12 @@
 				console.log("reading encountered error: " + err);
 			}
 		});
-	});
+	}
+	player.querySelector('.play').addEventListener('click', playVideo);
 
-	nativePlayer.querySelector('.play').addEventListener('click', function() {
-		nativeVideo.play();
-	});
+	//nativePlayer.querySelector('.play').addEventListener('click', function() {
+	//	nativeVideo.play();
+	//}
 	
 
 })();
