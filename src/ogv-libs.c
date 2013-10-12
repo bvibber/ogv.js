@@ -296,11 +296,15 @@ static void processDecoding() {
 	
 	if (vorbis_p) {
 		if (ogg_stream_packetout(&vo, &oggPacket) > 0) {
-			// fixme -- timing etc!
-			float **pcm;
-			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-			OgvJsOutputAudio(pcm, vi.channels, sampleCount);
-			vorbis_synthesis_read(&vd, sampleCount);
+			if(vorbis_synthesis(&vb, &oggPacket)==0) {
+				vorbis_synthesis_blockin(&vd,&vb);
+
+				// fixme -- timing etc!
+				float **pcm;
+				int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+				OgvJsOutputAudio(pcm, vi.channels, sampleCount);
+				vorbis_synthesis_read(&vd, sampleCount);
+			}
 		}
 	}
 }

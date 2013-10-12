@@ -595,10 +595,7 @@
 			framesSeen++;
 		};
 		codec.onaudio = function(channels) {
-			console.log('Audio data:');
-			for (var i = 0; i < channels.length; i++) {
-				console.log(channels[i]);
-			}
+			console.log('Audio data! ' + channels[0].length + ' samples');
 		}
 
 		var processingScheduled = false;
