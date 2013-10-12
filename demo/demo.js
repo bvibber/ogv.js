@@ -455,12 +455,6 @@
 			selectedUrl = selected.url;
 			console.log("Going to try streaming data from " + selectedUrl);
 
-			if (codec) {
-				// kill the previous video if any
-				codec.destroy();
-				codec = null;
-			}
-
 			canvas.width = selected.width;
 			canvas.height = selected.height;
 			
@@ -479,18 +473,24 @@
 		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
 	}
 	showVideo(getDefault());
-	
+
+	var stream;	
 	function playVideo() {
 		if (codec) {
 			// kill the previous video if any
+			if (stream) {
+				stream.abort();
+				stream = null;
+			}
 			codec.destroy();
+			codec = null;
 		}
 		clearBenchmark();
 
-		var stream;
 		function errorHandler() {
 			if (stream) {
 				stream.abort();
+				stream = null;
 			}
 		}
 		window.addEventListener('error', errorHandler);
@@ -533,10 +533,12 @@
 			ondone: function() {
 				console.log("reading done.");
 				window.removeEventListener('error', errorHandler);
+				stream = null;
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
 				window.removeEventListener('error', errorHandler);
+				stream = null;
 			}
 		});
 	}
