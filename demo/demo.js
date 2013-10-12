@@ -419,9 +419,9 @@
 		img.height = imageinfo.thumbheight;
 		
 		item.appendChild(img);
-		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace('_', ' ')));
+		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
 		item.addEventListener('click', function() {
-			document.location.hash = "#" + encodeURIComponent(title.replace("File:", "").replace(' ', '_'));
+			document.location.hash = "#" + encodeURIComponent(title.replace("File:", "").replace(/ /g, '_'));
 			window.scrollTo(0, 0);
 			showVideo(title);
 		});
