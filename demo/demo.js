@@ -164,8 +164,16 @@
 		}, function(data, err) {
 
 			var sources = [],
-				page = firstPageInApiResult(data),
-				imageinfo = page.imageinfo[0],
+				page = firstPageInApiResult(data);
+			if (page && 'imageinfo' in page && 'transcodestatus' in page) {
+				// yay
+			} else {
+				console.log("Skipping missing image data");
+				console.log(page);
+				return;
+			}
+				
+			var imageinfo = page.imageinfo[0],
 				transcodestatus = page.transcodestatus;
 			
 			// Build an entry for the original media
@@ -391,6 +399,16 @@
 	var mediaList = document.getElementById('media-list'),
 		filter = document.getElementById('filter');
 
+	function getDefault() {
+		if (document.location.hash.length > 1) {
+			title = decodeURIComponent(document.location.hash.slice(1));
+			filter.value = title.replace(/_/g, ' ');
+			return 'File:' + title;
+		}
+		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
+	}
+	var defaultTitle = getDefault();
+
 	function showChooser() {
 		var filterString = filter.value.toLowerCase();
 		
@@ -428,14 +446,15 @@
 					var page = pages[pageId];
 					var imageinfo = page.imageinfo[0];
 					if (imageinfo) {
-						//addMediaSelector(page.title, imageinfo);
 						mediaItems[page.title] = imageinfo;
 					}
 				}
 			}
 			selection.forEach(function(title) {
 				var imageinfo = mediaItems[title];
-				addMediaSelector(title, imageinfo);
+				if (imageinfo) {
+					addMediaSelector(title, imageinfo);
+				}
 			});
 		});
 	}
@@ -492,7 +511,7 @@
 				selected = oga;
 			}
 			if (selected == null) {
-				throw new Error("No ogv source found.");
+				throw new Error("No ogv or oga source found.");
 			}
 			
 			selectedUrl = selected.url;
@@ -509,13 +528,7 @@
 		});
 	}
 	
-	function getDefault() {
-		if (document.location.hash.length > 1) {
-			return 'File:' + decodeURIComponent(document.location.hash.slice(1));
-		}
-		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
-	}
-	showVideo(getDefault());
+	showVideo(defaultTitle);
 
 	var stream;	
 	function playVideo() {

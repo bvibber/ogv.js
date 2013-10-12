@@ -207,8 +207,9 @@ static void processHeaders() {
 		
 		if (vorbis_p && (vorbis_p < 3) && (ogg_stream_packetout(&vo, &oggPacket) < 0)) {
 			printf("checking vorbis headers...\n");
-			if (vorbis_synthesis_headerin(&vi, &vc, &oggPacket)) {
-				printf("Error parsing Vorbis stream headers; corrupt stream?\n");
+			ret = vorbis_synthesis_headerin(&vi, &vc, &oggPacket);
+			if (ret) {
+				printf("Error parsing Vorbis stream headers; corrupt stream? %d\n", ret);
 				exit(1);
 			}
 			vorbis_p++;
