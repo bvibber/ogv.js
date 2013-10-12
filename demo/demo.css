@@ -49,11 +49,6 @@ h1, h2, h3, h4, h5, h6 {
 	}
 }
 
-#player canvas {
-	max-width: 100%; /* size to fit if necessary */
-	height: auto;
-}
-
 .media-item {
 	min-height: 32px;
 
