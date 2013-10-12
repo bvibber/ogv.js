@@ -1,7 +1,48 @@
-#media-chooser {
-	width: 500px;
-	float: right;
+body {
+	font-family: 'Helvetica Neue', 'Roboto', 'Helvetica', sans-serif;
+	background: #eee;
+	color: black;
 }
 
-.media-item {
+h1, h2, h3, h4, h5, h6 {
+	font-weight: normal;
+	color: #888;
+}
+
+#header {
+	position: absolute;
+
+	left: 0;
+	right: 0;
+
+	top: 0;
+	height: 5em;
+	
+	padding-left: 24px;
+	
+	overflow: hidden;
+}
+
+#media-chooser {
+	position: absolute;
+	
+	right: 0;
+	width: 500px;
+	
+	top: 0;
+	bottom: 0;
+
+	overflow-y: scroll;
+}
+
+#main-player {
+	position: absolute;
+	
+	padding-left: 24px;
+
+	left: 0;
+
+	top: 5em;
+	bottom: 0;
+	
 }
