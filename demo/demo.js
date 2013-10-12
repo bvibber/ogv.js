@@ -539,5 +539,10 @@
 	//	nativeVideo.play();
 	//}
 	
+	window.setInterval(function() {
+		if (benchmarkData.length > 0) {
+			showBenchmark();
+		}
+	}, 1000);
 
 })();
