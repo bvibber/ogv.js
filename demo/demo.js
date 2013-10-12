@@ -384,7 +384,7 @@
 		// hmm... how the hell do we set the audio sample rate???
 		var AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext,
 			context = window.audioContext = new AudioContext(),
-			bufferSize = 16384,
+			bufferSize = 1024,
 			node = window.audioNode = context.createScriptProcessor(bufferSize, 0, 2),
 			buffers = [];
 		
@@ -400,13 +400,22 @@
 		window.p = 0;
 		node.onaudioprocess = function(event) {
 			window.p++;
-			console.log('audio process');
-			var inputBuffer = popOutputBuffer(bufferSize);
-			for (var channel; channel < channels; channel++) {
-				var input = inputBuffer[channel],
-					output = event.outputBuffer.getChannelData(channel);
-				for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
-					output[i] = input[i];
+			var inputBuffer = popNextBuffer(bufferSize);
+			if (inputBuffer) {
+				for (var channel = 0; channel < channels; channel++) {
+					var input = inputBuffer[channel],
+						output = event.outputBuffer.getChannelData(channel);
+					for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
+						output[i] = input[i];
+					}
+				}
+			} else {
+				console.log("Starved for audio!");
+				for (var channel = 0; channel < channels; channel++) {
+					var output = event.outputBuffer.getChannelData(channel);
+					for (var i = 0; i < bufferSize; i++) {
+						output[i] = 0;
+					}
 				}
 			}
 		};
@@ -420,6 +429,7 @@
 		
 		this.close = function() {
 			console.log('CLOSING AUDIO');
+			node.disconnect();
 			node = null;
 			context = null;
 			buffers = null;
