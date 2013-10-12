@@ -42,17 +42,51 @@ OgvJs = (function(canvas) {
 		return inputBuffer;
 	}
 	
+	function OgvJsInitVideoCallback(info) {
+		if (self.oninitvideo) {
+			self.oninitvideo(info);
+		}
+	}
+	
 	function OgvJsFrameCallback(imageData) {
 		if (self.onframe) {
 			self.onframe(imageData);
 		}
 	}
+	
+	function OgvJsInitAudioCallback(info) {
+		if (self.oninitaudio) {
+			self.oninitaudio(info);
+		}
+	}
+
+	function OgvJsAudioCallback(audioData) {
+		if (self.onaudio) {
+			self.onaudio(audioData);
+		}
+	}
 
 	/**
-	 * @property function(imageData) event handler when a frame is decoded
+	 * @property function({codec, frameWidth, frameHeight, fps, picWidth, picHeight, picX, picY}) event handler when initializing video stream
+	 */
+	self.onvideoinit = null;
+
+	/**
+	 * @property function(ImageData imageData) event handler when a frame is decoded
 	 */
 	self.onframe = null;
-		
+	
+	/**
+	 * @property function({codec, channels, rate}) event handler when initializing audio stream
+	 */
+	self.onaudioinit = null;
+
+	/**
+	 * @property function(ArrayBuffer audioData) event handler when audio is decoded
+	 */
+	self.onaudio = null;
+
+	
 	/**
 	 * Tear down the instance when done.
 	 *

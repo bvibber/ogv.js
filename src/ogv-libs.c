@@ -55,6 +55,13 @@ extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              int width, int height,
                              int hdec, int vdec);
 
+extern void OgvJsInitVideo(int frameWidth, int frameHeight,
+                           double fps,
+                           int picWidth, int picHeight,
+                           int picX, int picY);
+
+extern void OgvJsInitAudio(int channels, int rate);
+
 /*Write out the planar YUV frame, uncropped.*/
 static void video_write(void){
     th_ycbcr_buffer ycbcr;
@@ -241,11 +248,20 @@ static void processHeaders() {
 		 theoraStreamState.serialno,theoraInfo.frame_width,theoraInfo.frame_height,
 		 (double)theoraInfo.fps_numerator/theoraInfo.fps_denominator,
 		 theoraInfo.pic_width,theoraInfo.pic_height,theoraInfo.pic_x,theoraInfo.pic_y);
+
+			OgvJsInitVideo(theoraInfo.frame_width, theoraInfo.frame_height,
+			               (float)theoraInfo.fps_numerator / theoraInfo.fps_denominator,
+			               theoraInfo.pic_width, theoraInfo.pic_height,
+			               theoraInfo.pic_x, theoraInfo.pic_y);
 	  }
 
 		if (vorbis_p) {
 			vorbis_synthesis_init(&vd,&vi);
 			vorbis_block_init(&vd,&vb);
+			printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
+			   vo.serialno,vi.channels,vi.rate);
+			
+			OgvJsInitAudio(vi.channels, vi.rate);
 		}
 
 		  appState = STATE_DECODING;

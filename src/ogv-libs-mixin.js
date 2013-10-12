@@ -1,4 +1,21 @@
 mergeInto(LibraryManager.library, {
+	
+	OgvJsInitVideo: function(frameWidth, frameHeight,
+                             fps,
+                             picWidth, picHeight,
+                             picX, picY) {
+		OgvJsInitVideoCallback({
+			codec: "Theora",
+			frameWidth: frameWidth,
+			frameHeight: frameHeight,
+			fps: fps,
+			picWidth: picWidth,
+			picHeight: picHeight,
+			picX: picX,
+			picY: picY
+		});
+	},
+
 	OgvJsOutputFrame: function(bufferY, strideY,
 	                           bufferCb, strideCb,
 	                           bufferCr, strideCr,
@@ -34,5 +51,25 @@ mergeInto(LibraryManager.library, {
 			}
 		}
 		OgvJsFrameCallback(imageData);
+	},
+	
+	OgvJsInitAudio: function(channels, rate) {
+		OgvJsInitAudioCallback({
+			codec: "Vorbis",
+			channels: channels,
+			rate: rate
+		});
+	},
+	
+	OgvJsAudioCallback: function(buffer, bufSize) {
+		var HEAPU8 = Module.HEAPU8;
+		var data = new ArrayBuffer(bufSize);
+		// fixme copy more efficiently than this
+		var outBytes = new UIntArray(data);
+		for (var i = 0; i < bufSize; i++) {
+			outBytes[i] = HEAPU8[buffer + i];
+		}
+		OgvJsAudioCallback(data);
 	}
+
 });
