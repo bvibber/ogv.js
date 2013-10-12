@@ -6,14 +6,16 @@ libogg, libvorbis, and theora compiled to JavaScript with Emscripten.
 
 ## Current status
 
-A demo is included which runs some brief video output in the browser.
+A demo is included which runs some video output in the browser; you can
+select from a list of Wikimedia Commons 'Media of the Day', which are
+loaded live from the web.
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
 
 ## Goals
 
-Long-form goal is to create a drop-in replacement for the HTML5 <video> and <audio> tags which can be used for basic playback of Ogg Theora and Vorbis media on browsers that don't support Ogg or WebM natively.
+Long-form goal is to create a drop-in replacement for the HTML5 video and audio tags which can be used for basic playback of Ogg Theora and Vorbis media on browsers that don't support Ogg or WebM natively.
 
 (Note that a more user-friendly solution in most cases is to provide media in both open and MPEG-LA formats, if you're not averse to using patent-encumbered formats. This will use much less CPU and battery than performing JavaScript decoding!)
 
@@ -30,7 +32,7 @@ The primary target browsers are:
 
 ## Browser requirements
 
-Requires ArrayBuffer support (for emscripten code), <canvas> element (for video output), and XMLHTTPRequest responseType property support (for loading .ogv file data).
+Requires ArrayBuffer support (for emscripten code), canvas element (for video output), and XMLHTTPRequest streaming binary text support (for loading .ogv file data).
 
 W3C Web Audio API will be used for audio output on Safari; on IE it may be necessary to use a Flash 10 shim. (IE on Windows 8 ships with an embedded Flash plugin, so it does not require installation.)
 
@@ -52,9 +54,13 @@ YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if 
 
 The current standard for XMLHttpRequest can fetch data as an ArrayBuffer (convenient!) but doesn't have any provision for streaming content data during the download.
 
-The current demo simply fetches the entire file into memory before playback, which is obviously not suitable in a general case...
+Currently, streaming is done by using a 'binary string' read; this buffers a lot of
+extra data into memory so beware:
 
-It may be necessary to fake streaming by running a series of partial-content HTTP requests, staying a full chunk ahead to keep the buffers full.
+* XHR's responseText buffer will be up to twice the size of the file
+* buffer for the codec may grow up to the size of the file
+* C heap has been locked to 128M to ensure there's room
+
 
 *Seeking*
 
@@ -62,6 +68,9 @@ Seeking is tough. Need to do some research:
 * how to determine file length in time
 * how to estimate position in file to seek to based on time target
 * how to reinitialize the decoder context after seeking
+
+Jumping to a new position in the file that hasn't yet been buffered could be accomplished using partial-content HTTP requests ('Range' header), but this requires CORS header adjustment on the server side.
+
 
 *Audio output*
 

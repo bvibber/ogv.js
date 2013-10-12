@@ -5,6 +5,7 @@ OgvJs = (function(canvas) {
     var Module = {
     	noInitialRun: true,
     	noExitRuntime: true,
+    	TOTAL_MEMORY: 128 * 1024 * 1024, // default heap is 16M; we need space for video buffering :P
     	print: function(str) {
     		console.log("OgvJs: " + str);
     	}
