@@ -183,7 +183,7 @@ static void processHeaders() {
 			// fixme we might run out of data here
 			// if so we need to be able to halt here and save state.
 			printf("Ran out of input while searching for codec headers.\n");
-			exit(1);
+			return;
 		}
 	  }
 
