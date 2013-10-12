@@ -52,14 +52,11 @@ YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if 
 
 *Streaming input*
 
-The current standard for XMLHttpRequest can fetch data as an ArrayBuffer (convenient!) but doesn't have any provision for streaming content data during the download.
+In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data progressively into ArrayBuffer objects.
 
-Currently, streaming is done by using a 'binary string' read; this buffers a lot of
-extra data into memory so beware:
+Currently in Safari, streaming is done by using a 'binary string' read; this may buffer up to twice the size of the original file in addition to the codec buffers, but allows us to read the data during download.
 
-* XHR's responseText buffer will be up to twice the size of the file
-* buffer for the codec may grow up to the size of the file
-* C heap has been locked to 128M to ensure there's room
+Note that the C heap has been locked to 128M to ensure there's room for files to buffer fully.
 
 
 *Seeking*

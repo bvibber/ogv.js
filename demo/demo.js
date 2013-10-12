@@ -234,46 +234,91 @@
 			onread = options.onread,
 			ondone = options.ondone,
 			onerror = options.onerror,
-			bufferSize = options.bufferSize || 1024 * 1024,
+			bufferSize = options.bufferSize || 4096,
 			lastPosition = 0;
 		
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", url);
 		
-		// We really want chunked-arraybuffer for progressive streaming,
-		// but it's not available except in Firefox with moz- prefix.
-		// Use old binary string method since we can read reponseText
-		// progressively and extract ArrayBuffers from that.
-		xhr.responseType = "text";
-		xhr.overrideMimeType('text/plain; charset=x-user-defined');
-		
-		function processInput() {
-			var chunk = xhr.responseText.slice(lastPosition);
-			lastPosition += chunk.length;
+		if (window.MSStreamReader !== undefined) {
+			// IE 10 supports returning a Stream from XHR.
+			console.log("Streaming input using MSStreamReader");
 			
-			if (chunk.length > 0) {
-				var buffer = stringToArrayBuffer(chunk);
-				onread(buffer);
+			var stream, streamReader;
+			function readNextChunk() {
+				streamReader = new MSStreamReader();
+				streamReader.onload = function(event) {
+					if (event.target.result.byteLength > 0) {
+						onread(event.target.result);
+
+						// We have to schedule the next read.
+						readNextChunk();
+					} else {
+						// Zero length means end of stream.
+						ondone();
+					}
+				}
+				streamReader.onerror = function(event) {
+					onerror('mystery error streaming');
+				}
+				streamReader.readAsArrayBuffer(stream, bufferSize);
 			}
+			
+			xhr.responseType = 'ms-stream';
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 2) {
+					if (xhr.status >= 400) {
+						// errrorrrrrrr
+						callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+						onerror();
+						xhr.abort();
+					}
+				} else if (xhr.readyState == xhr.LOADING) {
+					// Transfer us over to the StreamReader...
+					stream = xhr.response;
+					readNextChunk();
+					xhr.onreadystatechange = null;
+				}
+			}
+			
+		} else {
+			// We really want chunked-arraybuffer for progressive streaming,
+			// but it's not available except in Firefox with moz- prefix.
+			// Use old binary string method since we can read reponseText
+			// progressively and extract ArrayBuffers from that.
+			console.log("Streaming input using XHR progressive binary string");
+			xhr.responseType = "text";
+			xhr.overrideMimeType('text/plain; charset=x-user-defined');
+		
+			function processInput() {
+				var chunk = xhr.responseText.slice(lastPosition);
+				lastPosition += chunk.length;
+			
+				if (chunk.length > 0) {
+					var buffer = stringToArrayBuffer(chunk);
+					onread(buffer);
+				}
+			}
+		
+			xhr.onreadystatechange = function(event) {
+				if (xhr.readyState == 2) {
+					if (xhr.status >= 400) {
+						// errrorrrrrrr
+						callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+						onerror();
+						xhr.abort();
+					}
+				} else if (xhr.readyState == 3) {
+					// Partial content
+					processInput();
+				} else if (xhr.readyState == 4) {
+					// Complete.
+					processInput();
+					ondone();
+				}
+			};
 		}
 		
-		xhr.onreadystatechange = function(event) {
-			if (xhr.readyState == 2) {
-				if (xhr.status >= 400) {
-					// errrorrrrrrr
-					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
-					onerror();
-					xhr.abort();
-				}
-			} else if (xhr.readyState == 3) {
-				// Partial content
-				processInput();
-			} else if (xhr.readyState == 4) {
-				// Complete.
-				processInput();
-				ondone();
-			}
-		};
 		xhr.send();
 		
 		this.abort = function() {
