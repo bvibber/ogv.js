@@ -247,7 +247,40 @@
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", url);
 		
-		if (window.MSStreamReader !== undefined) {
+		var foundMethod = false;
+		function tryMethod(rt) {
+			if (foundMethod) {
+				return false;
+			}
+			xhr.responseType = rt;
+			return (xhr.responseType == rt);
+		}
+
+		if (tryMethod('moz-chunked-arraybuffer')) {
+			foundMethod = true;
+
+			console.log("Streaming input using moz-chunked-arraybuffer");
+		
+			xhr.onreadystatechange = function(event) {
+				if (xhr.readyState == 2) {
+					if (xhr.status >= 400) {
+						// errrorrrrrrr
+						callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+						onerror();
+						xhr.abort();
+					}
+				} else if (xhr.readyState == 4) {
+					// Complete.
+					ondone();
+				}
+			};
+			xhr.onprogress = function(event) {
+				onread(xhr.response);
+			}
+		}
+		
+		if (tryMethod('ms-stream')) {
+			foundMethod = true;
 			// IE 10 supports returning a Stream from XHR.
 			console.log("Streaming input using MSStreamReader");
 			
@@ -271,7 +304,6 @@
 				streamReader.readAsArrayBuffer(stream, bufferSize);
 			}
 			
-			xhr.responseType = 'ms-stream';
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState == 2) {
 					if (xhr.status >= 400) {
@@ -287,10 +319,11 @@
 					xhr.onreadystatechange = null;
 				}
 			}
-			
-		} else {
-			// We really want chunked-arraybuffer for progressive streaming,
-			// but it's not available except in Firefox with moz- prefix.
+		}
+		
+		if (!foundMethod && xhr.overrideMimeType !== undefined) {
+			foundMethod = true;
+
 			// Use old binary string method since we can read reponseText
 			// progressively and extract ArrayBuffers from that.
 			console.log("Streaming input using XHR progressive binary string");
@@ -324,6 +357,10 @@
 					ondone();
 				}
 			};
+		}
+		
+		if (!foundMethod) {
+			throw new Error("No streaming HTTP input method found.");
 		}
 		
 		xhr.send();
