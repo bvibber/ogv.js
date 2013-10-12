@@ -419,6 +419,8 @@
 		img.width = imageinfo.thumbwidth;
 		img.height = imageinfo.thumbheight;
 		img.addEventListener('click', function() {
+			document.location.hash = "#" + encodeURIComponent(title.replace("File:", ""));
+			window.scrollTo(0, 0);
 			showVideo(title);
 		});
 		
@@ -469,7 +471,14 @@
 			playVideo();
 		});
 	}
-	showVideo('File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv');
+	
+	function getDefault() {
+		if (document.location.hash.length > 1) {
+			return 'File:' + decodeURIComponent(document.location.hash.slice(1));
+		}
+		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
+	}
+	showVideo(getDefault());
 	
 	function playVideo() {
 		if (codec) {
