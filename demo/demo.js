@@ -1,6 +1,6 @@
 (function() {
 
-	var codec;
+	var codec, audioFeeder;
 	
 	var getTimestamp;
 	if (window.performance === undefined) {
@@ -377,6 +377,65 @@
 			xhr.abort();
 		};
 	}
+	
+	
+	function AudioFeeder(channels, rate) {
+		// assume Firefox's Audio Data API
+		
+		var audioOutput = new Audio(),
+			buffers = [],
+			timeout;
+		
+		audioOutput.mozSetup(channels, rate);
+
+		function outputBuffer(samplesPerChannel) {
+			if (channels == 1) {
+				// Mono, yay!
+				combined = samplesPerChannel[0];
+			} else {
+				// Mozilla's audio API wants interleaved samples.
+				var sampleCount = samplesPerChannel[0].length,
+					combined = new Float32Array(channels * sampleCount);
+
+				for (var i = 0; i < sampleCount; i++) {
+					var base = i * channels;
+					for (var j = 0; j < channels; j++) {
+						combined[base + j] = samplesPerChannel[j][i];
+					}
+				}
+			}
+			audioOutput.mozWriteAudio(combined);
+		}
+		
+		function playNextBuffer() {
+			if (buffers.length > 0) {
+				var samplesPerChannel = buffers.shift(),
+					sampleCount = samplesPerChannel[0].length,
+					delay = 1000.0 * sampleCount / rate;
+				outputBuffer(samplesPerChannel);
+				timeout = window.setTimeout(function() {
+					timeout = null;
+					playNextBuffer();
+				}, delay);
+			}
+		}
+		
+		this.bufferData = function(samplesPerChannel) {
+			buffers.push(samplesPerChannel);
+			if (timeout == null) {
+				playNextBuffer();
+			}
+		};
+		
+		this.close = function() {
+			if (timeout) {
+				clearTimeout(timeout);
+				timeout = null;
+			}
+			audioOutput = null;
+			buffers = null;
+		};
+	}
 
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitAnimationFrame;
 	var scheduleNextTick;
@@ -540,6 +599,11 @@
 			}
 			codec.destroy();
 			codec = null;
+
+			if (audioFeeder) {
+				audioFeeder.close();
+				audioFeeder = null;
+			}
 		}
 		clearBenchmark();
 
@@ -589,14 +653,15 @@
 		codec.oninitaudio = function(info) {
 			document.getElementById('audio-channels').textContent = info.channels;
 			document.getElementById('audio-rate').textContent = info.rate;
+			audioFeeder = new AudioFeeder(info.channels, info.rate);
 		}
 		codec.onframe = function(imageData) {
 			ctx.putImageData(imageData, 0, 0);
 			framesSeen++;
 		};
-		codec.onaudio = function(channels) {
-			console.log('Audio data! ' + channels[0].length + ' samples');
-		}
+		codec.onaudio = function(samplesPerChannel) {
+			audioFeeder.bufferData(samplesPerChannel);
+		};
 
 		var processingScheduled = false;
 		function pingProcess() {
