@@ -15,15 +15,22 @@
 		}
 	}
 
-	var benchmarkData = [];
+	var benchmarkData = [],
+		benchmarkDirty = false;
 	function clearBenchmark() {
 		benchmarkData = [];
+		benchmarkDirty = true;
 	}
 	function recordBenchmarkPoint(ms) {
 		benchmarkData.push(ms);
+		benchmarkDirty = true;
 	}
 	function showBenchmark() {
-		console.log(benchmarkData);
+		if (!benchmarkDirty) {
+			return;
+		}
+		benchmarkDirty = false;
+
 		var canvas = document.getElementById('benchmark'),
 			width = canvas.width,
 			height = canvas.height,
