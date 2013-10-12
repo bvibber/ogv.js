@@ -378,61 +378,50 @@
 		};
 	}
 	
-	
 	function AudioFeeder(channels, rate) {
-		// assume Firefox's Audio Data API
+		// assume W3C Audio API
 		
-		var audioOutput = new Audio(),
-			buffers = [],
-			timeout;
+		// hmm... how the hell do we set the audio sample rate???
+		var AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext,
+			context = window.audioContext = new AudioContext(),
+			bufferSize = 16384,
+			node = window.audioNode = context.createScriptProcessor(bufferSize, 0, 2),
+			buffers = [];
 		
-		audioOutput.mozSetup(channels, rate);
+		function popNextBuffer() {
+			// hack hack
+			// fixme: grab the right number of samples
+			// and... rescale 
+			if (buffers.length > 0) {
+				return buffers.shift();
+			}
+		}
 
-		function outputBuffer(samplesPerChannel) {
-			if (channels == 1) {
-				// Mono, yay!
-				combined = samplesPerChannel[0];
-			} else {
-				// Mozilla's audio API wants interleaved samples.
-				var sampleCount = samplesPerChannel[0].length,
-					combined = new Float32Array(channels * sampleCount);
-
-				for (var i = 0; i < sampleCount; i++) {
-					var base = i * channels;
-					for (var j = 0; j < channels; j++) {
-						combined[base + j] = samplesPerChannel[j][i];
-					}
+		window.p = 0;
+		node.onaudioprocess = function(event) {
+			window.p++;
+			console.log('audio process');
+			var inputBuffer = popOutputBuffer(bufferSize);
+			for (var channel; channel < channels; channel++) {
+				var input = inputBuffer[channel],
+					output = event.outputBuffer.getChannelData(channel);
+				for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
+					output[i] = input[i];
 				}
 			}
-			audioOutput.mozWriteAudio(combined);
-		}
-		
-		function playNextBuffer() {
-			if (buffers.length > 0) {
-				var samplesPerChannel = buffers.shift(),
-					sampleCount = samplesPerChannel[0].length,
-					delay = 1000.0 * sampleCount / rate;
-				outputBuffer(samplesPerChannel);
-				timeout = window.setTimeout(function() {
-					timeout = null;
-					playNextBuffer();
-				}, delay);
-			}
-		}
+		};
+		console.log("HEY THERE 1");
+		node.connect(context.destination);
+		console.log("HEY THERE 2");
 		
 		this.bufferData = function(samplesPerChannel) {
 			buffers.push(samplesPerChannel);
-			if (timeout == null) {
-				playNextBuffer();
-			}
 		};
 		
 		this.close = function() {
-			if (timeout) {
-				clearTimeout(timeout);
-				timeout = null;
-			}
-			audioOutput = null;
+			console.log('CLOSING AUDIO');
+			node = null;
+			context = null;
 			buffers = null;
 		};
 	}
@@ -583,7 +572,7 @@
 			//nativeVideo.height = selected.height;
 			//nativeVideo.src = selectedUrl;
 			
-			playVideo();
+			//playVideo();
 		});
 	}
 	
