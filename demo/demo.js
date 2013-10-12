@@ -567,7 +567,29 @@
 
 		var framesSeen = 0;
 
+		document.getElementById('video-fps').textContent = '';
+		document.getElementById('video-frame-width').textContent = '';
+		document.getElementById('video-frame-height').textContent = '';
+		document.getElementById('video-pic-width').textContent = '';
+		document.getElementById('video-pic-height').textContent = '';
+		document.getElementById('video-pic-x').textContent = '';
+		document.getElementById('video-pic-y').textContent = '';
 		codec = new OgvJs(canvas);
+		codec.oninitvideo = function(info) {
+			document.getElementById('video-fps').textContent = info.fps;
+			document.getElementById('video-frame-width').textContent = info.frameWidth;
+			document.getElementById('video-frame-height').textContent = info.frameHeight;
+			document.getElementById('video-pic-width').textContent = info.picWidth;
+			document.getElementById('video-pic-height').textContent = info.picHeight;
+			document.getElementById('video-pic-x').textContent = info.picX;
+			document.getElementById('video-pic-y').textContent = info.picY;
+		}
+		document.getElementById('audio-channels').textContent = '';
+		document.getElementById('audio-rate').textContent = '';
+		codec.oninitaudio = function(info) {
+			document.getElementById('audio-channels').textContent = info.channels;
+			document.getElementById('audio-rate').textContent = info.rate;
+		}
 		codec.onframe = function(imageData) {
 			ctx.putImageData(imageData, 0, 0);
 			framesSeen++;
