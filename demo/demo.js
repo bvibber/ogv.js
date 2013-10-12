@@ -546,9 +546,12 @@
 		}
 		window.addEventListener('error', errorHandler);
 
+		var framesSeen = 0;
+
 		codec = new OgvJs(canvas);
 		codec.onframe = function(imageData) {
 			ctx.putImageData(imageData, 0, 0);
+			framesSeen++;
 		};
 
 		var processingScheduled = false;
@@ -559,7 +562,11 @@
 				scheduleNextTick(function() {
 					processingScheduled = false;
 					var start = getTimestamp();
-					var more = codec.process();
+					var more = true;
+					while (framesSeen == 0 && more) {
+						more = codec.process();
+					}
+					framesSeen = 0;
 					recordBenchmarkPoint(getTimestamp() - start);
 					if (more) {
 						pingProcess();
