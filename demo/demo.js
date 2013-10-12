@@ -369,7 +369,7 @@
 		var selection = list.reverse().slice(0, max);
 		console.log(selection);
 		
-		mediaList.innerText = '';
+		mediaList.innerHTML = '';
 				
 		if (selection.length == 0) {
 			mediaList.appendChild(document.createTextNode('No matches'));
@@ -432,7 +432,7 @@
 	
 	function showVideo(filename) {
 		var pagelink = document.getElementById('pagelink');
-		pagelink.innerText = 'Open this file on Wikimedia Commons';
+		pagelink.innerHTML = 'Open this file on Wikimedia Commons';
 		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(filename);
 		findSourcesForMedia(filename, function(sources) {
 			// Find the smallest ogv stream
