@@ -572,7 +572,7 @@
 			//nativeVideo.height = selected.height;
 			//nativeVideo.src = selectedUrl;
 			
-			//playVideo();
+			playVideo();
 		});
 	}
 	
