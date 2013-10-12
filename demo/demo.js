@@ -382,8 +382,17 @@
 		// assume W3C Audio API
 		
 		// hmm... how the hell do we set the audio sample rate???
-		var AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext,
-			context = window.audioContext = new AudioContext(),
+		var AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext;
+		if (!AudioContext) {
+			// stub it out
+			console.log("No W3C Web Audio API available");
+			this.bufferData = function(samplesPerChannel) {};
+			this.close = function() {};
+			return;
+		}
+		
+		
+		var context = window.audioContext = new AudioContext(),
 			bufferSize = 1024,
 			node = window.audioNode = context.createScriptProcessor(bufferSize, 0, 2),
 			buffers = [];
@@ -410,7 +419,7 @@
 					}
 				}
 			} else {
-				console.log("Starved for audio!");
+				//console.log("Starved for audio!");
 				for (var channel = 0; channel < channels; channel++) {
 					var output = event.outputBuffer.getChannelData(channel);
 					for (var i = 0; i < bufferSize; i++) {
@@ -419,9 +428,7 @@
 				}
 			}
 		};
-		console.log("HEY THERE 1");
 		node.connect(context.destination);
-		console.log("HEY THERE 2");
 		
 		this.bufferData = function(samplesPerChannel) {
 			buffers.push(samplesPerChannel);
@@ -652,6 +659,9 @@
 		codec.oninitaudio = function(info) {
 			document.getElementById('audio-channels').textContent = info.channels;
 			document.getElementById('audio-rate').textContent = info.rate;
+			if (audioFeeder) {
+				audioFeeder.close();
+			}
 			audioFeeder = new AudioFeeder(info.channels, info.rate);
 		}
 		codec.onframe = function(imageData) {
