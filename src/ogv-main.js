@@ -17,11 +17,12 @@ OgvJs = (function(canvas) {
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
 
-	var imageData, imageWidth, imageHeight;
+	var imageData;
 	function OgvJsImageData(width, height) {
-		if (imageData !== null && width == imageWidth && height == imageHeight) {
+		if (imageData !== undefined && width == imageData.width && height == imageData.height) {
 			// reuse imageData object
 		} else {
+			console.log("Creating new imageDataobject...");
 			imageData = ctx.createImageData(width, height);
 		}
 		return imageData;
