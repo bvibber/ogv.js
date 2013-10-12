@@ -9,40 +9,61 @@ h1, h2, h3, h4, h5, h6 {
 	color: #888;
 }
 
-#header {
-	position: absolute;
+@media (min-width: 960px) {
+	#header {
+		position: absolute;
 
-	left: 0;
-	right: 0;
+		left: 0;
+		right: 500px;
 
-	top: 0;
-	height: 5em;
+		top: 0;
+		height: 5em;
 	
-	padding-left: 24px;
+		padding-left: 24px;
 	
+		overflow: hidden;
+	}
+
+	#media-chooser {
+		position: absolute;
+	
+		right: 0;
+		width: 500px;
+	
+		top: 0;
+		bottom: 0;
+
+		overflow-y: scroll;
+	}
+
+	#main-player {
+		position: absolute;
+	
+		padding-left: 24px;
+
+		left: 0;
+		right: 500px;
+
+		top: 5em;
+		bottom: 0;
+	}
+}
+
+#player canvas {
+	max-width: 100%; /* size to fit if necessary */
+	height: auto;
+}
+
+.media-item {
+	width: 100%;
 	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	
+	background: white;
+	border-top: solid 1px #eee;
 }
-
-#media-chooser {
-	position: absolute;
-	
-	right: 0;
-	width: 500px;
-	
-	top: 0;
-	bottom: 0;
-
-	overflow-y: scroll;
-}
-
-#main-player {
-	position: absolute;
-	
-	padding-left: 24px;
-
-	left: 0;
-
-	top: 5em;
-	bottom: 0;
-	
+.media-item img {
+	vertical-align: middle;
+	cursor: pointer;
 }

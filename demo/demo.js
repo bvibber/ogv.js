@@ -415,6 +415,7 @@
 		item.className = 'media-item';
 		
 		img.src = imageinfo.thumburl;
+		img.title = "Play video"
 		img.width = imageinfo.thumbwidth;
 		img.height = imageinfo.thumbheight;
 		img.addEventListener('click', function() {
@@ -425,7 +426,7 @@
 		link.innerText = title.replace('File:', '').replace('_', ' ');
 		
 		item.appendChild(img);
-		item.appendChild(document.createTextNode(' - '));
+		item.appendChild(document.createTextNode(' '));
 		item.appendChild(link);
 		mediaList.appendChild(item);
 	}
