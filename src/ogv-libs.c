@@ -36,6 +36,7 @@ int          raw=0;
 
 /* Audio decode state */
 int              vorbis_p = 0;
+int              vorbis_processing_headers;
 ogg_stream_state vo;
 vorbis_info      vi;
 vorbis_dsp_state vd;
@@ -153,10 +154,10 @@ static void processBegin() {
 			} else {
 				ogg_stream_packetout(&theoraStreamState, NULL);
 			}
-		} else if (!vorbis_p && (vorbis_synthesis_headerin(&vi,&vc,&oggPacket)>=0)) {
+		} else if (!vorbis_p && (vorbis_processing_headers = vorbis_synthesis_headerin(&vi,&vc,&oggPacket)) == 0) {
 			// it's vorbis!
 			// save this as our audio stream...
-			printf("found vorbis stream!\n");
+			printf("found vorbis stream! %d\n", vorbis_processing_headers);
 			memcpy(&vo, &test, sizeof(test));
 			vorbis_p = 1;
 			
@@ -205,16 +206,27 @@ static void processHeaders() {
 			}
 		}
 		
-		if (vorbis_p && (vorbis_p < 3) && (ogg_stream_packetout(&vo, &oggPacket) < 0)) {
+		if (vorbis_p && (vorbis_p < 3)) {
 			printf("checking vorbis headers...\n");
-			ret = vorbis_synthesis_headerin(&vi, &vc, &oggPacket);
-			if (ret) {
-				printf("Error parsing Vorbis stream headers; corrupt stream? %d\n", ret);
+			ret = ogg_stream_packetpeek(&vo, &oggPacket);
+			if (ret < 0) {
+				printf("Error reading vorbis headers: %d.\n", ret);
 				exit(1);
 			}
-			vorbis_p++;
-			if (vorbis_p == 3) {
-				printf("Vorbis headers done.\n");
+			if (ret > 0) {
+				printf("Checking another vorbis header packet...\n");
+				vorbis_processing_headers = vorbis_synthesis_headerin(&vi, &vc, &oggPacket);
+				if (vorbis_processing_headers == 0) {
+					printf("Completed another vorbis header (of 3 total)...\n");
+					vorbis_p++;
+				} else {
+					printf("Invalid vorbis header?\n");
+					exit(1);
+				}
+				ogg_stream_packetout(&vo, NULL);
+			}
+			if (ret == 0) {
+				printf("No vorbis header packet...\n");
 			}
 		}		
     } else {
