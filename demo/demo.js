@@ -473,7 +473,7 @@
 		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(filename);
 		findSourcesForMedia(filename, function(sources) {
 			// Find the smallest ogv stream
-			var selected = null;
+			var selected = null, oga = null;
 			sources.forEach(function(source) {
 				if (source.format == 'ogv') {
 					if (selected == null) {
@@ -483,8 +483,14 @@
 							selected = source;
 						}
 					}
+				} else if (source.format == 'oga') {
+					oga = source;
 				}
 			});
+			if (selected == null) {
+				console.log("Try audio-only .oga transcode");
+				selected = oga;
+			}
 			if (selected == null) {
 				throw new Error("No ogv source found.");
 			}
