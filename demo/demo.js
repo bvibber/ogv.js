@@ -429,13 +429,21 @@
 		};
 		node.connect(context.destination);
 		
+		var self = this;
 		this.bufferData = function(samplesPerChannel) {
-			buffers.push(samplesPerChannel);
+			if (buffers) {
+				buffers.push(samplesPerChannel);
+			} else {
+				self.close();
+			}
 		};
 		
 		this.close = function() {
 			console.log('CLOSING AUDIO');
-			node.disconnect();
+			if (node) {
+				node.onaudioprocess = null;
+				node.disconnect();
+			}
 			node = null;
 			context = null;
 			buffers = null;
