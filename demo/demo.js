@@ -394,7 +394,8 @@
 		var context = window.audioContext = new AudioContext(),
 			bufferSize = 1024,
 			node = window.audioNode = context.createScriptProcessor(bufferSize, 0, 2),
-			buffers = [];
+			buffers = [],
+			muted = false;
 		
 		function popNextBuffer() {
 			// hack hack
@@ -409,7 +410,7 @@
 		node.onaudioprocess = function(event) {
 			window.p++;
 			var inputBuffer = popNextBuffer(bufferSize);
-			if (inputBuffer) {
+			if (!muted && inputBuffer) {
 				for (var channel = 0; channel < channels; channel++) {
 					var input = inputBuffer[channel],
 						output = event.outputBuffer.getChannelData(channel);
@@ -437,6 +438,14 @@
 				self.close();
 			}
 		};
+		
+		this.mute = function() {
+			muted = true;
+		};
+		
+		this.unmute = function() {
+			muted = false;
+		}
 		
 		this.close = function() {
 			console.log('CLOSING AUDIO');
@@ -486,6 +495,8 @@
 					title = value;
 				} else if (name === 'search') {
 					filter.value = value;
+				} else if (name === 'mute') {
+					document.getElementById('mute').checked = (value == '1');
 				}
 			});
 			if (title) {
@@ -601,6 +612,10 @@
 		
 		if (filter.value != '') {
 			hash += '&search=' + encodeURIComponent(filter.value);
+		}
+		
+		if (document.getElementById('mute').checked) {
+			hash += '&mute=1';
 		}
 		
 		document.location.hash = hash;
@@ -728,6 +743,9 @@
 				audioFeeder.close();
 			}
 			audioFeeder = new AudioFeeder(info.channels, info.rate);
+			if (document.getElementById('mute').checked) {
+				audioFeeder.mute();
+			}
 		}
 		codec.onaudio = function(samplesPerChannel) {
 			audioFeeder.bufferData(samplesPerChannel);
@@ -814,6 +832,16 @@
 	}
 	player.querySelector('.play').addEventListener('click', playVideo);
 	player.querySelector('.stop').addEventListener('click', stopVideo);
+	player.querySelector('#mute').addEventListener('click', function() {
+		if (codec && audioFeeder) {
+			if (this.checked) {
+				audioFeeder.mute();
+			} else {
+				audioFeeder.unmute();
+			}
+		}
+		setHash();
+	});
 
 	//nativePlayer.querySelector('.play').addEventListener('click', function() {
 	//	nativeVideo.play();
