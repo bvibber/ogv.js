@@ -603,7 +603,8 @@
 	showVideo(defaultTitle);
 
 	var stream;	
-	function playVideo() {
+	
+	function stopVideo() {
 		if (codec) {
 			// kill the previous video if any
 			if (stream) {
@@ -618,6 +619,10 @@
 				audioFeeder = null;
 			}
 		}
+	}
+	
+	function playVideo() {
+		stopVideo();
 		clearBenchmark();
 
 		var status = document.getElementById('status-view');
@@ -686,18 +691,20 @@
 
 				scheduleNextTick(function() {
 					processingScheduled = false;
-					var start = getTimestamp();
-					var more = true;
-					while (framesSeen == 0 && more) {
-						more = codec.process();
-					}
-					framesSeen = 0;
-					recordBenchmarkPoint(getTimestamp() - start);
-					if (more) {
-						pingProcess();
-					} else {
-						console.log("NO MORE PACKETS");
-						showBenchmark();
+					if (codec) {
+						var start = getTimestamp();
+						var more = true;
+						while (framesSeen == 0 && more) {
+							more = codec.process();
+						}
+						framesSeen = 0;
+						recordBenchmarkPoint(getTimestamp() - start);
+						if (more) {
+							pingProcess();
+						} else {
+							console.log("NO MORE PACKETS");
+							showBenchmark();
+						}
 					}
 				});
 			}
@@ -726,6 +733,7 @@
 		});
 	}
 	player.querySelector('.play').addEventListener('click', playVideo);
+	player.querySelector('.stop').addEventListener('click', stopVideo);
 
 	//nativePlayer.querySelector('.play').addEventListener('click', function() {
 	//	nativeVideo.play();
