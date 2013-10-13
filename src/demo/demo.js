@@ -523,10 +523,15 @@
 		document.getElementById('video-pic-height').textContent = '';
 		document.getElementById('video-pic-x').textContent = '';
 		document.getElementById('video-pic-y').textContent = '';
+		var videoData;
 		codec = new OgvJs(canvas);
 		codec.oninitvideo = function(info) {
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
+			videoData = info;
+			canvas.width = info.picWidth;
+			canvas.height = info.picHeight;
+			resizeVideo();
 			document.getElementById('video-fps').textContent = info.fps;
 			document.getElementById('video-frame-width').textContent = info.frameWidth;
 			document.getElementById('video-frame-height').textContent = info.frameHeight;
@@ -583,7 +588,10 @@
 					lastFrameTime = getTimestamp();
 					if (codec && codec.frameReady) {
 						var frame = codec.dequeueFrame();
-						ctx.putImageData(frame, 0, 0);
+						ctx.putImageData(frame,
+						                 0, 0,
+						                 videoData.picX, videoData.picY,
+						                 videoData.picWidth, videoData.picHeight);
 						frameScheduled = false;
 					}
 					if (stream) {
