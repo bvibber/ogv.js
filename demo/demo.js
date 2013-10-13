@@ -270,7 +270,7 @@
 				return 'File:' + title;
 			}
 		}
-		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
+		return 'File:Jarry - Métro de Montréal (640×360).ogv';
 	}
 
 	function dismissChooser() {
