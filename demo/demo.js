@@ -345,7 +345,7 @@
 		if (oldTitle != selectedTitle) {
 			showVideo();
 		}
-		if (oldFilter != filter.value) {
+		if (oldFilter != filter.value && document.getElementById('media-chooser').className == 'active') {
 			showChooser();
 		}
 	});

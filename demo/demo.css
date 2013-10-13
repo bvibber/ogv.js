@@ -27,6 +27,13 @@ h1, h2, h3, h4, h5, h6 {
 	top: 5em;
 }
 
+#header {
+	height: 5em;
+}
+#header h1 {
+	display: inline-block;
+}
+
 @media (min-width: 960px) {
 	body {
 		overflow: hidden;
@@ -40,15 +47,12 @@ h1, h2, h3, h4, h5, h6 {
 
 		top: 0;
 		height: 5em;
-	
+
 		padding-left: 24px;
-	
+
 		overflow: hidden;
 	}
-	#header h1 {
-		display: inline-block;
-	}
-	
+
 	#media-chooser-stub {
 		background: rgba(0, 0, 0, 0.5);
 		position: absolute;
