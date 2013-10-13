@@ -10,68 +10,10 @@ function StreamFile(options) {
 		onread = options.onread,
 		ondone = options.ondone,
 		onerror = options.onerror,
-		bufferSize = options.bufferSize || 4096,
-		lastPosition = 0;
+		bufferSize = options.bufferSize || 4096;
 	
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", url);
-	
-	var buffers = [],
-		waitingForInput = false,
-		doneBuffering = false;
-	
-	function popBuffer() {
-		var buffer = buffers.shift();
-		if (!bufferSize || bufferSize >= buffer.byteLength) {
-			return buffer;
-		} else {
-			// Split the buffer and requeue the rest
-			var thisBuffer = buffer.slice(0, bufferSize),
-				nextBuffer = buffer.slice(bufferSize);
-			buffers.unshift(nextBuffer);
-			return thisBuffer;
-		}
-	}
-	function handleInput(buffer) {
-		buffers.push(buffer);
-		if (waitingForInput) {
-			onread(popBuffer());
-			waitingForInput = false;
-			if (doneBuffering && buffers.length == 0) {
-				// We're out of data!
-				ondone();
-			}
-		}
-	}
-	xhr.onreadystatechange = function(event) {
-		if (xhr.readyState == 2) {
-			if (xhr.status >= 400) {
-				// errrorrrrrrr
-				callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
-				onerror();
-				xhr.abort();
-			}
-		} else if (xhr.readyState == 4) {
-			// Complete.
-			doneBuffering = true;
-		}
-	};
-	self.readBytes = function() {
-		if (buffers.length > 0) {
-			var buffer = popBuffer();
-			setTimeout(function() {
-				onread(buffer);
-			}, 0);
-		} else if (doneBuffering) {
-			// We're out of data!
-			setTimeout(function() {
-				ondone();
-			}, 0);
-		} else {
-			// Nothing queued...
-			waitingForInput = true;
-		}
-	}
 	
 	var foundMethod = false;
 	function tryMethod(rt) {
@@ -88,10 +30,69 @@ function StreamFile(options) {
 	if (tryMethod('moz-chunked-arraybuffer')) {
 		console.log("Streaming input using moz-chunked-arraybuffer");
 		
+		var buffers = [],
+			waitingForInput = false,
+			doneBuffering = false;
+	
+		function popBuffer() {
+			var buffer = buffers.shift();
+			if (!bufferSize || bufferSize >= buffer.byteLength) {
+				return buffer;
+			} else {
+				// Split the buffer and requeue the rest
+				var thisBuffer = buffer.slice(0, bufferSize),
+					nextBuffer = buffer.slice(bufferSize);
+				buffers.unshift(nextBuffer);
+				return thisBuffer;
+			}
+		}
+		function handleInput(buffer) {
+			buffers.push(buffer);
+			if (waitingForInput) {
+				onread(popBuffer());
+				waitingForInput = false;
+				if (doneBuffering && buffers.length == 0) {
+					// We're out of data!
+					ondone();
+				}
+			}
+		}
+
+		xhr.onreadystatechange = function(event) {
+			if (xhr.readyState == 2) {
+				if (xhr.status >= 400) {
+					// errrorrrrrrr
+					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+					onerror();
+					xhr.abort();
+				}
+			} else if (xhr.readyState == 4) {
+				// Complete.
+				doneBuffering = true;
+			}
+		};
+		
 		xhr.onprogress = function(event) {
 			// xhr.response is a per-chunk ArrayBuffer
 			handleInput(xhr.response);
-		}
+		};
+		
+		self.readBytes = function() {
+			if (buffers.length > 0) {
+				var buffer = popBuffer();
+				setTimeout(function() {
+					onread(buffer);
+				}, 0);
+			} else if (doneBuffering) {
+				// We're out of data!
+				setTimeout(function() {
+					ondone();
+				}, 0);
+			} else {
+				// Nothing queued...
+				waitingForInput = true;
+			}
+		};
 	}
 	
 	if (tryMethod('ms-stream')) {
@@ -149,7 +150,10 @@ function StreamFile(options) {
 		xhr.responseType = "text";
 		xhr.overrideMimeType('text/plain; charset=x-user-defined');
 	
-
+		var lastPosition = 0,
+			waitingForInput = false,
+			doneBuffering = false;
+		
 		// Is there a better way to do this conversion? :(
 		function stringToArrayBuffer(chunk) {
 			var len = chunk.length,
@@ -161,19 +165,61 @@ function StreamFile(options) {
 			return buffer;
 		}
 
-		function extractBuffer() {
-			var chunk = xhr.responseText.slice(lastPosition);
+		// Return a buffer with up to bufferSize from the next data
+		function popBuffer() {
+			var chunk = xhr.responseText.slice(lastPosition, lastPosition + bufferSize);
 			lastPosition += chunk.length;
 			return stringToArrayBuffer(chunk);
 		}
+
+		// Is there data available to read?
+		function dataToRead() {
+			return lastPosition < xhr.responseText.length;
+		}
+		
+		// Read the next binary buffer out of the input string
+		function readNextChunk() {
+			if (waitingForInput) {
+				onread(popBuffer());
+				waitingForInput = false;
+				if (doneBuffering && !dataToRead()) {
+					// We're out of data!
+					ondone();
+				}
+			}
+		}
 	
-		var orsc = xhr.onreadystatechange;
 		xhr.onreadystatechange = function(event) {
-			if (xhr.readyState == 3) {
+			if (xhr.readyState == 2) {
+				if (xhr.status >= 400) {
+					// errrorrrrrrr
+					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+					onerror();
+					xhr.abort();
+				}
+			} else if (xhr.readyState == 3) {
 				// xhr.response is a binary string of entire file so far
-				handleInput(extractBuffer());
+				readNextChunk();
+			} else if (xhr.readyState == 4) {
+				// Complete.
+				doneBuffering = true;
+			}
+		};
+		
+		self.readBytes = function() {
+			if (dataToRead()) {
+				var buffer = popBuffer();
+				setTimeout(function() {
+					onread(buffer);
+				}, 0);
+			} else if (doneBuffering) {
+				// We're out of data!
+				setTimeout(function() {
+					ondone();
+				}, 0);
 			} else {
-				return orsc();
+				// Nothing queued...
+				waitingForInput = true;
 			}
 		};
 	}
