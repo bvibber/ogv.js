@@ -23,4 +23,4 @@ build/ogv.js : src/ogv-main.js build/ogv-libs.js
 demo : build/ogv.js src/StreamFile.js src/AudioFeeder.js
 	cp build/ogv.js demo/ogv.js
 	cp src/StreamFile.js demo/StreamFile.js
-	cp src/AudioFeeder.js demo/AUdioFeeder.js
+	cp src/AudioFeeder.js demo/AudioFeeder.js
