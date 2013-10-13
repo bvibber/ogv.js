@@ -463,6 +463,8 @@
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
 		status.innerHTML = '';
+		
+		var bufferSize = 65536;
 
 		function errorHandler(event) {
 			if (stream) {
@@ -522,21 +524,18 @@
 		var lastFrameTime = getTimestamp(),
 			frameScheduled = false;
 
-		function process(callback) {
+		function process() {
+			console.log('process()');
+
 			var start = getTimestamp();
+			// Process until we run out of data or
+			// completely decode a video frame...
 			while (!codec.frameReady) {
 				more = codec.process();
-				if (more) {
-					// Process until we run out of data or
-					// completely decode a video frame...
-					if (codec.frameReady) {
-						break;
-					}
-				} else {
+				if (!more) {
 					// Ran out of input
-					if (callback) {
-						callback(true);
-					}
+					console.log('out of input, scheduling next read');
+					stream.readBytes(bufferSize);
 					break;
 				}
 			}
@@ -552,51 +551,49 @@
 						var frame = codec.dequeueFrame();
 						ctx.putImageData(frame, 0, 0);
 						frameScheduled = false;
-						if (callback) {
-							callback(false);
-						} else {
-							//console.log('no callback, waiting for input');
-						}
+					}
+					if (stream) {
+						process();
 					}
 				}, targetDelay);
 			}
 		}
-		function processAfterRead() {
-			process(function(complete) {
-				if (complete) {
-					if (audioFeeder) {
-						audioFeeder.close();
-						audioFeeder = null;
-					}
-				} else {
-					// Schedule another frame read, if we have more
-					processAfterRead();
-				}
-			});
-		}
+		
+		var totalRead = 0;
 		
 		stream = new StreamFile({
 			url: selectedUrl,
 			onread: function(data) {
+				totalRead += data.byteLength;
+				console.log('Received ' + data.byteLength + ' bytes, total ' + totalRead + ' so far');
+				if (data.byteLength > bufferSize) {
+					console.log("TOO BIG");
+				}
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
-				
 				process();
 			},
 			ondone: function() {
 				console.log("reading done.");
 				window.removeEventListener('error', errorHandler);
-				
-				// Continue processing until frames run out...
-				processAfterRead();
+				if (audioFeeder) {
+					// fixme -- do this when done *decoding* not done reading
+					audioFeeder.close();
+					audioFeeder = null;
+				}
 				stream = null;
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
 				window.removeEventListener('error', errorHandler);
+				if (audioFeeder) {
+					audioFeeder.close();
+					audioFeeder = null;
+				}
 				stream = null;
 			}
 		});
+		stream.readBytes(bufferSize);
 	}
 	player.querySelector('.play').addEventListener('click', playVideo);
 	player.querySelector('.stop').addEventListener('click', stopVideo);

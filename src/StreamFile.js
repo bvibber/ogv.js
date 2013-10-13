@@ -5,7 +5,8 @@
  * XHR option that I can see. :( May have to do multiple partial reqs.
  */
 function StreamFile(options) {
-	var url = options.url,
+	var self = this,
+		url = options.url,
 		onread = options.onread,
 		ondone = options.ondone,
 		onerror = options.onerror,
@@ -29,6 +30,22 @@ function StreamFile(options) {
 
 		console.log("Streaming input using moz-chunked-arraybuffer");
 	
+		var buffers = [],
+			waitingForInput = false,
+			doneBuffering = false;
+		
+		function popBuffer(bufferSize) {
+			var buffer = buffers.shift();
+			if (!bufferSize || bufferSize >= buffer.byteLength) {
+				return buffer;
+			} else {
+				// Split the buffer and requeue the rest
+				var thisBuffer = buffer.slice(0, bufferSize),
+					nextBuffer = buffer.slice(bufferSize);
+				buffers.unshift(nextBuffer);
+				return thisBuffer;
+			}
+		}
 		xhr.onreadystatechange = function(event) {
 			if (xhr.readyState == 2) {
 				if (xhr.status >= 400) {
@@ -39,11 +56,37 @@ function StreamFile(options) {
 				}
 			} else if (xhr.readyState == 4) {
 				// Complete.
-				ondone();
+				doneBuffering = true;
 			}
 		};
 		xhr.onprogress = function(event) {
-			onread(xhr.response);
+			// todo: is it safe to keep this buffer or should we copy it?
+			buffers.push(xhr.response);
+
+			if (waitingForInput) {
+				onread(popBuffer(bufferSize));
+				waitingForInput = false;
+				if (doneBuffering && buffers.length == 0) {
+					// We're out of data!
+					ondone();
+				}
+			}
+		}
+		self.readBytes = function(bufferSize) {
+			if (buffers.length > 0) {
+				var buffer = popBuffer(bufferSize);
+				setTimeout(function() {
+					onread(buffer);
+				}, 0);
+			} else if (doneBuffering) {
+ 				// We're out of data!
+ 				setTimeout(function() {
+					ondone();
+				}, 0);
+			} else {
+				// Nothing queued...
+				waitingForInput = true;
+			}
 		}
 	}
 	
@@ -145,7 +188,7 @@ function StreamFile(options) {
 	
 	xhr.send();
 	
-	this.abort = function() {
+	self.abort = function() {
 		xhr.abort();
 	};
 }
