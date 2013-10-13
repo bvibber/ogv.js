@@ -15,6 +15,7 @@ function AudioFeeder(channels, rate) {
 		this.close = function() {};
 		this.mute = function() {};
 		this.unmute = function() {};
+		this.stub = true;
 		return;
 	}
 	

@@ -484,6 +484,12 @@
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
 		status.innerHTML = '';
+
+		function showStatus(str) {		
+			status.className = 'status-visible';
+			status.innerHTML = '';
+			status.appendChild(document.createTextNode(str));
+		}
 		
 		function errorHandler(event) {
 			if (stream) {
@@ -494,11 +500,9 @@
 			if ('message' in event) {
 				str = event.message;
 			} else {
-				str = "halted due to script error";
+				str = "unknown script error";
 			}
-			status.className = 'status-visible';
-			status.innerHTML = '';
-			status.appendChild(document.createTextNode(str));
+			showStatus(str);
 			console.log(event);
 		}
 		window.addEventListener('error', errorHandler);
@@ -532,6 +536,12 @@
 				audioFeeder.close();
 			}
 			audioFeeder = new AudioFeeder(info.channels, info.rate);
+			if (audioFeeder.stub === true) {
+				showStatus('No audio support in browser.');
+				document.getElementById('mute').disabled = true;
+			} else {
+				document.getElementById('mute').disabled = false;
+			}
 			if (document.getElementById('mute').checked) {
 				audioFeeder.mute();
 			}
