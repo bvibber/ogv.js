@@ -381,8 +381,7 @@
 	function AudioFeeder(channels, rate) {
 		// assume W3C Audio API
 		
-		// hmm... how the hell do we set the audio sample rate???
-		var AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext;
+		var AudioContext = window.AudioContext || window.webkitAudioContext;
 		if (!AudioContext) {
 			// stub it out
 			console.log("No W3C Web Audio API available");
