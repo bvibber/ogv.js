@@ -27,13 +27,14 @@ function StreamFile(options) {
 		}
 	}
 
+	var waitingForInput = false,
+		doneBuffering = false;
+
 	if (tryMethod('moz-chunked-arraybuffer')) {
 		console.log("Streaming input using moz-chunked-arraybuffer");
 		
-		var buffers = [],
-			waitingForInput = false,
-			doneBuffering = false;
-	
+		var buffers = [];
+		
 		function popBuffer() {
 			var buffer = buffers.shift();
 			if (!bufferSize || bufferSize >= buffer.byteLength) {
@@ -99,7 +100,7 @@ function StreamFile(options) {
 		// IE 10 supports returning a Stream from XHR.
 		console.log("Streaming input using MSStreamReader");
 		
-		var stream, streamReader, waitingForInput;
+		var stream, streamReader;
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 2) {
