@@ -43,6 +43,8 @@ Early versions have only been spot-checked with a couple of small sample files o
 
 Note that on iOS, Safari performs *much* better than Chrome or other "alternative" browsers that use the system UIWebView but are unable to enable the JIT due to iOS limitations on third-party developers.
 
+Firefox performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed.
+
 It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 
 YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if that makes a measurable difference.
@@ -56,7 +58,7 @@ In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data p
 
 In Firefox, the 'moz-chunked-array' responseType on XHR is used similarly.
 
-Currently in Safari, streaming is done by using a 'binary string' read. This may buffer up to twice the size of the original file in addition to the codec's buffer, but seems to be the only way in Safari to do reads during download.
+Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This may buffer up to twice the size of the original file in addition to the codec's buffer, but seems to be the only way in WebKit to do reads during download currently.
 
 Note that the C heap has been locked to 128M to ensure there's room for files to buffer fully.
 
@@ -77,12 +79,15 @@ Safari supports the W3C Web Audio API (with 'webkit' prefix), which should be su
 
 Unfortunately IE doesn't support Web Audio yet... Audio playback on IE may need to use a shim via the Flash plugin (which is bundled), which may make sync more difficult as there's another layer between our JS code and the output.
 
+Firefox seems to support Web Audio in the latest versions but is newish, and may be behind a config switch.
+
+Chrome and Safari seem to have some issues with audio launching in my testing, needs more investigation.
 
 
 ## Building
 
 1. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
-2. Clone git submodules
+2. `git submodule update --init`
 3. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
 4. Run `make` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
