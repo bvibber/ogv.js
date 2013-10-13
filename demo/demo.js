@@ -547,6 +547,17 @@
 	filter.addEventListener('delete', showChooser);
 	filter.addEventListener('cut', showChooser);
 	filter.addEventListener('paste', showChooser);
+	window.addEventListener('hashchange', function() {
+		var oldTitle = selectedTitle,
+			oldFilter = filter.value;
+		selectedTitle = getDefault();
+		if (oldTitle != selectedTitle) {
+			showVideo();
+		}
+		if (oldFilter != filter.value) {
+			showChooser();
+		}
+	});
 	
 	function addMediaSelector(title, imageinfo) {
 		var item = document.createElement('div'),
