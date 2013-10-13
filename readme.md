@@ -7,10 +7,14 @@ libogg, libvorbis, and theora compiled to JavaScript with Emscripten.
 ## Current status
 
 A demo is included which runs some video output in the browser; you can
-select from a list of Wikimedia Commons 'Media of the Day', which are
-loaded live from the web.
+search within a list of Wikimedia Commons 'Media of the Day'.
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
+
+* streaming: buggy, some buffering problems
+* color: yes
+* audio: buggy & limited (no IE or iOS)
+* background threading: no
 
 
 ## Goals
@@ -24,17 +28,18 @@ Short-ish clips of a few seconds to at most a few minutes at SD resolution or be
 
 
 The primary target browsers are:
-* Safari 6+ on Mac OS X, iOS
-* Internet Explorer 10+ on Windows, Windows RT
+* Safari 6+ on Mac OS X
+* Internet Explorer 10+ on Windows
+
+Future targets (currently not acceptable performance):
+* Safari on iOS 6+
+* Internet Explorer 10+ on Windows RT
 
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS or Windows RT.)
 
-
-## Browser requirements
-
-Requires ArrayBuffer support (for emscripten code), canvas element (for video output), and XMLHTTPRequest streaming binary text support (for loading .ogv file data).
-
-W3C Web Audio API will be used for audio output on Safari; on IE it may be necessary to use a Flash 10 shim. (IE on Windows 8 ships with an embedded Flash plugin, so it does not require installation.)
+Testing browsers (these support .ogv natively):
+* Firefox 24
+* Chrome 30
 
 
 ## Performance
@@ -52,15 +57,24 @@ YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if 
 
 ## Difficulties
 
-*Streaming input*
+*Threading*
 
-In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data progressively into ArrayBuffer objects.
+Currently the video and audio codecs run on the UI thread, which can make the UI jumpy and the audio crackly.
 
-In Firefox, the 'moz-chunked-array' responseType on XHR is used similarly.
+WebWorkers will be used to background the decoder as a subprocess, sending video frames and audio data back to the parent web page for output. This should be supported by all target and test browsers.
 
-Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This may buffer up to twice the size of the original file in addition to the codec's buffer, but seems to be the only way in WebKit to do reads during download currently.
+It may not be possible to split up the codec work over multiple workers, but this will at least get us off the UI thread and make the page more responsive during playback.
 
-Note that the C heap has been locked to 128M to ensure there's room for files to buffer fully.
+
+*Streaming*
+
+There is currently a bug that causes playback to halt early or not start sometimes. Just keep reloading for now to work around.
+
+In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data on demand into ArrayBuffer objects.
+
+In Firefox, the 'moz-chunked-array' responseType on XHR is used to stream data, however there is no flow control so the file will buffer into memory as fast as possible, then drain over time.
+
+Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This has no flow control so will buffer into memory as fast as possible. This will buffer up to twice the size of the total file in memory for the entire lifetime of the player, which is wasteful but there doesn't seem to be a way around it without dividing up into subrange requests.
 
 
 *Seeking*
@@ -75,13 +89,13 @@ Jumping to a new position in the file that hasn't yet been buffered could be acc
 
 *Audio output*
 
-Safari supports the W3C Web Audio API (with 'webkit' prefix), which should be sufficient for basic audio playback. Keying video synchronization off of timestamps reached in the audio stream may be best way to achieve sync.
+Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit synchronization is not yet performed, the buffering's pretty awful, and the sample rate is wrong unless it happens to match the browser's setting (probably 48 kHz).
+
+Note that audio fails on iOS as web audio must be started in an event handler for a user action.
+
+Firefox supports Web Audio API with an optional about:config switch.
 
 Unfortunately IE doesn't support Web Audio yet... Audio playback on IE may need to use a shim via the Flash plugin (which is bundled), which may make sync more difficult as there's another layer between our JS code and the output.
-
-Firefox seems to support Web Audio in the latest versions but is newish, and may be behind a config switch.
-
-Chrome and Safari seem to have some issues with audio launching in my testing, needs more investigation.
 
 
 ## Building
