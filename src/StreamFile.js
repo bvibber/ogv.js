@@ -98,25 +98,7 @@ function StreamFile(options) {
 		// IE 10 supports returning a Stream from XHR.
 		console.log("Streaming input using MSStreamReader");
 		
-		var stream, streamReader;
-		function readNextChunk() {
-			streamReader = new MSStreamReader();
-			streamReader.onload = function(event) {
-				if (event.target.result.byteLength > 0) {
-					onread(event.target.result);
-
-					// We have to schedule the next read.
-					readNextChunk();
-				} else {
-					// Zero length means end of stream.
-					ondone();
-				}
-			}
-			streamReader.onerror = function(event) {
-				onerror('mystery error streaming');
-			}
-			streamReader.readAsArrayBuffer(stream, bufferSize);
-		}
+		var stream, streamReader, waitingForInput;
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 2) {
@@ -129,10 +111,33 @@ function StreamFile(options) {
 			} else if (xhr.readyState == xhr.LOADING) {
 				// Transfer us over to the StreamReader...
 				stream = xhr.response;
-				readNextChunk();
 				xhr.onreadystatechange = null;
+				if (waitingForInput) {
+					waitingForInput = false;
+					self.readBytes();
+				}
 			}
 		}
+		
+		self.readBytes = function() {
+			if (stream) {
+				streamReader = new MSStreamReader();
+				streamReader.onload = function(event) {
+					if (event.target.result.byteLength > 0) {
+						onread(event.target.result);
+					} else {
+						// Zero length means end of stream.
+						ondone();
+					}
+				}
+				streamReader.onerror = function(event) {
+					onerror('mystery error streaming');
+				}
+				streamReader.readAsArrayBuffer(stream, bufferSize);
+			} else {
+				waitingForInput = true;
+			}
+		};
 	}
 	
 	if (!foundMethod && xhr.overrideMimeType !== undefined) {
