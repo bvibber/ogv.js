@@ -165,7 +165,7 @@
 
 			var sources = [],
 				page = firstPageInApiResult(data);
-			if (page && 'imageinfo' in page && 'transcodestatus' in page) {
+			if (page && ('imageinfo' in page) && 'transcodestatus' in page) {
 				// yay
 			} else {
 				console.log("Skipping missing image data");
@@ -529,8 +529,8 @@
 			for (var pageId in pages) {
 				if (pages.hasOwnProperty(pageId)) {
 					var page = pages[pageId];
-					var imageinfo = page.imageinfo[0];
-					if (imageinfo) {
+					if (page.imageinfo) {
+						var imageinfo = page.imageinfo[0];
 						mediaItems[page.title] = imageinfo;
 					}
 				}
