@@ -43,10 +43,10 @@ mergeInto(LibraryManager.library, {
 				
 				// Quickie YUV conversion
 				// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
-				multY = (298.082 * colorY) / 256;
-				data[outPtr++] = multY + (408.583 * colorCr) / 256 - 222.921;
-				data[outPtr++] = multY - (100.291 * colorCb) / 256 - (208.120 * colorCr) / 256 + 135.576;
-				data[outPtr++] = multY + (516.412 * colorCb) / 256 - 276.836;
+				multY = (298 * colorY);
+				data[outPtr++] = (multY + (409 * colorCr) - 223*256) >> 8;
+				data[outPtr++] = (multY - (100 * colorCb) - (208 * colorCr) + 136*256) >> 8;
+				data[outPtr++] = (multY + (516 * colorCb) - 277*256) >> 8;
 				data[outPtr++] = 255;
 			}
 		}
