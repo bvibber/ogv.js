@@ -16,7 +16,8 @@
 	}
 
 	var benchmarkData = [],
-		benchmarkDirty = false;
+		benchmarkDirty = false,
+		benchmarkTargetFps = 0;
 	function clearBenchmark() {
 		benchmarkData = [];
 		benchmarkDirty = true;
@@ -38,7 +39,8 @@
 			i,
 			fps30 = 1000.0 / 30.0,
 			fps60 = 1000.0 / 60.0,
-			maxTime = fps30,
+			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps30),
+			maxTime = Math.max(fpsTarget, fps30),
 			maxItems = benchmarkData.length;
 		
 		// Find the tallest data point
@@ -69,6 +71,14 @@
 		ctx.lineTo(x(maxItems - 1), y(fps60));
 		ctx.stroke();
 		
+		if (benchmarkTargetFps) {
+			ctx.beginPath();
+			ctx.strokeStyle = 'red';
+			ctx.moveTo(x(0), y(fpsTarget));
+			ctx.lineTo(x(maxItems - 1), y(fpsTarget));
+			ctx.stroke();
+		}
+
 		ctx.beginPath();
 		ctx.strokeStyle = 'black';
 		ctx.moveTo(0, (height - 1) - benchmarkData[0] * (height - 1) / maxTime);
@@ -231,11 +241,8 @@
 	function scheduleNextTick(func, targetDelay) {
 		if (targetDelay > 16) {
 			window.setTimeout(func, targetDelay);
-		} else if (targetDelay > 0) {
-			requestAnimationFrame(func);
 		} else {
-			// cheat since we know this happens at the end of an event handler
-			func();
+			requestAnimationFrame(func);
 		}
 	}
 
@@ -519,6 +526,7 @@
 		codec = new OgvJs(canvas);
 		codec.oninitvideo = function(info) {
 			fps = info.fps;
+			benchmarkTargetFps = info.fps;
 			document.getElementById('video-fps').textContent = info.fps;
 			document.getElementById('video-frame-width').textContent = info.frameWidth;
 			document.getElementById('video-frame-height').textContent = info.frameHeight;
