@@ -386,7 +386,29 @@
 		
 		document.location.hash = hash;
 	}
-		
+	
+	function resizeVideo() {
+		var container = document.getElementById('player'),
+			computedStyle = window.getComputedStyle(container),
+			containerWidth = parseInt(computedStyle.getPropertyValue('width')),
+			containerHeight = parseInt(computedStyle.getPropertyValue('height')) - 64;
+
+		var width = containerWidth,
+			height = canvas.height * width / canvas.width;
+
+		if (computedStyle.getPropertyValue('position') == 'absolute') {
+			// Only vertical size if we're in large-screen mode
+			if (height > containerHeight) {
+				height = containerHeight;
+				width = canvas.width * height / canvas.height;
+			}
+		}
+				
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+	}
+	window.addEventListener('resize', resizeVideo);
+	
 	function showVideo() {
 		window.scrollTo(0, 0);
 		
@@ -422,6 +444,7 @@
 
 			canvas.width = selected.width;
 			canvas.height = selected.height;
+			resizeVideo();
 			
 			//nativeVideo.width = selected.width;
 			//nativeVideo.height = selected.height;
