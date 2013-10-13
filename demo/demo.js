@@ -724,17 +724,24 @@
 			frameScheduled = false;
 
 		function process(callback) {
-			if (!codec.frameReady) {
-				var start = getTimestamp();
-				while (more = codec.process()) {
+			var start = getTimestamp();
+			while (!codec.frameReady) {
+				more = codec.process();
+				if (more) {
 					// Process until we run out of data or
 					// completely decode a video frame...
 					if (codec.frameReady) {
 						break;
 					}
+				} else {
+					// Ran out of input
+					if (callback) {
+						callback(true);
+					}
+					break;
 				}
-				recordBenchmarkPoint(getTimestamp() - start);
 			}
+			recordBenchmarkPoint(getTimestamp() - start);
 			
 			if (codec.frameReady && !frameScheduled) {
 				frameScheduled = true;
@@ -747,16 +754,25 @@
 						ctx.putImageData(frame, 0, 0);
 						frameScheduled = false;
 						if (callback) {
-							callback();
+							callback(false);
+						} else {
+							//console.log('no callback, waiting for input');
 						}
 					}
 				}, targetDelay);
 			}
 		}
 		function processAfterRead() {
-			process(function() {
-				// Schedule another frame read, if we have more
-				processAfterRead();
+			process(function(complete) {
+				if (complete) {
+					if (audioFeeder) {
+						audioFeeder.close();
+						audioFeeder = null;
+					}
+				} else {
+					// Schedule another frame read, if we have more
+					processAfterRead();
+				}
 			});
 		}
 		
@@ -766,14 +782,14 @@
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
 				
-				// Continue processing until frames run out...
-				processAfterRead();
+				process();
 			},
 			ondone: function() {
 				console.log("reading done.");
 				window.removeEventListener('error', errorHandler);
 				
-				process();
+				// Continue processing until frames run out...
+				processAfterRead();
 				stream = null;
 			},
 			onerror: function(err) {
