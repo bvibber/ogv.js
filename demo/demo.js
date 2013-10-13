@@ -454,8 +454,11 @@
 	function scheduleNextTick(func, targetDelay) {
 		if (targetDelay > 16) {
 			window.setTimeout(func, targetDelay);
-		} else {
+		} else if (targetDelay > 0) {
 			requestAnimationFrame(func);
+		} else {
+			// cheat since we know this happens at the end of an event handler
+			func();
 		}
 	}
 
