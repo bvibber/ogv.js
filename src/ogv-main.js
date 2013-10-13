@@ -1,6 +1,5 @@
-OgvJs = (function(canvas) {
+OgvJs = (function() {
 	var self = this;
-    var ctx = canvas.getContext('2d');
     
     var Module = {
     	noInitialRun: true,
@@ -16,17 +15,6 @@ OgvJs = (function(canvas) {
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
 
-	var imageData;
-	function OgvJsImageData(width, height) {
-		if (imageData !== undefined && width == imageData.width && height == imageData.height) {
-			// reuse imageData object
-		} else {
-			console.log("Creating new imageDataobject...");
-			imageData = ctx.createImageData(width, height);
-		}
-		return imageData;
-	}
-	
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
 		if (inputBuffer && inputBufferSize >= size) {
@@ -49,11 +37,11 @@ OgvJs = (function(canvas) {
 	}
 	
 	var queuedFrame = null;
-	function OgvJsFrameCallback(imageData) {
+	function OgvJsFrameCallback(frameBuffer) {
 		if (self.frameReady) {
 			throw new Error("OgvJsFrameCallback called when frame already queued");
 		} else {
-			queuedFrame = imageData;
+			queuedFrame = frameBuffer;
 			self.frameReady = true;
 		}
 	}

@@ -523,15 +523,20 @@
 		document.getElementById('video-pic-height').textContent = '';
 		document.getElementById('video-pic-x').textContent = '';
 		document.getElementById('video-pic-y').textContent = '';
-		var videoData;
-		codec = new OgvJs(canvas);
+		var videoInfo,
+			imageData;
+		codec = new OgvJs();
 		codec.oninitvideo = function(info) {
+			videoInfo = info;
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
-			videoData = info;
+
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
+			imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
+
 			resizeVideo();
+
 			document.getElementById('video-fps').textContent = info.fps;
 			document.getElementById('video-frame-width').textContent = info.frameWidth;
 			document.getElementById('video-frame-height').textContent = info.frameHeight;
@@ -564,7 +569,8 @@
 		};
 
 		var lastFrameTime = getTimestamp(),
-			frameScheduled = false;
+			frameScheduled = false,
+			imageData = null;
 
 		function process() {
 			var start = getTimestamp();
@@ -587,11 +593,27 @@
 				scheduleNextTick(function() {
 					lastFrameTime = getTimestamp();
 					if (codec && codec.frameReady) {
-						var frame = codec.dequeueFrame();
-						ctx.putImageData(frame,
+						var frameBuffer = codec.dequeueFrame();
+						
+						// Copy image data into the imageData...
+						//
+						// Some old docs indicate you can do this as a shortcut:
+						//
+						//    imageData.data.set(frameBuffer);
+						//
+						// but it doesn't appear to work as expected.
+						
+						var max = videoInfo.frameWidth * videoInfo.frameHeight,
+							inArr = new Uint32Array(frameBuffer),
+							outArr = new Uint32Array(imageData.data.buffer);
+						for (var i = 0; i < max; i++) {
+							outArr[i] = inArr[i];
+						}
+
+						ctx.putImageData(imageData,
 						                 0, 0,
-						                 videoData.picX, videoData.picY,
-						                 videoData.picWidth, videoData.picHeight);
+						                 videoInfo.picX, videoInfo.picY,
+						                 videoInfo.picWidth, videoInfo.picHeight);
 						frameScheduled = false;
 					}
 					if (stream) {

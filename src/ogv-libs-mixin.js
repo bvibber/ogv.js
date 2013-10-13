@@ -23,8 +23,8 @@ mergeInto(LibraryManager.library, {
 	                           hdec, vdec) {
 		// YCbCr whee
 		var HEAPU8 = Module.HEAPU8;
-		var imageData = OgvJsImageData(width, height);
-		var data = imageData.data;
+		var frameBuffer = new ArrayBuffer(width * height * 4),
+			data = new Uint8ClampedArray(frameBuffer);
 		var YPtr, CbPtr, CrPtr, outPtr;
 		var xdec, ydec;
 		var colorY, colorCb, colorCr;
@@ -50,7 +50,7 @@ mergeInto(LibraryManager.library, {
 				data[outPtr++] = 255;
 			}
 		}
-		OgvJsFrameCallback(imageData);
+		OgvJsFrameCallback(frameBuffer);
 	},
 	
 	OgvJsInitAudio: function(channels, rate) {
