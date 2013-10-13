@@ -25,6 +25,7 @@ function StreamFile(options) {
 			foundMethod = true;
 			return true;
 		}
+		return false;
 	}
 
 	var waitingForInput = false,
@@ -50,8 +51,8 @@ function StreamFile(options) {
 		function handleInput(buffer) {
 			buffers.push(buffer);
 			if (waitingForInput) {
-				onread(popBuffer());
 				waitingForInput = false;
+				onread(popBuffer());
 				if (doneBuffering && buffers.length == 0) {
 					// We're out of data!
 					ondone();
@@ -152,7 +153,6 @@ function StreamFile(options) {
 		xhr.overrideMimeType('text/plain; charset=x-user-defined');
 	
 		var lastPosition = 0,
-			waitingForInput = false,
 			doneBuffering = false;
 		
 		// Is there a better way to do this conversion? :(
@@ -181,8 +181,8 @@ function StreamFile(options) {
 		// Read the next binary buffer out of the input string
 		function readNextChunk() {
 			if (waitingForInput) {
-				onread(popBuffer());
 				waitingForInput = false;
+				onread(popBuffer());
 				if (doneBuffering && !dataToRead()) {
 					// We're out of data!
 					ondone();
