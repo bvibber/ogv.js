@@ -32,6 +32,10 @@ int              theora_processing_headers;
 int          videobuf_ready=0;
 ogg_int64_t  videobuf_granulepos=-1;
 double       videobuf_time=0;
+
+int          audiobuf_ready=0;
+ogg_int64_t  audiobuf_granulepos=0; /* time position of last sample */
+
 int          raw=0;
 
 /* Audio decode state */
@@ -322,12 +326,19 @@ int OgvJsProcess() {
 		queue_page(&oggPage);
 		if (appState == STATE_BEGIN) {
 			processBegin();
+			return 1;
 		} else if (appState == STATE_HEADERS) {
 			processHeaders();
+			return 1;
 		} else if (appState == STATE_DECODING) {
 			processDecoding();
+			if (videobuf_ready) {
+				// We have a frame ready... Enjoy it.
+				return 0;
+			} else {
+				return 1;
+			}
 		}
-		return 1;
 	}
 	return 0;
 }

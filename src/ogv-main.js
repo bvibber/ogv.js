@@ -48,9 +48,13 @@ OgvJs = (function(canvas) {
 		}
 	}
 	
+	var queuedFrame = null;
 	function OgvJsFrameCallback(imageData) {
-		if (self.onframe) {
-			self.onframe(imageData);
+		if (self.frameReady) {
+			throw new Error("OgvJsFrameCallback called when frame already queued");
+		} else {
+			queuedFrame = imageData;
+			self.frameReady = true;
 		}
 	}
 	
@@ -72,11 +76,6 @@ OgvJs = (function(canvas) {
 	self.onvideoinit = null;
 
 	/**
-	 * @property function(ImageData imageData) event handler when a frame is decoded
-	 */
-	self.onframe = null;
-	
-	/**
 	 * @property function({codec, channels, rate}) event handler when initializing audio stream
 	 */
 	self.onaudioinit = null;
@@ -86,6 +85,10 @@ OgvJs = (function(canvas) {
 	 */
 	self.onaudio = null;
 
+	/**
+	 * @property boolean Have we decoded a frame that's ready to be used?
+	 */
+	self.frameReady = false;
 	
 	/**
 	 * Tear down the instance when done.
@@ -122,6 +125,22 @@ OgvJs = (function(canvas) {
 	 */
 	self.process = function() {
 		return OgvJsProcess();
+	}
+	
+	/**
+	 * Return the last-decoded frame, if any.
+	 *
+	 * @return ImageData or null
+	 */
+	self.dequeueFrame = function() {
+		if (self.frameReady) {
+			var frame = queuedFrame;
+			queuedFrame = null;
+			self.frameReady = false;
+			return frame;
+		} else {
+			throw new Error("called dequeueFrame when no frame ready");
+		}
 	}
 
 	OgvJsInit();

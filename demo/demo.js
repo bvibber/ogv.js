@@ -451,12 +451,11 @@
 	}
 
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitAnimationFrame;
-	var scheduleNextTick;
-	if (requestAnimationFrame) {
-		scheduleNextTick = requestAnimationFrame;
-	} else {
-		scheduleNextTick = function(func) {
-			window.setTimeout(func, 0);
+	function scheduleNextTick(func, targetDelay) {
+		if (targetDelay > 16) {
+			window.setTimeout(func, targetDelay);
+		} else {
+			requestAnimationFrame(func);
 		}
 	}
 
@@ -684,7 +683,7 @@
 		}
 		window.addEventListener('error', errorHandler);
 
-		var framesSeen = 0;
+		var fps = 60;
 
 		document.getElementById('video-fps').textContent = '';
 		document.getElementById('video-frame-width').textContent = '';
@@ -695,6 +694,7 @@
 		document.getElementById('video-pic-y').textContent = '';
 		codec = new OgvJs(canvas);
 		codec.oninitvideo = function(info) {
+			fps = info.fps;
 			document.getElementById('video-fps').textContent = info.fps;
 			document.getElementById('video-frame-width').textContent = info.frameWidth;
 			document.getElementById('video-frame-height').textContent = info.frameHeight;
@@ -713,53 +713,64 @@
 			}
 			audioFeeder = new AudioFeeder(info.channels, info.rate);
 		}
-		codec.onframe = function(imageData) {
-			ctx.putImageData(imageData, 0, 0);
-			framesSeen++;
-		};
 		codec.onaudio = function(samplesPerChannel) {
 			audioFeeder.bufferData(samplesPerChannel);
 		};
 
-		var processingScheduled = false;
-		function pingProcess() {
-			if (!processingScheduled) {
-				processingScheduled = true;
+		var lastFrameTime = getTimestamp(),
+			frameScheduled = false;
 
+		function process(callback) {
+			if (!codec.frameReady) {
+				var start = getTimestamp();
+				while (more = codec.process()) {
+					// Process until we run out of data or
+					// completely decode a video frame...
+					if (codec.frameReady) {
+						break;
+					}
+				}
+				recordBenchmarkPoint(getTimestamp() - start);
+			}
+			
+			if (codec.frameReady && !frameScheduled) {
+				frameScheduled = true;
+				targetTime = lastFrameTime + (1000.0 / fps);
+				targetDelay = Math.max(0, targetTime - getTimestamp());
 				scheduleNextTick(function() {
-					processingScheduled = false;
-					if (codec) {
-						var start = getTimestamp();
-						var more = true;
-						while (framesSeen == 0 && more) {
-							more = codec.process();
-						}
-						framesSeen = 0;
-						recordBenchmarkPoint(getTimestamp() - start);
-						if (more) {
-							pingProcess();
-						} else {
-							console.log("NO MORE PACKETS");
-							showBenchmark();
+					lastFrameTime = getTimestamp();
+					if (codec && codec.frameReady) {
+						var frame = codec.dequeueFrame();
+						ctx.putImageData(frame, 0, 0);
+						frameScheduled = false;
+						if (callback) {
+							callback();
 						}
 					}
-				});
+				}, targetDelay);
 			}
 		}
-
+		function processAfterRead() {
+			process(function() {
+				// Schedule another frame read, if we have more
+				processAfterRead();
+			});
+		}
+		
 		stream = new StreamFile({
 			url: selectedUrl,
 			onread: function(data) {
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
 				
-				// Process the next frame in the buffer on the next
-				// animation redraw pass.
-				pingProcess();
+				// Continue processing until frames run out...
+				processAfterRead();
 			},
 			ondone: function() {
 				console.log("reading done.");
 				window.removeEventListener('error', errorHandler);
+				
+				process();
 				stream = null;
 			},
 			onerror: function(err) {
