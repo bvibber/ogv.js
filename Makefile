@@ -20,5 +20,7 @@ build/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js compileOgg.sh compileVo
 build/ogv.js : src/ogv-main.js build/ogv-libs.js
 	importer src/ogv-main.js build/ogv.js
 
-demo : build/ogv.js
+demo : build/ogv.js src/StreamFile.js src/AudioFeeder.js
 	cp build/ogv.js demo/ogv.js
+	cp src/StreamFile.js demo/StreamFile.js
+	cp src/AudioFeeder.js demo/AUdioFeeder.js
