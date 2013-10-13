@@ -7,7 +7,8 @@ libogg, libvorbis, and theora compiled to JavaScript with Emscripten.
 ## Current status
 
 A demo is included which runs some video output in the browser; you can
-search within a list of Wikimedia Commons 'Media of the Day'.
+search within a list of Wikimedia Commons 'Media of the Day'. It will
+appear under build/demo/
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
@@ -105,7 +106,7 @@ Unfortunately IE doesn't support Web Audio yet... Audio playback on IE may need 
 3. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
 4. Run `make` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
-See a sample web page in demos/
+See a sample web page in build/demo/
 
 
 ## License
