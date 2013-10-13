@@ -495,8 +495,19 @@
 		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
 	}
 
+	function dismissChooser() {
+		document.getElementById('media-chooser-stub').className = '';
+		document.getElementById('media-chooser').className = '';
+	}
+	document.getElementById('media-chooser-stub').addEventListener('click', function() {
+		dismissChooser();
+	});
 	function showChooser() {
 		setHash();
+		
+		document.getElementById('media-chooser-stub').className = 'active';
+		document.getElementById('media-chooser').className = 'active';
+		
 		var filterString = filter.value.toLowerCase();
 		
 		var max = 20, list = [];
@@ -549,6 +560,7 @@
 	filter.addEventListener('delete', showChooser);
 	filter.addEventListener('cut', showChooser);
 	filter.addEventListener('paste', showChooser);
+	filter.addEventListener('focus', showChooser);
 	window.addEventListener('hashchange', function() {
 		var oldTitle = selectedTitle,
 			oldFilter = filter.value;
@@ -577,6 +589,7 @@
 		item.addEventListener('click', function() {
 			selectedTitle = title;
 			setHash();
+			dismissChooser();
 			showVideo();
 		});
 
@@ -638,7 +651,7 @@
 	}
 	
 	var selectedTitle = getDefault();
-	showChooser();
+	//showChooser();
 	showVideo();
 
 	var stream;	

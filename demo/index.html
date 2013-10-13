@@ -9,6 +9,8 @@
 <body>
 	<div id="header">
 		<h1>ogv.js demo/test</h1>
+		<input id=filter type=search placeholder="Search media">
+		<a href="https://github.com/brion/ogv.js" target="_blank">Source and README</a>
 	</div>
 
 	<div id="main-player">
@@ -17,50 +19,53 @@
 			<br>
 			<button class="play">Play</button>
 			<button class="stop">Stop</button>
+			<span id="status-view"></span>
 		</div>
 
-		<div id="status-view"></div>
+		<div id="metadata">
+			<table id="info">
+				<tr>
+					<td>Frames per second</td>
+					<td id="video-fps"></td>
+				</tr>
+				<tr>
+					<td>Frame size</td>
+					<td><span id="video-frame-width"></span>x<span id="video-frame-height"></span></td>
+				</tr>
+				<tr>
+					<td>Crop size</td>
+					<td><span id="video-pic-width"></span>x<span id="video-pic-height"></span></td>
+				</tr>
+				<tr>
+					<td>Crop offset</td>
+					<td><span id="video-pic-x"></span>, <span id="video-pic-y"></span></td>
+				</tr>
+				<tr>
+					<td>Audio channels</td>
+					<td id="audio-channels"></td>
+				</tr>
+				<tr>
+					<td>Audio rate</td>
+					<td id="audio-rate"></td>
+				</tr>
+			</table>
 		
-		<table id="info">
-			<tr>
-				<td>Frames per second</td>
-				<td id="video-fps"></td>
-			</tr>
-			<tr>
-				<td>Frame size</td>
-				<td><span id="video-frame-width"></span>x<span id="video-frame-height"></span></td>
-			</tr>
-			<tr>
-				<td>Crop size</td>
-				<td><span id="video-pic-width"></span>x<span id="video-pic-height"></span></td>
-			</tr>
-			<tr>
-				<td>Crop offset</td>
-				<td><span id="video-pic-x"></span>, <span id="video-pic-y"></span></td>
-			</tr>
-			<tr>
-				<td>Audio channels</td>
-				<td id="audio-channels"></td>
-			</tr>
-			<tr>
-				<td>Audio rate</td>
-				<td id="audio-rate"></td>
-			</tr>
-		</table>
+			<ul>
+				<li><a id="pagelink" href="javascript:false" target="_blank">...</a>
+				
+			</ul>
 		
-		<ul>
-			<li><a id="pagelink" href="javascript:false" target="_blank">...</a>
-			<li><a href="https://github.com/brion/ogv.js" target="_blank">Player source repository and README</a></li>
-		</ul>
-		
-		<canvas id="benchmark" width=500 height=200></canvas>
-		<div>Black line is per-frame decoding time (lower is better). Green line is target for 30fps; blue line for 60fps.</div>
+			<canvas id="benchmark" width=500 height=200></canvas>
+			<div>Black line is per-frame decoding time (lower is better). Green line is target for 30fps; blue line for 60fps.</div>
+		</div>
 
 	</div>
 	
+	<div id="media-chooser-stub">
+		<!-- lightbox-style click-to-dismiss background -->
+	</div>
 	<div id="media-chooser">
 		<h2><a href="http://commons.wikimedia.org/wiki/Commons:Media_of_the_day" target="_blank">Wikimedia Commons Media of the Day</a></h2>
-		<input id=filter type=search placeholder="Filter">
 		<div id="media-list">
 			<!-- ... -->
 		</div>
