@@ -16,82 +16,85 @@ function StreamFile(options) {
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", url);
 	
+	var buffers = [],
+		waitingForInput = false,
+		doneBuffering = false;
+	
+	function popBuffer() {
+		var buffer = buffers.shift();
+		if (!bufferSize || bufferSize >= buffer.byteLength) {
+			return buffer;
+		} else {
+			// Split the buffer and requeue the rest
+			var thisBuffer = buffer.slice(0, bufferSize),
+				nextBuffer = buffer.slice(bufferSize);
+			buffers.unshift(nextBuffer);
+			return thisBuffer;
+		}
+	}
+	function handleInput(buffer) {
+		buffers.push(buffer);
+		if (waitingForInput) {
+			onread(popBuffer());
+			waitingForInput = false;
+			if (doneBuffering && buffers.length == 0) {
+				// We're out of data!
+				ondone();
+			}
+		}
+	}
+	xhr.onreadystatechange = function(event) {
+		if (xhr.readyState == 2) {
+			if (xhr.status >= 400) {
+				// errrorrrrrrr
+				callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+				onerror();
+				xhr.abort();
+			}
+		} else if (xhr.readyState == 4) {
+			// Complete.
+			doneBuffering = true;
+		}
+	};
+	self.readBytes = function() {
+		if (buffers.length > 0) {
+			var buffer = popBuffer();
+			setTimeout(function() {
+				onread(buffer);
+			}, 0);
+		} else if (doneBuffering) {
+			// We're out of data!
+			setTimeout(function() {
+				ondone();
+			}, 0);
+		} else {
+			// Nothing queued...
+			waitingForInput = true;
+		}
+	}
+	
 	var foundMethod = false;
 	function tryMethod(rt) {
 		if (foundMethod) {
 			return false;
 		}
 		xhr.responseType = rt;
-		return (xhr.responseType == rt);
+		if (xhr.responseType == rt) {
+			foundMethod = true;
+			return true;
+		}
 	}
 
 	if (tryMethod('moz-chunked-arraybuffer')) {
-		foundMethod = true;
-
 		console.log("Streaming input using moz-chunked-arraybuffer");
-	
-		var buffers = [],
-			waitingForInput = false,
-			doneBuffering = false;
 		
-		function popBuffer(bufferSize) {
-			var buffer = buffers.shift();
-			if (!bufferSize || bufferSize >= buffer.byteLength) {
-				return buffer;
-			} else {
-				// Split the buffer and requeue the rest
-				var thisBuffer = buffer.slice(0, bufferSize),
-					nextBuffer = buffer.slice(bufferSize);
-				buffers.unshift(nextBuffer);
-				return thisBuffer;
-			}
-		}
-		xhr.onreadystatechange = function(event) {
-			if (xhr.readyState == 2) {
-				if (xhr.status >= 400) {
-					// errrorrrrrrr
-					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
-					onerror();
-					xhr.abort();
-				}
-			} else if (xhr.readyState == 4) {
-				// Complete.
-				doneBuffering = true;
-			}
-		};
 		xhr.onprogress = function(event) {
-			// todo: is it safe to keep this buffer or should we copy it?
-			buffers.push(xhr.response);
-
-			if (waitingForInput) {
-				onread(popBuffer(bufferSize));
-				waitingForInput = false;
-				if (doneBuffering && buffers.length == 0) {
-					// We're out of data!
-					ondone();
-				}
-			}
-		}
-		self.readBytes = function(bufferSize) {
-			if (buffers.length > 0) {
-				var buffer = popBuffer(bufferSize);
-				setTimeout(function() {
-					onread(buffer);
-				}, 0);
-			} else if (doneBuffering) {
- 				// We're out of data!
- 				setTimeout(function() {
-					ondone();
-				}, 0);
-			} else {
-				// Nothing queued...
-				waitingForInput = true;
-			}
+			// xhr.response is a per-chunk ArrayBuffer
+			handleInput(xhr.response);
 		}
 	}
 	
 	if (tryMethod('ms-stream')) {
-		foundMethod = true;
 		// IE 10 supports returning a Stream from XHR.
 		console.log("Streaming input using MSStreamReader");
 		
@@ -153,31 +156,19 @@ function StreamFile(options) {
 			return buffer;
 		}
 
-		function processInput() {
+		function extractBuffer() {
 			var chunk = xhr.responseText.slice(lastPosition);
 			lastPosition += chunk.length;
-		
-			if (chunk.length > 0) {
-				var buffer = stringToArrayBuffer(chunk);
-				onread(buffer);
-			}
+			return stringToArrayBuffer(chunk);
 		}
 	
+		var orsc = xhr.onreadystatechange;
 		xhr.onreadystatechange = function(event) {
-			if (xhr.readyState == 2) {
-				if (xhr.status >= 400) {
-					// errrorrrrrrr
-					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
-					onerror();
-					xhr.abort();
-				}
-			} else if (xhr.readyState == 3) {
-				// Partial content
-				processInput();
-			} else if (xhr.readyState == 4) {
-				// Complete.
-				processInput();
-				ondone();
+			if (xhr.readyState == 3) {
+				// xhr.response is a binary string of entire file so far
+				handleInput(extractBuffer());
+			} else {
+				return orsc();
 			}
 		};
 	}

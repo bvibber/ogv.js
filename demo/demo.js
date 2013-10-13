@@ -255,7 +255,6 @@
 		if (document.location.hash.length > 1) {
 			var title;
 			document.location.hash.slice(1).split('&').forEach(function(pair) {
-				console.log(pair);
 				var parts = pair.split('='),
 					name = decodeURIComponent(parts[0]),
 					value = decodeURIComponent(parts[1]);
@@ -299,7 +298,6 @@
 			}
 		}
 		var selection = list.reverse().slice(0, max);
-		console.log(selection);
 		
 		mediaList.innerHTML = '';
 				
@@ -464,8 +462,6 @@
 		status.className = 'status-invisible';
 		status.innerHTML = '';
 		
-		var bufferSize = 65536;
-
 		function errorHandler(event) {
 			if (stream) {
 				stream.abort();
@@ -525,8 +521,6 @@
 			frameScheduled = false;
 
 		function process() {
-			console.log('process()');
-
 			var start = getTimestamp();
 			// Process until we run out of data or
 			// completely decode a video frame...
@@ -534,8 +528,7 @@
 				more = codec.process();
 				if (!more) {
 					// Ran out of input
-					console.log('out of input, scheduling next read');
-					stream.readBytes(bufferSize);
+					stream.readBytes();
 					break;
 				}
 			}
@@ -563,12 +556,9 @@
 		
 		stream = new StreamFile({
 			url: selectedUrl,
+			bufferSize: 65536,
 			onread: function(data) {
 				totalRead += data.byteLength;
-				console.log('Received ' + data.byteLength + ' bytes, total ' + totalRead + ' so far');
-				if (data.byteLength > bufferSize) {
-					console.log("TOO BIG");
-				}
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
 				process();
@@ -593,7 +583,7 @@
 				stream = null;
 			}
 		});
-		stream.readBytes(bufferSize);
+		stream.readBytes();
 	}
 	player.querySelector('.play').addEventListener('click', playVideo);
 	player.querySelector('.stop').addEventListener('click', stopVideo);
