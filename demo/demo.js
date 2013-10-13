@@ -466,6 +466,7 @@
 		//nativeVideo = nativePlayer.querySelector('video'),
 		ctx = canvas.getContext('2d'),
 		videoChooser = document.getElementById('video-chooser'),
+		selectedTitle = null,
 		selectedUrl = null;
 	
 	var mediaList = document.getElementById('media-list'),
@@ -473,15 +474,27 @@
 
 	function getDefault() {
 		if (document.location.hash.length > 1) {
-			title = decodeURIComponent(document.location.hash.slice(1));
-			filter.value = title.replace(/_/g, ' ');
-			return 'File:' + title;
+			var title;
+			document.location.hash.split('&').forEach(function(pair) {
+				var parts = pair.split('='),
+					name = decodeURIComponent(parts[0]),
+					value = decodeURIComponent(parts[1]);
+				if (name === 'file') {
+					title = name;
+				} else if (name === 'search') {
+					filter.value = value;
+				}
+			});
+			if (title) {
+				return 'File:' + title;
+			}
 		}
 		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
 	}
 	var defaultTitle = getDefault();
 
 	function showChooser() {
+		setHash();
 		var filterString = filter.value.toLowerCase();
 		
 		var max = 20, list = [];
@@ -534,7 +547,6 @@
 	filter.addEventListener('delete', showChooser);
 	filter.addEventListener('cut', showChooser);
 	filter.addEventListener('paste', showChooser);
-	showChooser();
 	
 	function addMediaSelector(title, imageinfo) {
 		var item = document.createElement('div'),
@@ -550,15 +562,27 @@
 		item.appendChild(img);
 		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
 		item.addEventListener('click', function() {
-			document.location.hash = "#" + encodeURIComponent(title.replace("File:", "").replace(/ /g, '_'));
-			window.scrollTo(0, 0);
 			showVideo(title);
 		});
 
 		mediaList.appendChild(item);
 	}
-	
+
+	function setHash() {
+		var hash = "#file=" + encodeURIComponent(selectedTitle.replace("File:", "").replace(/ /g, '_'));
+		
+		if (filter.value != '') {
+			hash += '&search=' + encodeURIComponent(filter.value);
+		}
+		
+		document.location.hash = hash;
+	}
+		
 	function showVideo(filename) {
+		selectedTitle = filename;
+		setHash();
+		window.scrollTo(0, 0);
+		
 		var pagelink = document.getElementById('pagelink');
 		pagelink.innerHTML = 'Open this file on Wikimedia Commons';
 		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(filename);
@@ -601,6 +625,7 @@
 	}
 	
 	showVideo(defaultTitle);
+	showChooser();
 
 	var stream;	
 	
