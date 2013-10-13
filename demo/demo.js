@@ -475,12 +475,13 @@
 	function getDefault() {
 		if (document.location.hash.length > 1) {
 			var title;
-			document.location.hash.split('&').forEach(function(pair) {
+			document.location.hash.slice(1).split('&').forEach(function(pair) {
+				console.log(pair);
 				var parts = pair.split('='),
 					name = decodeURIComponent(parts[0]),
 					value = decodeURIComponent(parts[1]);
 				if (name === 'file') {
-					title = name;
+					title = value;
 				} else if (name === 'search') {
 					filter.value = value;
 				}
@@ -491,7 +492,6 @@
 		}
 		return 'File:Thresher-Sharks-Use-Tail-Slaps-as-a-Hunting-Strategy-pone.0067380.s003.ogv';
 	}
-	var defaultTitle = getDefault();
 
 	function showChooser() {
 		setHash();
@@ -562,7 +562,9 @@
 		item.appendChild(img);
 		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
 		item.addEventListener('click', function() {
-			showVideo(title);
+			selectedTitle = title;
+			setHash();
+			showVideo();
 		});
 
 		mediaList.appendChild(item);
@@ -578,15 +580,13 @@
 		document.location.hash = hash;
 	}
 		
-	function showVideo(filename) {
-		selectedTitle = filename;
-		setHash();
+	function showVideo() {
 		window.scrollTo(0, 0);
 		
 		var pagelink = document.getElementById('pagelink');
 		pagelink.innerHTML = 'Open this file on Wikimedia Commons';
-		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(filename);
-		findSourcesForMedia(filename, function(sources) {
+		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(selectedTitle);
+		findSourcesForMedia(selectedTitle, function(sources) {
 			// Find the smallest ogv stream
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
@@ -624,8 +624,9 @@
 		});
 	}
 	
-	showVideo(defaultTitle);
+	var selectedTitle = getDefault();
 	showChooser();
+	showVideo();
 
 	var stream;	
 	
