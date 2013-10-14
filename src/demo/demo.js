@@ -603,11 +603,23 @@
 						//
 						// but it doesn't appear to work as expected.
 						
-						var max = videoInfo.frameWidth * videoInfo.frameHeight,
-							inArr = new Uint32Array(frameBuffer),
-							outArr = new Uint32Array(imageData.data.buffer);
-						for (var i = 0; i < max; i++) {
-							outArr[i] = inArr[i];
+						if (window.Uint8ClampedArray) {
+							// detection hack -- IE won't let us build an
+							// Uint32Array around an imageData buffer. :(
+							
+							var max = videoInfo.frameWidth * videoInfo.frameHeight,
+								inArr = new Uint32Array(frameBuffer),
+								outArr = new Uint32Array(imageData.data.buffer);
+							for (var i = 0; i < max; i++) {
+								outArr[i] = inArr[i];
+							}
+						} else {
+							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4,
+								inArr = new Uint8Array(frameBuffer),
+								outArr = imageData.data;
+							for (var i = 0; i < max; i++) {
+								outArr[i] = inArr[i];
+							}
 						}
 
 						ctx.putImageData(imageData,
