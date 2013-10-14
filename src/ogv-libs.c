@@ -119,8 +119,14 @@ enum AppState {
 	STATE_HEADERS,
 	STATE_DECODING
 } appState;
+int process_audio, process_video;
 
-void OgvJsInit() {
+void OgvJsInit(int process_audio_flag, int process_video_flag) {
+	// Allow the caller to specify whether we want audio, video, or both.
+	// Or neither, but that won't be very useful.
+	process_audio = process_audio_flag;
+	process_video = process_video_flag;
+
 	appState = STATE_BEGIN;
 	
   /* start up Ogg stream synchronization layer */
@@ -155,7 +161,7 @@ static void processBegin() {
 		}
   
 		/* identify the codec: try theora */
-		if(!theora_p && (theora_processing_headers = th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket))>=0){
+		if(process_video && !theora_p && (theora_processing_headers = th_decode_headerin(&theoraInfo,&theoraComment,&theoraSetupInfo,&oggPacket))>=0){
 
 			/* it is theora -- save this stream state */
 			printf("found theora stream!\n");
@@ -167,7 +173,7 @@ static void processBegin() {
 			} else {
 				ogg_stream_packetout(&theoraStreamState, NULL);
 			}
-		} else if (!vorbis_p && (vorbis_processing_headers = vorbis_synthesis_headerin(&vi,&vc,&oggPacket)) == 0) {
+		} else if (process_audio && !vorbis_p && (vorbis_processing_headers = vorbis_synthesis_headerin(&vi,&vc,&oggPacket)) == 0) {
 			// it's vorbis!
 			// save this as our audio stream...
 			printf("found vorbis stream! %d\n", vorbis_processing_headers);

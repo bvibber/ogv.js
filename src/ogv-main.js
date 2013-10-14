@@ -1,5 +1,8 @@
-OgvJs = (function() {
-	var self = this;
+OgvJs = (function(options) {
+	options = options || {};
+	var self = this,
+		processAudio = (options.audio !== undefined) ? !!options.audio : true,
+		processVideo = (options.video !== undefined) ? !!options.video : true;
     
     var Module = {
     	noInitialRun: true,
@@ -10,7 +13,7 @@ OgvJs = (function() {
     };
     //import "../build/intermediate/ogv-libs.js"
     
-    var OgvJsInit = Module.cwrap('OgvJsInit', 'void', []);
+    var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
@@ -131,6 +134,6 @@ OgvJs = (function() {
 		}
 	}
 
-	OgvJsInit();
+	OgvJsInit(processAudio ? 1 : 0, processVideo ? 1 : 0);
 	return self;
 });
