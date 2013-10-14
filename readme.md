@@ -94,6 +94,8 @@ Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit
 
 Note that audio fails on iOS as web audio must be started in an event handler for a user action.
 
+Audio is blacklisted on Safari 6 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). Safari 7 works just fine and is not blacklisted.
+
 Firefox supports Web Audio API with an optional about:config switch.
 
 Unfortunately IE doesn't support Web Audio yet... Audio playback on IE may need to use a shim via the Flash plugin (which is bundled), which may make sync more difficult as there's another layer between our JS code and the output.
