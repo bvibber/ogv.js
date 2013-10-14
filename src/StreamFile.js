@@ -1,8 +1,12 @@
 /**
  * Quickie wrapper around XHR to fetch a file as array buffer chunks.
- * Does not yet actually deliver during download, however.
- * Safari doesn't seem to currently support a streaming/progressive
- * XHR option that I can see. :( May have to do multiple partial reqs.
+ *
+ * Call streamFile.readBytes() after an onread event's data has been
+ * processed to trigger the next read.
+ *
+ * IE 10: uses MSStream / MSStreamReader for true streaming
+ * Firefox: uses moz-chunked-arraybuffer to buffer & deliver during download
+ * Safari, Chrome: uses binary string to buffer & deliver during download
  */
 function StreamFile(options) {
 	var self = this,
