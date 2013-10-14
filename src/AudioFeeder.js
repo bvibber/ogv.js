@@ -22,9 +22,17 @@ function AudioFeeder(channels, rate) {
 	
 	var context = window.audioContext = new AudioContext(),
 		bufferSize = 1024,
-		node = window.audioNode = context.createScriptProcessor(bufferSize, 0, 2),
+		node,
 		buffers = [],
 		muted = false;
+	
+	if (context.createScriptProcessor) {
+		node = context.createScriptProcessor(bufferSize, 0, 2)
+	} else if (context.createJavaScriptNode) {
+		node = context.createJavaScriptNode(bufferSize, 0, 2)
+	} else {
+		throw new Error("Bad version of web audio API?");
+	}
 	
 	function popNextBuffer() {
 		// hack hack
