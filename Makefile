@@ -5,8 +5,11 @@ all : build/ogv.js build/demo/index.html
 clean:
 	rm -rf build
 	rm -rf demo
+	test -f libogg/Makefile && (cd libogg && make distclean) || true
 	rm -f libogg/configure
+	test -f libvorbis/Makefile && (cd libvorbis && make distclean) || true
 	rm -f libvorbis/configure
+	test -f libtheora/Makefile && (cd libtheora && make distclean) || true
 	rm -f libtheora/configure
 
 build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js compileOgg.sh compileVorbis.sh compileTheora.sh compileOgv.sh
