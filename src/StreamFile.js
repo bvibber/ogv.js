@@ -20,7 +20,15 @@ function StreamFile(options) {
 		if (foundMethod) {
 			return false;
 		}
-		xhr.responseType = rt;
+		try {
+			// Set the response type and see if it explodes!
+			xhr.responseType = rt;
+		} catch (e) {
+			// Safari 6 throws a DOM Exception on invalid setting
+			return false;
+		}
+		// Other browsers just don't accept the setting, so check
+		// whether it made it through.
 		if (xhr.responseType == rt) {
 			foundMethod = true;
 			return true;

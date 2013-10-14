@@ -237,7 +237,7 @@
 		});
 	}
 
-	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitAnimationFrame;
+	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 	function scheduleNextTick(func, targetDelay) {
 		if (targetDelay > 16) {
 			window.setTimeout(func, targetDelay);
