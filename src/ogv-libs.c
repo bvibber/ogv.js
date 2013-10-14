@@ -9,7 +9,6 @@
 
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
-#include <theora/codec.h>
 #include <theora/theoradec.h>
 
 
