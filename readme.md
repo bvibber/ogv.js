@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-libogg, libvorbis, and theora compiled to JavaScript with Emscripten.
+libogg, libvorbis, and libtheora compiled to JavaScript with Emscripten.
 
 
 ## Current status
@@ -47,13 +47,30 @@ Testing browsers (these support .ogv natively):
 
 Early versions have only been spot-checked with a couple of small sample files on a few devices, but for SD-or-less resolution basic decoding speed seems adequate on desktop. Newer mobile devices seem to handle at least low-res files, but much more tuning and measurement is needed.
 
-Note that on iOS, Safari performs *much* better than Chrome or other "alternative" browsers that use the system UIWebView but are unable to enable the JIT due to iOS limitations on third-party developers.
+*Target browsers*
 
-Firefox performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed.
+On Mac OS X, Safari 7 performs much better than Safari 6; however 7 has not yet been generally released. Have patience! Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
+
+IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE are not supported at all.
+
+*Future targets*
+
+On iOS, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. However, I have not yet gotten acceptable performance on non-tiny files even on the latest iOS 7 Safari. Needs more testing on the iPhone 5S however!
+
+IE 11 on Windows RT 8.1 Preview on an original Surface RT tablet does not perform very well.
+
+In both cases, a native application looms as a possibly better alternative. If installed, a native app could definitely be launched from web content... Need to look into how easy it is to detect presence of apps from web, however; if it's not possible to detect it may need a UX workaround to prompt the user.
+
+
+*Test browsers*
+
+Firefox 24 performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed.
+
+Chrome 30 performs pretty well, but not quite as snappy as Firefox's asm.js mode.
 
 It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 
-YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11), if that makes a measurable difference.
+YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11, Chrome, Firefox), if that makes a measurable difference.
 
 
 ## Difficulties
@@ -69,13 +86,11 @@ It may not be possible to split up the codec work over multiple workers, but thi
 
 *Streaming*
 
-There is currently a bug that causes playback to halt early or not start sometimes. Just keep reloading for now to work around.
-
 In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data on demand into ArrayBuffer objects.
 
 In Firefox, the 'moz-chunked-array' responseType on XHR is used to stream data, however there is no flow control so the file will buffer into memory as fast as possible, then drain over time.
 
-Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This has no flow control so will buffer into memory as fast as possible. This will buffer up to twice the size of the total file in memory for the entire lifetime of the player, which is wasteful but there doesn't seem to be a way around it without dividing up into subrange requests.
+Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This has no flow control so will buffer into memory as fast as possible. This will also buffer up to twice the size of the total file in memory for the entire lifetime of the player, which is wasteful but there doesn't seem to be a way around it without dividing up into subrange requests.
 
 
 *Seeking*
