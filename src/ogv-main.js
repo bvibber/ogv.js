@@ -7,6 +7,7 @@ OgvJs = (function(options) {
     var Module = {
     	noInitialRun: true,
     	noExitRuntime: true,
+    	TOTAL_MEMORY: 32 * 1024 * 1024, // default heap is 16M
     	print: function(str) {
     		console.log("OgvJs: " + str);
     	}
