@@ -78,8 +78,25 @@ function AudioFeeder(channels, rate) {
 	};
 	node.connect(context.destination);
 	
+	/**
+	 * This is horribly naive and wrong.
+	 * Replace me with a better algo!
+	 */
 	function resample(samples) {
-		return samples;
+		if (rate == context.sampleRate) {
+			return samples;
+		} else {
+			var newSamples = [];
+			for (var channel = 0; channel < channels; channel++) {
+				var input = samples[channel],
+					output = new Float32Array(Math.round(input.length * context.sampleRate / rate));
+				for (var i = 0; i < output.length; i++) {
+					output[i] = input[Math.floor(i * rate / context.sampleRate)];
+				}
+				newSamples.push(output);
+			}
+			return newSamples;
+		}
 	}
 	
 	function pushSamples(samples) {
