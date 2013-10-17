@@ -49,7 +49,7 @@ Early versions have only been spot-checked with a couple of small sample files o
 
 *Target browsers*
 
-On Mac OS X, Safari 7 performs much better than Safari 6; however 7 has not yet been generally released. Have patience! Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
+On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0; however 6.1/7 have not yet been generally released. Have patience! Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
 
 IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE are not supported at all.
 
@@ -109,7 +109,7 @@ Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit
 
 Note that audio fails on iOS as web audio must be started in an event handler for a user action.
 
-Audio is blacklisted on Safari 6 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). Safari 7 works just fine and is not blacklisted.
+Audio is blacklisted on Safari 6.0 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). Safari 6.1 and 7 work just fine and are not blacklisted.
 
 Firefox supports Web Audio API with an optional about:config switch.
 
