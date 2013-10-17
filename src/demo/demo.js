@@ -528,16 +528,16 @@
 			options = {};
 		
 		// Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1
-		if (navigator.userAgent.match(/Version\/6\.[0-9a-z.]+ Safari/)) {
-			// Something may be wrong with the JIT compiler in Safari 6;
+		if (navigator.userAgent.match(/Version\/6\.0\.[0-9a-z.]+ Safari/)) {
+			// Something may be wrong with the JIT compiler in Safari 6.0;
 			// when we decode Vorbis with the debug console closed it falls
 			// into 100% CPU loop and never exits.
 			//
 			// Blacklist audio decoding for this browser.
 			//
-			// Known working in Safari 7.
+			// Known working in Safari 6.1 and 7.
 			options.audio = false;
-			showStatus('Audio disabled due to bug on Safari 6');
+			showStatus('Audio disabled due to bug on Safari 6.0');
 		}
 		
 		codec = new OgvJs(options);
