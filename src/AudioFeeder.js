@@ -20,7 +20,7 @@ function AudioFeeder(channels, rate) {
 	}
 	
 	
-	var context = window.audioContext = new AudioContext(),
+	var context = new AudioContext(),
 		bufferSize = 1024,
 		node,
 		buffers = [],
