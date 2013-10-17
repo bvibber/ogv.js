@@ -22,8 +22,19 @@ function AudioFeeder(channels, rate) {
 	
 	var context = new AudioContext(),
 		bufferSize = 1024,
-		node,
-		buffers = [],
+		node;
+	
+	function freshBuffer() {
+		var buffer = [];
+		for (var channel = 0; channel < channels; channel++) {
+			buffer[channel] = new Float32Array(bufferSize);
+		}
+		return buffer;
+	}
+	
+	var buffers = [],
+		pendingBuffer = freshBuffer(),
+		pendingPos = 0,
 		muted = false;
 	
 	if (context.createScriptProcessor) {
@@ -54,7 +65,9 @@ function AudioFeeder(channels, rate) {
 				}
 			}
 		} else {
-			//console.log("Starved for audio!");
+			if (!inputBuffer) {
+				console.log("Starved for audio!");
+			}
 			for (var channel = 0; channel < channels; channel++) {
 				var output = event.outputBuffer.getChannelData(channel);
 				for (var i = 0; i < bufferSize; i++) {
@@ -65,10 +78,30 @@ function AudioFeeder(channels, rate) {
 	};
 	node.connect(context.destination);
 	
+	function resample(samples) {
+		return samples;
+	}
+	
+	function pushSamples(samples) {
+		var firstChannel = samples[0],
+			sampleCount = firstChannel.length;
+		for (var i = 0; i < sampleCount; i++) {
+			for (var channel = 0; channel < channels; channel++) {
+				pendingBuffer[channel][pendingPos] = samples[channel][i];
+			}
+			if (++pendingPos == bufferSize) {
+				buffers.push(pendingBuffer);
+				pendingPos = 0;
+				pendingBuffer = freshBuffer();
+			}
+		}
+	}
+	
 	var self = this;
 	this.bufferData = function(samplesPerChannel) {
 		if (buffers) {
-			buffers.push(samplesPerChannel);
+			samples = resample(samplesPerChannel);
+			pushSamples(samples);
 		} else {
 			self.close();
 		}
