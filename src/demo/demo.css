@@ -81,9 +81,6 @@ body {
 	color: white;
 	position: absolute;
 
-	padding: 24px;
-	padding: 24px;
-
 	left: 0;
 	right: 0;
 
@@ -93,13 +90,21 @@ body {
 	text-align: center;
 }
 
-#player button {
+#controls {
+	width: 100%;
+	padding: 8px;
+	
+	text-align: center;
+}
+
+#controls button {
+	background: rgba(0, 0, 0, 0.5);
 	color: white;
-	background-color: black;
 	border: solid 1px white;
 	border-radius: 8px;
+	height: 1.5em;
 	font-size: 2em;
-	padding: 16px;
+	padding: 0px 16px;
 	cursor: pointer;
 }
 #mute, label {

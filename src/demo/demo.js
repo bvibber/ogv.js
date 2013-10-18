@@ -247,6 +247,7 @@
 	}
 
 	var player = document.getElementById('player'),
+		controls = document.getElementById('controls'),
 		canvas = player.querySelector('canvas'),
 		//nativePlayer = document.getElementById('native'),
 		//nativeVideo = nativePlayer.querySelector('video'),
@@ -398,21 +399,22 @@
 		var container = document.getElementById('player'),
 			computedStyle = window.getComputedStyle(container),
 			containerWidth = parseInt(computedStyle.getPropertyValue('width')),
-			containerHeight = parseInt(computedStyle.getPropertyValue('height')) - 64;
+			containerHeight = parseInt(computedStyle.getPropertyValue('height'));
 
 		var width = containerWidth,
-			height = canvas.height * width / canvas.width;
+			height = canvas.height * width / canvas.width,
+			top = 0;
 
-		if (computedStyle.getPropertyValue('position') == 'absolute') {
-			// Only vertical size if we're in large-screen mode
-			if (height > containerHeight) {
-				height = containerHeight;
-				width = canvas.width * height / canvas.height;
-			}
+		if (height > containerHeight) {
+			height = containerHeight;
+			width = canvas.width * height / canvas.height;
+		} else {
+			top = Math.round((containerHeight - height) / 2);
 		}
-				
+		
 		canvas.style.width = width + 'px';
 		canvas.style.height = height + 'px';
+		canvas.style.marginTop = top + 'px';
 	}
 	window.addEventListener('resize', resizeVideo);
 	
@@ -683,9 +685,9 @@
 		});
 		stream.readBytes();
 	}
-	player.querySelector('.play').addEventListener('click', playVideo);
-	player.querySelector('.stop').addEventListener('click', stopVideo);
-	player.querySelector('#mute').addEventListener('click', function() {
+	controls.querySelector('.play').addEventListener('click', playVideo);
+	controls.querySelector('.stop').addEventListener('click', stopVideo);
+	controls.querySelector('#mute').addEventListener('click', function() {
 		if (codec && audioFeeder) {
 			if (this.checked) {
 				audioFeeder.mute();
