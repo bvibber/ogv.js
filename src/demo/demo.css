@@ -18,86 +18,73 @@ h1, h2, h3, h4, h5, h6 {
 	display: block;
 }
 
-#media-chooser {
-	background: white;
-	position: absolute;
-	left: 0;
-	width: 100%;
-
-	top: 5em;
+body {
+	overflow: hidden;
 }
 
 #header {
+	position: absolute;
 	height: 5em;
+
+	left: 0;
+	right: 0;
+
+	top: 0;
+	height: 5em;
+
+	padding-left: 24px;
+
+	overflow: hidden;
 }
 #header h1 {
 	display: inline-block;
 }
 
-@media (min-width: 960px) {
-	body {
-		overflow: hidden;
-	}
+#media-chooser-stub {
+	background: rgba(0, 0, 0, 0.5);
+	position: absolute;
+	left: 0;
+	top: 5em;
+	right: 0;
+	bottom: 0;
+}
+#media-chooser {
+	background: white;
 	
-	#header {
-		position: absolute;
+	position: absolute;
 
-		left: 0;
-		right: 0;
+	left: 5em;
+	width: 500px;
 
-		top: 0;
-		height: 5em;
+	top: 5em;
+	bottom: 0;
 
-		padding-left: 24px;
+	overflow-y: scroll;
+}
 
-		overflow: hidden;
-	}
+#player {
+	background-color: #222;
+	position: absolute;
 
-	#media-chooser-stub {
-		background: rgba(0, 0, 0, 0.5);
-		position: absolute;
-		left: 0;
-		top: 5em;
-		right: 0;
-		bottom: 0;
-	}
-	#media-chooser {
-		background: white;
-		
-		position: absolute;
+	padding: 24px;
+	padding: 24px;
+
+	left: 0;
+	right: 0;
+
+	top: 5em;
+	bottom: 10em;
 	
-		left: 5em;
-		width: 500px;
-	
-		top: 5em;
-		bottom: 0;
+	text-align: center;
+}
+#metadata {
+	position: absolute;
 
-		overflow-y: scroll;
-	}
+	left: 0;
+	right: 0;
 
-	#player {
-		position: absolute;
-	
-		padding-left: 24px;
-		padding-right: 24px;
-
-		left: 0;
-		right: 500px;
-
-		top: 5em;
-		bottom: 0;
-	}
-	#metadata {
-		position: absolute;
-
-		right: 0;
-		width: 500px;
-	
-		top: 5em;
-		bottom: 0;
-
-		overflow-y: scroll;
-	}
+	height: 10em;
+	bottom: 0;
 }
 
 .media-item {
@@ -117,10 +104,36 @@ h1, h2, h3, h4, h5, h6 {
 	vertical-align: middle;
 }
 
+#info {
+	position: absolute;
+	left: 0;
+	right: 500px;
+	
+	overflow-x: hidden;
+	overflow-y: auto;
+}
 #benchmark {
 	background: white;
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 500px;
+	height: 10em;
 }
-
+#benchmark-legend {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 500px;
+	
+	text-align: right;
+	font-size: 0.8em;
+}
+#benchmark-legend li {
+	list-style: none;
+}
 
 #status-view {
 	display: none;
@@ -129,3 +142,5 @@ h1, h2, h3, h4, h5, h6 {
 	display: block;
 	color: red;
 }
+
+

@@ -20,50 +20,43 @@
 			<button class="play">Play</button>
 			<button class="stop">Stop</button>
 			<span><input type="checkbox" id="mute"><label for="mute">Mute</label></span>
-			<span id="status-view"></span>
 		</div>
 
 		<div id="metadata">
 			<table id="info">
 				<tr>
-					<td>Frames per second</td>
+					<td colspan=2><a id="pagelink" href="javascript:false" target="_blank">...</a></td>
+				</tr>
+				<tr>
+					<td>Frames rate</td>
 					<td id="video-fps"></td>
 				</tr>
 				<tr>
-					<td>Frame size</td>
-					<td><span id="video-frame-width"></span>x<span id="video-frame-height"></span></td>
+					<td>Picture size</td>
+					<td>
+						<span id="video-frame-width"></span>x<span id="video-frame-height"></span>
+						(<span id="video-pic-width"></span>x<span id="video-pic-height"></span>
+						+<span id="video-pic-x"></span>x<span id="video-pic-y"></span>)
+					</td>
 				</tr>
 				<tr>
-					<td>Crop size</td>
-					<td><span id="video-pic-width"></span>x<span id="video-pic-height"></span></td>
+					<td>Audio</td>
+					<td><span id="audio-rate"></span> Hz, <span id="audio-channels"></span> channels</td>
 				</tr>
 				<tr>
-					<td>Crop offset</td>
-					<td><span id="video-pic-x"></span>, <span id="video-pic-y"></span></td>
-				</tr>
-				<tr>
-					<td>Audio channels</td>
-					<td id="audio-channels"></td>
-				</tr>
-				<tr>
-					<td>Audio rate</td>
-					<td id="audio-rate"></td>
+					<td colspan=2><span id="status-view"></span></td>
 				</tr>
 			</table>
-		
-			<ul>
-				<li><a id="pagelink" href="javascript:false" target="_blank">...</a>
-				
-			</ul>
-		
+
 			<canvas id="benchmark" width=500 height=200></canvas>
-			<ul>
-				<li>black: per-frame decoding time (lower is better)
-				<li>red: target frame rate
-				<li>green: 30fps target rate
-				<li>blue: 60fps target rate
-			</ul>
-		</div>
+			<div id="benchmark-legend">
+				<ul>
+					<li>black: per-frame decoding time (lower is better)
+					<li>red: target frame rate
+					<li>green: 30fps target rate
+					<li>blue: 60fps target rate
+				</ul>
+			</div>
 
 	</div>
 	
