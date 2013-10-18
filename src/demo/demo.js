@@ -554,7 +554,7 @@
 
 			resizeVideo();
 
-			document.getElementById('video-fps').textContent = info.fps;
+			document.getElementById('video-fps').textContent = (Math.round(info.fps * 100) / 100);
 			document.getElementById('video-frame-width').textContent = info.frameWidth;
 			document.getElementById('video-frame-height').textContent = info.frameHeight;
 			document.getElementById('video-pic-width').textContent = info.picWidth;
