@@ -8,17 +8,19 @@
 
 <body>
 	<div id="header">
-		<h1>ogv.js demo/test</h1>
-		<input id=filter type=search placeholder="Search media">
-		<a href="https://github.com/brion/ogv.js" target="_blank">JS video decoder source and README</a>
+		<h1><a href="https://github.com/brion/ogv.js" target="_blank">ogv.js</a></h1>
+		<h2>decoding Theora video in JavaScript</h2>
 	</div>
-
+	<div id=search>
+		<input id=filter type=search placeholder="Search media">
+	</div>
+	
 	<div id="main-player">
 		<div id="player" class="ogvjs-player">
 			<canvas width=640 height=360></canvas>
 			<br>
-			<button class="play">Play</button>
-			<button class="stop">Stop</button>
+			<button class="play">▶</button>
+			<button class="stop">◼</button>
 			<span><input type="checkbox" id="mute"><label for="mute">Mute</label></span>
 		</div>
 

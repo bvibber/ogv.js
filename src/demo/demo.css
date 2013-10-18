@@ -39,6 +39,20 @@ body {
 #header h1 {
 	display: inline-block;
 }
+#header h2 {
+	display: inline-block;
+}
+#search {
+	position: absolute;
+	width: 500px;
+	right: 0;
+	top: 0;
+	height: 5em;
+	text-align: right;
+}
+#filter {
+	margin: 2.5em;
+}
 
 #media-chooser-stub {
 	background: rgba(0, 0, 0, 0.5);
@@ -53,7 +67,7 @@ body {
 	
 	position: absolute;
 
-	left: 5em;
+	right: 0;
 	width: 500px;
 
 	top: 5em;
@@ -64,6 +78,7 @@ body {
 
 #player {
 	background-color: #222;
+	color: white;
 	position: absolute;
 
 	padding: 24px;
@@ -77,6 +92,20 @@ body {
 	
 	text-align: center;
 }
+
+#player button {
+	color: white;
+	background-color: black;
+	border: solid 1px white;
+	border-radius: 8px;
+	font-size: 2em;
+	padding: 16px;
+	cursor: pointer;
+}
+#mute, label {
+	cursor: pointer;
+}
+
 #metadata {
 	position: absolute;
 
@@ -118,7 +147,8 @@ body {
 	right: 0;
 	top: 0;
 	bottom: 0;
-	width: 500px;
+	width: 100%;
+	max-width: 500px;
 	height: 10em;
 }
 #benchmark-legend {
