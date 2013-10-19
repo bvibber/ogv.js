@@ -1,6 +1,7 @@
 mergeInto(LibraryManager.library, {
 	
 	OgvJsInitVideo: function(frameWidth, frameHeight,
+	                         hdec, vdec,
                              fps,
                              picWidth, picHeight,
                              picX, picY) {
@@ -8,6 +9,8 @@ mergeInto(LibraryManager.library, {
 			codec: "Theora",
 			frameWidth: frameWidth,
 			frameHeight: frameHeight,
+			hdec: hdec,
+			vdec: vdec,
 			fps: fps,
 			picWidth: picWidth,
 			picHeight: picHeight,
@@ -21,74 +24,39 @@ mergeInto(LibraryManager.library, {
 	                           bufferCr, strideCr,
 	                           width, height,
 	                           hdec, vdec) {
-		// YCbCr whee
-		var HEAPU8 = Module.HEAPU8;
-		var frameBuffer = new ArrayBuffer(width * height * 4),
-			data;
-		var YPtr, CbPtr, CrPtr, outPtr;
-		var xdec, ydec;
-		var colorY, colorCb, colorCr;
-		var multY;
+		
+		// Create typed array views of the source buffers from the emscripten heap:
+		var HEAPU8 = Module.HEAPU8,
+			widthColor = width >> hdec,
+			heightColor = height >> vdec,
+			countBytesY = width * height,
+			countBytesColor = widthColor * heightColor,
+			inBytesY = HEAPU8.subarray(bufferY, bufferY + countBytesY),
+			inBytesCb = HEAPU8.subarray(bufferCb, bufferCb + countBytesColor),
+			inBytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesColor)
 
-		if (window.Uint8ClampedArray) {
-			data = new Uint8ClampedArray(frameBuffer);
-			for (var y = 0; y < height; y++) {
-				ydec = y >> vdec;
-				YPtr = bufferY + y * strideY;
-				CbPtr = bufferCb + ydec * strideCb;
-				CrPtr = bufferCr + ydec * strideCr;
-				outPtr = y * 4 * width;
-				for (var x = 0; x < width; x++) {
-					xdec = x >> hdec;
-					colorY = HEAPU8[YPtr + x];
-					colorCb = HEAPU8[CbPtr + xdec];
-					colorCr = HEAPU8[CrPtr + xdec];
-				
-					// Quickie YUV conversion
-					// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
-					// multiplied by 256 for integer-friendliness
-					multY = (298 * colorY);
-					data[outPtr++] = (multY + (409 * colorCr) - 57088) >> 8;
-					data[outPtr++] = (multY - (100 * colorCb) - (208 * colorCr) + 34816) >> 8;
-					data[outPtr++] = (multY + (516 * colorCb) - 70912) >> 8;
-					data[outPtr++] = 255;
-				}
-			}
-		} else {
-			function clamp(i) {
-				if (i < 0) {
-					return 0;
-				} else if (i > 0xff00) {
-					return 0xff00;
-				} else {
-					return i;
-				}
-			}
-			// IE has no clamped support. Erm?
-			data = new Uint8Array(frameBuffer);
-			for (var y = 0; y < height; y++) {
-				ydec = y >> vdec;
-				YPtr = bufferY + y * strideY;
-				CbPtr = bufferCb + ydec * strideCb;
-				CrPtr = bufferCr + ydec * strideCr;
-				outPtr = y * 4 * width;
-				for (var x = 0; x < width; x++) {
-					xdec = x >> hdec;
-					colorY = HEAPU8[YPtr + x];
-					colorCb = HEAPU8[CbPtr + xdec];
-					colorCr = HEAPU8[CrPtr + xdec];
-				
-					// Quickie YUV conversion
-					// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
-					multY = (298 * colorY);
-					data[outPtr++] = clamp((multY + (409 * colorCr) - 223*256)) >> 8;
-					data[outPtr++] = clamp((multY - (100 * colorCb) - (208 * colorCr) + 136*256)) >> 8;
-					data[outPtr++] = clamp((multY + (516 * colorCb) - 277*256)) >> 8;
-					data[outPtr++] = 255;
-				}
-			}
+		// Copy them over to a fresh buffer to transfer to output...
+		var outBuffer = new ArrayBuffer(countBytesY + countBytesColor * 2),
+			outBytes = new Uint8Array(outBuffer);
+		
+		for (var y = 0; y < height; y++) {
+			var inPtrY = bufferY + y * strideY,
+				inBytesY = HEAPU8.subarray(inPtrY, inPtrY + strideY);
+			outBytes.set(inBytesY, y * width);
 		}
-		OgvJsFrameCallback(frameBuffer);
+		for (var y = 0; y < heightColor; y++) {
+			var inPtrCb = bufferCb + y * strideCb,
+				inBytesCb = HEAPU8.subarray(inPtrCb, inPtrCb + widthColor);
+			outBytes.set(inBytesCb, countBytesY + y * widthColor);
+		}
+		for (var y = 0; y < heightColor; y++) {
+			var inPtrCr = bufferCr + y * strideCr,
+				inBytesCr = HEAPU8.subarray(inPtrCr, inPtrCr + widthColor);
+			outBytes.set(inBytesCr, countBytesY + countBytesColor + y * widthColor);
+		}
+
+		// And queue up the output buffer!
+		OgvJsFrameCallback(outBuffer);
 	},
 	
 	OgvJsInitAudio: function(channels, rate) {

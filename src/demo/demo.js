@@ -610,19 +610,22 @@
 				scheduleNextTick(function Player_drawFrame() {
 					lastFrameTime = getTimestamp();
 					if (codec && codec.frameReady) {
-						var rawBuffer = codec.dequeueFrame(),
-							frameBuffer = new Uint8Array(rawBuffer),
+						var yCbCrBuffer = codec.dequeueFrame(),
+							rgbBuffer = convertYCbCr(yCbCrBuffer,
+							                         videoInfo.frameWidth, videoInfo.frameHeight,
+							                         videoInfo.hdec, videoInfo.vdec),
+							rgbBytes = new Uint8Array(rgbBuffer),
 							outputBuffer = imageData.data;
 						
 						if (outputBuffer.set) {
-							outputBuffer.set(frameBuffer);
+							outputBuffer.set(rgbBytes);
 						} else {
 							// IE 10 & 11 still use old CanvasPixelArray, which is
 							// not interoperable with new typed arrays.
 							// We must copy it all byte by byte!
 							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
 							for (var i = 0; i < max; i++) {
-								outputBuffer[i] = frameBuffer[i];
+								outputBuffer[i] = rgbBytes[i];
 							}
 						}
 
