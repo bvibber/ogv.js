@@ -29,7 +29,7 @@ Short-ish clips of a few seconds to at most a few minutes at SD resolution or be
 
 
 The primary target browsers are:
-* Safari 6+ on Mac OS X
+* Safari 6.1+ on Mac OS X (currently still in pre-release...)
 * Internet Explorer 10+ on Windows
 
 Future targets (currently not acceptable performance):
