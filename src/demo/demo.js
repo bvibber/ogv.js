@@ -655,47 +655,51 @@
 			if (codec.frameReady && !frameScheduled) {
 				frameScheduled = true;
 				targetTime = lastFrameTime + (1000.0 / fps);
-				targetDelay = Math.max(0, targetTime - getTimestamp());
-				scheduleNextTick(function Player_drawYCbCrFrame() {
-					lastFrameTime = getTimestamp();
-					if (codec && codec.frameReady) {
-						var yCbCrBuffer = codec.dequeueFrame();
-						// Schedule YCbCr->RGB conversion on a background thread
-						deferredColorConversion(yCbCrBuffer,
-												videoInfo.frameWidth, videoInfo.frameHeight,
-												videoInfo.hdec, videoInfo.vdec,
-												function Player_drawRgbFrame(rgbBuffer) {
-							
-							var rgbBytes = new Uint8Array(rgbBuffer),
-								outputBuffer = imageData.data;
-						
-							if (outputBuffer.set) {
-								outputBuffer.set(rgbBytes);
-							} else {
-								// IE 10 & 11 still use old CanvasPixelArray, which is
-								// not interoperable with new typed arrays.
-								// We must copy it all byte by byte!
-								var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
-								for (var i = 0; i < max; i++) {
-									outputBuffer[i] = rgbBytes[i];
-								}
+				var yCbCrBuffer = codec.dequeueFrame();
+				
+				// Schedule YCbCr->RGB conversion on a background thread
+				deferredColorConversion(yCbCrBuffer,
+										videoInfo.frameWidth, videoInfo.frameHeight,
+										videoInfo.hdec, videoInfo.vdec,
+										function Player_drawRgbFrame(rgbBuffer) {
+
+					var targetDelay = Math.max(0, targetTime - getTimestamp());
+					scheduleNextTick(function() {
+					
+						var rgbBytes = new Uint8Array(rgbBuffer),
+							outputBuffer = imageData.data;
+				
+						if (outputBuffer.set) {
+							outputBuffer.set(rgbBytes);
+						} else {
+							// IE 10 & 11 still use old CanvasPixelArray, which is
+							// not interoperable with new typed arrays.
+							// We must copy it all byte by byte!
+							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
+							for (var i = 0; i < max; i++) {
+								outputBuffer[i] = rgbBytes[i];
 							}
-
-							ctx.putImageData(imageData,
-											 0, 0,
-											 videoInfo.picX, videoInfo.picY,
-											 videoInfo.picWidth, videoInfo.picHeight);
-						});
-						frameScheduled = false;
-
-						if (stream) {
-							setTimeout(function() {
-								// Schedule the next processing.
-								// Don't do it *during* requestAnimationFrame scheduling!
-								process();
-							}, 0);
 						}
-					}
+
+						ctx.putImageData(imageData,
+										 0, 0,
+										 videoInfo.picX, videoInfo.picY,
+										 videoInfo.picWidth, videoInfo.picHeight);
+					}, targetDelay);
+				});
+
+				// Assuming actual drawing happens on time-ish, also schedule the next
+				// frame decode...
+				var targetDelay = Math.max(0, targetTime - getTimestamp());
+				scheduleNextTick(function() {
+					lastFrameTime = getTimestamp();
+					frameScheduled = false;
+
+					setTimeout(function() {
+						// Schedule the next processing.
+						// Don't do it *during* requestAnimationFrame scheduling!
+						process();
+					}, 0);
 				}, targetDelay);
 			}
 		}
