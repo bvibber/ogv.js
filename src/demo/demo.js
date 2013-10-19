@@ -338,6 +338,11 @@
 		});
 	}
 	filter.addEventListener('change', showChooser);
+	filter.addEventListener('keypress', function(event) {
+		if (event.keyCode == '\n') {
+			showChooser();
+		}
+	});
 	filter.addEventListener('delete', showChooser);
 	filter.addEventListener('cut', showChooser);
 	filter.addEventListener('paste', showChooser);
@@ -463,22 +468,25 @@
 	//showChooser();
 	showVideo();
 
-	var stream;	
+	var stream, nextFrameTimer;
 	
 	function stopVideo() {
+		// kill the previous video if any
+		if (stream) {
+			stream.abort();
+			stream = null;
+		}
 		if (codec) {
-			// kill the previous video if any
-			if (stream) {
-				stream.abort();
-				stream = null;
-			}
 			codec.destroy();
 			codec = null;
-
-			if (audioFeeder) {
-				audioFeeder.close();
-				audioFeeder = null;
-			}
+		}
+		if (audioFeeder) {
+			audioFeeder.close();
+			audioFeeder = null;
+		}
+		if (nextFrameTimer) {
+			cancelAnimationFrame(nextFrameTimer);
+			nextFrameTimer = null;
 		}
 	}
 	
@@ -627,7 +635,8 @@
 		
 		var targetFrameTime = getTimestamp() + 1000.0 / fps;
 		function pingAnimationFrame() {
-			requestAnimationFrame(function() {
+			nextFrameTimer = requestAnimationFrame(function() {
+				nextFrameTimer = null;
 				if (codec && stream) {
 					var currentTime = getTimestamp();
 					if (currentTime >= targetFrameTime) {
