@@ -53,11 +53,14 @@ On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0; however 6.1/7
 
 IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE are not supported at all.
 
+
 *Future targets*
+
+See [device notes](https://github.com/brion/ogv.js/wiki/Device-notes) for testing status.
 
 On iOS, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. However, I have not yet gotten acceptable performance on non-tiny files even on the latest iOS 7 Safari. Needs more testing on the iPhone 5S however!
 
-IE 11 on Windows RT 8.1 Preview on an original Surface RT tablet does not perform very well.
+IE 11 on Windows RT 8.1 on an original Surface RT tablet does not perform very well.
 
 In both cases, a native application looms as a possibly better alternative. If installed, a native app could definitely be launched from web content... Need to look into how easy it is to detect presence of apps from web, however; if it's not possible to detect it may need a UX workaround to prompt the user.
 
@@ -105,7 +108,7 @@ Jumping to a new position in the file that hasn't yet been buffered could be acc
 
 *Audio output*
 
-Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit synchronization is not yet performed, the buffering's pretty awful, and the sample rate is wrong unless it happens to match the browser's setting (probably 48 kHz).
+Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit synchronization is not yet performed, so audio and video drift out of sync over time.
 
 Note that audio fails on iOS as web audio must be started in an event handler for a user action.
 
