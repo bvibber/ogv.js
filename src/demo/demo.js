@@ -607,7 +607,7 @@
 				frameScheduled = true;
 				targetTime = lastFrameTime + (1000.0 / fps);
 				targetDelay = Math.max(0, targetTime - getTimestamp());
-				scheduleNextTick(function() {
+				scheduleNextTick(function Player_drawFrame() {
 					lastFrameTime = getTimestamp();
 					if (codec && codec.frameReady) {
 						var frameBuffer = codec.dequeueFrame();
@@ -646,7 +646,11 @@
 						frameScheduled = false;
 					}
 					if (stream) {
-						process();
+						setTimeout(function() {
+							// Schedule the next processing.
+							// Don't do it *during* requestAnimationFrame scheduling!
+							process();
+						}, 0);
 					}
 				}, targetDelay);
 			}
