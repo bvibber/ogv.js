@@ -486,9 +486,8 @@
 		}
 	}
 	
-	// IE 10/11 don't allow to transfer an ArrayBuffer!
-	var canTransfer = !navigator.userAgent.match(/Trident/);
-	var colorConverter = new Worker('YCbCr-worker.js'),
+	var canTransfer = undefined,
+		colorConverter = new Worker('YCbCr-worker.js'),
 		colorConverterCallbacks = [],
 		colorConverterCallbackLastId = 1;
 	colorConverter.addEventListener('message', function(event) {
@@ -513,10 +512,26 @@
 			hdec: hdec,
 			vdec: vdec
 		};
-		if (canTransfer) {
+		if (canTransfer === true) {
 			colorConverter.postMessage(packet, [buffer]);
-		} else {
+		} else if (canTransfer === false) {
 			colorConverter.postMessage(packet);
+		} else {
+			try {
+				colorConverter.postMessage(packet, [buffer]);
+			} catch (e) {
+				// IE 10/11 throw an exception if you try to
+				// transfer an ArrayBuffer. This is annoying.
+				console.log('Cannot transfer ArrayBuffers specifically across threads!');
+				colorConverter.postMessage(packet);
+			}
+			if (buffer.byteLength == 0) {
+				canTransfer = true;
+				console.log('Can transfer objects across threads, yay!');
+			} else {
+				canTransfer = false;
+				console.log('Cannot transfer objects across threads, boo');
+			}
 		}
 	}
 	
