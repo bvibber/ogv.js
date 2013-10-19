@@ -61,6 +61,7 @@ static void sigint_handler (int signal) {
 }
 
 extern void OgvJsInitVideo(int frameWidth, int frameHeight,
+                           int hdec, int vdec,
                            double fps,
                            int picWidth, int picHeight,
                            int picX, int picY);
@@ -269,7 +270,10 @@ static void processHeaders() {
 		 (double)theoraInfo.fps_numerator/theoraInfo.fps_denominator,
 		 theoraInfo.pic_width,theoraInfo.pic_height,theoraInfo.pic_x,theoraInfo.pic_y);
 
+			int hdec = !(theoraInfo.pixel_fmt & 1);
+			int vdec = !(theoraInfo.pixel_fmt & 2);
 			OgvJsInitVideo(theoraInfo.frame_width, theoraInfo.frame_height,
+			               hdec, vdec,
 			               (float)theoraInfo.fps_numerator / theoraInfo.fps_denominator,
 			               theoraInfo.pic_width, theoraInfo.pic_height,
 			               theoraInfo.pic_x, theoraInfo.pic_y);

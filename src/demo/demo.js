@@ -789,21 +789,12 @@
 			imageData = null;
 
 		function drawFrame() {
-			var rawBuffer = codec.dequeueFrame(),
-				frameBuffer = new Uint8Array(rawBuffer),
+			var yCbCrBuffer = codec.dequeueFrame(),
 				outputBuffer = imageData.data;
-			
-			if (outputBuffer.set) {
-				outputBuffer.set(frameBuffer);
-			} else {
-				// IE 10 & 11 still use old CanvasPixelArray, which is
-				// not interoperable with new typed arrays.
-				// We must copy it all byte by byte!
-				var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
-				for (var i = 0; i < max; i++) {
-					outputBuffer[i] = frameBuffer[i];
-				}
-			}
+
+			convertYCbCr(yCbCrBuffer, outputBuffer,
+						 videoInfo.frameWidth, videoInfo.frameHeight,
+						 videoInfo.hdec, videoInfo.vdec),
 
 			ctx.putImageData(imageData,
 							 0, 0,

@@ -26,7 +26,7 @@ build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js compileOgg
 build/ogv.js : src/ogv-main.js build/intermediate/ogv-libs.js
 	importer src/ogv-main.js build/ogv.js
 
-build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js build/ogv.js src/dynamicaudio.swf
+build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf
 	test -d build/demo || mkdir build/demo
 	cp src/demo/index.html build/demo/index.html
 	cp src/demo/demo.css build/demo/demo.css
@@ -37,6 +37,7 @@ build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js s
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp src/StreamFile.js build/demo/lib/StreamFile.js
 	cp src/AudioFeeder.js build/demo/lib/AudioFeeder.js
+	cp src/YCbCr.js build/demo/lib/YCbCr.js
 	cp build/ogv.js build/demo/lib/ogv.js
 
 
