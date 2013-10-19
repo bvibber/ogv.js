@@ -11,9 +11,10 @@
 function StreamFile(options) {
 	var self = this,
 		url = options.url,
-		onread = options.onread,
-		ondone = options.ondone,
-		onerror = options.onerror,
+		onstart = options.onstart || function(){},
+		onread = options.onread || function(){},
+		ondone = options.ondone || function(){},
+		onerror = options.onerror || function(){},
 		bufferSize = options.bufferSize || 4096;
 	
 	var xhr = new XMLHttpRequest();
@@ -79,6 +80,8 @@ function StreamFile(options) {
 					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
 					onerror();
 					xhr.abort();
+				} else {
+					onstart();
 				}
 			} else if (xhr.readyState == 4) {
 				// Complete.
@@ -127,10 +130,7 @@ function StreamFile(options) {
 				// Transfer us over to the StreamReader...
 				stream = xhr.response;
 				xhr.onreadystatechange = null;
-				if (waitingForInput) {
-					waitingForInput = false;
-					self.readBytes();
-				}
+				onstart();
 			}
 		}
 		
@@ -209,6 +209,8 @@ function StreamFile(options) {
 					callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
 					onerror();
 					xhr.abort();
+				} else {
+					onstart();
 				}
 			} else if (xhr.readyState == 3) {
 				// xhr.response is a binary string of entire file so far

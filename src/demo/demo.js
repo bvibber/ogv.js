@@ -609,18 +609,20 @@
 		}
 		
 		function process() {
-			var start = getTimestamp();
-			// Process until we run out of data or
-			// completely decode a video frame...
-			while (!codec.frameReady) {
-				more = codec.process();
-				if (!more) {
-					// Ran out of input
-					stream.readBytes();
-					break;
+			if (!codec.frameReady) {
+				var start = getTimestamp();
+				// Process until we run out of data or
+				// completely decode a video frame...
+				while (!codec.frameReady) {
+					more = codec.process();
+					if (!more) {
+						// Ran out of input
+						stream.readBytes();
+						break;
+					}
 				}
+				recordBenchmarkPoint(getTimestamp() - start);
 			}
-			recordBenchmarkPoint(getTimestamp() - start);
 		}
 		
 		var targetFrameTime = getTimestamp() + 1000.0 / fps;
@@ -649,6 +651,12 @@
 		stream = new StreamFile({
 			url: selectedUrl,
 			bufferSize: 65536,
+			onstart: function() {
+				console.log('stream.onstart');
+				// Fire off the read/decode/draw loop...
+				process();
+				pingAnimationFrame();
+			},
 			onread: function(data) {
 				totalRead += data.byteLength;
 				// Pass chunk into the codec's buffer
@@ -667,19 +675,17 @@
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
+				/*
 				window.removeEventListener('error', errorHandler);
 				if (audioFeeder) {
 					audioFeeder.close();
 					audioFeeder = null;
 				}
 				stream = null;
+				*/
 			}
 		});
-		stream.readBytes();
-
-		// Fire off the read/decode/draw loop...
-		process();
-		pingAnimationFrame();
+		//stream.readBytes();
 	}
 
 	controls.querySelector('.play').addEventListener('click', playVideo);
