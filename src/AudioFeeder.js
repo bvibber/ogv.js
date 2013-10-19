@@ -66,7 +66,7 @@ function AudioFeeder(channels, rate) {
 			}
 		} else {
 			if (!inputBuffer) {
-				//console.log("Starved for audio!");
+				console.log("Starved for audio!");
 			}
 			for (var channel = 0; channel < channels; channel++) {
 				var output = event.outputBuffer.getChannelData(channel);

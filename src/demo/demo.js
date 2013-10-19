@@ -238,12 +238,8 @@
 	}
 
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-	function scheduleNextTick(func, targetDelay) {
-		if (targetDelay > 16) {
-			window.setTimeout(func, targetDelay);
-		} else {
-			requestAnimationFrame(func);
-		}
+	if (!requestAnimationFrame) {
+		throw new Error("No requestAnimationFrame available!");
 	}
 
 	var player = document.getElementById('player'),
@@ -589,6 +585,29 @@
 			frameScheduled = false,
 			imageData = null;
 
+		function drawFrame() {
+			var rawBuffer = codec.dequeueFrame(),
+				frameBuffer = new Uint8Array(rawBuffer),
+				outputBuffer = imageData.data;
+			
+			if (outputBuffer.set) {
+				outputBuffer.set(frameBuffer);
+			} else {
+				// IE 10 & 11 still use old CanvasPixelArray, which is
+				// not interoperable with new typed arrays.
+				// We must copy it all byte by byte!
+				var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
+				for (var i = 0; i < max; i++) {
+					outputBuffer[i] = frameBuffer[i];
+				}
+			}
+
+			ctx.putImageData(imageData,
+							 0, 0,
+							 videoInfo.picX, videoInfo.picY,
+							 videoInfo.picWidth, videoInfo.picHeight);
+		}
+		
 		function process() {
 			var start = getTimestamp();
 			// Process until we run out of data or
@@ -602,45 +621,27 @@
 				}
 			}
 			recordBenchmarkPoint(getTimestamp() - start);
-			
-			if (codec.frameReady && !frameScheduled) {
-				frameScheduled = true;
-				targetTime = lastFrameTime + (1000.0 / fps);
-				targetDelay = Math.max(0, targetTime - getTimestamp());
-				scheduleNextTick(function Player_drawFrame() {
-					lastFrameTime = getTimestamp();
-					if (codec && codec.frameReady) {
-						var rawBuffer = codec.dequeueFrame(),
-							frameBuffer = new Uint8Array(rawBuffer),
-							outputBuffer = imageData.data;
-						
-						if (outputBuffer.set) {
-							outputBuffer.set(frameBuffer);
+		}
+		
+		var targetFrameTime = getTimestamp() + 1000.0 / fps;
+		function pingAnimationFrame() {
+			requestAnimationFrame(function() {
+				if (codec && stream) {
+					var currentTime = getTimestamp();
+					if (currentTime >= targetFrameTime) {
+						// It's time to draw a frame, if we have one
+						if (codec.frameReady) {
+							drawFrame();
+							targetFrameTime += 1000.0 / fps;
 						} else {
-							// IE 10 & 11 still use old CanvasPixelArray, which is
-							// not interoperable with new typed arrays.
-							// We must copy it all byte by byte!
-							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
-							for (var i = 0; i < max; i++) {
-								outputBuffer[i] = frameBuffer[i];
-							}
+							console.log("Late video frame!");
+							targetFrameTime = getTimestamp() + 1000.0 / fps;
 						}
-
-						ctx.putImageData(imageData,
-						                 0, 0,
-						                 videoInfo.picX, videoInfo.picY,
-						                 videoInfo.picWidth, videoInfo.picHeight);
-						frameScheduled = false;
+						process();
 					}
-					if (stream) {
-						setTimeout(function() {
-							// Schedule the next processing.
-							// Don't do it *during* requestAnimationFrame scheduling!
-							process();
-						}, 0);
-					}
-				}, targetDelay);
-			}
+					pingAnimationFrame();
+				}
+			});
 		}
 		
 		var totalRead = 0;
@@ -675,7 +676,12 @@
 			}
 		});
 		stream.readBytes();
+
+		// Fire off the read/decode/draw loop...
+		process();
+		pingAnimationFrame();
 	}
+
 	controls.querySelector('.play').addEventListener('click', playVideo);
 	controls.querySelector('.stop').addEventListener('click', stopVideo);
 	controls.querySelector('#mute').addEventListener('click', function() {
