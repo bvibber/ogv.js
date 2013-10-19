@@ -610,32 +610,19 @@
 				scheduleNextTick(function Player_drawFrame() {
 					lastFrameTime = getTimestamp();
 					if (codec && codec.frameReady) {
-						var frameBuffer = codec.dequeueFrame();
+						var rawBuffer = codec.dequeueFrame(),
+							frameBuffer = new Uint8Array(rawBuffer),
+							outputBuffer = imageData.data;
 						
-						// Copy image data into the imageData...
-						//
-						// Some old docs indicate you can do this as a shortcut:
-						//
-						//    imageData.data.set(frameBuffer);
-						//
-						// but it doesn't appear to work as expected.
-						
-						if (window.Uint8ClampedArray) {
-							// detection hack -- IE won't let us build an
-							// Uint32Array around an imageData buffer. :(
-							
-							var max = videoInfo.frameWidth * videoInfo.frameHeight,
-								inArr = new Uint32Array(frameBuffer),
-								outArr = new Uint32Array(imageData.data.buffer);
-							for (var i = 0; i < max; i++) {
-								outArr[i] = inArr[i];
-							}
+						if (outputBuffer.set) {
+							outputBuffer.set(frameBuffer);
 						} else {
-							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4,
-								inArr = new Uint8Array(frameBuffer),
-								outArr = imageData.data;
+							// IE 10 & 11 still use old CanvasPixelArray, which is
+							// not interoperable with new typed arrays.
+							// We must copy it all byte by byte!
+							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
 							for (var i = 0; i < max; i++) {
-								outArr[i] = inArr[i];
+								outputBuffer[i] = frameBuffer[i];
 							}
 						}
 
