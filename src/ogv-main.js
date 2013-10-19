@@ -35,6 +35,7 @@ OgvJs = (function(options) {
 	}
 	
 	function OgvJsInitVideoCallback(info) {
+		self.hasVideo = true;
 		if (self.oninitvideo) {
 			self.oninitvideo(info);
 		}
@@ -51,15 +52,16 @@ OgvJs = (function(options) {
 	}
 	
 	function OgvJsInitAudioCallback(info) {
+		self.hasAudio = true;
 		if (self.oninitaudio) {
 			self.oninitaudio(info);
 		}
 	}
 
+	var audioBuffers = [];
 	function OgvJsAudioCallback(audioData) {
-		if (self.onaudio) {
-			self.onaudio(audioData);
-		}
+		audioBuffers.push(audioData);
+		self.audioReady = true;
 	}
 
 	/**
@@ -73,14 +75,24 @@ OgvJs = (function(options) {
 	self.onaudioinit = null;
 
 	/**
-	 * @property function(ArrayBuffer audioData) event handler when audio is decoded
+	 * @property boolean does the media stream contain video?
 	 */
-	self.onaudio = null;
+	self.hasVideo = false;
+
+	/**
+	 * @property boolean does the media stream contain audio?
+	 */
+	self.hasAudio = false;
 
 	/**
 	 * @property boolean Have we decoded a frame that's ready to be used?
 	 */
 	self.frameReady = false;
+	
+	/**
+	 * @property boolean Have we decoded an audio buffer that's ready to be used?
+	 */
+	self.audioReady = false;
 	
 	/**
 	 * Tear down the instance when done.
@@ -112,8 +124,6 @@ OgvJs = (function(options) {
 	
 	/**
 	 * Process the next packet in the stream
-	 *
-	 * This may trigger 'onframe' event callbacks after calling.
 	 */
 	self.process = function() {
 		return OgvJsProcess();
@@ -122,7 +132,7 @@ OgvJs = (function(options) {
 	/**
 	 * Return the last-decoded frame, if any.
 	 *
-	 * @return ImageData or null
+	 * @return ImageData
 	 */
 	self.dequeueFrame = function() {
 		if (self.frameReady) {
@@ -132,6 +142,34 @@ OgvJs = (function(options) {
 			return frame;
 		} else {
 			throw new Error("called dequeueFrame when no frame ready");
+		}
+	}
+
+	/**
+	 * Return the next decoded audio buffer
+	 *
+	 * @return array of audio thingies
+	 */
+	self.dequeueAudio = function() {
+		if (self.audioReady) {
+			var buffer = audioBuffers.shift();
+			self.audioReady = (audioBuffers.length > 0);
+			return buffer;
+		} else {
+			throw new Error("called dequeueAudio when no audio ready");
+		}
+	}
+
+	/**
+	 * Is there processed data to handle?
+	 *
+	 * @return boolean
+	 */	
+	self.dataReady = function() {
+		if (self.hasVideo) {
+			return self.frameReady;
+		} else {
+			return self.audioReady;
 		}
 	}
 

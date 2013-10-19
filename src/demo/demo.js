@@ -585,9 +585,6 @@
 				audioFeeder.mute();
 			}
 		}
-		codec.onaudio = function(samplesPerChannel) {
-			audioFeeder.bufferData(samplesPerChannel);
-		};
 
 		var lastFrameTime = getTimestamp(),
 			frameScheduled = false,
@@ -617,15 +614,23 @@
 		}
 		
 		function process() {
-			if (!codec.frameReady) {
+			if (!codec.dataReady()) {
 				var start = getTimestamp();
 				// Process until we run out of data or
 				// completely decode a video frame...
-				while (!codec.frameReady) {
+				while (!codec.dataReady()) {
 					more = codec.process();
 					if (!more) {
-						// Ran out of input
-						stream.readBytes();
+						if (stream) {
+							// Ran out of buffered input
+							stream.readBytes();
+						} else {
+							// Ran out of stream!
+							setTimeout(function() {
+								showStatus('End of stream reached.');
+								stopVideo();
+							}, 0);
+						}
 						break;
 					}
 				}
@@ -637,17 +642,28 @@
 		function pingAnimationFrame() {
 			nextFrameTimer = requestAnimationFrame(function() {
 				nextFrameTimer = null;
-				if (codec && stream) {
-					var currentTime = getTimestamp();
-					if (currentTime >= targetFrameTime) {
-						// It's time to draw a frame, if we have one
-						if (codec.frameReady) {
-							drawFrame();
-							targetFrameTime += 1000.0 / fps;
-						} else {
-							console.log("Late video frame!");
-							targetFrameTime = getTimestamp() + 1000.0 / fps;
+				if (codec) {
+					if (codec.audioReady) {
+						while (codec.audioReady) {
+							var buffer = codec.dequeueAudio();
+							audioFeeder.bufferData(buffer);
 						}
+					}
+					if (codec.hasVideo) {
+						var currentTime = getTimestamp();
+						if (currentTime >= targetFrameTime) {
+							// It's time to draw a frame, if we have one
+							if (codec.frameReady) {
+								drawFrame();
+								targetFrameTime += 1000.0 / fps;
+							} else {
+								console.log("Late video frame!");
+								targetFrameTime = getTimestamp() + 1000.0 / fps;
+							}
+							process();
+						}
+					} else {
+						// Process next set of audio
 						process();
 					}
 					pingAnimationFrame();
@@ -675,15 +691,11 @@
 			ondone: function() {
 				console.log("reading done.");
 				window.removeEventListener('error', errorHandler);
-				if (audioFeeder) {
-					// fixme -- do this when done *decoding* not done reading
-					audioFeeder.close();
-					audioFeeder = null;
-				}
 				stream = null;
 			},
 			onerror: function(err) {
 				console.log("reading encountered error: " + err);
+				showStatus('end of stream reached.');
 				/*
 				window.removeEventListener('error', errorHandler);
 				if (audioFeeder) {
