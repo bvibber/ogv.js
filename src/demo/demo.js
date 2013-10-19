@@ -486,6 +486,40 @@
 		}
 	}
 	
+	// IE 10/11 don't allow to transfer an ArrayBuffer!
+	var canTransfer = !navigator.userAgent.match(/Trident/);
+	var colorConverter = new Worker('YCbCr-worker.js'),
+		colorConverterCallbacks = [],
+		colorConverterCallbackLastId = 1;
+	colorConverter.addEventListener('message', function(event) {
+		var data = event.data;
+		if (data.action == 'result:convertYCbCr') {
+			var callback = colorConverterCallbacks[data.id];
+			colorConverterCallbacks[data.id] = undefined;
+			callback(data.buffer);
+		} else {
+			throw new Error("Received unexpected result: " + data.action);
+		}
+	});
+	function deferredColorConversion(buffer, width, height, hdec, vdec, callback) {
+		var id = ++colorConverterCallbackLastId;
+		colorConverterCallbacks[id] = callback;
+		var packet = {
+			action: 'convertYCbCr',
+			id: id,
+			buffer: buffer,
+			width: width,
+			height: height,
+			hdec: hdec,
+			vdec: vdec
+		};
+		if (canTransfer) {
+			colorConverter.postMessage(packet, [buffer]);
+		} else {
+			colorConverter.postMessage(packet);
+		}
+	}
+	
 	function playVideo() {
 		stopVideo();
 		clearBenchmark();
@@ -607,40 +641,45 @@
 				frameScheduled = true;
 				targetTime = lastFrameTime + (1000.0 / fps);
 				targetDelay = Math.max(0, targetTime - getTimestamp());
-				scheduleNextTick(function Player_drawFrame() {
+				scheduleNextTick(function Player_drawYCbCrFrame() {
 					lastFrameTime = getTimestamp();
 					if (codec && codec.frameReady) {
-						var yCbCrBuffer = codec.dequeueFrame(),
-							rgbBuffer = convertYCbCr(yCbCrBuffer,
-							                         videoInfo.frameWidth, videoInfo.frameHeight,
-							                         videoInfo.hdec, videoInfo.vdec),
-							rgbBytes = new Uint8Array(rgbBuffer),
-							outputBuffer = imageData.data;
+						var yCbCrBuffer = codec.dequeueFrame();
+						// Schedule YCbCr->RGB conversion on a background thread
+						deferredColorConversion(yCbCrBuffer,
+												videoInfo.frameWidth, videoInfo.frameHeight,
+												videoInfo.hdec, videoInfo.vdec,
+												function Player_drawRgbFrame(rgbBuffer) {
+							
+							var rgbBytes = new Uint8Array(rgbBuffer),
+								outputBuffer = imageData.data;
 						
-						if (outputBuffer.set) {
-							outputBuffer.set(rgbBytes);
-						} else {
-							// IE 10 & 11 still use old CanvasPixelArray, which is
-							// not interoperable with new typed arrays.
-							// We must copy it all byte by byte!
-							var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
-							for (var i = 0; i < max; i++) {
-								outputBuffer[i] = rgbBytes[i];
+							if (outputBuffer.set) {
+								outputBuffer.set(rgbBytes);
+							} else {
+								// IE 10 & 11 still use old CanvasPixelArray, which is
+								// not interoperable with new typed arrays.
+								// We must copy it all byte by byte!
+								var max = videoInfo.frameWidth * videoInfo.frameHeight * 4;
+								for (var i = 0; i < max; i++) {
+									outputBuffer[i] = rgbBytes[i];
+								}
 							}
-						}
 
-						ctx.putImageData(imageData,
-						                 0, 0,
-						                 videoInfo.picX, videoInfo.picY,
-						                 videoInfo.picWidth, videoInfo.picHeight);
+							ctx.putImageData(imageData,
+											 0, 0,
+											 videoInfo.picX, videoInfo.picY,
+											 videoInfo.picWidth, videoInfo.picHeight);
+						});
 						frameScheduled = false;
-					}
-					if (stream) {
-						setTimeout(function() {
-							// Schedule the next processing.
-							// Don't do it *during* requestAnimationFrame scheduling!
-							process();
-						}, 0);
+
+						if (stream) {
+							setTimeout(function() {
+								// Schedule the next processing.
+								// Don't do it *during* requestAnimationFrame scheduling!
+								process();
+							}, 0);
+						}
 					}
 				}, targetDelay);
 			}

@@ -23,12 +23,13 @@ build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js compileOgg
 build/ogv.js : src/ogv-main.js build/intermediate/ogv-libs.js
 	importer src/ogv-main.js build/ogv.js
 
-build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js
+build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/YCbCr-worker.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js
 	test -d build/demo || mkdir build/demo
 	cp src/demo/index.html build/demo/index.html
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
+	cp src/demo/YCbCr-worker.js build/demo/YCbCr-worker.js
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp src/StreamFile.js build/demo/lib/StreamFile.js
