@@ -88,6 +88,22 @@
 		ctx.stroke();
 	}
 	
+	var progress = {
+		total: 1,
+		buffered: 0,
+		processed: 0
+	};
+	function updateProgress() {
+		function percent(val) {
+			var ratio = val / progress.total,
+				percentage = ratio * 100.0;
+			return percentage + '%';
+		}
+		document.getElementById('progress-total').title = progress.total;
+		document.getElementById('progress-buffered').style.width = percent(progress.buffered);
+		document.getElementById('progress-processed').style.width = percent(progress.processed);
+	}
+	
 	/**
 	 * dictionary -> URL query string params
 	 */
@@ -163,14 +179,16 @@
 	
 	/**
 	 * @param String media
-	 * @param function([{format, title, width, height, url}]) callback
+	 * @param function({duration}, [{format, title, width, height, url}]) callback
 	 */
 	function findSourcesForMedia(media, callback) {
 		commonsApi({
 			action: 'query',
 			prop: 'imageinfo|transcodestatus',
 			titles: media,
-			iiprop: 'url|size'
+			iiprop: 'url|size|mediatype|metadata',
+			iiurlwidth: 1280,
+			iiurlheight: 720
 		}, function(data, err) {
 
 			var sources = [],
@@ -185,6 +203,21 @@
 				
 			var imageinfo = page.imageinfo[0],
 				transcodestatus = page.transcodestatus;
+			
+			function findMetadata(name) {
+				var meta = imageinfo.metadata;
+				for (var i = 0; i < meta.length; i++) {
+					var pair = meta[i];
+					if (pair.name === name) {
+						return pair.value;
+					}
+				}
+				return undefined;
+			}
+			var mediaInfo = {
+				mediatype: imageinfo.mediatype,
+				duration: findMetadata('length') || findMetadata('playtime_seconds')
+			};
 			
 			// Build an entry for the original media
 			var ext = getExtension(imageinfo.url),
@@ -206,7 +239,8 @@
 				width: imageinfo.width,
 				height: imageinfo.height,
 				url: imageinfo.url,
-				bitrate: 0 // todo: calculate
+				size: imageinfo.size,
+				bitrate: imageinfo.size * 8 / mediaInfo.duration
 			});
 			
 			// Build entries for the transcodes
@@ -218,13 +252,15 @@
 						matches = key.match(/^(\d+)p\.(.*?)$/);
 						if (matches) {
 							var height = parseInt(matches[1]),
-								format = matches[2];
+								format = matches[2],
+								bitrate = parseFloat(transcode.final_bitrate);
 							sources.push({
 								format: format,
 								width: Math.round(imageinfo.width * height / imageinfo.height),
 								height: height,
 								url: transcodeUrl(imageinfo.url, height, format),
-								bitrate: parseInt(transcode.final_bitrate)
+								size: Math.round(bitrate * mediaInfo.duration / 8),
+								bitrate: bitrate
 							});
 						} else {
 							throw new Error("unexpected transcode key name: " + key);
@@ -233,7 +269,7 @@
 				}
 			}
 			
-			callback(sources);
+			callback(mediaInfo, sources);
 		});
 	}
 
@@ -425,7 +461,10 @@
 		var pagelink = document.getElementById('pagelink');
 		pagelink.innerHTML = 'Open this file on Wikimedia Commons';
 		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(selectedTitle);
-		findSourcesForMedia(selectedTitle, function(sources) {
+		findSourcesForMedia(selectedTitle, function(mediaInfo, sources) {
+			console.log('type of file: ' + mediaInfo.mediatype);
+			console.log('duration of file: ' + mediaInfo.duration);
+			
 			// Find the smallest ogv stream
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
@@ -455,6 +494,11 @@
 			canvas.width = selected.width;
 			canvas.height = selected.height;
 			resizeVideo();
+
+			progress.total = selected.size;
+			progress.buffered = 0;
+			progress.processed = 0;
+			updateProgress();
 			
 			//nativeVideo.width = selected.width;
 			//nativeVideo.height = selected.height;
@@ -682,8 +726,12 @@
 				process();
 				pingAnimationFrame();
 			},
+			onbuffer: function() {
+				progress.buffered = stream.bytesBuffered;
+			},
 			onread: function(data) {
-				totalRead += data.byteLength;
+				progress.processed = stream.bytesRead;
+				
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
 				process();
@@ -722,11 +770,13 @@
 		setHash();
 	});
 	
-	var controlPanel = document.getElementById('control-panel');
+	var topPanel = document.getElementById('top-panel'),
+		controlPanel = document.getElementById('control-panel');
 	var playerTimeout;
 	function hideControlPanel() {
 		if (controlPanel.style.opacity == 1.0) {
 			controlPanel.style.opacity = 0.0;
+			topPanel.style.opacity = 0.0;
 		}
 		if (playerTimeout) {
 			clearTimeout(playerTimeout);
@@ -740,11 +790,13 @@
 		playerTimeout = setTimeout(function() {
 			playerTimeout = null;
 			controlPanel.style.opacity = 0.0;
+			topPanel.style.opacity = 0.0;
 		}, 5000);
 	}
 	function showControlPanel() {
 		if (controlPanel.style.opacity == 0.0) {
 			controlPanel.style.opacity = 1.0;
+			topPanel.style.opacity = 1.0;
 		}
 	}
 	player.addEventListener('mousemove', function() {
@@ -760,6 +812,7 @@
 	window.setInterval(function() {
 		if (benchmarkData.length > 0) {
 			showBenchmark();
+			updateProgress();
 		}
 	}, 1000);
 

@@ -12,6 +12,7 @@ function StreamFile(options) {
 	var self = this,
 		url = options.url,
 		onstart = options.onstart || function(){},
+		onbuffer = options.onbuffer || function(){},
 		onread = options.onread || function(){},
 		ondone = options.ondone || function(){},
 		onerror = options.onerror || function(){},
@@ -52,16 +53,20 @@ function StreamFile(options) {
 		function popBuffer() {
 			var buffer = buffers.shift();
 			if (!bufferSize || bufferSize >= buffer.byteLength) {
+				self.bytesRead += buffer.byteLength;
 				return buffer;
 			} else {
 				// Split the buffer and requeue the rest
 				var thisBuffer = buffer.slice(0, bufferSize),
 					nextBuffer = buffer.slice(bufferSize);
 				buffers.unshift(nextBuffer);
+				self.bytesRead += thisBuffer.byteLength;
 				return thisBuffer;
 			}
 		}
 		function handleInput(buffer) {
+			self.bytesBuffered += buffer.byteLength;
+			onbuffer();
 			buffers.push(buffer);
 			if (waitingForInput) {
 				waitingForInput = false;
@@ -138,8 +143,12 @@ function StreamFile(options) {
 			if (stream) {
 				streamReader = new MSStreamReader();
 				streamReader.onload = function(event) {
-					if (event.target.result.byteLength > 0) {
-						onread(event.target.result);
+					var buffer = event.target.result,
+						len = buffer.byteLength;
+					if (len > 0) {
+						self.bytesBuffered += len;
+						self.bytesRead += len;
+						onread(buffer);
 					} else {
 						// Zero length means end of stream.
 						ondone();
@@ -182,6 +191,7 @@ function StreamFile(options) {
 		function popBuffer() {
 			var chunk = xhr.responseText.slice(lastPosition, lastPosition + bufferSize);
 			lastPosition += chunk.length;
+			self.bytesRead += chunk.length;
 			return stringToArrayBuffer(chunk);
 		}
 
@@ -213,7 +223,9 @@ function StreamFile(options) {
 					onstart();
 				}
 			} else if (xhr.readyState == 3) {
-				// xhr.response is a binary string of entire file so far
+				// xhr.responseText is a binary string of entire file so far
+				self.bytesBuffered = xhr.responseText.length;
+				onbuffer();
 				readNextChunk();
 			} else if (xhr.readyState == 4) {
 				// Complete.
@@ -245,6 +257,10 @@ function StreamFile(options) {
 	
 	xhr.send();
 	
+	self.bytesBuffered = 0;
+
+	self.bytesRead = 0;
+
 	self.abort = function() {
 		xhr.abort();
 	};

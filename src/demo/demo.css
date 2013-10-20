@@ -91,14 +91,14 @@ body {
 	text-align: center;
 }
 
+#top-panel,
 #control-panel {
 	position: absolute;
 	
 	left: 0;
 	right: 0;
-	bottom: 0;
 	max-height: 5em;
-	height: 100%;
+	height: 33%;
 	padding-bottom: 16px;
 	
 	background: rgba(0, 0, 0, 0.5);
@@ -109,6 +109,14 @@ body {
 	transition: opacity 1.0s;
 }
 
+#top-panel {
+	top: 0;
+}
+#control-panel {
+	bottom: 0;
+}
+
+#top,
 #controls {
 	padding: 16px;
 }
@@ -131,6 +139,30 @@ body {
 }
 #mute, label {
 	cursor: pointer;
+}
+
+#progress-total{
+	height: 1.5em;
+	position: relative;
+}
+
+#progress-buffered,
+#progress-processed {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+}
+
+#progress-total {
+	background: gray;
+}
+#progress-buffered {
+	background: white;
+}
+#progress-processed {
+	background: green;
 }
 
 #metadata {
