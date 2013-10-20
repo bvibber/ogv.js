@@ -38,9 +38,9 @@ function AudioFeeder(channels, rate) {
 		muted = false;
 	
 	if (context.createScriptProcessor) {
-		node = context.createScriptProcessor(bufferSize, 0, 2)
+		node = context.createScriptProcessor(bufferSize, 0, channels)
 	} else if (context.createJavaScriptNode) {
-		node = context.createJavaScriptNode(bufferSize, 0, 2)
+		node = context.createJavaScriptNode(bufferSize, 0, channels)
 	} else {
 		throw new Error("Bad version of web audio API?");
 	}
