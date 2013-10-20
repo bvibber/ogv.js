@@ -68,6 +68,7 @@ body {
 	position: absolute;
 
 	right: 0;
+	max-width: 100%;
 	width: 500px;
 
 	top: 5em;
