@@ -721,6 +721,37 @@
 		}
 		setHash();
 	});
+	
+	var controlPanel = document.getElementById('control-panel');
+	var playerTimeout;
+	function hideControlPanel() {
+		if (controlPanel.style.opacity == 1.0) {
+			controlPanel.style.opacity = 0.0;
+		}
+		if (playerTimeout) {
+			clearTimeout(playerTimeout);
+			playerTimeout = null;
+		}
+	}
+	function delayHideControlPanel() {
+		if (playerTimeout) {
+			clearTimeout(playerTimeout);
+		}
+		playerTimeout = setTimeout(function() {
+			playerTimeout = null;
+			controlPanel.style.opacity = 0.0;
+		}, 5000);
+	}
+	function showControlPanel() {
+		if (controlPanel.style.opacity == 0.0) {
+			controlPanel.style.opacity = 1.0;
+		}
+	}
+	player.addEventListener('mousemove', function() {
+		showControlPanel();
+		delayHideControlPanel();
+	});
+	delayHideControlPanel();
 
 	//nativePlayer.querySelector('.play').addEventListener('click', function() {
 	//	nativeVideo.play();

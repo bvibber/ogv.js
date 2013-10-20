@@ -90,19 +90,40 @@ body {
 	text-align: center;
 }
 
-#controls {
-	width: 100%;
-	padding: 8px;
+#control-panel {
+	position: absolute;
 	
+	left: 0;
+	right: 0;
+	bottom: 0;
+	max-height: 5em;
+	height: 100%;
+	padding-bottom: 16px;
+	
+	background: rgba(0, 0, 0, 0.5);
+	color: white;
 	text-align: center;
+	
+	opacity: 1.0;
+	transition: opacity 1.0s;
+}
+
+#controls {
+	padding: 16px;
 }
 
 #controls button {
-	background: rgba(0, 0, 0, 0.5);
+	appearance: none;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+
 	color: white;
-	border: solid 1px white;
-	border-radius: 8px;
+	background: transparent;
+	border: none;
+	
+	width: 2em;
 	height: 1.5em;
+
 	font-size: 2em;
 	padding: 0px 16px;
 	cursor: pointer;

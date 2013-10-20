@@ -18,17 +18,19 @@
 	<div id="main-player">
 		<div id="player" class="ogvjs-player">
 			<canvas width=640 height=360></canvas>
+			<div id="control-panel">
+				<div id="controls">
+					<button class="play">▶</button>
+					<button class="stop">◼</button>
+					<span><input type="checkbox" id="mute"><label for="mute">Mute</label></span>
+				</div>
+			</div>
 		</div>
 
 		<div id="metadata">
 			<table id="info">
 				<tr>
 					<td colspan=2>
-						<div id="controls">
-							<button class="play">▶</button>
-							<button class="stop">◼</button>
-							<span><input type="checkbox" id="mute"><label for="mute">Mute</label></span>
-						</div>
 						<div>
 							<a id="pagelink" href="javascript:false" target="_blank">...</a>
 						</div>
