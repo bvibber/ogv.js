@@ -657,13 +657,19 @@
 							 videoInfo.picWidth, videoInfo.picHeight);
 		}
 		
+		var lastFrameDecodeTime = 0.0;
 		function process() {
 			if (!codec.dataReady()) {
-				var start = getTimestamp();
 				// Process until we run out of data or
 				// completely decode a video frame...
 				while (!codec.dataReady()) {
+					var start = getTimestamp();
+					
 					more = codec.process();
+					
+					var delta = (getTimestamp() - start);
+					lastFrameDecodeTime += delta;
+
 					if (!more) {
 						if (stream) {
 							// Ran out of buffered input
@@ -678,7 +684,6 @@
 						break;
 					}
 				}
-				recordBenchmarkPoint(getTimestamp() - start);
 			}
 		}
 		
@@ -699,6 +704,8 @@
 							// It's time to draw a frame, if we have one
 							if (codec.frameReady) {
 								drawFrame();
+								recordBenchmarkPoint(lastFrameDecodeTime);
+								lastFrameDecodeTime = 0.0;
 								targetFrameTime += 1000.0 / fps;
 							} else {
 								console.log("Late video frame!");
@@ -709,6 +716,8 @@
 					} else {
 						// Process next set of audio
 						process();
+						recordBenchmarkPoint(lastFrameDecodeTime);
+						lastFrameDecodeTime = 0.0;
 					}
 					pingAnimationFrame();
 				}
