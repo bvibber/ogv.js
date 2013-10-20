@@ -457,9 +457,12 @@
 	
 	function showVideo() {
 		window.scrollTo(0, 0);
+
+		var prettyName = selectedTitle.replace(/_/g, ' ').replace(/^File:/, '');
+		document.title = prettyName + ' - ogv.js demo/test';
 		
 		var pagelink = document.getElementById('pagelink');
-		pagelink.innerHTML = 'Open this file on Wikimedia Commons';
+		pagelink.textContent = prettyName;
 		pagelink.href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(selectedTitle);
 		findSourcesForMedia(selectedTitle, function(mediaInfo, sources) {
 			console.log('type of file: ' + mediaInfo.mediatype);
