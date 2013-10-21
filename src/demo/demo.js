@@ -781,6 +781,20 @@
 		}
 		setHash();
 	});
+	controls.querySelector('.fullscreen').addEventListener('click', function() {
+		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+		if (fullscreenElement == player) {
+			var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
+			cancelFullscreen();
+		} else {
+			var requestFullscreen = (player.requestFullscreen || player.mozRequestFullScreen || player.webkitRequestFullscreen || player.msRequestFullscreen).bind(player);
+			requestFullscreen();
+		}
+	});
+	document.addEventListener('fullscreenchange', resizeVideo);
+	document.addEventListener('mozfullscreenchange', resizeVideo);
+	document.addEventListener('webkitfullscreenchange', resizeVideo);
+	document.addEventListener('MSFullscreenChange', resizeVideo);
 	
 	var topPanel = document.getElementById('top-panel'),
 		controlPanel = document.getElementById('control-panel');
