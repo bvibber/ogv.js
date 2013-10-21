@@ -91,7 +91,6 @@ body {
 	text-align: center;
 }
 
-#player:fullscreen,
 #player:-webkit-full-screen {
 	position: absolute;
 	top: 0 !important;
