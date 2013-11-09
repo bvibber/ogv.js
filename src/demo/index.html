@@ -38,6 +38,17 @@
 		</div>
 
 		<div id="metadata">
+
+			<canvas id="benchmark" width=500 height=200></canvas>
+			<div id="benchmark-legend">
+				<ul>
+					<li>black: per-frame decoding time (lower is better)
+					<li>red: target frame rate
+					<li>green: 30fps target rate
+					<li>blue: 60fps target rate
+				</ul>
+			</div>
+
 			<table id="info">
 				<tr>
 					<td colspan=2>
@@ -62,19 +73,12 @@
 					<td><span id="audio-rate"></span> Hz, <span id="audio-channels"></span> channels</td>
 				</tr>
 				<tr>
+					<td colspan=2 id="decode-rate"></td>
+				</tr>
+				<tr>
 					<td colspan=2><span id="status-view"></span></td>
 				</tr>
 			</table>
-
-			<canvas id="benchmark" width=500 height=200></canvas>
-			<div id="benchmark-legend">
-				<ul>
-					<li>black: per-frame decoding time (lower is better)
-					<li>red: target frame rate
-					<li>green: 30fps target rate
-					<li>blue: 60fps target rate
-				</ul>
-			</div>
 
 	</div>
 	

@@ -15,6 +15,15 @@
 		}
 	}
 
+
+	var pixelsPerFrame = 0, // pixels
+		targetPixelRate = 0, // pixels/second
+		pixelsProcessed = 0, // pixels
+		decodingTime = 0, // seconds
+		averageDecodingRate = 0, // pixels/second
+		drawingTime = 0, // seconds
+		averageDrawingRate = 0; // pixels/second
+
 	var benchmarkData = [],
 		benchmarkDirty = false,
 		benchmarkTargetFps = 0;
@@ -86,6 +95,20 @@
 			ctx.lineTo(x(i), y(benchmarkData[i]));
 		}
 		ctx.stroke();
+	}
+	
+	function round2(n) {
+		return Math.round(n * 100) / 100;
+	}
+	function showAverageRate() {
+		if (pixelsPerFrame) {
+			averageDecodingRate = pixelsProcessed / decodingTime;
+			averageDrawingRate = pixelsProcessed / drawingTime;
+			var str = round2(averageDecodingRate / 1000000) + ' MP/s decoded, ' +
+				round2(averageDrawingRate / 1000000) + ' MP/s drawn, ' +
+				round2(targetPixelRate / 1000000) + ' MP/s target';
+			document.getElementById('decode-rate').textContent = str;
+		}
 	}
 	
 	var progress = {
@@ -605,6 +628,12 @@
 			videoInfo = info;
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
+			
+			pixelsPerFrame = info.frameWidth * info.frameHeight;
+			targetPixelRate = pixelsPerFrame * info.fps;
+			pixelsProcessed = 0;
+			decodeTime = 0;
+			drawingTime = 0;
 
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
@@ -679,6 +708,7 @@
 					
 					var delta = (getTimestamp() - start);
 					lastFrameDecodeTime += delta;
+					decodingTime += delta / 1000;
 
 					if (!more) {
 						if (stream) {
@@ -714,8 +744,13 @@
 							// It's time to draw a frame, if we have one
 							if (codec.frameReady) {
 								drawFrame();
+								var delta = getTimestamp() - currentTime;
 								recordBenchmarkPoint(lastFrameDecodeTime);
 								lastFrameDecodeTime = 0.0;
+
+								pixelsProcessed += pixelsPerFrame;
+								drawingTime += delta / 1000.0;
+
 								targetFrameTime += 1000.0 / fps;
 							} else {
 								console.log("Late video frame!");
@@ -845,6 +880,7 @@
 	window.setInterval(function() {
 		if (benchmarkData.length > 0) {
 			showBenchmark();
+			showAverageRate();
 			updateProgress();
 		}
 	}, 1000);
