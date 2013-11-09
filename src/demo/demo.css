@@ -250,3 +250,12 @@ body {
 }
 
 
+
+
+/* hack for small screens */
+@media (max-width: 568px) {
+	#benchmark,
+	#benchmark-legend {
+		display: none;
+	}
+}
