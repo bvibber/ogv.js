@@ -632,7 +632,7 @@
 			pixelsPerFrame = info.frameWidth * info.frameHeight;
 			targetPixelRate = pixelsPerFrame * info.fps;
 			pixelsProcessed = 0;
-			decodeTime = 0;
+			decodingTime = 0;
 			drawingTime = 0;
 
 			canvas.width = info.picWidth;
