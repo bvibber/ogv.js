@@ -29,6 +29,7 @@ build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js s
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
+	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp src/StreamFile.js build/demo/lib/StreamFile.js
