@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # compile wrapper around libogg + libvorbis + libtheora
+# Using -O1 instead of -O2 to avoid some sort of optimization fail that breaks Vorbis decoding on arm64 iOS 7 devices
 emcc \
-  -O2 \
+  -O1 \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
