@@ -18,7 +18,7 @@ if [ ! -f configure ]; then
   sed -i.bak 's/$ac_cv_func_oggpack_writealign/yes/' configure
   
   # finally, run configuration script
-  emconfigure ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs
+  emconfigure ./configure --enable-low-accuracy --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs
 fi
 
 # compile libvorbis
