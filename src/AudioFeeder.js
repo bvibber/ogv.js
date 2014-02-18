@@ -161,7 +161,11 @@ function AudioFeeder(channels, rate) {
 	}
 	
 	this.close = function() {
-		if (node) {
+		if(this.flashaudio) {
+			var wrapper = this.flashaudio.flashWrapper;
+			wrapper.parentNode.removeChild(wrapper);
+			this.flashaudio = null;
+		} else if (node) {
 			node.onaudioprocess = null;
 			node.disconnect();
 		}
