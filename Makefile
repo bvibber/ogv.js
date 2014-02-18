@@ -9,6 +9,8 @@ clean:
 	rm -f libogg/configure
 	test -f libvorbis/Makefile && (cd libvorbis && make distclean) || true
 	rm -f libvorbis/configure
+	test -f tremor/Makefile && (cd tremor && make distclean) || true
+	rm -f tremor/configure
 	test -f libtheora/Makefile && (cd libtheora && make distclean) || true
 	rm -f libtheora/configure
 
@@ -17,6 +19,7 @@ build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js compileOgg
 	test -d build/intermediate || mkdir build/intermediate
 	./compileOgg.sh
 	./compileVorbis.sh
+	./compileTremor.sh
 	./compileTheora.sh
 	./compileOgv.sh
 
