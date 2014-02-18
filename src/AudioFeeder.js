@@ -140,7 +140,10 @@ function AudioFeeder(channels, rate) {
 	this.bufferData = function(samplesPerChannel) {
 		if(this.flashaudio) {
 			var resamples = resampleFlash(samplesPerChannel);
-			if(resamples.length > 0) this.flashaudio.flashElement.write(resamples.join(' '));
+			var flashElement = this.flashaudio.flashElement;
+			if(resamples.length > 0 && flashElement.write) {
+				flashElement.write(resamples.join(' '));
+			}
 		} else if (buffers) {
 			samples = resample(samplesPerChannel);
 			pushSamples(samples);
@@ -158,7 +161,11 @@ function AudioFeeder(channels, rate) {
 	}
 	
 	this.close = function() {
-		if (node) {
+		if(this.flashaudio) {
+			var wrapper = this.flashaudio.flashWrapper;
+			wrapper.parentNode.removeChild(wrapper);
+			this.flashaudio = null;
+		} else if (node) {
 			node.onaudioprocess = null;
 			node.disconnect();
 		}
