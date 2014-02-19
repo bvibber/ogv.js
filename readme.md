@@ -119,6 +119,13 @@ Firefox supports Web Audio API with an optional about:config switch.
 IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working! However this may make sync more difficult to achieve as there's another layer between our JS code and the output.
 
 
+## Emscripten issues
+
+Something in the combination of the relooper and the code generation in the current release versions of emscripten causes a hang on arm64 iOS devices such as the iPhone 5s somewhere in Vorbis audio decoding. Disabling the relooper gets it working but slashes performance horribly.
+
+Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscripten/wiki/LLVM-Backend) seems to avoid hitting the iOS JIT bug while retaining full relooper performance.
+
+
 ## Building
 
 1. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).

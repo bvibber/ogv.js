@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # compile wrapper around libogg + libvorbis + libtheora
-# Using -O2 with relooper explicitly disabled to avoid a JIT hang on arm64 iOS devices in Vorbis decoding
-emcc \
+# Warning: -O2 enables the emscripten relooper which, on current release version hangs
+# on arm64 iOS devices in Vorbis decoding. Use with emscripten-fastcomp for iOS arm64!
+EMCC_FAST_COMPILER=1 emcc \
   -O2 \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
   -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
-  -s RELOOP=0 \
   -I libogg/include -Llibogg/src/.libs -logg \
   libogg/src/bitwise.o \
   -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis \
