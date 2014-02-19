@@ -105,17 +105,17 @@ function AudioFeeder(channels, rate) {
 	 * The Flash fallback expects 44.1 kHz, stereo
 	 * Resampling: This is horribly naive and wrong.
 	 * TODO: Replace me with a better algo!
-	 * TODO: Convert mono audio to stereo
 	 */
 	function resampleFlash(samples) {
 		var sampleincr = rate / 44100;
 		var samplecount = Math.floor(samples[0].length * (44100 / rate));
 		var newSamples = new Array(samplecount * channels);
+		var channel1 = channels > 1 ? 1 : 0;
 		for(var s = 0; s < samplecount; s++) {
 			var idx = Math.floor(s * sampleincr);
-			for(var c = 0; c < channels; ++c) {
-				newSamples[(s * channels) + c] = Math.floor(samples[c][idx] * 32768);
-			}
+			var idx_out = s * 2;
+			newSamples[idx_out] = Math.floor(samples[0][idx] * 32768);
+			newSamples[idx_out + 1] = Math.floor(samples[channel1][idx] * 32768);
 		}
 		return newSamples;
 	}
