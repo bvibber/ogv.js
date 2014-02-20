@@ -14,7 +14,7 @@ See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
 * streaming: buggy, some buffering problems
 * color: yes
-* audio: buggy & limited (no IE or iOS)
+* audio: buggy & limited (no iOS yet)
 * background threading: no
 
 
@@ -29,7 +29,7 @@ Short-ish clips of a few seconds to at most a few minutes at SD resolution or be
 
 
 The primary target browsers are:
-* Safari 6.1+ on Mac OS X (currently still in pre-release...)
+* Safari 6.1+ on Mac OS X
 * Internet Explorer 10+ on Windows
 
 Future targets (currently not acceptable performance):
@@ -39,8 +39,8 @@ Future targets (currently not acceptable performance):
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS or Windows RT.)
 
 Testing browsers (these support .ogv natively):
-* Firefox 24
-* Chrome 30
+* Firefox 27
+* Chrome 32
 
 
 ## Performance
@@ -49,7 +49,7 @@ Early versions have only been spot-checked with a couple of small sample files o
 
 *Target browsers*
 
-On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0; however 6.1/7 have not yet been generally released. Have patience! Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
+On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
 
 IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE are not supported at all.
 
@@ -58,7 +58,7 @@ IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE a
 
 See [device notes](https://github.com/brion/ogv.js/wiki/Device-notes) for testing status.
 
-On iOS, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. However, I have not yet gotten acceptable performance on non-tiny files even on the latest iOS 7 Safari. Needs more testing on the iPhone 5S however!
+On iOS, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. However, I have not yet gotten acceptable performance on non-trivial files except on the latest 64-bit iPhone 5s.
 
 IE 11 on Windows RT 8.1 on an original Surface RT tablet does not perform very well.
 
@@ -67,9 +67,9 @@ In both cases, a native application looms as a possibly better alternative. If i
 
 *Test browsers*
 
-Firefox 24 performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed.
+Firefox 27 performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed.
 
-Chrome 30 performs pretty well, but not quite as snappy as Firefox's asm.js mode.
+Chrome 32 performs pretty well, but not quite as snappy as Firefox's asm.js mode.
 
 It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 
@@ -110,13 +110,20 @@ Jumping to a new position in the file that hasn't yet been buffered could be acc
 
 Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit synchronization is not yet performed, so audio and video drift out of sync over time.
 
-Note that audio fails on iOS as web audio must be started in an event handler for a user action.
+Note that audio currently fails on iOS as web audio must be started in an event handler for a user action.
 
-Audio is blacklisted on Safari 6.0 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). Safari 6.1 and 7 work just fine and are not blacklisted.
+Audio is blacklisted on Safari 6.0 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). This may or may not be fixed in the latest builds, but I no longer have Safari 6.0 handy to test.
 
 Firefox supports Web Audio API with an optional about:config switch.
 
-Unfortunately IE doesn't support Web Audio yet... Audio playback on IE may need to use a shim via the Flash plugin (which is bundled), which may make sync more difficult as there's another layer between our JS code and the output.
+IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working! However this may make sync more difficult to achieve as there's another layer between our JS code and the output.
+
+
+## Emscripten issues
+
+Something in the combination of the relooper and the code generation in the current release versions of emscripten causes a hang on arm64 iOS devices such as the iPhone 5s somewhere in Vorbis audio decoding. Disabling the relooper gets it working but slashes performance horribly.
+
+Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscripten/wiki/LLVM-Backend) seems to avoid hitting the iOS JIT bug while retaining full relooper performance.
 
 
 ## Building
@@ -134,3 +141,5 @@ See a sample web page in build/demo/
 libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
 
 Based on build scripts from https://github.com/devongovett/ogg.js
+
+dynamicaudio.as and other Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman (see src/AudioFeeder.js flash fallback section).

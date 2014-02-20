@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# compile wrapper around libogg + tremor + libtheora
-emcc \
+# compile wrapper around libogg + libvorbis + libtheora
+# Warning: -O2 enables the emscripten relooper which, on current release version hangs
+# on arm64 iOS devices in Vorbis decoding. Use with emscripten-fastcomp for iOS arm64!
+EMCC_FAST_COMPILER=1 emcc \
   -O2 \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
@@ -9,10 +11,7 @@ emcc \
   -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
   -I libogg/include -Llibogg/src/.libs -logg \
   libogg/src/bitwise.o \
-  -I tremor -Ltremor/.libs -llibvorbisidec \
+  -I tremor -Ltremor/.libs -lvorbisidec \
   -I libtheora/include -Llibtheora/lib/.libs -ltheoradec \
   --js-library src/ogv-libs-mixin.js \
   src/ogv-libs.c -o build/intermediate/ogv-libs.js
-
-# Tremor replaces
-#  -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis \

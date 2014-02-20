@@ -616,13 +616,6 @@
 			showStatus('Audio disabled due to bug on Safari 6.0');
 		}
 		
-		// Mozilla/5.0 (iPhone; CPU iPhone OS 7_0_3 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B511 Safari/9537.53
-		if (navigator.userAgent.match(/iPhone OS [67]_/)) {
-			// Hang on iPhone 5s with Safari 7... other devices just super slow.
-			options.audio = false;
-			showStatus('Audio disabled due to bug on iPhone 5s');
-		}
-		
 		codec = new OgvJs(options);
 		codec.oninitvideo = function(info) {
 			videoInfo = info;
