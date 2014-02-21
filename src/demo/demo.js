@@ -491,15 +491,17 @@
 			console.log('type of file: ' + mediaInfo.mediatype);
 			console.log('duration of file: ' + mediaInfo.duration);
 			
-			// Find the smallest ogv stream
+			// Find the 480p or original ogv stream for now
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
 				if (source.format == 'ogv') {
-					if (selected == null) {
-						selected = source;
-					} else {
-						if (source.height < selected.height) {
+					if (source.height >= 480) { // temporarily disable the smaller transcodes
+						if (selected == null) {
 							selected = source;
+						} else {
+							if (source.height < selected.height) {
+								selected = source;
+							}
 						}
 					}
 				} else if (source.format == 'oga') {
