@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH=$HOME/crossbridge/sdk/usr/bin:$PATH
+
 # configure libvorbis
 dir=`pwd`
 cd libvorbis
@@ -18,10 +20,10 @@ if [ ! -f configure ]; then
   sed -i.bak 's/$ac_cv_func_oggpack_writealign/yes/' configure
   
   # finally, run configuration script
-  emconfigure ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs
+  ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs
 fi
 
 # compile libvorbis
-EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
+make
 
 cd ..
