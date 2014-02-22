@@ -28,7 +28,7 @@ function AudioFeeder() {
 
 	function freshBuffer() {
 		var buffer = [];
-		for (var channel = 0; channel < channels; channel++) {
+		for (var channel = 0; channel < outputChannels; channel++) {
 			buffer[channel] = new Float32Array(bufferSize);
 		}
 		return buffer;
@@ -138,7 +138,7 @@ function AudioFeeder() {
 		var firstChannel = samples[0],
 			sampleCount = firstChannel.length;
 		for (var i = 0; i < sampleCount; i++) {
-			for (var channel = 0; channel < channels; channel++) {
+			for (var channel = 0; channel < outputChannels; channel++) {
 				pendingBuffer[channel][pendingPos] = samples[channel][i];
 			}
 			if (++pendingPos == bufferSize) {
