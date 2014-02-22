@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export PATH=$HOME/crossbridge/sdk/usr/bin:$PATH
-
 # configure libtheora
 dir=`pwd`
 cd libtheora
@@ -20,10 +18,10 @@ if [ ! -f configure ]; then
   sed -i.bak 's/$ac_cv_func_oggpack_writealign/yes/' configure
   
   # finally, run configuration script
-  ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs --disable-asm --disable-examples
+  PATH=$HOME/crossbridge/sdk/usr/bin:$PATH ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs --disable-asm --disable-examples
 fi
 
 # compile libtheora
-make
+PATH=$HOME/crossbridge/sdk/usr/bin:$PATH make
 
 cd ..

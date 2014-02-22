@@ -1,17 +1,15 @@
 #!/bin/bash
 
 # compile wrapper around libogg + libvorbis + libtheora
-# Warning: -O2 enables the emscripten relooper which, on current release version hangs
-# on arm64 iOS devices in Vorbis decoding. Use with emscripten-fastcomp for iOS arm64!
-EMCC_FAST_COMPILER=1 emcc \
+PATH=$HOME/crossbridge/sdk/usr/bin:$PATH gcc \
   -O2 \
-  -s ASM_JS=1 \
-  -s VERBOSE=1 \
-  -s WARN_ON_UNDEFINED_SYMBOLS=1 \
-  -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
+  -emit-swf \
+  -flto-api=swfexports.txt \
   -I libogg/include -Llibogg/src/.libs -logg \
   libogg/src/bitwise.o \
   -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis \
   -I libtheora/include -Llibtheora/lib/.libs -ltheoradec \
-  --js-library src/ogv-libs-mixin.js \
-  src/ogv-libs.c -o build/intermediate/ogv-libs.js
+  src/ogv-libs.c \
+  -o ogv-libs.swf && \
+mv ogv-libs.swf build/intermediate/ogv-libs.swf
+
