@@ -16,12 +16,23 @@ if [ ! -f configure ]; then
   
   # disable oggpack_writealign test
   sed -i.bak 's/$ac_cv_func_oggpack_writealign/yes/' configure
-  
-  # finally, run configuration script
-  emconfigure ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs
 fi
+cd ..
+
+# set up the build directory
+mkdir build
+cd build
+
+mkdir root
+mkdir libvorbis
+cd libvorbis
+  
+# finally, run configuration script
+emconfigure ../../libvorbis/configure --disable-shared --disable-oggtest --prefix=$dir/build/root
 
 # compile libvorbis
-EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
+emmake make
+emmake make install
 
+cd ..
 cd ..

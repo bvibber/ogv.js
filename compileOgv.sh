@@ -9,9 +9,12 @@ EMCC_FAST_COMPILER=1 emcc \
   -s VERBOSE=1 \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
   -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
-  -I libogg/include -Llibogg/src/.libs -logg \
-  libogg/src/bitwise.o \
-  -I libvorbis/include -Llibvorbis/lib/.libs -lvorbis \
-  -I libtheora/include -Llibtheora/lib/.libs -ltheoradec \
+  -Ibuild/root/include \
+  -Lbuild/root/lib \
+  -logg \
+  build/libogg/src/bitwise.o \
+  -lvorbis \
+  -ltheoradec \
   --js-library src/ogv-libs-mixin.js \
-  src/ogv-libs.c -o build/intermediate/ogv-libs.js
+  src/ogv-libs.c \
+  -o build/intermediate/ogv-libs.js

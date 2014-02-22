@@ -17,11 +17,23 @@ if [ ! -f configure ]; then
   # disable oggpack_writealign test
   sed -i.bak 's/$ac_cv_func_oggpack_writealign/yes/' configure
   
-  # finally, run configuration script
-  emconfigure ./configure --disable-oggtest --with-ogg=$dir/libogg --with-ogg-libraries=$dir/libogg/src/.libs --disable-asm --disable-examples
 fi
+cd ..
+
+# set up the build directory
+mkdir build
+cd build
+
+mkdir root
+mkdir libtheora
+cd libtheora
+
+# finally, run configuration script
+emconfigure ../../libtheora/configure --disable-oggtest --prefix="$dir/build/root" --with-ogg="$dir/build/root" --disable-asm --disable-examples --disable-encode --disable-shared
 
 # compile libtheora
-EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
+emmake make
+emmake make install
 
+cd ..
 cd ..
