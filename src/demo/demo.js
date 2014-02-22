@@ -277,6 +277,10 @@
 							var height = parseInt(matches[1]),
 								format = matches[2],
 								bitrate = parseFloat(transcode.final_bitrate);
+							if (bitrate == 0) {
+								// incomplete
+								continue;
+							}
 							sources.push({
 								format: format,
 								width: Math.round(imageinfo.width * height / imageinfo.height),
@@ -398,7 +402,7 @@
 	}
 	filter.addEventListener('change', showChooser);
 	filter.addEventListener('keypress', function(event) {
-		if (event.keyCode == 10) {
+		if (event.keyCode == 10 || event.keyCode == 13) {
 			showChooser();
 		}
 	});
@@ -491,15 +495,17 @@
 			console.log('type of file: ' + mediaInfo.mediatype);
 			console.log('duration of file: ' + mediaInfo.duration);
 			
-			// Find the smallest ogv stream
+			// Find the 480p or original ogv stream for now
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
 				if (source.format == 'ogv') {
-					if (selected == null) {
-						selected = source;
-					} else {
-						if (source.height < selected.height) {
+					if (source.height == 0 || source.height > 180) { // temporarily disable the smaller transcodes
+						if (selected == null) {
 							selected = source;
+						} else {
+							if (source.height < selected.height) {
+								selected = source;
+							}
 						}
 					}
 				} else if (source.format == 'oga') {
