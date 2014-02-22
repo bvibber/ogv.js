@@ -137,6 +137,13 @@ function AudioFeeder(channels, rate) {
 	}
 	
 	var self = this;
+	
+	this.init = function(numChannels, sampleRate) {
+		// warning: can't change channels here reliably
+		rate = sampleRate;
+		channels = numChannels;
+	};
+	
 	this.bufferData = function(samplesPerChannel) {
 		if(this.flashaudio) {
 			var resamples = resampleFlash(samplesPerChannel);

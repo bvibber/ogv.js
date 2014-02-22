@@ -239,7 +239,8 @@
 			}
 			var mediaInfo = {
 				mediatype: imageinfo.mediatype,
-				duration: findMetadata('length') || findMetadata('playtime_seconds')
+				duration: findMetadata('length') || findMetadata('playtime_seconds'),
+				thumburl: imageinfo.thumburl
 			};
 			
 			// Build an entry for the original media
@@ -484,6 +485,7 @@
 	
 	function showVideo() {
 		window.scrollTo(0, 0);
+		stopVideo();
 
 		var prettyName = selectedTitle.replace(/_/g, ' ').replace(/^File:/, '');
 		document.title = prettyName + ' - ogv.js demo/test';
@@ -526,6 +528,14 @@
 			canvas.width = selected.width;
 			canvas.height = selected.height;
 			resizeVideo();
+			drawPlayButton();
+			
+			var thumbnail = new Image();
+			thumbnail.src = mediaInfo.thumburl;
+			thumbnail.addEventListener('load', function() {
+				ctx.drawImage(thumbnail, 0, 0, selected.width, selected.height);
+				drawPlayButton();
+			});
 
 			progress.total = selected.size;
 			progress.buffered = 0;
@@ -534,10 +544,24 @@
 			
 			//nativeVideo.width = selected.width;
 			//nativeVideo.height = selected.height;
-			//nativeVideo.src = selectedUrl;
 			
-			playVideo();
+			canvas.removeEventListener('click', stopVideo);
+			canvas.addEventListener('click', playVideo);
 		});
+	}
+	
+	function drawPlayButton() {
+		var midX = canvas.width / 2,
+			midY = canvas.height / 2,
+			side = canvas.height / 4;
+		ctx.save();
+		ctx.fillStyle = "white";
+		ctx.beginPath();
+		ctx.moveTo(midX - side / 2, midY - side / 2);
+		ctx.lineTo(midX + side / 2, midY);
+		ctx.lineTo(midX - side / 2, midY + side / 2);
+		ctx.fill();
+		ctx.restore();
 	}
 	
 	var selectedTitle = getDefault();
@@ -564,11 +588,17 @@
 			cancelAnimationFrame(nextFrameTimer);
 			nextFrameTimer = null;
 		}
+		drawPlayButton();
+		canvas.removeEventListener('click', stopVideo);
+		canvas.addEventListener('click', playVideo);
 	}
 	
 	function playVideo() {
 		stopVideo();
 		clearBenchmark();
+		
+		canvas.removeEventListener('click', playVideo);
+		canvas.addEventListener('click', stopVideo);
 
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
@@ -653,10 +683,7 @@
 		codec.oninitaudio = function(info) {
 			document.getElementById('audio-channels').textContent = info.channels;
 			document.getElementById('audio-rate').textContent = info.rate;
-			if (audioFeeder) {
-				audioFeeder.close();
-			}
-			audioFeeder = new AudioFeeder(info.channels, info.rate);
+			audioFeeder.init(info.channels, info.rate);
 			if (audioFeeder.stub === true) {
 				showStatus('No audio support in browser.');
 				document.getElementById('mute').disabled = true;
@@ -808,6 +835,9 @@
 			}
 		});
 		//stream.readBytes();
+
+		// We have to initialize audio here...
+		audioFeeder = new AudioFeeder(2, 44100);
 	}
 
 	controls.querySelector('.play').addEventListener('click', playVideo);

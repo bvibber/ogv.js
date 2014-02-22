@@ -107,6 +107,10 @@ body {
 	right: 0;
 }
 
+#player canvas {
+	cursor: pointer;
+}
+
 #top-panel,
 #control-panel {
 	position: absolute;
