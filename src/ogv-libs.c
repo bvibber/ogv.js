@@ -7,6 +7,12 @@
 #include <sys/stat.h>
 #include <limits.h>
 
+#ifdef __FLASHPLAYER__
+// For crossbridge SWF version
+#include <AS3/AS3.h>
+#endif
+
+
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
 #include <theora/theoradec.h>
@@ -362,3 +368,9 @@ void OgvJsDestroy() {
   }
   ogg_sync_clear(&oggSyncState);
 }
+
+#ifdef __FLASHPLAYER__
+int main(int argc, const char **argv) {
+	AS3_GoAsync();
+}
+#endif
