@@ -24,10 +24,10 @@ mkdir libogg
 cd libogg
 
 # finally, run configuration script
-emconfigure ../../libogg/configure --prefix="$dir/build/root"
+emconfigure ../../libogg/configure --prefix="$dir/build/root" --disable-shared
 
 # compile libogg
-EMCC_CFLAGS="--ignore-dynamic-linking" emmake make
+emmake make
 emmake make install
 
 cd ..
