@@ -17,7 +17,7 @@ function AudioFeeder() {
 	}
 	
 
-	var bufferSize = 1024,
+	var bufferSize = 8192,
 		channels = 0, // call init()!
 		rate = 0; // call init()!
 
@@ -170,6 +170,21 @@ function AudioFeeder() {
 			pushSamples(samples);
 		} else {
 			self.close();
+		}
+	};
+	
+	this.isBufferNearEmpty = function() {
+		if (this.flashaudio) {
+			// fixme!
+			return true;
+		} else if (buffers) {
+			var samplesQueued = 0;
+			buffers.forEach(function(buffer) {
+				samplesQueued += buffer[0].length;
+			});
+			return samplesQueued <= bufferSize * 2;
+		} else {
+			return true;
 		}
 	};
 	

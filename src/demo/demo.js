@@ -851,9 +851,11 @@
 						}
 					} else {
 						// Process next set of audio
-						process();
-						recordBenchmarkPoint(lastFrameDecodeTime);
-						lastFrameDecodeTime = 0.0;
+						if (audioFeeder.isBufferNearEmpty()) {
+							process();
+							recordBenchmarkPoint(lastFrameDecodeTime);
+							lastFrameDecodeTime = 0.0;
+						}
 					}
 					pingAnimationFrame();
 				}
