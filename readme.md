@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-libogg, libvorbis, and libtheora compiled to JavaScript with Emscripten.
+libogg, libvorbis/tremor, and libtheora compiled to JavaScript with Emscripten.
 
 
 ## Current status
@@ -124,19 +124,26 @@ Something in the combination of the relooper and the code generation in the curr
 Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscripten/wiki/LLVM-Backend) seems to avoid hitting the iOS JIT bug while retaining full relooper performance.
 
 
+## Upstream library notes
+
+We're currently using tremor (libivorbis), an integer-only variant of libvorbis. This may or may not decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library.
+
+Libtheora needs a slight patch to a function signature to pass emscripten's checks for asm.js-mode function pointer compatibility.
+
+
 ## Building
 
 1. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
 2. `git submodule update --init`
 3. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
-4. Run `make` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
+4. Run `make` to configure and build libogg, libvorbis, tremor, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
 See a sample web page in build/demo/
 
 
 ## License
 
-libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
+libogg, libvorbis, tremor, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
 
 Based on build scripts from https://github.com/devongovett/ogg.js
 
