@@ -117,8 +117,6 @@ body {
 	
 	left: 0;
 	right: 0;
-	max-height: 5em;
-	height: 33%;
 	padding-bottom: 16px;
 	
 	background: rgba(0, 0, 0, 0.5);
@@ -131,13 +129,14 @@ body {
 
 #top-panel {
 	top: 0;
+	height: 40px;
 }
 #control-panel {
 	bottom: 0;
+	height: 40px;
 }
 
-#top,
-#controls {
+#top {
 	padding: 16px;
 }
 

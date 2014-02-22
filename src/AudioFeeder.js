@@ -1,10 +1,12 @@
 /**
  * Object that we can throw audio data into and have it drain out.
  *
+ * Because changing the number of channels on the fly is hard, hardcoding
+ * to 2 output channels. That's also all we can do on IE with Flash output.
+ *
  * @todo better timing!
- * @todo resample input
  */
-function AudioFeeder(channels, rate) {
+function AudioFeeder() {
 	// assume W3C Audio API
 	
 	var AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -15,7 +17,14 @@ function AudioFeeder(channels, rate) {
 	}
 	
 
-	var bufferSize = 1024;
+	var bufferSize = 1024,
+		channels = 0, // call init()!
+		rate = 0; // call init()!
+
+	// Always create stereo output. For iOS we have to set this stuff up
+	// before we've actually gotten the info from the codec because we
+	// must initialize from a UI event. Bah!
+	var outputChannels = 2;
 
 	function freshBuffer() {
 		var buffer = [];
@@ -35,9 +44,9 @@ function AudioFeeder(channels, rate) {
 	if(AudioContext) {
 		context = new AudioContext;
 		if (context.createScriptProcessor) {
-			node = context.createScriptProcessor(bufferSize, 0, channels)
+			node = context.createScriptProcessor(bufferSize, 0, outputChannels)
 		} else if (context.createJavaScriptNode) {
-			node = context.createJavaScriptNode(bufferSize, 0, channels)
+			node = context.createJavaScriptNode(bufferSize, 0, outputChannels)
 		} else {
 			throw new Error("Bad version of web audio API?");
 		}
@@ -56,7 +65,7 @@ function AudioFeeder(channels, rate) {
 		node.onaudioprocess = function(event) {
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!muted && inputBuffer) {
-				for (var channel = 0; channel < channels; channel++) {
+				for (var channel = 0; channel < outputChannels; channel++) {
 					var input = inputBuffer[channel],
 						output = event.outputBuffer.getChannelData(channel);
 					for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
@@ -67,7 +76,7 @@ function AudioFeeder(channels, rate) {
 				if (!inputBuffer) {
 					console.log("Starved for audio!");
 				}
-				for (var channel = 0; channel < channels; channel++) {
+				for (var channel = 0; channel < outputChannels; channel++) {
 					var output = event.outputBuffer.getChannelData(channel);
 					for (var i = 0; i < bufferSize; i++) {
 						output[i] = 0;
@@ -88,8 +97,12 @@ function AudioFeeder(channels, rate) {
 			return samples;
 		} else {
 			var newSamples = [];
-			for (var channel = 0; channel < channels; channel++) {
-				var input = samples[channel],
+			for (var channel = 0; channel < outputChannels; channel++) {
+				var inputChannel = channel;
+				if (channel >= channels) {
+					inputChannel = 0;
+				}
+				var input = samples[inputChannel],
 					output = new Float32Array(Math.round(input.length * targetRate / rate));
 				for (var i = 0; i < output.length; i++) {
 					output[i] = input[Math.floor(i * rate / targetRate)];
@@ -142,6 +155,7 @@ function AudioFeeder(channels, rate) {
 		// warning: can't change channels here reliably
 		rate = sampleRate;
 		channels = numChannels;
+		pendingBuffer = freshBuffer();
 	};
 	
 	this.bufferData = function(samplesPerChannel) {

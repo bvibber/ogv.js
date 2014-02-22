@@ -240,7 +240,9 @@
 			var mediaInfo = {
 				mediatype: imageinfo.mediatype,
 				duration: findMetadata('length') || findMetadata('playtime_seconds'),
-				thumburl: imageinfo.thumburl
+				thumburl: imageinfo.thumburl,
+				thumbwidth: imageinfo.thumbwidth,
+				thumbheight: imageinfo.thumbheight
 			};
 			
 			// Build an entry for the original media
@@ -525,15 +527,20 @@
 			selectedUrl = selected.url;
 			console.log("Going to try streaming data from " + selectedUrl);
 
-			canvas.width = selected.width;
-			canvas.height = selected.height;
+			if (selected.height > 0) {
+				canvas.width = selected.width;
+				canvas.height = selected.height;
+			} else {
+				canvas.width = mediaInfo.thumbwidth;
+				canvas.height = mediaInfo.thumbheight;
+			}
 			resizeVideo();
 			drawPlayButton();
 			
 			var thumbnail = new Image();
 			thumbnail.src = mediaInfo.thumburl;
 			thumbnail.addEventListener('load', function() {
-				ctx.drawImage(thumbnail, 0, 0, selected.width, selected.height);
+				ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
 				drawPlayButton();
 			});
 
