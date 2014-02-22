@@ -112,7 +112,27 @@ mergeInto(LibraryManager.library, {
 			outBuffer = new ArrayBuffer(sampleCount * 4);
 			outArray = new Float32Array(outBuffer);
 			for (i = 0; i < sampleCount; i++) {
-				outArray[i] = HEAPF32[inBuffer / 4 + i];
+				outArray[i] = HEAPF32[inBuffer / 4 + i] ;
+			}
+			outputBuffers.push(outArray);
+		}
+
+		OgvJsAudioCallback(outputBuffers);
+	},
+
+	OgvJsOutputAudioInt: function(buffers, channels, sampleCount) {
+		// buffers is an array of pointers to int arrays for each channel
+		var HEAP32 = Module.HEAP32;
+		
+		var outputBuffers = [];
+		var inBuffer, outBuffer, outArray, i;
+		for (var channel = 0; channel < channels; channel++) {
+			inBuffer = HEAP32[buffers / 4 + channel];
+			outBuffer = new ArrayBuffer(sampleCount * 4);
+			outArray = new Float32Array(outBuffer);
+			for (i = 0; i < sampleCount; i++) {
+				// FIXME: Find proper scale value, seriously
+				outArray[i] = HEAP32[inBuffer / 4 + i] / 9999999 ;
 			}
 			outputBuffers.push(outArray);
 		}

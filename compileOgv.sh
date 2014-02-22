@@ -10,10 +10,11 @@ EMCC_FAST_COMPILER=1 emcc \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
   -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
   -Ibuild/root/include \
+  -Ibuild/root/include/tremor \
   -Lbuild/root/lib \
   -logg \
   build/libogg/src/bitwise.o \
-  -lvorbis \
+  -lvorbisidec \
   -ltheoradec \
   --js-library src/ogv-libs-mixin.js \
   src/ogv-libs.c \
