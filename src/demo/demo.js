@@ -15,7 +15,6 @@
 		}
 	}
 
-
 	var pixelsPerFrame = 0, // pixels
 		targetPixelRate = 0, // pixels/second
 		pixelsProcessed = 0, // pixels
@@ -303,6 +302,62 @@
 		});
 	}
 
+	function fetchMediaList(callback) {
+		function pad00(n) {
+			if (n < 10) {
+				return '0' + n;
+			} else {
+				return '' + n;
+			}
+		}
+		
+		var today = new Date(),
+			year = 2013,
+			month = 10,
+			day = 28; // where we left off in motd.js
+		
+		var input = '';
+		while (!(year >= today.getUTCFullYear() && month >= (today.getUTCMonth()+1) && day > today.getUTCDate())) {
+			var ymd = year +
+					'-' +
+					pad00(month) +
+					'-' +
+					pad00(day);
+			var line = ymd + '|{{Motd/' + ymd + '}}\n';
+			input += line;
+
+			day++;
+			if (day > 31) {
+				day = 1;
+				month++;
+				if (month > 12) {
+					month = 1;
+					year++;
+				}
+			}
+		}
+		
+		commonsApi({
+			action: 'expandtemplates',
+			text: input
+		}, function(data, err) {
+			var output = data.expandtemplates['*'],
+				lines = output.split('\n');
+			lines.forEach(function(line) {
+				var bits = line.split('|'),
+					date = bits[0],
+					filename = bits[1];
+				if (filename && !filename.match(/\.gif$/i)) {
+					console.log(filename);
+					motd[date] = filename;
+				} else {
+					console.log('motd update skipping ' + filename);
+				}
+			});
+			callback();
+		});
+	}
+
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 	if (!requestAnimationFrame) {
 		throw new Error("No requestAnimationFrame available!");
@@ -574,6 +629,9 @@
 	var selectedTitle = getDefault();
 	//showChooser();
 	showVideo();
+	fetchMediaList(function() {
+		console.log('media list updated');
+	});
 
 	var stream, nextFrameTimer;
 	
