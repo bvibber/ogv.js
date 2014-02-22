@@ -586,8 +586,8 @@
 				canvas.width = selected.width;
 				canvas.height = selected.height;
 			} else {
-				canvas.width = mediaInfo.thumbwidth;
-				canvas.height = mediaInfo.thumbheight;
+				canvas.width = 256; // hack for audio
+				canvas.height = 256;
 			}
 			resizeVideo();
 			drawPlayButton();
