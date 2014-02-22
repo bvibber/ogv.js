@@ -499,7 +499,7 @@
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
 				if (source.format == 'ogv') {
-					if (source.height > 180) { // temporarily disable the smaller transcodes
+					if (source.height == 0 || source.height > 180) { // temporarily disable the smaller transcodes
 						if (selected == null) {
 							selected = source;
 						} else {
