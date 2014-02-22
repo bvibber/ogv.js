@@ -277,6 +277,10 @@
 							var height = parseInt(matches[1]),
 								format = matches[2],
 								bitrate = parseFloat(transcode.final_bitrate);
+							if (bitrate == 0) {
+								// incomplete
+								continue;
+							}
 							sources.push({
 								format: format,
 								width: Math.round(imageinfo.width * height / imageinfo.height),
@@ -495,7 +499,7 @@
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
 				if (source.format == 'ogv') {
-					if (source.height >= 480) { // temporarily disable the smaller transcodes
+					if (source.height > 180) { // temporarily disable the smaller transcodes
 						if (selected == null) {
 							selected = source;
 						} else {
