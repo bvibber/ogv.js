@@ -131,8 +131,8 @@ mergeInto(LibraryManager.library, {
 			outBuffer = new ArrayBuffer(sampleCount * 4);
 			outArray = new Float32Array(outBuffer);
 			for (i = 0; i < sampleCount; i++) {
-				// FIXME: Find proper scale value, seriously
-				outArray[i] = HEAP32[inBuffer / 4 + i] / 9999999 ;
+				// not 100% sure but we think it's 8.24 fixed point
+				outArray[i] = HEAP32[inBuffer / 4 + i] / 16777216 ;
 			}
 			outputBuffers.push(outArray);
 		}
