@@ -93,7 +93,7 @@ function AudioFeeder() {
 	 */
 	function resample(samples) {
 		var targetRate = context.sampleRate;
-		if (rate == targetRate) {
+		if (rate == targetRate && channels == outputChannels) {
 			return samples;
 		} else {
 			var newSamples = [];
