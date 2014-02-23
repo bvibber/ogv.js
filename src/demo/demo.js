@@ -554,11 +554,23 @@
 			console.log('type of file: ' + mediaInfo.mediatype);
 			console.log('duration of file: ' + mediaInfo.duration);
 			
-			// Find the 480p or original ogv stream for now
+			// Find the transcoded or original ogv stream for now
+			
+			// temporarily disable the smallest transcodes, except on mobiles/iOS
+			var minHeight;
+			if (navigator.userAgent.match(/Mobile/)) {
+				minHeight = 1;
+			} else {
+				minHeight = 161;
+			}
+			if (window.innerWidth <= 360) {
+				// ...except on iOS!
+				minnie = 1;
+			}
 			var selected = null, oga = null;
 			sources.forEach(function(source) {
 				if (source.format == 'ogv') {
-					if (source.height == 0 || source.height > 180) { // temporarily disable the smaller transcodes
+					if (source.height == 0 || source.height >= minHeight) {
 						if (selected == null) {
 							selected = source;
 						} else {
