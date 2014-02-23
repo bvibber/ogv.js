@@ -628,13 +628,25 @@
 		var midX = canvas.width / 2,
 			midY = canvas.height / 2,
 			side = canvas.height / 4;
+		
+		function triangle() {
+			ctx.beginPath();
+			ctx.moveTo(midX - side / 2, midY - side / 2);
+			ctx.lineTo(midX + side / 2, midY);
+			ctx.lineTo(midX - side / 2, midY + side / 2);
+			ctx.lineTo(midX - side / 2, midY - side / 2);
+		}
+		
 		ctx.save();
+		triangle();
 		ctx.fillStyle = "white";
-		ctx.beginPath();
-		ctx.moveTo(midX - side / 2, midY - side / 2);
-		ctx.lineTo(midX + side / 2, midY);
-		ctx.lineTo(midX - side / 2, midY + side / 2);
 		ctx.fill();
+		ctx.restore();
+		
+		ctx.save();
+		triangle();
+		ctx.strokeStyle = "2px black";
+		ctx.stroke();
 		ctx.restore();
 	}
 	
