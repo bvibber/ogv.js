@@ -29,7 +29,7 @@ cd tremor
   
 
 # finally, run configuration script
-emconfigure ../../tremor/configure --enable-low-accuracy --disable-oggtest --disable-shared --prefix="$dir/build/root"
+PKG_CONFIG_PATH="$dir/build/root/lib/pkgconfig" emconfigure ../../tremor/configure --enable-low-accuracy --disable-oggtest --disable-shared --prefix="$dir/build/root"
 
 # compile tremor
 emmake make
