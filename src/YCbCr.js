@@ -63,7 +63,6 @@
 				processLine(y);
 			}
 		} else {
-			failout();
 			processLine = function convertYCbCr_processLine_clamped(y) {
 				var xdec = 0,
 					ydec = y >> vdec,
