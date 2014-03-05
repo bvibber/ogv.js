@@ -9,7 +9,7 @@ OgvJs = (function(options) {
     	noExitRuntime: true,
     	TOTAL_MEMORY: 32 * 1024 * 1024, // default heap is 16M
     	print: function(str) {
-    		console.log("OgvJs: " + str);
+    		//console.log("OgvJs: " + str);
     	}
     };
     //import "../build/intermediate/ogv-libs.js"
@@ -29,7 +29,7 @@ OgvJs = (function(options) {
 			Module._free(inputBuffer);
 		}
 		inputBufferSize = size;
-		console.log('reallocating buffer');
+		//console.log('reallocating buffer');
 		inputBuffer = Module._malloc(inputBufferSize);
 		return inputBuffer;
 	}
@@ -105,7 +105,7 @@ OgvJs = (function(options) {
 			inputBuffer = undefined;
 		}
 		OgvJsDestroy();
-		console.log("ogv.js destroyed");
+		//console.log("ogv.js destroyed");
 	};
 	
 	/**
