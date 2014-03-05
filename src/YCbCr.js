@@ -2,25 +2,21 @@
 	var global = this;
 
 	/**
-	 * @param buffer ArrayBuffer buffer holding the Y, Cb, and Cr planes in sequence
+	 * @param ybcbr {bufferY, bufferCb, bufferCr, strideY, strideCb, strideCr, width, height, hdec, vdec}
 	 * @param TypedArray output: CanvasPixelArray or Uint8ClampedArray to draw RGB into
-	 * @param number width width of buffer in pixels
-	 * @param number height height of buffer in pixels
-	 * @param number hdec 1 if color is horizontally decimated
-	 * @param number vdec 1 if color is vertically decimated
-	 *
-	 * @return ArrayBuffer output as RGBA (opaque)
 	 */
-	global.convertYCbCr = function convertYCbCr(buffer, output, width, height, hdec, vdec) {
-		var countBytesY = width * height,
-			countBytesColor = (width >> hdec) * (height >> vdec),
-			bytesY = new Uint8Array(buffer, 0, countBytesY),
-			bytesCb = new Uint8Array(buffer, countBytesY, countBytesColor),
-			bytesCr = new Uint8Array(buffer, countBytesY + countBytesColor, countBytesColor),
+	global.convertYCbCr = function convertYCbCr(ybcbr, output) {
+		var width = ybcbr.width,
+			height = ybcbr.height,
+			hdec = ybcbr.hdec,
+			vdec = ybcbr.vdec,
+			bytesY = new Uint8Array(ybcbr.bufferY),
+			bytesCb = new Uint8Array(ybcbr.bufferCb),
+			bytesCr = new Uint8Array(ybcbr.bufferCr),
 			processLine,
-			strideY = width,
-			strideCb = width >> hdec,
-			strideCr = width >> hdec;
+			strideY = ybcbr.strideY,
+			strideCb = ybcbr.strideCb,
+			strideCr = ybcbr.strideCr;
 		processLine = function convertYCbCr_processLine_clamped(y) {
 			var xdec = 0,
 				ydec = y >> vdec,

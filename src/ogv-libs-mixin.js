@@ -29,34 +29,38 @@ mergeInto(LibraryManager.library, {
 		var HEAPU8 = Module.HEAPU8,
 			widthColor = width >> hdec,
 			heightColor = height >> vdec,
-			countBytesY = width * height,
-			countBytesColor = widthColor * heightColor,
+			countBytesY = strideY * height,
+			countBytesCb = strideCb * heightColor,
+			countBytesCr = strideCr * heightColor,
 			inBytesY = HEAPU8.subarray(bufferY, bufferY + countBytesY),
-			inBytesCb = HEAPU8.subarray(bufferCb, bufferCb + countBytesColor),
-			inBytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesColor)
+			inBytesCb = HEAPU8.subarray(bufferCb, bufferCb + countBytesCb),
+			inBytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesCr),
+			bufferY = new ArrayBuffer(countBytesY),
+			bufferCb = new ArrayBuffer(countBytesCb),
+			bufferCr = new ArrayBuffer(countBytesCr),
+			bytesY = new Uint8Array(bufferY),
+			bytesCb = new Uint8Array(bufferCb),
+			bytesCr = new Uint8Array(bufferCr);
 
-		// Copy them over to a fresh buffer to transfer to output...
-		var outBuffer = new ArrayBuffer(countBytesY + countBytesColor * 2),
-			outBytes = new Uint8Array(outBuffer);
-		
-		for (var y = 0; y < height; y++) {
-			var inPtrY = bufferY + y * strideY,
-				inBytesY = HEAPU8.subarray(inPtrY, inPtrY + strideY);
-			outBytes.set(inBytesY, y * width);
-		}
-		for (var y = 0; y < heightColor; y++) {
-			var inPtrCb = bufferCb + y * strideCb,
-				inBytesCb = HEAPU8.subarray(inPtrCb, inPtrCb + widthColor);
-			outBytes.set(inBytesCb, countBytesY + y * widthColor);
-		}
-		for (var y = 0; y < heightColor; y++) {
-			var inPtrCr = bufferCr + y * strideCr,
-				inBytesCr = HEAPU8.subarray(inPtrCr, inPtrCr + widthColor);
-			outBytes.set(inBytesCr, countBytesY + countBytesColor + y * widthColor);
-		}
+		// These copies may not be packed efficiently,
+		// but it's easier than guessing the internal format.
+		bytesY.set(inBytesY);
+		bytesCb.set(inBytesCb);
+		bytesCr.set(inBytesCr);
 
 		// And queue up the output buffer!
-		OgvJsFrameCallback(outBuffer);
+		OgvJsFrameCallback({
+			bufferY: bufferY,
+			bufferCb: bufferCb,
+			bufferCr: bufferCr,
+			strideY: strideY,
+			strideCb: strideCb,
+			strideCr: strideCr,
+			width: width,
+			height: height,
+			hdec: hdec,
+			vdec: vdec
+		});
 	},
 	
 	OgvJsInitAudio: function(channels, rate) {
