@@ -27,26 +27,27 @@ mergeInto(LibraryManager.library, {
 		
 		// Create typed array views of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
+			HEAPU32 = Module.HEAPU32,
 			widthColor = width >> hdec,
 			heightColor = height >> vdec,
 			countBytesY = strideY * height,
 			countBytesCb = strideCb * heightColor,
 			countBytesCr = strideCr * heightColor,
-			inBytesY = HEAPU8.subarray(bufferY, bufferY + countBytesY),
-			inBytesCb = HEAPU8.subarray(bufferCb, bufferCb + countBytesCb),
-			inBytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesCr),
+			inDwordsY = HEAPU32.subarray(bufferY / 4, (bufferY + countBytesY) / 4),
+			inDwordsCb = HEAPU32.subarray(bufferCb / 4, (bufferCb + countBytesCb) / 4),
+			inDwordsCr = HEAPU32.subarray(bufferCr / 4, (bufferCr + countBytesCr) / 4),
 			bufferY = new ArrayBuffer(countBytesY),
 			bufferCb = new ArrayBuffer(countBytesCb),
 			bufferCr = new ArrayBuffer(countBytesCr),
-			bytesY = new Uint8Array(bufferY),
-			bytesCb = new Uint8Array(bufferCb),
-			bytesCr = new Uint8Array(bufferCr);
+			dwordsY = new Uint32Array(bufferY),
+			dwordsCb = new Uint32Array(bufferCb),
+			dwordsCr = new Uint32Array(bufferCr);
 
 		// These copies may not be packed efficiently,
 		// but it's easier than guessing the internal format.
-		bytesY.set(inBytesY);
-		bytesCb.set(inBytesCb);
-		bytesCr.set(inBytesCr);
+		dwordsY.set(inDwordsY);
+		dwordsCb.set(inDwordsCb);
+		dwordsCr.set(inDwordsCr);
 
 		// And queue up the output buffer!
 		OgvJsFrameCallback({
