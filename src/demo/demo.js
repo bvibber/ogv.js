@@ -792,9 +792,7 @@
 			var yCbCrBuffer = codec.dequeueFrame(),
 				outputBuffer = imageData.data;
 
-			convertYCbCr(yCbCrBuffer, outputBuffer,
-						 videoInfo.frameWidth, videoInfo.frameHeight,
-						 videoInfo.hdec, videoInfo.vdec),
+			convertYCbCr(yCbCrBuffer, outputBuffer),
 
 			ctx.putImageData(imageData,
 							 0, 0,
