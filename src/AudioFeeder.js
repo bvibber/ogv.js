@@ -17,7 +17,7 @@ function AudioFeeder() {
 	}
 	
 
-	var bufferSize = 8192,
+	var bufferSize = 4096,
 		channels = 0, // call init()!
 		rate = 0; // call init()!
 
