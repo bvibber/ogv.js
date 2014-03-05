@@ -741,8 +741,9 @@
 			showStatus('Audio disabled due to bug on Safari 6.0');
 		}
 		
-		codec = new OgvJs(options);
+		codec = new OgvJsShim(options);
 		codec.oninitvideo = function(info) {
+			console.log('INIT VIDEO', info);
 			videoInfo = info;
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
@@ -788,11 +789,10 @@
 			frameScheduled = false,
 			imageData = null;
 
-		function drawFrame() {
-			var yCbCrBuffer = codec.dequeueFrame(),
-				outputBuffer = imageData.data;
+		function drawFrame(frame) {
+			var outputBuffer = imageData.data;
 
-			convertYCbCr(yCbCrBuffer, outputBuffer),
+			convertYCbCr(frame, outputBuffer),
 
 			ctx.putImageData(imageData,
 							 0, 0,
@@ -801,20 +801,31 @@
 		}
 		
 		var lastFrameDecodeTime = 0.0;
-		function process() {
-			if (!codec.dataReady()) {
+		function process(callback) {
+			if (codec.dataReady()) {
+				if (callback) {
+					callback();
+				}
+			} else {
 				// Process until we run out of data or
 				// completely decode a video frame...
-				while (!codec.dataReady()) {
-					var start = getTimestamp();
-					
-					more = codec.process();
-					
+				var start = getTimestamp();
+				
+				codec.process(function(more) {
 					var delta = (getTimestamp() - start);
 					lastFrameDecodeTime += delta;
 					decodingTime += delta / 1000;
 
-					if (!more) {
+					if (codec.dataReady()) {
+						if (callback) {
+							callback();
+						}
+					}
+					
+					if (more) {
+						// keep processing...
+						setTimeout(process, 0);
+					} else {
 						if (stream) {
 							// Ran out of buffered input
 							stream.readBytes();
@@ -825,9 +836,8 @@
 								stopVideo();
 							}, 0);
 						}
-						break;
 					}
-				}
+				});
 			}
 		}
 		
@@ -836,7 +846,7 @@
 			nextFrameTimer = requestAnimationFrame(function() {
 				nextFrameTimer = null;
 				if (codec) {
-					if (codec.audioReady) {
+					if (codec.hasAudio && codec.audioReady) {
 						while (codec.audioReady) {
 							var buffer = codec.dequeueAudio();
 							audioFeeder.bufferData(buffer);
@@ -847,7 +857,12 @@
 						if (currentTime >= targetFrameTime) {
 							// It's time to draw a frame, if we have one
 							if (codec.frameReady) {
-								drawFrame();
+								var frame = codec.dequeueFrame();
+								
+								// Start processing next frame async
+								process();
+				
+								drawFrame(frame);
 								var delta = getTimestamp() - currentTime;
 								recordBenchmarkPoint(lastFrameDecodeTime);
 								lastFrameDecodeTime = 0.0;
@@ -859,15 +874,16 @@
 							} else {
 								console.log("Late video frame!");
 								targetFrameTime = getTimestamp() + 1000.0 / fps;
+								process();
 							}
-							process();
 						}
 					} else {
 						// Process next set of audio
 						if (audioFeeder.isBufferNearEmpty()) {
-							process();
-							recordBenchmarkPoint(lastFrameDecodeTime);
-							lastFrameDecodeTime = 0.0;
+							process(function() {
+								recordBenchmarkPoint(lastFrameDecodeTime);
+								lastFrameDecodeTime = 0.0;
+							});
 						}
 					}
 					pingAnimationFrame();

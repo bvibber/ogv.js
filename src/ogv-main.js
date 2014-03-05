@@ -67,12 +67,12 @@ OgvJs = (function(options) {
 	/**
 	 * @property function({codec, frameWidth, frameHeight, fps, picWidth, picHeight, picX, picY}) event handler when initializing video stream
 	 */
-	self.onvideoinit = null;
+	self.oninitvideo = null;
 
 	/**
 	 * @property function({codec, channels, rate}) event handler when initializing audio stream
 	 */
-	self.onaudioinit = null;
+	self.oninitaudio = null;
 
 	/**
 	 * @property boolean does the media stream contain video?
