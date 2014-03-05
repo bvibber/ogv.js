@@ -25,7 +25,6 @@ function OgvJsShim(options) {
 			}
 			if (data.audio) {
 				self.audioReady = true;
-				console.log(data.audio);
 				for (var i = 0; i < data.audio.length; i++) {
 					audioBuffers.push(data.audio[i]);
 				}
