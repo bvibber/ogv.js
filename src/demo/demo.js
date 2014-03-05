@@ -260,6 +260,7 @@
 				throw new Error("Unexpected file extension " + ext);
 			}
 			sources.push({
+				key: 'original',
 				format: format,
 				width: imageinfo.width,
 				height: imageinfo.height,
@@ -284,6 +285,7 @@
 								continue;
 							}
 							sources.push({
+								key: key,
 								format: format,
 								width: Math.round(imageinfo.width * height / imageinfo.height),
 								height: height,
@@ -389,6 +391,10 @@
 					filter.value = value;
 				} else if (name === 'mute') {
 					document.getElementById('mute').checked = (value == '1');
+				} else if (name === 'size') {
+					var selector = document.getElementById('video-preferred-size');
+					selector.value = value;
+					preferredKey = value;
 				}
 			});
 			if (title) {
@@ -514,9 +520,24 @@
 			hash += '&mute=1';
 		}
 		
+		hash += '&size=' + document.getElementById('video-preferred-size').value;
+		
 		document.location.hash = hash;
 	}
 	
+	var preferredKey = '360p.ogv';
+	if (navigator.userAgent.match(/Mobile/)) {
+		preferredKey = '160p.ogv';
+	}
+	var selector = document.getElementById('video-preferred-size');
+	selector.value = preferredKey;
+	selector.addEventListener('change', function() {
+		preferredKey = selector.value;
+		console.log('changed to ' + preferredKey);
+		setHash();
+		showVideo();
+	});
+
 	function resizeVideo() {
 		var container = document.getElementById('player'),
 			computedStyle = window.getComputedStyle(container),
@@ -558,31 +579,24 @@
 			
 			// temporarily disable the smallest transcodes, except on mobiles/iOS
 			var minHeight;
-			if (navigator.userAgent.match(/Mobile/)) {
-				minHeight = 1;
-			} else {
-				minHeight = 161;
-			}
-			if (window.innerWidth <= 360) {
-				// ...except on iOS!
-				minnie = 1;
-			}
-			var selected = null, oga = null;
+			var selected = null,
+				original = null,
+				oga = null;
 			sources.forEach(function(source) {
-				if (source.format == 'ogv') {
-					if (source.height == 0 || source.height >= minHeight) {
-						if (selected == null) {
-							selected = source;
-						} else {
-							if (source.height < selected.height) {
-								selected = source;
-							}
-						}
-					}
-				} else if (source.format == 'oga') {
+				if (source.key == 'original' && source.format == 'ogv') {
+					original = source;
+				}
+				if (source.key == preferredKey) {
+					selected = source;
+				}
+				if (source.format == 'oga') {
 					oga = source;
 				}
 			});
+			if (selected == null) {
+				console.log("Try original file");
+				selected = original;
+			}
 			if (selected == null) {
 				console.log("Try audio-only .oga transcode");
 				selected = oga;
