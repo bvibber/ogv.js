@@ -12,9 +12,9 @@ appear under build/demo/
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
-* streaming: buggy, some buffering problems
+* streaming: mostly works (buffering varies by browser)
 * color: yes
-* audio: buggy & limited
+* audio: yes, with a/v sync
 * background threading: no
 
 
@@ -108,13 +108,16 @@ Jumping to a new position in the file that hasn't yet been buffered could be acc
 
 *Audio output*
 
-Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix). Explicit synchronization is not yet performed, so audio and video drift out of sync over time.
+Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix).
 
 Audio is blacklisted on Safari 6.0 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). This may or may not be fixed in the latest builds, but I no longer have Safari 6.0 handy to test.
 
 Firefox supports Web Audio API in recent versions.
 
-IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working! However this may make sync more difficult to achieve as there's another layer between our JS code and the output.
+IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
+
+A/V synchronization is performed on files with both audio and video, and seems to
+actually work. Yay!
 
 
 ## Emscripten issues
