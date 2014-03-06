@@ -10,6 +10,7 @@ package {
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
         public var buffer:Array = [];
+        public var fudgeFactor:Number = 0;
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -45,7 +46,7 @@ package {
         	if (this.soundChannel == null) {
         		return 0;
         	} else {
-        		return this.soundChannel.position / 1000;
+        		return this.soundChannel.position / 1000 - this.fudgeFactor;
         	}
         }
 
@@ -58,6 +59,7 @@ package {
                 for (i = 0; i < 4096; i++) {
                     event.data.writeFloat(0.0);
                 }
+                this.fudgeFactor += (2048 / 44100);
                 return;
             }
             
