@@ -313,7 +313,7 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		  }
 		}
 
-		if(videobuf_ready && audiobuf_time >= videobuf_time){
+		if(videobuf_ready && (audiobuf_time < 0 || audiobuf_time >= videobuf_time)) {
 			/* dumpvideo frame, and get new one */
 			video_write();
 			videobuf_ready=0;

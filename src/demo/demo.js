@@ -821,8 +821,14 @@
 				// completely decode a video frame...
 				var start = getTimestamp();
 				
-				var empty = audioFeeder.isBufferNearEmpty();
-				var pos = audioFeeder.playbackPosition();
+				var pos, empty;
+				if (codec.hasAudio) {
+					pos = audioFeeder.playbackPosition();
+					empty = audioFeeder.isBufferNearEmpty();
+				} else {
+					pos = -1;
+					empty = true;
+				}
 				more = codec.process(pos, empty);
 				
 				var delta = (getTimestamp() - start);
