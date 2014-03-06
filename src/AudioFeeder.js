@@ -8,6 +8,7 @@
  */
 function AudioFeeder() {
 	// assume W3C Audio API
+	var self = this;
 	
 	var AudioContext = window.AudioContext || window.webkitAudioContext;
 	if (!AudioContext) {
@@ -39,7 +40,9 @@ function AudioFeeder() {
 		node,
 		pendingBuffer = freshBuffer(),
 		pendingPos = 0,
-		muted = false;
+		muted = false,
+		bufferHead = 0,
+		playbackTimeAtBufferHead = 0;
 
 	if(AudioContext) {
 		context = new AudioContext;
@@ -65,6 +68,8 @@ function AudioFeeder() {
 		node.onaudioprocess = function(event) {
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!muted && inputBuffer) {
+				playbackTimeAtBufferHead = event.playbackTime;
+				bufferHead += (bufferSize / rate);
 				for (var channel = 0; channel < outputChannels; channel++) {
 					var input = inputBuffer[channel],
 						output = event.outputBuffer.getChannelData(channel);
@@ -149,8 +154,6 @@ function AudioFeeder() {
 		}
 	}
 	
-	var self = this;
-	
 	this.init = function(numChannels, sampleRate) {
 		// warning: can't change channels here reliably
 		rate = sampleRate;
@@ -182,11 +185,19 @@ function AudioFeeder() {
 			buffers.forEach(function(buffer) {
 				samplesQueued += buffer[0].length;
 			});
-			return samplesQueued <= bufferSize * 2;
+			return samplesQueued <= bufferSize;
 		} else {
 			return true;
 		}
 	};
+	
+	this.playbackPosition = function() {
+		return bufferHead - (playbackTimeAtBufferHead - context.currentTime);
+	}
+	
+	this.bufferedTime = function() {
+		return playbackTimeAtBufferHead - context.currentTime;
+	}
 	
 	this.mute = function() {
 		muted = true;

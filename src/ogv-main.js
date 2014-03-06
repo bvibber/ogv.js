@@ -17,7 +17,7 @@ OgvJs = (function(options) {
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
-    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
+    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', ['number', 'number']);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -125,8 +125,8 @@ OgvJs = (function(options) {
 	/**
 	 * Process the next packet in the stream
 	 */
-	self.process = function() {
-		return OgvJsProcess();
+	self.process = function(audioPosition, audioReady) {
+		return OgvJsProcess(audioPosition, audioReady ? 1 : 0);
 	}
 	
 	/**

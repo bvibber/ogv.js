@@ -819,27 +819,27 @@
 			if (!codec.dataReady()) {
 				// Process until we run out of data or
 				// completely decode a video frame...
-				while (!codec.dataReady()) {
-					var start = getTimestamp();
-					
-					more = codec.process();
-					
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					decodingTime += delta / 1000;
+				var start = getTimestamp();
+				
+				var empty = audioFeeder.isBufferNearEmpty();
+				more = codec.process(audioFeeder.playbackPosition(), empty);
+				
+				var delta = (getTimestamp() - start);
+				lastFrameDecodeTime += delta;
+				decodingTime += delta / 1000;
 
-					if (!more) {
-						if (stream) {
-							// Ran out of buffered input
-							stream.readBytes();
-						} else {
-							// Ran out of stream!
-							setTimeout(function() {
-								showStatus('End of stream reached.');
-								stopVideo();
-							}, 0);
-						}
-						break;
+				if (!more) {
+					if (stream) {
+						// Ran out of buffered input
+						stream.readBytes();
+					} else {
+						// Ran out of stream!
+						/*
+						setTimeout(function() {
+							showStatus('End of stream reached.');
+							stopVideo();
+						}, 0);
+						*/
 					}
 				}
 			}
@@ -850,14 +850,32 @@
 			nextFrameTimer = requestAnimationFrame(function() {
 				nextFrameTimer = null;
 				if (codec) {
-					if (codec.audioReady) {
+					var currentTime = getTimestamp();
+					if (codec.hasAudio) {
+						// Drive on the audio clock!
 						while (codec.audioReady) {
 							var buffer = codec.dequeueAudio();
 							audioFeeder.bufferData(buffer);
 						}
-					}
-					if (codec.hasVideo) {
-						var currentTime = getTimestamp();
+						if (codec.frameReady) {
+							drawFrame();
+							var delta = getTimestamp() - currentTime;
+							recordBenchmarkPoint(lastFrameDecodeTime);
+							lastFrameDecodeTime = 0.0;
+
+							pixelsProcessed += pixelsPerFrame;
+							drawingTime += delta / 1000.0;
+
+							targetFrameTime += 1000.0 / fps;
+						}
+						process();
+						if (!codec.hasVideo) {
+							recordBenchmarkPoint(lastFrameDecodeTime);
+							lastFrameDecodeTime = 0.0;
+						}
+					} else {
+						// Video-only: drive on the video clock
+						
 						if (currentTime >= targetFrameTime) {
 							// It's time to draw a frame, if we have one
 							if (codec.frameReady) {
@@ -875,13 +893,6 @@
 								targetFrameTime = getTimestamp() + 1000.0 / fps;
 							}
 							process();
-						}
-					} else {
-						// Process next set of audio
-						if (audioFeeder.isBufferNearEmpty()) {
-							process();
-							recordBenchmarkPoint(lastFrameDecodeTime);
-							lastFrameDecodeTime = 0.0;
 						}
 					}
 					pingAnimationFrame();
