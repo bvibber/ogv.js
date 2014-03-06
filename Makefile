@@ -14,13 +14,29 @@ clean:
 	test -f libtheora/Makefile && (cd libtheora && make distclean) || true
 	rm -f libtheora/configure
 
-build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js compileOgg.sh compileVorbis.sh compileTheora.sh compileOgv.sh
+build/root/lib/libogg.a : compileOgg.sh
 	test -d build || mkdir build
 	test -d build/intermediate || mkdir build/intermediate
 	./compileOgg.sh
-	./compileVorbis.sh
-	./compileTremor.sh
+
+build/root/lib/libtheora.a : build/root/lib/libogg.a compileTheora.sh
+	test -d build || mkdir build
+	test -d build/intermediate || mkdir build/intermediate
 	./compileTheora.sh
+
+build/root/lib/libvorbis.a : build/root/lib/libogg.a compileVorbis.sh
+	test -d build || mkdir build
+	test -d build/intermediate || mkdir build/intermediate
+	./compileVorbis.sh
+
+build/root/lib/libvorbisidec.a : build/root/lib/libogg.a compileTremor.sh
+	test -d build || mkdir build
+	test -d build/intermediate || mkdir build/intermediate
+	./compileTremor.sh
+
+build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/root/lib/libogg.a build/root/lib/libtheora.a build/root/lib/libvorbisidec.a compileOgv.sh
+	test -d build || mkdir build
+	test -d build/intermediate || mkdir build/intermediate
 	./compileOgv.sh
 
 build/ogv.js : src/ogv-main.js build/intermediate/ogv-libs.js
