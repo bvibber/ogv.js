@@ -822,7 +822,8 @@
 				var start = getTimestamp();
 				
 				var empty = audioFeeder.isBufferNearEmpty();
-				more = codec.process(audioFeeder.playbackPosition(), empty);
+				var pos = audioFeeder.playbackPosition();
+				more = codec.process(pos, empty);
 				
 				var delta = (getTimestamp() - start);
 				lastFrameDecodeTime += delta;

@@ -165,9 +165,6 @@ function AudioFeeder() {
 		rate = sampleRate;
 		channels = numChannels;
 		pendingBuffer = freshBuffer();
-
-		playbackTimeAtBufferHead = (performance.now() / 1000);
-		bufferHead = 0;
 	};
 	
 	this.bufferData = function(samplesPerChannel) {
@@ -178,7 +175,6 @@ function AudioFeeder() {
 				flashElement.write(resamples.join(' '));
 			}
 			bufferHead += (samplesPerChannel[0].length / rate);
-			playbackTimeAtBufferHead += (samplesPerChannel[0].length / rate);
 		} else if (buffers) {
 			samples = resample(samplesPerChannel);
 			pushSamples(samples);
@@ -189,11 +185,13 @@ function AudioFeeder() {
 	
 	this.isBufferNearEmpty = function() {
 		if (this.flashaudio) {
-			if (bufferHead == 0) {
-				return true;
+			var flashElement = this.flashaudio.flashElement;
+			if (flashElement.write) {
+				var samplesQueued = flashElement.samplesQueued();
+				return samplesQueued <= bufferSize * 2;
 			} else {
-				//console.log((bufferHead - this.playbackPosition()), 4000 / 44100);
-				return (bufferHead - this.playbackPosition()) < (1000 / 44100);
+				// still initializing...
+				return true;
 			}
 		} else if (buffers) {
 			var samplesQueued = 0;
@@ -208,7 +206,12 @@ function AudioFeeder() {
 	
 	this.playbackPosition = function() {
 		if (this.flashaudio) {
-			return bufferHead - (playbackTimeAtBufferHead - (performance.now() / 1000)); // fake it!
+			var flashElement = this.flashaudio.flashElement;
+			if (flashElement.write) {
+				return flashElement.playbackPosition();
+			} else {
+				return 0;
+			}
 		} else {
 			return bufferHead - (playbackTimeAtBufferHead - context.currentTime);
 		}
