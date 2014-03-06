@@ -296,8 +296,6 @@ static void processHeaders() {
 static int needData = 1;
 
 static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
-	int foundStuff = 0;
-	
 	needData = 0;
 	if (theora_p) {
 		// fixme -- don't decode next frame until the time is right
@@ -306,7 +304,6 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		  if (ogg_stream_packetout(&theoraStreamState, &oggPacket) > 0 ){
 
 			if (th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
-			  foundStuff = 1;
 			  videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
 			  videobuf_ready=1;
 			  frames++;
@@ -327,7 +324,6 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		int successfulAudio = 0;
 		while (ogg_stream_packetout(&vo, &oggPacket) > 0) {
 			successfulAudio = 1;
-			foundStuff = 1;
 			if(vorbis_synthesis(&vb, &oggPacket)==0) {
 				vorbis_synthesis_blockin(&vd,&vb);
 
@@ -350,7 +346,7 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		}
 	}
 	
-	return !needData;
+	return 1;
 }
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {

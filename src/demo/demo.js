@@ -835,12 +835,10 @@
 						stream.readBytes();
 					} else {
 						// Ran out of stream!
-						/*
 						setTimeout(function() {
 							showStatus('End of stream reached.');
 							stopVideo();
 						}, 0);
-						*/
 					}
 				}
 			}
