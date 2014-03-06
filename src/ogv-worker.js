@@ -30,7 +30,7 @@ self.addEventListener('message', function( event) {
 	} else if (data.action == 'receiveInput') {
 		codec.receiveInput(data.data);
 	} else if (data.action == 'process') {
-		result = codec.process();
+		result = codec.process(data.audioPosition, data.audioReady);
 		var payload = {
 			action: 'onprocess',
 			result: result

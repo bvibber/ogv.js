@@ -101,10 +101,12 @@ function OgvJsShim(options) {
 	/**
 	 * Process the next packet in the stream
 	 */
-	self.process = function(callback) {
+	self.process = function(audioPosition, audioReady, callback) {
 		self.onprocess = callback;
 		worker.postMessage({
 			action: 'process',
+			audioPosition: audioPosition,
+			audioReady: audioReady
 		});
 	}
 	

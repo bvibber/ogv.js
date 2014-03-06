@@ -833,7 +833,7 @@
 					pos = -1;
 					empty = true;
 				}
-				codec.process(pos, empty, function() {
+				codec.process(pos, empty, function(more) {
 				
 					var delta = (getTimestamp() - start);
 					lastFrameDecodeTime += delta;
@@ -850,7 +850,7 @@
 								stopVideo();
 							}, 0);
 						}
-					});
+					}
 				});
 			}
 		}
@@ -868,7 +868,8 @@
 							audioFeeder.bufferData(buffer);
 						}
 						if (codec.frameReady) {
-							drawFrame();
+							var frame = codec.dequeueFrame();
+							drawFrame(frame);
 							var delta = getTimestamp() - currentTime;
 							recordBenchmarkPoint(lastFrameDecodeTime);
 							lastFrameDecodeTime = 0.0;
