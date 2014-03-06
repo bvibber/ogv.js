@@ -3,14 +3,19 @@ package {
     import flash.events.SampleDataEvent;
     import flash.external.ExternalInterface;
     import flash.media.Sound;
+    import flash.media.SoundChannel;
     
     public class dynamicaudio extends Sprite {
         public var bufferSize:Number = 2048; // In samples
         public var sound:Sound = null;
+        public var soundChannel:SoundChannel = null;
         public var buffer:Array = [];
+        public var fudgeFactor:Number = 0;
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
+            ExternalInterface.addCallback('playbackPosition', playbackPosition);
+            ExternalInterface.addCallback('samplesQueued', samplesQueued);
         }
         
         // Called from JavaScript to add samples to the buffer
@@ -24,13 +29,25 @@ package {
                     SampleDataEvent.SAMPLE_DATA,
                     soundGenerator
                 );
-                this.sound.play();
+                this.soundChannel = this.sound.play();
             }
             
             var multiplier:Number = 1/32768;
             for each (var sample:String in s.split(" ")) {
                 this.buffer.push(Number(sample)*multiplier);
             }
+        }
+
+        public function samplesQueued():Number {
+        	return this.buffer.length / 2;
+        }
+        
+        public function playbackPosition():Number {
+        	if (this.soundChannel == null) {
+        		return 0;
+        	} else {
+        		return this.soundChannel.position / 1000 - this.fudgeFactor;
+        	}
         }
 
         public function soundGenerator(event:SampleDataEvent):void {
@@ -42,6 +59,7 @@ package {
                 for (i = 0; i < 4096; i++) {
                     event.data.writeFloat(0.0);
                 }
+                this.fudgeFactor += (2048 / 44100);
                 return;
             }
             

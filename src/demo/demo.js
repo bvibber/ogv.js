@@ -825,21 +825,21 @@
 				// completely decode a video frame...
 				var start = getTimestamp();
 				
-				codec.process(function(more) {
+				var pos, empty;
+				if (codec.hasAudio) {
+					pos = audioFeeder.playbackPosition();
+					empty = audioFeeder.isBufferNearEmpty();
+				} else {
+					pos = -1;
+					empty = true;
+				}
+				codec.process(pos, empty, function() {
+				
 					var delta = (getTimestamp() - start);
 					lastFrameDecodeTime += delta;
 					decodingTime += delta / 1000;
 
-					if (codec.dataReady()) {
-						if (callback) {
-							callback();
-						}
-					}
-					
-					if (more) {
-						// keep processing...
-						setTimeout(process, 0);
-					} else {
+					if (!more) {
 						if (stream) {
 							// Ran out of buffered input
 							stream.readBytes();
@@ -850,7 +850,7 @@
 								stopVideo();
 							}, 0);
 						}
-					}
+					});
 				});
 			}
 		}
@@ -860,14 +860,32 @@
 			nextFrameTimer = requestAnimationFrame(function() {
 				nextFrameTimer = null;
 				if (codec) {
-					if (codec.hasAudio && codec.audioReady) {
+					var currentTime = getTimestamp();
+					if (codec.hasAudio) {
+						// Drive on the audio clock!
 						while (codec.audioReady) {
 							var buffer = codec.dequeueAudio();
 							audioFeeder.bufferData(buffer);
 						}
-					}
-					if (codec.hasVideo) {
-						var currentTime = getTimestamp();
+						if (codec.frameReady) {
+							drawFrame();
+							var delta = getTimestamp() - currentTime;
+							recordBenchmarkPoint(lastFrameDecodeTime);
+							lastFrameDecodeTime = 0.0;
+
+							pixelsProcessed += pixelsPerFrame;
+							drawingTime += delta / 1000.0;
+
+							targetFrameTime += 1000.0 / fps;
+						}
+						process();
+						if (!codec.hasVideo) {
+							recordBenchmarkPoint(lastFrameDecodeTime);
+							lastFrameDecodeTime = 0.0;
+						}
+					} else {
+						// Video-only: drive on the video clock
+						
 						if (currentTime >= targetFrameTime) {
 							// It's time to draw a frame, if we have one
 							if (codec.frameReady) {
@@ -890,14 +908,6 @@
 								targetFrameTime = getTimestamp() + 1000.0 / fps;
 								process();
 							}
-						}
-					} else {
-						// Process next set of audio
-						if (audioFeeder.isBufferNearEmpty()) {
-							process(function() {
-								recordBenchmarkPoint(lastFrameDecodeTime);
-								lastFrameDecodeTime = 0.0;
-							});
 						}
 					}
 					pingAnimationFrame();

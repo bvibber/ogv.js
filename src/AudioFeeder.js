@@ -8,6 +8,7 @@
  */
 function AudioFeeder() {
 	// assume W3C Audio API
+	var self = this;
 	
 	var AudioContext = window.AudioContext || window.webkitAudioContext;
 	if (!AudioContext) {
@@ -39,7 +40,9 @@ function AudioFeeder() {
 		node,
 		pendingBuffer = freshBuffer(),
 		pendingPos = 0,
-		muted = false;
+		muted = false,
+		bufferHead = 0,
+		playbackTimeAtBufferHead = 0;
 
 	if(AudioContext) {
 		context = new AudioContext;
@@ -65,6 +68,14 @@ function AudioFeeder() {
 		node.onaudioprocess = function(event) {
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!muted && inputBuffer) {
+				if (typeof event.playbackTime === "number") {
+					playbackTimeAtBufferHead = event.playbackTime;
+				} else if (typeof event.timeStamp === "number") {
+					playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
+				} else {
+					console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
+				}
+				bufferHead += (bufferSize / rate);
 				for (var channel = 0; channel < outputChannels; channel++) {
 					var input = inputBuffer[channel],
 						output = event.outputBuffer.getChannelData(channel);
@@ -149,8 +160,6 @@ function AudioFeeder() {
 		}
 	}
 	
-	var self = this;
-	
 	this.init = function(numChannels, sampleRate) {
 		// warning: can't change channels here reliably
 		rate = sampleRate;
@@ -165,6 +174,7 @@ function AudioFeeder() {
 			if(resamples.length > 0 && flashElement.write) {
 				flashElement.write(resamples.join(' '));
 			}
+			bufferHead += (samplesPerChannel[0].length / rate);
 		} else if (buffers) {
 			samples = resample(samplesPerChannel);
 			pushSamples(samples);
@@ -175,18 +185,37 @@ function AudioFeeder() {
 	
 	this.isBufferNearEmpty = function() {
 		if (this.flashaudio) {
-			// fixme!
-			return true;
+			var flashElement = this.flashaudio.flashElement;
+			if (flashElement.write) {
+				var samplesQueued = flashElement.samplesQueued();
+				return samplesQueued <= bufferSize * 2;
+			} else {
+				// still initializing...
+				return true;
+			}
 		} else if (buffers) {
 			var samplesQueued = 0;
 			buffers.forEach(function(buffer) {
 				samplesQueued += buffer[0].length;
 			});
-			return samplesQueued <= bufferSize * 2;
+			return samplesQueued <= bufferSize;
 		} else {
 			return true;
 		}
 	};
+	
+	this.playbackPosition = function() {
+		if (this.flashaudio) {
+			var flashElement = this.flashaudio.flashElement;
+			if (flashElement.write) {
+				return flashElement.playbackPosition();
+			} else {
+				return 0;
+			}
+		} else {
+			return bufferHead - (playbackTimeAtBufferHead - context.currentTime);
+		}
+	}
 	
 	this.mute = function() {
 		muted = true;

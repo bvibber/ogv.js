@@ -295,8 +295,8 @@ static void processHeaders() {
 
 static int needData = 1;
 
-static void processDecoding() {
-	int foundStuff = 0;
+static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
+	needData = 0;
 	if (theora_p) {
 		// fixme -- don't decode next frame until the time is right
 		if(!videobuf_ready){
@@ -304,26 +304,27 @@ static void processDecoding() {
 		  if (ogg_stream_packetout(&theoraStreamState, &oggPacket) > 0 ){
 
 			if (th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
-				foundStuff = 1;
 			  videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
 			  videobuf_ready=1;
 			  frames++;
 			}
-
+		  } else {
+		  	needData = 1;
 		  }
 		}
 
-		if(videobuf_ready){
+		if(videobuf_ready && (audiobuf_time < 0 || audiobuf_time >= videobuf_time)) {
 			/* dumpvideo frame, and get new one */
 			video_write();
 			videobuf_ready=0;
 		}
 	}
 	
-	if (vorbis_p) {
+	if (vorbis_p && audiobuffer_empty) {
+		int successfulAudio = 0;
 		while (ogg_stream_packetout(&vo, &oggPacket) > 0) {
+			successfulAudio = 1;
 			if(vorbis_synthesis(&vb, &oggPacket)==0) {
-				foundStuff = 1;
 				vorbis_synthesis_blockin(&vd,&vb);
 
 				// fixme -- timing etc!
@@ -340,9 +341,12 @@ static void processDecoding() {
 				vorbis_synthesis_read(&vd, sampleCount);
 			}
 		}
+		if (!successfulAudio) {
+			needData = 1;
+		}
 	}
 	
-	needData = !foundStuff;
+	return 1;
 }
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {
@@ -353,7 +357,7 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 	}
 }
 
-int OgvJsProcess() {
+int OgvJsProcess(double audiobuf_time, int audiobuffer_empty) {
 	if (needData) {
 		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 			queue_page(&oggPage);
@@ -367,7 +371,7 @@ int OgvJsProcess() {
 	} else if (appState == STATE_HEADERS) {
 		processHeaders();
 	} else if (appState == STATE_DECODING) {
-		processDecoding();
+		return processDecoding(audiobuf_time, audiobuffer_empty);
 	}
 	return 1;
 }
