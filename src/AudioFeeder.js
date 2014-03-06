@@ -68,7 +68,13 @@ function AudioFeeder() {
 		node.onaudioprocess = function(event) {
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!muted && inputBuffer) {
-				playbackTimeAtBufferHead = event.playbackTime;
+				if (typeof event.playbackTime === "number") {
+					playbackTimeAtBufferHead = event.playbackTime;
+				} else if (typeof event.timeStamp === "number") {
+					playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
+				} else {
+					console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
+				}
 				bufferHead += (bufferSize / rate);
 				for (var channel = 0; channel < outputChannels; channel++) {
 					var input = inputBuffer[channel],
