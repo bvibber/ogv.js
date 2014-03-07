@@ -34,7 +34,7 @@ build/root/lib/libvorbisidec.a : build/root/lib/libogg.a compileTremor.sh
 	test -d build/intermediate || mkdir build/intermediate
 	./compileTremor.sh
 
-build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/root/lib/libogg.a build/root/lib/libtheora.a build/root/lib/libvorbisidec.a compileOgv.sh
+build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/root/lib/libogg.a build/root/lib/libtheora.a build/root/lib/libvorbis.a compileOgv.sh
 	test -d build || mkdir build
 	test -d build/intermediate || mkdir build/intermediate
 	./compileOgv.sh

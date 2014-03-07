@@ -129,7 +129,7 @@ Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscr
 
 ## Upstream library notes
 
-We're currently using tremor (libivorbis), an integer-only variant of libvorbis. This may or may not decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library.
+We've experimented with tremor (libivorbis), an integer-only variant of libvorbis. This actually does *not* decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library. However on slow devices like iPod Touch 5th-generation, it makes a significant impact on the decode time.
 
 Libtheora needs a slight patch to a function signature to pass emscripten's checks for asm.js-mode function pointer compatibility.
 
