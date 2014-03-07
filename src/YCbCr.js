@@ -31,7 +31,7 @@
 					outPtr1 = outPtr0 + 4 * width,
 					colorY00, colorY01, colorY10, colorY11, colorCb, colorCr,
 					multY00, multY01, multY10, multY11,
-					multCrR, multCbG, multCrG, multCbB;
+					multCrR, multCbCrG, multCbB;
 				
 				for (var x = 0; x < width; x += 2) {
 					xdec = x >> hdec;
@@ -45,33 +45,32 @@
 					// Quickie YUV conversion
 					// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
 					// multiplied by 256 for integer-friendliness
-					multCrR = (409 * colorCr);
-					multCbG = (100 * colorCb);
-					multCrG = (208 * colorCr);
-					multCbB = (516 * colorCb);
+					multCrR = (409 * colorCr) - 57088;
+					multCbCrG = (100 * colorCb) + (208 * colorCr) - 34816;
+					multCbB = (516 * colorCb) - 70912;
 					
 					multY00 = (298 * colorY00);
-					output[outPtr0++] = (multY00 + multCrR - 57088) >> 8;
-					output[outPtr0++] = (multY00 - multCbG - multCrG + 34816) >> 8;
-					output[outPtr0++] = (multY00 + multCbB - 70912) >> 8;
+					output[outPtr0++] = (multY00 + multCrR) >> 8;
+					output[outPtr0++] = (multY00 - multCbCrG) >> 8;
+					output[outPtr0++] = (multY00 + multCbB) >> 8;
 					output[outPtr0++] = 255;
 
 					multY01 = (298 * colorY01);
-					output[outPtr0++] = (multY01 + multCrR - 57088) >> 8;
-					output[outPtr0++] = (multY01 - multCbG - multCrG + 34816) >> 8;
-					output[outPtr0++] = (multY01 + multCbB - 70912) >> 8;
+					output[outPtr0++] = (multY01 + multCrR) >> 8;
+					output[outPtr0++] = (multY01 - multCbCrG) >> 8;
+					output[outPtr0++] = (multY01 + multCbB) >> 8;
 					output[outPtr0++] = 255;
 					
 					multY10 = (298 * colorY10);
-					output[outPtr1++] = (multY10 + multCrR - 57088) >> 8;
-					output[outPtr1++] = (multY10 - multCbG - multCrG + 34816) >> 8;
-					output[outPtr1++] = (multY10 + multCbB - 70912) >> 8;
+					output[outPtr1++] = (multY10 + multCrR) >> 8;
+					output[outPtr1++] = (multY10 - multCbCrG) >> 8;
+					output[outPtr1++] = (multY10 + multCbB) >> 8;
 					output[outPtr1++] = 255;
 
 					multY11 = (298 * colorY11);
-					output[outPtr1++] = (multY11 + multCrR - 57088) >> 8;
-					output[outPtr1++] = (multY11 - multCbG - multCrG + 34816) >> 8;
-					output[outPtr1++] = (multY11 + multCbB - 70912) >> 8;
+					output[outPtr1++] = (multY11 + multCrR) >> 8;
+					output[outPtr1++] = (multY11 - multCbCrG) >> 8;
+					output[outPtr1++] = (multY11 + multCbB) >> 8;
 					output[outPtr1++] = 255;
 				}
 			}
