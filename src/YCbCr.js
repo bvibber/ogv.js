@@ -34,13 +34,12 @@
 					multCrR, multCbCrG, multCbB;
 				
 				for (var x = 0; x < width; x += 2) {
-					xdec = x >> hdec;
-					colorY00 = bytesY[Y0Ptr + x];
-					colorY01 = bytesY[Y0Ptr + x + 1];
-					colorY10 = bytesY[Y1Ptr + x];
-					colorY11 = bytesY[Y1Ptr + x + 1];
-					colorCb = bytesCb[CbPtr + xdec];
-					colorCr = bytesCr[CrPtr + xdec];
+					colorY00 = bytesY[Y0Ptr++];
+					colorY01 = bytesY[Y0Ptr++];
+					colorY10 = bytesY[Y1Ptr++];
+					colorY11 = bytesY[Y1Ptr++];
+					colorCb = bytesCb[CbPtr++];
+					colorCr = bytesCr[CrPtr++];
 	
 					// Quickie YUV conversion
 					// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
