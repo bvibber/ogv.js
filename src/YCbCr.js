@@ -20,19 +20,18 @@
 		
 		if (hdec == vdec == 1) {
 			// Optimize for 4:2:0, which is most common
-			processLine = function convertYCbCr_processLine_420(y) {
-				var xdec = 0,
-					ydec = y >> vdec,
-					Y0Ptr = y * strideY,
+			var outStride = 4 * width,
+				outPtr0 = 0,
+				outPtr1 = outStride,
+				ydec = 0,
+				colorY00, colorY01, colorY10, colorY11, colorCb, colorCr,
+				multY00, multY01, multY10, multY11,
+				multCrR, multCbCrG, multCbB;
+			for (var y = 0; y < height; y += 2) {
+				var Y0Ptr = y * strideY,
 					Y1Ptr = Y0Ptr + strideY,
 					CbPtr = ydec * strideCb,
-					CrPtr = ydec * strideCr,
-					outPtr0 = y * 4 * width,
-					outPtr1 = outPtr0 + 4 * width,
-					colorY00, colorY01, colorY10, colorY11, colorCb, colorCr,
-					multY00, multY01, multY10, multY11,
-					multCrR, multCbCrG, multCbB;
-				
+					CrPtr = ydec * strideCr;
 				for (var x = 0; x < width; x += 2) {
 					colorY00 = bytesY[Y0Ptr++];
 					colorY01 = bytesY[Y0Ptr++];
@@ -72,9 +71,9 @@
 					output[outPtr1++] = (multY11 + multCbB) >> 8;
 					output[outPtr1++] = 255;
 				}
-			}
-			for (var y = 0; y < height; y += 2) {
-				processLine(y);
+				outPtr0 += outStride;
+				outPtr1 += outStride;
+				ydec++;
 			}
 		} else {
 			processLine = function convertYCbCr_processLine_clamped(y) {
