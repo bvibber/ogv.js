@@ -15,13 +15,12 @@
 		}
 	}
 
-	var pixelsPerFrame = 0, // pixels
-		targetPixelRate = 0, // pixels/second
-		pixelsProcessed = 0, // pixels
+	var targetPerFrameTime = 0, // seconds
+		framesProcessed = 0, // frames
 		decodingTime = 0, // seconds
-		averageDecodingRate = 0, // pixels/second
+		averageDecodingTime = 0, // seconds
 		drawingTime = 0, // seconds
-		averageDrawingRate = 0; // pixels/second
+		averageDrawingTime = 0; // seconds
 
 	var benchmarkData = [],
 		benchmarkDirty = false,
@@ -100,12 +99,12 @@
 		return Math.round(n * 100) / 100;
 	}
 	function showAverageRate() {
-		if (pixelsPerFrame) {
-			averageDecodingRate = pixelsProcessed / decodingTime;
-			averageDrawingRate = pixelsProcessed / drawingTime;
-			var str = round2(averageDecodingRate / 1000000) + ' MP/s decoded, ' +
-				round2(averageDrawingRate / 1000000) + ' MP/s drawn, ' +
-				round2(targetPixelRate / 1000000) + ' MP/s target';
+		if (framesProcessed) {
+			averageDecodingTime = decodingTime / framesProcessed;
+			averageDrawingTime = drawingTime / framesProcessed;
+			var str = round2(averageDecodingTime * 1000) + 'ms decoded, ' +
+				round2(averageDrawingTime * 1000) + 'ms drawn, ' +
+				round2(targetPerFrameTime * 1000) + 'ms/frame target';
 			document.getElementById('decode-rate').textContent = str;
 		}
 	}
@@ -761,9 +760,8 @@
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
 			
-			pixelsPerFrame = info.frameWidth * info.frameHeight;
-			targetPixelRate = pixelsPerFrame * info.fps;
-			pixelsProcessed = 0;
+			targetPerFrameTime = 1 / info.fps;
+			framesProcessed = 0;
 			decodingTime = 0;
 			drawingTime = 0;
 
@@ -868,7 +866,7 @@
 							recordBenchmarkPoint(lastFrameDecodeTime);
 							lastFrameDecodeTime = 0.0;
 
-							pixelsProcessed += pixelsPerFrame;
+							framesProcessed++;
 							drawingTime += delta / 1000.0;
 
 							targetFrameTime += 1000.0 / fps;
@@ -889,7 +887,7 @@
 								recordBenchmarkPoint(lastFrameDecodeTime);
 								lastFrameDecodeTime = 0.0;
 
-								pixelsProcessed += pixelsPerFrame;
+								framesProcessed++;
 								drawingTime += delta / 1000.0;
 
 								targetFrameTime += 1000.0 / fps;
