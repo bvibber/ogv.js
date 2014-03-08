@@ -9,8 +9,8 @@ package {
         public var bufferSize:Number = 2048; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
-	public var stringBuffer:Array = [];
-        public var buffer:Array = [];
+        public var stringBuffer:Vector.<String> = new Vector.<String>();
+        public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
         public var multiplier:Number = 1/32768;
         
@@ -37,7 +37,7 @@ package {
         }
 
         public function samplesQueued():Number {
-        	return this.buffer.length / 2;
+        	return buffer.length / 2;
         }
         
         public function playbackPosition():Number {
@@ -51,19 +51,19 @@ package {
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
 
-            var sBuffer:Array = stringBuffer;
-            // FIXME: Is this a race condition with write(), which is called externally?
-            stringBuffer = [];
-
-            for each (var s:String in sBuffer) {
-            	for each (var samp:String in s.split(" ")) {
-            	    this.buffer.push(Number(samp)*multiplier);
-            	}
+            // Note: Flash's threading model *seems* to keep this from being
+            // a race condition with the write() external callback. We *think*
+            // the write() call will block until this callback is done, or something.
+            while (stringBuffer.length > 0) {
+                var s:String = stringBuffer.shift();
+                for each (var samp:String in s.split(" ")) {
+                    buffer.push(parseInt(samp, 10) * multiplier);
+                }
             }
             
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows
-            if (this.buffer.length < this.bufferSize*2) {
+            if (buffer.length < bufferSize*2) {
                 for (i = 0; i < 4096; i++) {
                     event.data.writeFloat(0.0);
                 }
@@ -71,13 +71,13 @@ package {
                 return;
             }
             
-            var count:Number = Math.min(this.buffer.length, 16384);
+            var count:Number = Math.min(buffer.length, 16384);
             
-            for each (var sample:Number in this.buffer.slice(0, count)) {
-                event.data.writeFloat(sample);
+            for (i = 0; i < count; i++) {
+                event.data.writeFloat(buffer[i]);
             }
             
-            this.buffer = this.buffer.slice(count, this.buffer.length);
+            buffer = buffer.slice(count, buffer.length);
         }
     }
 }
