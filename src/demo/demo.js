@@ -923,8 +923,8 @@
 				stream = null;
 			},
 			onerror: function(err) {
-				console.log("reading encountered error: " + err);
-				showStatus('end of stream reached.');
+				console.log("reading error: " + err);
+				showStatus("reading error: " + err);
 				/*
 				window.removeEventListener('error', errorHandler);
 				if (audioFeeder) {
