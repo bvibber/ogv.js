@@ -116,7 +116,7 @@ function AudioFeeder() {
 				var input = samples[inputChannel],
 					output = new Float32Array(Math.round(input.length * targetRate / rate));
 				for (var i = 0; i < output.length; i++) {
-					output[i] = input[Math.floor(i * rate / targetRate)];
+					output[i] = input[(i * rate / targetRate) | 0];
 				}
 				newSamples.push(output);
 			}
@@ -132,14 +132,14 @@ function AudioFeeder() {
 	 */
 	function resampleFlash(samples) {
 		var sampleincr = rate / 44100;
-		var samplecount = Math.floor(samples[0].length * (44100 / rate));
+		var samplecount = (samples[0].length * (44100 / rate)) | 0;
 		var newSamples = new Array(samplecount * channels);
 		var channel1 = channels > 1 ? 1 : 0;
 		for(var s = 0; s < samplecount; s++) {
-			var idx = Math.floor(s * sampleincr);
+			var idx = (s * sampleincr) | 0;
 			var idx_out = s * 2;
-			newSamples[idx_out] = Math.floor(samples[0][idx] * 32768);
-			newSamples[idx_out + 1] = Math.floor(samples[channel1][idx] * 32768);
+			newSamples[idx_out] = (samples[0][idx] * 32768) | 0;
+			newSamples[idx_out + 1] = (samples[channel1][idx] * 32768) | 0;
 		}
 		return newSamples;
 	}
