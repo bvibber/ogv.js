@@ -9,8 +9,10 @@ package {
         public var bufferSize:Number = 2048; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
+	public var stringBuffer:Array = [];
         public var buffer:Array = [];
         public var fudgeFactor:Number = 0;
+        public var multiplier:Number = 1/32768;
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -31,11 +33,7 @@ package {
                 );
                 this.soundChannel = this.sound.play();
             }
-            
-            var multiplier:Number = 1/32768;
-            for each (var sample:String in s.split(" ")) {
-                this.buffer.push(Number(sample)*multiplier);
-            }
+            stringBuffer.push(s);
         }
 
         public function samplesQueued():Number {
@@ -52,6 +50,16 @@ package {
 
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
+
+            var sBuffer:Array = stringBuffer;
+            // FIXME: Is this a race condition with write(), which is called externally?
+            stringBuffer = [];
+
+            for each (var s:String in sBuffer) {
+            	for each (var samp:String in s.split(" ")) {
+            	    this.buffer.push(Number(samp)*multiplier);
+            	}
+            }
             
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows
