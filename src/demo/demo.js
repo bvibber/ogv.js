@@ -624,9 +624,6 @@
 			
 			//nativeVideo.width = selected.width;
 			//nativeVideo.height = selected.height;
-			
-			canvas.removeEventListener('click', stopVideo);
-			canvas.addEventListener('click', playVideo);
 		});
 	}
 	
@@ -663,7 +660,7 @@
 		console.log('media list updated');
 	});
 
-	var stream, nextFrameTimer;
+	var stream, nextFrameTimer, paused = false;
 	
 	function stopVideo() {
 		// kill the previous video if any
@@ -684,16 +681,21 @@
 			nextFrameTimer = null;
 		}
 		drawPlayButton();
-		canvas.removeEventListener('click', stopVideo);
+		canvas.removeEventListener('click', togglePauseVideo);
 		canvas.addEventListener('click', playVideo);
+	}
+	
+	function togglePauseVideo() {
+		paused = !paused;
 	}
 	
 	function playVideo() {
 		stopVideo();
+		paused = false;
 		clearBenchmark();
 		
 		canvas.removeEventListener('click', playVideo);
-		canvas.addEventListener('click', stopVideo);
+		canvas.addEventListener('click', togglePauseVideo);
 
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
@@ -847,7 +849,9 @@
 				nextFrameTimer = null;
 				if (codec) {
 					var currentTime = getTimestamp();
-					if (codec.hasAudio) {
+					if (paused) {
+						// do nothing
+					} else if (codec.hasAudio) {
 						// Drive on the audio clock!
 						while (codec.audioReady) {
 							var buffer = codec.dequeueAudio();
