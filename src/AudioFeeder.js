@@ -296,7 +296,7 @@ DynamicAudio.nextId = 1;
 
 DynamicAudio.prototype = {
 	nextId: null,
-	swf: 'dynamicaudio.swf',
+	swf: 'dynamicaudio.swf?' + Math.random(),
 
 	flashWrapper: null,
 	flashElement: null,
