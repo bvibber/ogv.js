@@ -75,7 +75,8 @@ function AudioFeeder() {
 			}
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!muted && inputBuffer) {
-				bufferHead += (bufferSize / rate);
+				bufferHead += (bufferSize / context.sampleRate);
+				playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
 				for (var channel = 0; channel < outputChannels; channel++) {
 					var input = inputBuffer[channel],
 						output = event.outputBuffer.getChannelData(channel);
@@ -198,7 +199,12 @@ function AudioFeeder() {
 			buffers.forEach(function(buffer) {
 				samplesQueued += buffer[0].length;
 			});
-			return samplesQueued <= bufferSize;
+			
+			var bufferedSamples = samplesQueued;
+			var remainingSamples = (playbackTimeAtBufferHead - context.currentTime) * context.sampleRate;
+			
+			var empty = (bufferedSamples + remainingSamples) <= bufferSize * 2;
+			return empty;
 		} else {
 			return true;
 		}
