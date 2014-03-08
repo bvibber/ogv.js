@@ -44,16 +44,10 @@
 			height = canvas.height,
 			ctx = canvas.getContext('2d'),
 			i,
-			fps30 = 1000.0 / 30.0,
 			fps60 = 1000.0 / 60.0,
-			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps30),
-			maxTime = Math.max(fpsTarget, fps30),
+			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps60),
+			maxTime = fpsTarget * 2,
 			maxItems = benchmarkData.length;
-		
-		// Find the tallest data point
-		for (i = 0; i < maxItems; i++) {
-			maxTime = Math.max(maxTime, benchmarkData[i]);
-		}
 		
 		// Draw!
 		
@@ -65,12 +59,6 @@
 		function y(ms) {
 			return (height - 1) - ms * (height - 1) / maxTime;
 		}
-		
-		ctx.beginPath();
-		ctx.strokeStyle = 'green';
-		ctx.moveTo(x(0), y(fps30));
-		ctx.lineTo(x(maxItems - 1), y(fps30));
-		ctx.stroke();
 		
 		ctx.beginPath();
 		ctx.strokeStyle = 'blue';
