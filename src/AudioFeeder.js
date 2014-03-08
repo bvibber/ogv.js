@@ -18,7 +18,7 @@ function AudioFeeder() {
 	}
 	
 
-	var bufferSize = 4096,
+	var bufferSize = this.bufferSize = 4096,
 		channels = 0, // call init()!
 		rate = 0; // call init()!
 
@@ -184,17 +184,8 @@ function AudioFeeder() {
 		}
 	};
 	
-	this.isBufferNearEmpty = function() {
-		if (this.flashaudio) {
-			var flashElement = this.flashaudio.flashElement;
-			if (flashElement.write) {
-				var samplesQueued = flashElement.samplesQueued();
-				return samplesQueued <= bufferSize * 2;
-			} else {
-				// still initializing...
-				return true;
-			}
-		} else if (buffers) {
+	function samplesQueued() {
+		if (buffers) {
 			var samplesQueued = 0;
 			buffers.forEach(function(buffer) {
 				samplesQueued += buffer[0].length;
@@ -203,23 +194,28 @@ function AudioFeeder() {
 			var bufferedSamples = samplesQueued;
 			var remainingSamples = (playbackTimeAtBufferHead - context.currentTime) * context.sampleRate;
 			
-			var empty = (bufferedSamples + remainingSamples) <= bufferSize * 2;
-			return empty;
+			return bufferedSamples + remainingSamples;
 		} else {
-			return true;
+			return 0;
 		}
 	};
 	
-	this.playbackPosition = function() {
+	this.getPlaybackState = function() {
 		if (this.flashaudio) {
 			var flashElement = this.flashaudio.flashElement;
 			if (flashElement.write) {
-				return flashElement.playbackPosition();
+				return flashElement.getPlaybackState();
 			} else {
-				return 0;
+				return {
+					playbackPosition: 0,
+					samplesQueued: 0
+				};
 			}
 		} else {
-			return bufferHead - (playbackTimeAtBufferHead - context.currentTime);
+			return {
+				playbackPosition: bufferHead - (playbackTimeAtBufferHead - context.currentTime),
+				samplesQueued: samplesQueued()
+			}
 		}
 	}
 	

@@ -16,8 +16,7 @@ package {
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
-            ExternalInterface.addCallback('playbackPosition', playbackPosition);
-            ExternalInterface.addCallback('samplesQueued', samplesQueued);
+            ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
         }
         
         // Called from JavaScript to add samples to the buffer
@@ -36,6 +35,13 @@ package {
             stringBuffer.push(s);
         }
 
+        public function getPlaybackState():Object {
+            return {
+                playbackPosition: playbackPosition(),
+                samplesQueued: samplesQueued()
+            };
+        }
+        
         public function samplesQueued():Number {
         	return buffer.length / 2;
         }

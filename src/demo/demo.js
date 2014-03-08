@@ -816,8 +816,9 @@
 				
 				var pos, empty;
 				if (codec.hasAudio) {
-					pos = audioFeeder.playbackPosition();
-					empty = audioFeeder.isBufferNearEmpty();
+					var state = audioFeeder.getPlaybackState();
+					pos = state.playbackPosition;
+					empty = state.samplesQueued < (audioFeeder.bufferSize * 2);
 				} else {
 					pos = -1;
 					empty = true;
