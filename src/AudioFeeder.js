@@ -187,7 +187,9 @@ function AudioFeeder() {
 			var resamples = resampleFlash(samplesPerChannel);
 			var flashElement = this.flashaudio.flashElement;
 			if(resamples.length > 0 && flashElement.write) {
-				flashElement.write(uint16HexString(resamples));
+				var str = uint16HexString(resamples)
+				//console.log(str.length + ' bytes sent to Flash');
+				flashElement.write(str);
 			}
 			bufferHead += (samplesPerChannel[0].length / rate);
 		} else if (buffers) {
