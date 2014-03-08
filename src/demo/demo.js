@@ -106,6 +106,11 @@
 				round2(averageDrawingTime * 1000) + 'ms drawn, ' +
 				round2(targetPerFrameTime * 1000) + 'ms/frame target';
 			document.getElementById('decode-rate').textContent = str;
+			
+			// keep it a rolling average
+			decodingTime = 0;
+			drawingTime = 0;
+			framesProcessed = 0;
 		}
 	}
 	
