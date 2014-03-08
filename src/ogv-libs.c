@@ -9,7 +9,7 @@
 
 #include <ogg/ogg.h>
 
-#define TREMOR 1
+//#define TREMOR 1
 #ifdef TREMOR
 #include "ivorbiscodec.h"
 #else

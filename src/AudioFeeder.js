@@ -66,16 +66,17 @@ function AudioFeeder() {
 
 	if(node) {
 		node.onaudioprocess = function(event) {
+			if (typeof event.playbackTime === "number") {
+				playbackTimeAtBufferHead = event.playbackTime;
+			} else if (typeof event.timeStamp === "number") {
+				playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
+			} else {
+				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
+			}
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!muted && inputBuffer) {
-				if (typeof event.playbackTime === "number") {
-					playbackTimeAtBufferHead = event.playbackTime;
-				} else if (typeof event.timeStamp === "number") {
-					playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
-				} else {
-					console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
-				}
-				bufferHead += (bufferSize / rate);
+				bufferHead += (bufferSize / context.sampleRate);
+				playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
 				for (var channel = 0; channel < outputChannels; channel++) {
 					var input = inputBuffer[channel],
 						output = event.outputBuffer.getChannelData(channel);
@@ -116,7 +117,7 @@ function AudioFeeder() {
 				var input = samples[inputChannel],
 					output = new Float32Array(Math.round(input.length * targetRate / rate));
 				for (var i = 0; i < output.length; i++) {
-					output[i] = input[Math.floor(i * rate / targetRate)];
+					output[i] = input[(i * rate / targetRate) | 0];
 				}
 				newSamples.push(output);
 			}
@@ -132,14 +133,14 @@ function AudioFeeder() {
 	 */
 	function resampleFlash(samples) {
 		var sampleincr = rate / 44100;
-		var samplecount = Math.floor(samples[0].length * (44100 / rate));
+		var samplecount = (samples[0].length * (44100 / rate)) | 0;
 		var newSamples = new Array(samplecount * channels);
 		var channel1 = channels > 1 ? 1 : 0;
 		for(var s = 0; s < samplecount; s++) {
-			var idx = Math.floor(s * sampleincr);
+			var idx = (s * sampleincr) | 0;
 			var idx_out = s * 2;
-			newSamples[idx_out] = Math.floor(samples[0][idx] * 32768);
-			newSamples[idx_out + 1] = Math.floor(samples[channel1][idx] * 32768);
+			newSamples[idx_out] = (samples[0][idx] * 32768) | 0;
+			newSamples[idx_out + 1] = (samples[channel1][idx] * 32768) | 0;
 		}
 		return newSamples;
 	}
@@ -198,7 +199,12 @@ function AudioFeeder() {
 			buffers.forEach(function(buffer) {
 				samplesQueued += buffer[0].length;
 			});
-			return samplesQueued <= bufferSize;
+			
+			var bufferedSamples = samplesQueued;
+			var remainingSamples = (playbackTimeAtBufferHead - context.currentTime) * context.sampleRate;
+			
+			var empty = (bufferedSamples + remainingSamples) <= bufferSize * 2;
+			return empty;
 		} else {
 			return true;
 		}

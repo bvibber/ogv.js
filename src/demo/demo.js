@@ -15,13 +15,12 @@
 		}
 	}
 
-	var pixelsPerFrame = 0, // pixels
-		targetPixelRate = 0, // pixels/second
-		pixelsProcessed = 0, // pixels
+	var targetPerFrameTime = 0, // seconds
+		framesProcessed = 0, // frames
 		decodingTime = 0, // seconds
-		averageDecodingRate = 0, // pixels/second
+		averageDecodingTime = 0, // seconds
 		drawingTime = 0, // seconds
-		averageDrawingRate = 0; // pixels/second
+		averageDrawingTime = 0; // seconds
 
 	var benchmarkData = [],
 		benchmarkDirty = false,
@@ -45,16 +44,10 @@
 			height = canvas.height,
 			ctx = canvas.getContext('2d'),
 			i,
-			fps30 = 1000.0 / 30.0,
 			fps60 = 1000.0 / 60.0,
-			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps30),
-			maxTime = Math.max(fpsTarget, fps30),
+			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps60),
+			maxTime = fpsTarget * 2,
 			maxItems = benchmarkData.length;
-		
-		// Find the tallest data point
-		for (i = 0; i < maxItems; i++) {
-			maxTime = Math.max(maxTime, benchmarkData[i]);
-		}
 		
 		// Draw!
 		
@@ -66,12 +59,6 @@
 		function y(ms) {
 			return (height - 1) - ms * (height - 1) / maxTime;
 		}
-		
-		ctx.beginPath();
-		ctx.strokeStyle = 'green';
-		ctx.moveTo(x(0), y(fps30));
-		ctx.lineTo(x(maxItems - 1), y(fps30));
-		ctx.stroke();
 		
 		ctx.beginPath();
 		ctx.strokeStyle = 'blue';
@@ -100,13 +87,18 @@
 		return Math.round(n * 100) / 100;
 	}
 	function showAverageRate() {
-		if (pixelsPerFrame) {
-			averageDecodingRate = pixelsProcessed / decodingTime;
-			averageDrawingRate = pixelsProcessed / drawingTime;
-			var str = round2(averageDecodingRate / 1000000) + ' MP/s decoded, ' +
-				round2(averageDrawingRate / 1000000) + ' MP/s drawn, ' +
-				round2(targetPixelRate / 1000000) + ' MP/s target';
+		if (framesProcessed) {
+			averageDecodingTime = decodingTime / framesProcessed;
+			averageDrawingTime = drawingTime / framesProcessed;
+			var str = round2(averageDecodingTime * 1000) + 'ms decoded, ' +
+				round2(averageDrawingTime * 1000) + 'ms drawn, ' +
+				round2(targetPerFrameTime * 1000) + 'ms/frame target';
 			document.getElementById('decode-rate').textContent = str;
+			
+			// keep it a rolling average
+			decodingTime = 0;
+			drawingTime = 0;
+			framesProcessed = 0;
 		}
 	}
 	
@@ -632,9 +624,6 @@
 			
 			//nativeVideo.width = selected.width;
 			//nativeVideo.height = selected.height;
-			
-			canvas.removeEventListener('click', stopVideo);
-			canvas.addEventListener('click', playVideo);
 		});
 	}
 	
@@ -671,7 +660,7 @@
 		console.log('media list updated');
 	});
 
-	var stream, nextFrameTimer;
+	var stream, nextFrameTimer, paused = false;
 	
 	function stopVideo() {
 		// kill the previous video if any
@@ -692,16 +681,21 @@
 			nextFrameTimer = null;
 		}
 		drawPlayButton();
-		canvas.removeEventListener('click', stopVideo);
+		canvas.removeEventListener('click', togglePauseVideo);
 		canvas.addEventListener('click', playVideo);
+	}
+	
+	function togglePauseVideo() {
+		paused = !paused;
 	}
 	
 	function playVideo() {
 		stopVideo();
+		paused = false;
 		clearBenchmark();
 		
 		canvas.removeEventListener('click', playVideo);
-		canvas.addEventListener('click', stopVideo);
+		canvas.addEventListener('click', togglePauseVideo);
 
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
@@ -762,9 +756,8 @@
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
 			
-			pixelsPerFrame = info.frameWidth * info.frameHeight;
-			targetPixelRate = pixelsPerFrame * info.fps;
-			pixelsProcessed = 0;
+			targetPerFrameTime = 1 / info.fps;
+			framesProcessed = 0;
 			decodingTime = 0;
 			drawingTime = 0;
 
@@ -861,7 +854,9 @@
 				nextFrameTimer = null;
 				if (codec) {
 					var currentTime = getTimestamp();
-					if (codec.hasAudio) {
+					if (paused) {
+						// do nothing
+					} else if (codec.hasAudio) {
 						// Drive on the audio clock!
 						while (codec.audioReady) {
 							var buffer = codec.dequeueAudio();
@@ -874,7 +869,7 @@
 							recordBenchmarkPoint(lastFrameDecodeTime);
 							lastFrameDecodeTime = 0.0;
 
-							pixelsProcessed += pixelsPerFrame;
+							framesProcessed++;
 							drawingTime += delta / 1000.0;
 
 							targetFrameTime += 1000.0 / fps;
@@ -900,7 +895,7 @@
 								recordBenchmarkPoint(lastFrameDecodeTime);
 								lastFrameDecodeTime = 0.0;
 
-								pixelsProcessed += pixelsPerFrame;
+								framesProcessed++;
 								drawingTime += delta / 1000.0;
 
 								targetFrameTime += 1000.0 / fps;
@@ -943,8 +938,8 @@
 				stream = null;
 			},
 			onerror: function(err) {
-				console.log("reading encountered error: " + err);
-				showStatus('end of stream reached.');
+				console.log("reading error: " + err);
+				showStatus("reading error: " + err);
 				/*
 				window.removeEventListener('error', errorHandler);
 				if (audioFeeder) {
