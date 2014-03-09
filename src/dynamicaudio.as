@@ -32,7 +32,10 @@ package {
                 );
                 this.soundChannel = this.sound.play();
             }
-            stringBuffer.push(s);
+
+            for each (var samp:String in s.split(" ")) {
+                buffer.push(parseInt(samp, 10) * multiplier);
+            }
         }
 
         public function getPlaybackState():Object {
@@ -56,16 +59,6 @@ package {
 
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
-
-            // Note: Flash's threading model *seems* to keep this from being
-            // a race condition with the write() external callback. We *think*
-            // the write() call will block until this callback is done, or something.
-            while (stringBuffer.length > 0) {
-                var s:String = stringBuffer.shift();
-                for each (var samp:String in s.split(" ")) {
-                    buffer.push(parseInt(samp, 10) * multiplier);
-                }
-            }
             
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows
