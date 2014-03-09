@@ -99,6 +99,7 @@
 			averageAudioDecodingTime = audioDecodingTime / framesProcessed;
 			averageColorTime = colorTime / framesProcessed;
 			averageDrawingTime = drawingTime / framesProcessed;
+			/*
 			var str = round2(averageDemuxingTime * 1000) + ' demux, ' +
 				round2(averageVideoDecodingTime * 1000) + ' video, ' +
 				round2(averageAudioDecodingTime * 1000) + ' audio, ' +
@@ -106,6 +107,15 @@
 				round2(averageDrawingTime * 1000) + ' draw, ' +
 				round2(targetPerFrameTime * 1000) + 'ms/frame target';
 			document.getElementById('decode-rate').textContent = str;
+			*/
+			document.getElementById('bench-target').textContent = round2(targetPerFrameTime * 1000);
+			document.getElementById('bench-total').textContent = round2((averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageColorTime + averageDrawingTime) * 1000);
+			document.getElementById('bench-demux').textContent = round2(averageDemuxingTime * 1000);
+			document.getElementById('bench-video').textContent = round2(averageVideoDecodingTime * 1000);
+			document.getElementById('bench-audio').textContent = round2(averageAudioDecodingTime * 1000);
+			document.getElementById('bench-yuv').textContent = round2(averageColorTime * 1000);
+			document.getElementById('bench-draw').textContent = round2(averageDrawingTime * 1000);
+			
 			
 			// keep it a rolling average
 			demuxingTime = 0;

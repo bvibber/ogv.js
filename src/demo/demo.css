@@ -258,7 +258,27 @@ body {
 	color: red;
 }
 
-
+.bench-target {
+	color: red;
+}
+.bench-total {
+	color: black;
+}
+.bench-demux {
+	color: brown;
+}
+.bench-video {
+	color: blue;
+}
+.bench-audio {
+	color: green;
+}
+.bench-yuv {
+	color: orange;
+}
+.bench-draw {
+	color: pink;
+}
 
 
 /* hack for small screens */
