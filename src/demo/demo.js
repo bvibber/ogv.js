@@ -390,7 +390,8 @@
 		ctx = canvas.getContext('2d'),
 		videoChooser = document.getElementById('video-chooser'),
 		selectedTitle = null,
-		selectedUrl = null;
+		selectedUrl = null,
+		skipAudio = false;
 	
 	var mediaList = document.getElementById('media-list'),
 		filter = document.getElementById('filter');
@@ -402,6 +403,7 @@
 				var parts = pair.split('='),
 					name = decodeURIComponent(parts[0]),
 					value = decodeURIComponent(parts[1]);
+				skipAudio = false;
 				if (name === 'file') {
 					title = value;
 				} else if (name === 'search') {
@@ -412,6 +414,10 @@
 					var selector = document.getElementById('video-preferred-size');
 					selector.value = value;
 					preferredKey = value;
+				} else if (name == 'audio') {
+					if (value == '0') {
+						skipAudio = true;
+					}
 				}
 			});
 			if (title) {
@@ -783,6 +789,11 @@
 			// Known working in Safari 6.1 and 7.
 			options.audio = false;
 			showStatus('Audio disabled due to bug on Safari 6.0');
+		}
+		
+		if (skipAudio) {
+			options.audio = false;
+			showStatus('Skipping audio');
 		}
 		
 		codec = new OgvJs(options);
