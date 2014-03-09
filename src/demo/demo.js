@@ -863,7 +863,7 @@
 				
 				function scheduleDrawFrame(callback) {
 					prepareFrame();
-					//nextFrameTimer = requestAnimationFrame(function() {
+					nextFrameTimer = requestAnimationFrame(function() {
 						
 						var start = getTimestamp();
 						drawFrame();
@@ -876,16 +876,17 @@
 
 						nextFrameTimer = null;
 						callback();
-					//});
+					});
 				}
 				
 				if (hasAudio) {
 					// Drive on the audio clock!
 					var audioBufferedDuration = 0;
 					if (state) {
-						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize) / audioFeeder.targetRate) * 1000;
+						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize * 2) / audioFeeder.targetRate) * 1000;
 					}
 					if (codec.audioReady) {
+						var start = getTimestamp();
 						var ok = codec.decodeAudio();
 						if (ok) {
 							while (codec.audioQueued()) {
@@ -894,9 +895,16 @@
 								audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
 							}
 						}
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						decodingTime += delta / 1000;
 					}
 					if (codec.frameReady) {
+						var start = getTimestamp();
 						var ok = codec.decodeFrame();
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						decodingTime += delta / 1000;
 						if (ok) {
 							scheduleDrawFrame(function() {
 								// ??
