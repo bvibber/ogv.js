@@ -299,20 +299,13 @@ static int needData = 1;
 
 static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 	needData = 0;
-	if (theora_p) {
-		// fixme -- don't decode next frame until the time is right
-		if(!videobuf_ready){
-		  /* theora is one in, one out... */
-		  if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0 ){
-			  videobuf_ready=1;
-		  } else {
-		  	needData = 1;
-		  }
-		}
-
-		if(videobuf_ready && (audiobuf_time < 0 || audiobuf_time >= videobuf_time)) {
-			/* dumpvideo frame, and get new one */
+	if (theora_p && !videobuf_ready && ((audiobuf_time < 0) || (audiobuf_time >= videobuf_time))) {
+		/* theora is one in, one out... */
+		if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0 ){
+			videobuf_ready=1;
 			OgvJsOutputFrameReady();
+		} else {
+		  	needData = 1;
 		}
 	}
 	
@@ -354,7 +347,7 @@ int OgvJsDecodeAudio() {
 	int packetRet = 0;
 	audiobuf_ready = 0;
 	int foundSome = 0;
-	while (ogg_stream_packetout(&vo, &audioPacket) > 0) {
+	if (ogg_stream_packetout(&vo, &audioPacket) > 0) {
 		int ret = vorbis_synthesis(&vb, &audioPacket);
 		if (ret == 0) {
 			foundSome = 1;
