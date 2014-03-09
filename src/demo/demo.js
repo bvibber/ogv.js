@@ -881,6 +881,8 @@
 					empty = true;
 				}
 				more = codec.process(pos, empty);
+
+				//showStatus('audio pos: ' + round2(pos) + '; video pos: ' + round2(codec.videoPosition));
 			
 				var delta = (getTimestamp() - start);
 				lastFrameDecodeTime += delta;

@@ -43,8 +43,9 @@ OgvJs = (function(options) {
 		}
 	}
 	
-	function OgvJsOutputFrameReadyCallback() {
+	function OgvJsOutputFrameReadyCallback(videoPosition) {
 		self.frameReady = true;
+		self.videoPosition = videoPosition;
 	}
 
 	var queuedFrame = null;
@@ -97,6 +98,11 @@ OgvJs = (function(options) {
 	 * @property boolean Have we found an audio buffer that's ready to be decoded?
 	 */
 	self.audioReady = false;
+	
+	/**
+	 * @property number time position in seconds of last decoded frame
+	 */
+	self.videoPosition = 0.0;
 	
 	/**
 	 * Tear down the instance when done.

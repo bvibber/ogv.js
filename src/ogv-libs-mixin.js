@@ -19,8 +19,8 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	OgvJsOutputFrameReady: function() {
-		OgvJsOutputFrameReadyCallback();
+	OgvJsOutputFrameReady: function(videoPosition) {
+		OgvJsOutputFrameReadyCallback(videoPosition);
 	},
 	
 	OgvJsOutputFrame: function(bufferY, strideY,

@@ -65,7 +65,7 @@ extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            double fps,
                            int picWidth, int picHeight,
                            int picX, int picY);
-extern void OgvJsOutputFrameReady();
+extern void OgvJsOutputFrameReady(double videoPosition);
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
@@ -303,7 +303,7 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		/* theora is one in, one out... */
 		if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0 ){
 			videobuf_ready=1;
-			OgvJsOutputFrameReady();
+			OgvJsOutputFrameReady(videobuf_time);
 		} else {
 		  	needData = 1;
 		}
@@ -329,7 +329,13 @@ int OgvJsDecodeFrame() {
 	videobuf_ready=0;
 	int ret = th_decode_packetin(theoraDecoderContext,&videoPacket,&videobuf_granulepos);
 	if (ret == 0){
-		videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
+		double t = th_granule_time(theoraDecoderContext,videobuf_granulepos);
+		if (t > 0) {
+			videobuf_time = t;
+		} else {
+			// For some reason sometimes we get a bunch of 0s out of th_granule_time
+			videobuf_time += 1.0 / ((double)theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+		}
 		frames++;
 		video_write();
 		return 1;
