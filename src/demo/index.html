@@ -50,38 +50,44 @@
 
 			<table id="info">
 				<tr>
-					<td colspan=2>
+					<td>
 						<div>
 							<a id="pagelink" href="javascript:false" target="_blank">...</a>
 						</div>
 					</td>
 				</tr>
 				<tr>
-					<td>Video</td>
 					<td>
-						<span id="video-fps"></span>fps
-						<span id="video-frame-width"></span>x<span id="video-frame-height"></span>
-						<small>
-						(<span id="video-pic-width"></span>x<span id="video-pic-height"></span>
-						+<span id="video-pic-x"></span>x<span id="video-pic-y"></span>)
-						</small>
-						<select height=1 id="video-preferred-size">
-							<option value="original">original</option>
-							<option value="480p.ogv">480p</option>
-							<option value="360p.ogv">360p</option>
-							<option value="160p.ogv">160p</option>
-						</select>
+						<div>
+							Video
+							<select height=1 id="video-preferred-size">
+								<option value="original">original</option>
+								<option value="480p.ogv">480p</option>
+								<option value="360p.ogv">360p</option>
+								<option value="160p.ogv">160p</option>
+							</select>
+							<span id="video-fps"></span>fps
+							<span id="video-frame-width"></span>x<span id="video-frame-height"></span>
+							<small>
+							(<span id="video-pic-width"></span>x<span id="video-pic-height"></span>
+							+<span id="video-pic-x"></span>x<span id="video-pic-y"></span>)
+							</small>
+						</div>
 					</td>
 				</tr>
 				<tr>
-					<td>Audio</td>
-					<td><span id="audio-rate"></span> Hz, <span id="audio-channels"></span> channels</td>
+					<td>
+						<div>
+							Audio
+							<span id="audio-rate"></span> Hz, <span id="audio-channels"></span> channels
+						</div>
+					</td>
 				</tr>
 				<tr>
-					<td colspan=2 id="decode-rate"></td>
+					<td id="decode-rate"></td>
 				</tr>
 				<tr>
-					<td colspan=2><span id="status-view"></span></td>
+					<td><span id="status-view"></span></td>
 				</tr>
 			</table>
 

@@ -220,6 +220,12 @@ body {
 	overflow-y: auto;
 }
 
+#info td {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
 #benchmark {
 	background: white;
 	position: absolute;
