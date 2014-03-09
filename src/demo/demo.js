@@ -92,6 +92,14 @@
 	function round2(n) {
 		return Math.round(n * 100) / 100;
 	}
+	function round1_0(n) {
+		var n = Math.round(n * 10) / 10,
+			s = n + '';
+		if (s.indexOf('.') === -1) {
+			s += '.0';
+		}
+		return s;
+	}
 	function showAverageRate() {
 		if (framesProcessed) {
 			averageDemuxingTime = demuxingTime / framesProcessed;
@@ -99,22 +107,14 @@
 			averageAudioDecodingTime = audioDecodingTime / framesProcessed;
 			averageColorTime = colorTime / framesProcessed;
 			averageDrawingTime = drawingTime / framesProcessed;
-			/*
-			var str = round2(averageDemuxingTime * 1000) + ' demux, ' +
-				round2(averageVideoDecodingTime * 1000) + ' video, ' +
-				round2(averageAudioDecodingTime * 1000) + ' audio, ' +
-				round2(averageColorTime * 1000) + ' yuv, ' +
-				round2(averageDrawingTime * 1000) + ' draw, ' +
-				round2(targetPerFrameTime * 1000) + 'ms/frame target';
-			document.getElementById('decode-rate').textContent = str;
-			*/
-			document.getElementById('bench-target').textContent = round2(targetPerFrameTime * 1000);
-			document.getElementById('bench-total').textContent = round2((averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageColorTime + averageDrawingTime) * 1000);
-			document.getElementById('bench-demux').textContent = round2(averageDemuxingTime * 1000);
-			document.getElementById('bench-video').textContent = round2(averageVideoDecodingTime * 1000);
-			document.getElementById('bench-audio').textContent = round2(averageAudioDecodingTime * 1000);
-			document.getElementById('bench-yuv').textContent = round2(averageColorTime * 1000);
-			document.getElementById('bench-draw').textContent = round2(averageDrawingTime * 1000);
+
+			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime * 1000);
+			document.getElementById('bench-total').textContent = round1_0((averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageColorTime + averageDrawingTime) * 1000);
+			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime * 1000);
+			document.getElementById('bench-video').textContent = round1_0(averageVideoDecodingTime * 1000);
+			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime * 1000);
+			document.getElementById('bench-yuv').textContent = round1_0(averageColorTime * 1000);
+			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime * 1000);
 			
 			
 			// keep it a rolling average

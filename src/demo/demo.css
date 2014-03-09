@@ -258,6 +258,9 @@ body {
 	color: red;
 }
 
+#decode-rate-table td {
+	text-align: right;
+}
 .bench-target {
 	color: red;
 }
