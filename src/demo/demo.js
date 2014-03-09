@@ -934,6 +934,11 @@
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
 						audioDecodingTime += delta / 1000;
+						if (!codec.hasVideo) {
+							framesProcessed++; // pretend!
+							recordBenchmarkPoint(lastFrameDecodeTime);
+							lastFrameDecodeTime = 0.0;
+						}
 					}
 					if (codec.frameReady) {
 						var start = getTimestamp();
@@ -950,11 +955,6 @@
 							console.log('Bad video packet or something');
 						}
 						targetFrameTime = currentTime + 1000.0 / fps;
-					} else {
-						if (!codec.hasVideo) {
-							recordBenchmarkPoint(lastFrameDecodeTime);
-							lastFrameDecodeTime = 0.0;
-						}
 					}
 					var videoBufferedDuration = Math.max(0, targetFrameTime - getTimestamp());
 					nextProcessingTimer = null;
