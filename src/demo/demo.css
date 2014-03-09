@@ -276,8 +276,11 @@ body {
 .bench-audio {
 	color: green;
 }
-.bench-yuv {
+.bench-buffer {
 	color: orange;
+}
+.bench-yuv {
+	color: purple;
 }
 .bench-draw {
 	color: pink;

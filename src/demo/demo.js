@@ -20,11 +20,13 @@
 		demuxingTime = 0, // seconds
 		videoDecodingTime = 0, // ms
 		audioDecodingTime = 0, // ms
+		bufferTime = 0, // ms
 		colorTime = 0, // ms
 		drawingTime = 0, // ms
 		averageDemuxingTime = 0, // ms
 		averageVideoDecodingTime = 0, // ms
 		averageAudioDecodingTime = 0, // ms
+		averageBufferTime = 0, // ms
 		averageColorTime = 0, // ms
 		averageDrawingTime = 0; // ms
 
@@ -105,14 +107,16 @@
 			averageDemuxingTime = demuxingTime / framesProcessed;
 			averageVideoDecodingTime = videoDecodingTime / framesProcessed;
 			averageAudioDecodingTime = audioDecodingTime / framesProcessed;
+			averageBufferTime = bufferTime / framesProcessed;
 			averageColorTime = colorTime / framesProcessed;
 			averageDrawingTime = drawingTime / framesProcessed;
 
 			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime);
-			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageColorTime + averageDrawingTime);
+			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageBufferTime + averageColorTime + averageDrawingTime);
 			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime);
 			document.getElementById('bench-video').textContent = round1_0(averageVideoDecodingTime);
 			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime);
+			document.getElementById('bench-buffer').textContent = round1_0(averageBufferTime);
 			document.getElementById('bench-yuv').textContent = round1_0(averageColorTime);
 			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
 			
@@ -121,6 +125,7 @@
 			demuxingTime = 0;
 			videoDecodingTime = 0;
 			audioDecodingTime = 0;
+			bufferTime = 0;
 			colorTime = 0;
 			drawingTime = 0;
 			framesProcessed = 0;
@@ -796,6 +801,13 @@
 			showStatus('Skipping audio');
 		}
 		
+		framesProcessed = 0;
+		demuxingTime = 0;
+		videoDecodingTime = 0;
+		audioDecodingTime = 0;
+		bufferTime = 0;
+		drawingTime = 0;
+
 		codec = new OgvJs(options);
 		codec.oninitvideo = function(info) {
 			videoInfo = info;
@@ -803,11 +815,6 @@
 			benchmarkTargetFps = info.fps;
 			
 			targetPerFrameTime = 1000 / info.fps;
-			framesProcessed = 0;
-			demuxingTime = 0;
-			videoDecodingTime = 0;
-			audioDecodingTime = 0;
-			drawingTime = 0;
 
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
@@ -945,6 +952,11 @@
 					if (codec.audioReady) {
 						var start = getTimestamp();
 						var ok = codec.decodeAudio();
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						audioDecodingTime += delta;
+						
+						var start = getTimestamp();
 						if (ok) {
 							while (codec.audioQueued()) {
 								var buffer = codec.dequeueAudio();
@@ -954,7 +966,8 @@
 						}
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
-						audioDecodingTime += delta;
+						bufferTime += delta;
+						
 						if (!codec.hasVideo) {
 							framesProcessed++; // pretend!
 							recordBenchmarkPoint(lastFrameDecodeTime);
