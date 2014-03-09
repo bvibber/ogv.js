@@ -18,8 +18,8 @@ OgvJs = (function(options) {
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', ['number', 'number']);
-    var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'void', []);
-    var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'void', []);
+    var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'int', []);
+    var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'int', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -135,11 +135,13 @@ OgvJs = (function(options) {
 	
 	/**
 	 * Decode the last-found video packet
+	 *
+	 * @return boolean true if successful decode, false if failure
 	 */
 	self.decodeFrame = function() {
 		if (self.frameReady) {
-			OgvJsDecodeFrame();
 			self.frameReady = false;
+			return !!OgvJsDecodeFrame();
 		} else {
 			throw new Error("called decodeFrame when no frame ready");
 		}
@@ -162,11 +164,13 @@ OgvJs = (function(options) {
 
 	/**
 	 * Decode the last-found audio packets
+	 *
+	 * @return boolean true if successful decode, false if failure
 	 */
 	self.decodeAudio = function() {
 		if (self.audioReady) {
-			OgvJsDecodeAudio();
 			self.audioReady = false;
+			return !!OgvJsDecodeAudio();
 		} else {
 			throw new Error("called decodeAudio when no audio ready");
 		}
@@ -197,10 +201,10 @@ OgvJs = (function(options) {
 	 * @return boolean
 	 */	
 	self.dataReady = function() {
-		if (self.hasVideo) {
-			return self.frameReady;
-		} else {
+		if (self.hasAudio) {
 			return self.audioReady;
+		} else {
+			return self.frameReady;
 		}
 	}
 

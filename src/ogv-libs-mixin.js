@@ -29,6 +29,11 @@ mergeInto(LibraryManager.library, {
 	                           width, height,
 	                           hdec, vdec) {
 		
+		if (bufferY == 0) {
+			OgvJsFrameCallback(null);
+			return;
+		}
+		
 		// Create typed array views of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
 			HEAPU32 = Module.HEAPU32,
@@ -77,25 +82,32 @@ mergeInto(LibraryManager.library, {
 	},
 	
 	OgvJsOutputAudioReady: function() {
-		OgvJsOutputFrameReadyCallback();
+		OgvJsOutputAudioReadyCallback();
 	},
 	
 	OgvJsOutputAudio: function(buffers, channels, sampleCount) {
+		if (buffers == 0) {
+			OgvJsAudioCallback(null);
+			return;
+		}
+		
 		// buffers is an array of pointers to float arrays for each channel
 		var HEAPU8 = Module.HEAPU8;
 		var HEAPU32 = Module.HEAPU32;
 		var HEAPF32 = Module.HEAPF32;
 		
 		var outputBuffers = [];
-		var inBuffer, outBuffer, outArray, i;
-		for (var channel = 0; channel < channels; channel++) {
-			inBuffer = HEAPU32[buffers / 4 + channel];
-			outBuffer = new ArrayBuffer(sampleCount * 4);
-			outArray = new Float32Array(outBuffer);
-			for (i = 0; i < sampleCount; i++) {
-				outArray[i] = HEAPF32[inBuffer / 4 + i] ;
+		if (buffers != 0) {
+			var inBuffer, outBuffer, outArray, i;
+			for (var channel = 0; channel < channels; channel++) {
+				inBuffer = HEAPU32[buffers / 4 + channel];
+				outBuffer = new ArrayBuffer(sampleCount * 4);
+				outArray = new Float32Array(outBuffer);
+				for (i = 0; i < sampleCount; i++) {
+					outArray[i] = HEAPF32[inBuffer / 4 + i] ;
+				}
+				outputBuffers.push(outArray);
 			}
-			outputBuffers.push(outArray);
 		}
 
 		OgvJsAudioCallback(outputBuffers);

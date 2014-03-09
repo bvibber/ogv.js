@@ -863,7 +863,7 @@
 				
 				function scheduleDrawFrame(callback) {
 					prepareFrame();
-					nextFrameTimer = requestAnimationFrame(function() {
+					//nextFrameTimer = requestAnimationFrame(function() {
 						
 						var start = getTimestamp();
 						drawFrame();
@@ -876,7 +876,7 @@
 
 						nextFrameTimer = null;
 						callback();
-					});
+					//});
 				}
 				
 				if (hasAudio) {
@@ -886,18 +886,25 @@
 						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize) / audioFeeder.targetRate) * 1000;
 					}
 					if (codec.audioReady) {
-						codec.decodeAudio();
-						while (codec.audioQueued()) {
-							var buffer = codec.dequeueAudio();
-							audioFeeder.bufferData(buffer);
-							audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+						var ok = codec.decodeAudio();
+						if (ok) {
+							while (codec.audioQueued()) {
+								var buffer = codec.dequeueAudio();
+								audioFeeder.bufferData(buffer);
+								audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+							}
 						}
 					}
 					if (codec.frameReady) {
-						codec.decodeFrame();
-						scheduleDrawFrame(function() {
-							// ??
-						});
+						var ok = codec.decodeFrame();
+						if (ok) {
+							scheduleDrawFrame(function() {
+								// ??
+							});
+						} else {
+							// Bad packet or something.
+							console.log('Bad packet or something');
+						}
 						targetFrameTime = currentTime + 1000.0 / fps;
 					} else {
 						if (!codec.hasVideo) {

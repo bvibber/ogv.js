@@ -316,13 +316,11 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		}
 	}
 	
-	if (vorbis_p && audiobuffer_empty) {
-		int successfulAudio = 0;
-		while (ogg_stream_packetout(&vo, &audioPacket) > 0) {
-			successfulAudio = 1;
+	if (vorbis_p && !audiobuf_ready && audiobuffer_empty) {
+		if (ogg_stream_packetout(&vo, &audioPacket) > 0) {
+			audiobuf_ready = 1;
 			OgvJsOutputAudioReady();
-		}
-		if (!successfulAudio) {
+		} else {
 			needData = 1;
 		}
 	}
@@ -330,25 +328,29 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 	return 1;
 }
 
-void OgvJsDecodeFrame() {
+int OgvJsDecodeFrame() {
+	videobuf_ready=0;
 	int ret = th_decode_packetin(theoraDecoderContext,&videoPacket,&videobuf_granulepos);
-	if (ret >= 0){
+	if (ret == 0){
 		videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
 		frames++;
 		video_write();
-		videobuf_ready=0;
+		return 1;
 	} else if (ret == TH_DUPFRAME) {
 		printf("Duplicate frame\n");
 		frames++;
 		video_write();
-		videobuf_ready=0;
+		return 1;
 	} else {
 		printf("Decoder failed mysteriously? %d\n", ret);
+		return 0;
 	}
 }
 
-void OgvJsDecodeAudio() {
-	if(vorbis_synthesis(&vb, &audioPacket)==0) {
+int OgvJsDecodeAudio() {
+	audiobuf_ready = 0;
+	int ret = vorbis_synthesis(&vb, &audioPacket);
+	if(ret == 0) {
 		vorbis_synthesis_blockin(&vd,&vb);
 
 		// fixme -- timing etc!
@@ -363,6 +365,10 @@ void OgvJsDecodeAudio() {
 
 #endif
 		vorbis_synthesis_read(&vd, sampleCount);
+		return 1;
+	} else {
+		printf("Vorbis decoder failed mysteriously? %d", ret);
+		return 0;
 	}
 }
 
