@@ -351,32 +351,33 @@ int OgvJsDecodeFrame() {
 }
 
 int OgvJsDecodeAudio() {
-	if (ogg_stream_packetout(&vo, &audioPacket) <= 0) {
-		printf("Vorbis packet didn't come out of stream\n");
-		return 0;
-	}
+	int packetRet = 0;
 	audiobuf_ready = 0;
-	int ret = vorbis_synthesis(&vb, &audioPacket);
-	if(ret == 0) {
-		vorbis_synthesis_blockin(&vd,&vb);
+	int foundSome = 0;
+	while (ogg_stream_packetout(&vo, &audioPacket) > 0) {
+		int ret = vorbis_synthesis(&vb, &audioPacket);
+		if (ret == 0) {
+			foundSome = 1;
+			vorbis_synthesis_blockin(&vd,&vb);
 
-		// fixme -- timing etc!
-#ifdef TREMOR
-		ogg_int32_t **pcm;
-		int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-		OgvJsOutputAudioInt(pcm, vi.channels, sampleCount);
-#else
-		float **pcm;
-		int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-		OgvJsOutputAudio(pcm, vi.channels, sampleCount);
+			// fixme -- timing etc!
+	#ifdef TREMOR
+			ogg_int32_t **pcm;
+			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+			OgvJsOutputAudioInt(pcm, vi.channels, sampleCount);
+	#else
+			float **pcm;
+			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+			OgvJsOutputAudio(pcm, vi.channels, sampleCount);
 
-#endif
-		vorbis_synthesis_read(&vd, sampleCount);
-		return 1;
-	} else {
-		printf("Vorbis decoder failed mysteriously? %d", ret);
-		return 0;
+	#endif
+			vorbis_synthesis_read(&vd, sampleCount);
+		} else {
+			printf("Vorbis decoder failed mysteriously? %d", ret);
+		}
 	}
+	
+	return foundSome;
 }
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {

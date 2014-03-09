@@ -903,7 +903,7 @@
 							});
 						} else {
 							// Bad packet or something.
-							console.log('Bad packet or something');
+							console.log('Bad video packet or something');
 						}
 						targetFrameTime = currentTime + 1000.0 / fps;
 					} else {
@@ -927,7 +927,7 @@
 								pingProcessing();
 							});
 						} else {
-							console.log('bad packet or something');
+							console.log('Bad video packet or something');
 							nextProcessingTimer = null;
 							pingProcessing(targetFrameTime - getTimestamp());
 						}
