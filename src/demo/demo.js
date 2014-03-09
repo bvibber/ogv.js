@@ -963,7 +963,11 @@
 					// Video-only: drive on the video clock
 					if (codec.frameReady && getTimestamp() >= targetFrameTime) {
 						// it's time to draw
+						var start = getTimestamp();
 						var ok = codec.decodeFrame();
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						videoDecodingTime += delta / 1000;
 						if (ok) {
 							scheduleDrawFrame(function() {
 								targetFrameTime += 1000.0 / fps;
