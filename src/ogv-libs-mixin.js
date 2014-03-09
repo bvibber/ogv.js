@@ -19,6 +19,10 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
+	OgvJsOutputFrameReady: function() {
+		OgvJsOutputFrameReadyCallback();
+	},
+	
 	OgvJsOutputFrame: function(bufferY, strideY,
 	                           bufferCb, strideCb,
 	                           bufferCr, strideCr,
@@ -70,6 +74,10 @@ mergeInto(LibraryManager.library, {
 			channels: channels,
 			rate: rate
 		});
+	},
+	
+	OgvJsOutputAudioReady: function() {
+		OgvJsOutputFrameReadyCallback();
 	},
 	
 	OgvJsOutputAudio: function(buffers, channels, sampleCount) {

@@ -65,7 +65,7 @@ extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            double fps,
                            int picWidth, int picHeight,
                            int picX, int picY);
-
+extern void OgvJsOutputFrameReady();
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
@@ -73,7 +73,7 @@ extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              int hdec, int vdec);
 
 extern void OgvJsInitAudio(int channels, int rate);
-
+extern void OgvJsOutputAudioReady();
 extern void OgvJsOutputAudio(float **buffers, int channels, int sampleCount);
 extern void OgvJsOutputAudioInt(int **buffers, int channels, int sampleCount);
 
@@ -120,6 +120,8 @@ static int queue_page(ogg_page *page){
 
 
   ogg_packet oggPacket;
+  ogg_packet audioPacket;
+  ogg_packet videoPacket;
 
   int frames = 0;
 
@@ -301,13 +303,8 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		// fixme -- don't decode next frame until the time is right
 		if(!videobuf_ready){
 		  /* theora is one in, one out... */
-		  if (ogg_stream_packetout(&theoraStreamState, &oggPacket) > 0 ){
-
-			if (th_decode_packetin(theoraDecoderContext,&oggPacket,&videobuf_granulepos)>=0){
-			  videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
+		  if (ogg_stream_packetout(&theoraStreamState, &videoPacket) > 0 ){
 			  videobuf_ready=1;
-			  frames++;
-			}
 		  } else {
 		  	needData = 1;
 		  }
@@ -315,31 +312,15 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 
 		if(videobuf_ready && (audiobuf_time < 0 || audiobuf_time >= videobuf_time)) {
 			/* dumpvideo frame, and get new one */
-			video_write();
-			videobuf_ready=0;
+			OgvJsOutputFrameReady();
 		}
 	}
 	
 	if (vorbis_p && audiobuffer_empty) {
 		int successfulAudio = 0;
-		while (ogg_stream_packetout(&vo, &oggPacket) > 0) {
+		while (ogg_stream_packetout(&vo, &audioPacket) > 0) {
 			successfulAudio = 1;
-			if(vorbis_synthesis(&vb, &oggPacket)==0) {
-				vorbis_synthesis_blockin(&vd,&vb);
-
-				// fixme -- timing etc!
-#ifdef TREMOR
-				ogg_int32_t **pcm;
-				int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-				OgvJsOutputAudioInt(pcm, vi.channels, sampleCount);
-#else
-				float **pcm;
-				int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-				OgvJsOutputAudio(pcm, vi.channels, sampleCount);
-
-#endif
-				vorbis_synthesis_read(&vd, sampleCount);
-			}
+			OgvJsOutputAudioReady();
 		}
 		if (!successfulAudio) {
 			needData = 1;
@@ -347,6 +328,42 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 	}
 	
 	return 1;
+}
+
+void OgvJsDecodeFrame() {
+	int ret = th_decode_packetin(theoraDecoderContext,&videoPacket,&videobuf_granulepos);
+	if (ret >= 0){
+		videobuf_time=th_granule_time(theoraDecoderContext,videobuf_granulepos);
+		frames++;
+		video_write();
+		videobuf_ready=0;
+	} else if (ret == TH_DUPFRAME) {
+		printf("Duplicate frame\n");
+		frames++;
+		video_write();
+		videobuf_ready=0;
+	} else {
+		printf("Decoder failed mysteriously? %d\n", ret);
+	}
+}
+
+void OgvJsDecodeAudio() {
+	if(vorbis_synthesis(&vb, &audioPacket)==0) {
+		vorbis_synthesis_blockin(&vd,&vb);
+
+		// fixme -- timing etc!
+#ifdef TREMOR
+		ogg_int32_t **pcm;
+		int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+		OgvJsOutputAudioInt(pcm, vi.channels, sampleCount);
+#else
+		float **pcm;
+		int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+		OgvJsOutputAudio(pcm, vi.channels, sampleCount);
+
+#endif
+		vorbis_synthesis_read(&vd, sampleCount);
+	}
 }
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {

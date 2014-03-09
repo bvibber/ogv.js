@@ -18,6 +18,8 @@ OgvJs = (function(options) {
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', ['number', 'number']);
+    var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'void', []);
+    var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'void', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -41,14 +43,13 @@ OgvJs = (function(options) {
 		}
 	}
 	
+	function OgvJsOutputFrameReadyCallback() {
+		self.frameReady = true;
+	}
+
 	var queuedFrame = null;
 	function OgvJsFrameCallback(frameBuffer) {
-		if (self.frameReady) {
-			throw new Error("OgvJsFrameCallback called when frame already queued");
-		} else {
-			queuedFrame = frameBuffer;
-			self.frameReady = true;
-		}
+		queuedFrame = frameBuffer;
 	}
 	
 	function OgvJsInitAudioCallback(info) {
@@ -58,10 +59,13 @@ OgvJs = (function(options) {
 		}
 	}
 
+	function OgvJsOutputAudioReadyCallback() {
+		self.audioReady = true;
+	}
+
 	var audioBuffers = [];
 	function OgvJsAudioCallback(audioData) {
 		audioBuffers.push(audioData);
-		self.audioReady = true;
 	}
 
 	/**
@@ -85,12 +89,12 @@ OgvJs = (function(options) {
 	self.hasAudio = false;
 
 	/**
-	 * @property boolean Have we decoded a frame that's ready to be used?
+	 * @property boolean Have we found a frame that's ready to be decoded?
 	 */
 	self.frameReady = false;
 	
 	/**
-	 * @property boolean Have we decoded an audio buffer that's ready to be used?
+	 * @property boolean Have we found an audio buffer that's ready to be decoded?
 	 */
 	self.audioReady = false;
 	
@@ -130,15 +134,26 @@ OgvJs = (function(options) {
 	}
 	
 	/**
+	 * Decode the last-found video packet
+	 */
+	self.decodeFrame = function() {
+		if (self.frameReady) {
+			OgvJsDecodeFrame();
+			self.frameReady = false;
+		} else {
+			throw new Error("called decodeFrame when no frame ready");
+		}
+	}
+	
+	/**
 	 * Return the last-decoded frame, if any.
 	 *
 	 * @return ImageData
 	 */
 	self.dequeueFrame = function() {
-		if (self.frameReady) {
+		if (queuedFrame) {
 			var frame = queuedFrame;
 			queuedFrame = null;
-			self.frameReady = false;
 			return frame;
 		} else {
 			throw new Error("called dequeueFrame when no frame ready");
@@ -146,12 +161,28 @@ OgvJs = (function(options) {
 	}
 
 	/**
+	 * Decode the last-found audio packets
+	 */
+	self.decodeAudio = function() {
+		if (self.audioReady) {
+			OgvJsDecodeAudio();
+			self.audioReady = false;
+		} else {
+			throw new Error("called decodeAudio when no audio ready");
+		}
+	}
+	
+	self.audioQueued = function() {
+		return audioBuffers.length > 0;
+	};
+	
+	/**
 	 * Return the next decoded audio buffer
 	 *
 	 * @return array of audio thingies
 	 */
 	self.dequeueAudio = function() {
-		if (self.audioReady) {
+		if (self.audioQueued()) {
 			var buffer = audioBuffers.shift();
 			self.audioReady = (audioBuffers.length > 0);
 			return buffer;

@@ -8,7 +8,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
-  -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess']" \
+  -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess', '_OgvJsDecodeFrame', '_OgvJsDecodeAudio']" \
   -Ibuild/root/include \
   -Lbuild/root/lib \
   -logg \

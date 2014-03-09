@@ -885,12 +885,16 @@
 					if (state) {
 						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize) / audioFeeder.targetRate) * 1000;
 					}
-					while (codec.audioReady) {
-						var buffer = codec.dequeueAudio();
-						audioFeeder.bufferData(buffer);
-						audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+					if (codec.audioReady) {
+						codec.decodeAudio();
+						while (codec.audioQueued()) {
+							var buffer = codec.dequeueAudio();
+							audioFeeder.bufferData(buffer);
+							audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+						}
 					}
 					if (codec.frameReady) {
+						codec.decodeFrame();
 						scheduleDrawFrame(function() {
 							// ??
 						});
@@ -908,6 +912,7 @@
 					// Video-only: drive on the video clock
 					if (codec.frameReady && getTimestamp() >= targetFrameTime) {
 						// it's time to draw
+						codec.decodeFrame();
 						scheduleDrawFrame(function() {
 							targetFrameTime += 1000.0 / fps;
 							nextProcessingTimer = null;
