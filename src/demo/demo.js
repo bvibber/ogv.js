@@ -917,7 +917,7 @@
 					// Drive on the audio clock!
 					var audioBufferedDuration = 0;
 					if (state) {
-						audioBufferedDuration = ((state.samplesQueued) / audioFeeder.targetRate) * 1000;
+						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize * 2) / audioFeeder.targetRate) * 1000;
 					}
 					if (codec.audioReady) {
 						var start = getTimestamp();
