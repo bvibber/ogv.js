@@ -303,7 +303,7 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 		// fixme -- don't decode next frame until the time is right
 		if(!videobuf_ready){
 		  /* theora is one in, one out... */
-		  if (ogg_stream_packetout(&theoraStreamState, &videoPacket) > 0 ){
+		  if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0 ){
 			  videobuf_ready=1;
 		  } else {
 		  	needData = 1;
@@ -317,7 +317,7 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 	}
 	
 	if (vorbis_p && !audiobuf_ready && audiobuffer_empty) {
-		if (ogg_stream_packetout(&vo, &audioPacket) > 0) {
+		if (ogg_stream_packetpeek(&vo, &audioPacket) > 0) {
 			audiobuf_ready = 1;
 			OgvJsOutputAudioReady();
 		} else {
@@ -329,6 +329,10 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 }
 
 int OgvJsDecodeFrame() {
+	if (ogg_stream_packetout(&theoraStreamState, &videoPacket) <= 0) {
+		printf("Theora packet didn't come out of stream\n");
+		return 0;
+	}
 	videobuf_ready=0;
 	int ret = th_decode_packetin(theoraDecoderContext,&videoPacket,&videobuf_granulepos);
 	if (ret == 0){
@@ -339,15 +343,18 @@ int OgvJsDecodeFrame() {
 	} else if (ret == TH_DUPFRAME) {
 		printf("Duplicate frame\n");
 		frames++;
-		video_write();
-		return 1;
+		return 0;
 	} else {
-		printf("Decoder failed mysteriously? %d\n", ret);
+		printf("Theora decoder failed mysteriously? %d\n", ret);
 		return 0;
 	}
 }
 
 int OgvJsDecodeAudio() {
+	if (ogg_stream_packetout(&vo, &audioPacket) <= 0) {
+		printf("Vorbis packet didn't come out of stream\n");
+		return 0;
+	}
 	audiobuf_ready = 0;
 	int ret = vorbis_synthesis(&vb, &audioPacket);
 	if(ret == 0) {

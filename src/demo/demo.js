@@ -919,12 +919,18 @@
 					// Video-only: drive on the video clock
 					if (codec.frameReady && getTimestamp() >= targetFrameTime) {
 						// it's time to draw
-						codec.decodeFrame();
-						scheduleDrawFrame(function() {
-							targetFrameTime += 1000.0 / fps;
+						var ok = codec.decodeFrame();
+						if (ok) {
+							scheduleDrawFrame(function() {
+								targetFrameTime += 1000.0 / fps;
+								nextProcessingTimer = null;
+								pingProcessing();
+							});
+						} else {
+							console.log('bad packet or something');
 							nextProcessingTimer = null;
-							pingProcessing();
-						});
+							pingProcessing(targetFrameTime - getTimestamp());
+						}
 					} else {
 						// check in again soon!
 						nextProcessingTimer = null;
