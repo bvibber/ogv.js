@@ -18,15 +18,15 @@
 	var targetPerFrameTime = 0, // seconds
 		framesProcessed = 0, // frames
 		demuxingTime = 0, // seconds
-		videoDecodingTime = 0, // seconds
-		audioDecodingTime = 0, // seconds
-		colorTime = 0, // seconds
-		drawingTime = 0, // seconds
-		averageDemuxingTime = 0, // seconds
-		averageVideoDecodingTime = 0, // seconds
-		averageAudioDecodingTime = 0, // seconds
-		averageColorTime = 0, // seconds
-		averageDrawingTime = 0; // seconds
+		videoDecodingTime = 0, // ms
+		audioDecodingTime = 0, // ms
+		colorTime = 0, // ms
+		drawingTime = 0, // ms
+		averageDemuxingTime = 0, // ms
+		averageVideoDecodingTime = 0, // ms
+		averageAudioDecodingTime = 0, // ms
+		averageColorTime = 0, // ms
+		averageDrawingTime = 0; // ms
 
 	var benchmarkData = [],
 		benchmarkDirty = false,
@@ -108,13 +108,13 @@
 			averageColorTime = colorTime / framesProcessed;
 			averageDrawingTime = drawingTime / framesProcessed;
 
-			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime * 1000);
-			document.getElementById('bench-total').textContent = round1_0((averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageColorTime + averageDrawingTime) * 1000);
-			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime * 1000);
-			document.getElementById('bench-video').textContent = round1_0(averageVideoDecodingTime * 1000);
-			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime * 1000);
-			document.getElementById('bench-yuv').textContent = round1_0(averageColorTime * 1000);
-			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime * 1000);
+			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime);
+			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageColorTime + averageDrawingTime);
+			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime);
+			document.getElementById('bench-video').textContent = round1_0(averageVideoDecodingTime);
+			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime);
+			document.getElementById('bench-yuv').textContent = round1_0(averageColorTime);
+			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
 			
 			
 			// keep it a rolling average
@@ -791,7 +791,7 @@
 			fps = info.fps;
 			benchmarkTargetFps = info.fps;
 			
-			targetPerFrameTime = 1 / info.fps;
+			targetPerFrameTime = 1000 / info.fps;
 			framesProcessed = 0;
 			demuxingTime = 0;
 			videoDecodingTime = 0;
@@ -847,7 +847,7 @@
 			convertYCbCr(yCbCrBuffer, imageData.data);
 			
 			delta = getTimestamp() - start;
-			colorTime += delta / 1000.0;
+			colorTime += delta;
 			lastFrameDecodeTime += delta;
 
 			start = getTimestamp();
@@ -858,7 +858,7 @@
 			delta = getTimestamp() - start;
 
 			lastFrameDecodeTime += delta;
-			drawingTime += delta / 1000.0;
+			drawingTime += delta;
 			framesProcessed++;
 		}
 		
@@ -896,7 +896,7 @@
 			
 				var delta = (getTimestamp() - start);
 				lastFrameDecodeTime += delta;
-				demuxingTime += delta / 1000;
+				demuxingTime += delta;
 
 				if (!more) {
 					if (stream) {
@@ -943,7 +943,7 @@
 						}
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
-						audioDecodingTime += delta / 1000;
+						audioDecodingTime += delta;
 						if (!codec.hasVideo) {
 							framesProcessed++; // pretend!
 							recordBenchmarkPoint(lastFrameDecodeTime);
@@ -955,7 +955,7 @@
 						var ok = codec.decodeFrame();
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
-						videoDecodingTime += delta / 1000;
+						videoDecodingTime += delta;
 						if (ok) {
 							scheduleDrawFrame(function() {
 								// ??
@@ -977,7 +977,7 @@
 						var ok = codec.decodeFrame();
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
-						videoDecodingTime += delta / 1000;
+						videoDecodingTime += delta;
 						if (ok) {
 							scheduleDrawFrame(function() {
 								targetFrameTime += 1000.0 / fps;
