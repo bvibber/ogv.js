@@ -17,9 +17,15 @@
 
 	var targetPerFrameTime = 0, // seconds
 		framesProcessed = 0, // frames
-		decodingTime = 0, // seconds
-		averageDecodingTime = 0, // seconds
+		demuxingTime = 0, // seconds
+		videoDecodingTime = 0, // seconds
+		audioDecodingTime = 0, // seconds
+		colorTime = 0, // seconds
 		drawingTime = 0, // seconds
+		averageDemuxingTime = 0, // seconds
+		averageVideoDecodingTime = 0, // seconds
+		averageAudioDecodingTime = 0, // seconds
+		averageColorTime = 0, // seconds
 		averageDrawingTime = 0; // seconds
 
 	var benchmarkData = [],
@@ -88,15 +94,24 @@
 	}
 	function showAverageRate() {
 		if (framesProcessed) {
-			averageDecodingTime = decodingTime / framesProcessed;
+			averageDemuxingTime = demuxingTime / framesProcessed;
+			averageVideoDecodingTime = videoDecodingTime / framesProcessed;
+			averageAudioDecodingTime = audioDecodingTime / framesProcessed;
+			averageColorTime = colorTime / framesProcessed;
 			averageDrawingTime = drawingTime / framesProcessed;
-			var str = round2(averageDecodingTime * 1000) + 'ms decoded, ' +
-				round2(averageDrawingTime * 1000) + 'ms drawn, ' +
+			var str = round2(averageDemuxingTime * 1000) + ' demux, ' +
+				round2(averageVideoDecodingTime * 1000) + ' video, ' +
+				round2(averageAudioDecodingTime * 1000) + ' audio, ' +
+				round2(averageColorTime * 1000) + ' yuv, ' +
+				round2(averageDrawingTime * 1000) + ' draw, ' +
 				round2(targetPerFrameTime * 1000) + 'ms/frame target';
 			document.getElementById('decode-rate').textContent = str;
 			
 			// keep it a rolling average
-			decodingTime = 0;
+			demuxingTime = 0;
+			videoDecodingTime = 0;
+			audioDecodingTime = 0;
+			colorTime = 0;
 			drawingTime = 0;
 			framesProcessed = 0;
 		}
@@ -762,7 +777,9 @@
 			
 			targetPerFrameTime = 1 / info.fps;
 			framesProcessed = 0;
-			decodingTime = 0;
+			demuxingTime = 0;
+			videoDecodingTime = 0;
+			audioDecodingTime = 0;
 			drawingTime = 0;
 
 			canvas.width = info.picWidth;
@@ -807,11 +824,26 @@
 		}
 		
 		function drawFrame() {
+			var start, delta;
+
+			start = getTimestamp();
+			
 			convertYCbCr(yCbCrBuffer, imageData.data);
+			
+			delta = getTimestamp() - start;
+			colorTime += delta / 1000.0;
+			lastFrameDecodeTime += delta;
+
+			start = getTimestamp();
 			ctx.putImageData(imageData,
 							 0, 0,
 							 videoInfo.picX, videoInfo.picY,
 							 videoInfo.picWidth, videoInfo.picHeight);
+			delta = getTimestamp() - start;
+
+			lastFrameDecodeTime += delta;
+			drawingTime += delta / 1000.0;
+			framesProcessed++;
 		}
 		
 		var lastFrameDecodeTime = 0.0;		
@@ -846,7 +878,7 @@
 			
 				var delta = (getTimestamp() - start);
 				lastFrameDecodeTime += delta;
-				decodingTime += delta / 1000;
+				demuxingTime += delta / 1000;
 
 				if (!more) {
 					if (stream) {
@@ -865,14 +897,10 @@
 					prepareFrame();
 					nextFrameTimer = requestAnimationFrame(function() {
 						
-						var start = getTimestamp();
 						drawFrame();
-						var delta = getTimestamp() - start;
+
 						recordBenchmarkPoint(lastFrameDecodeTime);
 						lastFrameDecodeTime = 0.0;
-
-						framesProcessed++;
-						drawingTime += delta / 1000.0;
 
 						nextFrameTimer = null;
 						callback();
@@ -897,14 +925,14 @@
 						}
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
-						decodingTime += delta / 1000;
+						audioDecodingTime += delta / 1000;
 					}
 					if (codec.frameReady) {
 						var start = getTimestamp();
 						var ok = codec.decodeFrame();
 						var delta = (getTimestamp() - start);
 						lastFrameDecodeTime += delta;
-						decodingTime += delta / 1000;
+						videoDecodingTime += delta / 1000;
 						if (ok) {
 							scheduleDrawFrame(function() {
 								// ??
