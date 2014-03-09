@@ -32,8 +32,8 @@ The primary target browsers are:
 * Safari 6.1+ on Mac OS X
 * Internet Explorer 10+ on Windows
 
-Future targets (currently not acceptable performance):
-* Safari on iOS 6+
+And for lower-resolution files (testing 160p/15fps):
+* Safari on iOS 7+
 * Internet Explorer 10+ on Windows RT
 
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS or Windows RT.)
@@ -54,13 +54,13 @@ On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Saf
 IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE are not supported at all.
 
 
-*Future targets*
+*Low-res targets*
 
 See [device notes](https://github.com/brion/ogv.js/wiki/Device-notes) for testing status.
 
-On iOS, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. However, I have not yet gotten acceptable performance on non-trivial files except on the latest 64-bit iPhone 5s.
+On iOS 7, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. As of March 2014, I've gotten barely acceptable performance for 160p/15fps files on iPod Touch 5th-gen and iPad 3. Files at 360p play acceptably only on the latest 64-bit iPhone 5s.
 
-IE 11 on Windows RT 8.1 on an original Surface RT tablet does not perform very well.
+IE 11 on Windows RT 8.1 on an original Surface RT tablet performs barely acceptably with 160p/15fps files, but sound sync is poor (due to Flash overhead?). Larger files play unacceptably slowly.
 
 In both cases, a native application looms as a possibly better alternative. If installed, a native app could definitely be launched from web content... Need to look into how easy it is to detect presence of apps from web, however; if it's not possible to detect it may need a UX workaround to prompt the user.
 
