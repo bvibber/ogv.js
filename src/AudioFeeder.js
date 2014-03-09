@@ -53,6 +53,7 @@ function AudioFeeder() {
 		} else {
 			throw new Error("Bad version of web audio API?");
 		}
+		var targetRate = this.targetRate = context.sampleRate;
 	}
 	
 	function popNextBuffer() {
@@ -104,7 +105,6 @@ function AudioFeeder() {
 	 * Replace me with a better algo!
 	 */
 	function resample(samples) {
-		var targetRate = context.sampleRate;
 		if (rate == targetRate && channels == outputChannels) {
 			return samples;
 		} else {

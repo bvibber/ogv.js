@@ -660,7 +660,7 @@
 		console.log('media list updated');
 	});
 
-	var stream, nextFrameTimer, paused = false;
+	var stream, nextProcessingTimer, nextFrameTimer, paused = false;
 	
 	function stopVideo() {
 		// kill the previous video if any
@@ -675,6 +675,10 @@
 		if (audioFeeder) {
 			audioFeeder.close();
 			audioFeeder = null;
+		}
+		if (nextProcessingTimer) {
+			clearTimeout(nextProcessingTimer);
+			nextProcessingTimer = null;
 		}
 		if (nextFrameTimer) {
 			cancelAnimationFrame(nextFrameTimer);
@@ -733,6 +737,7 @@
 		document.getElementById('video-pic-x').textContent = '';
 		document.getElementById('video-pic-y').textContent = '';
 		var videoInfo,
+			audioInfo,
 			imageData,
 			options = {};
 		
@@ -777,6 +782,7 @@
 		document.getElementById('audio-channels').textContent = '';
 		document.getElementById('audio-rate').textContent = '';
 		codec.oninitaudio = function(info) {
+			audioInfo = info;
 			document.getElementById('audio-channels').textContent = info.channels;
 			document.getElementById('audio-rate').textContent = info.rate;
 			audioFeeder.init(info.channels, info.rate);
@@ -793,30 +799,44 @@
 
 		var lastFrameTime = getTimestamp(),
 			frameScheduled = false,
-			imageData = null;
+			imageData = null,
+			yCbCrBuffer = null;
 
+		function prepareFrame() {
+			yCbCrBuffer = codec.dequeueFrame();
+		}
+		
 		function drawFrame() {
-			var yCbCrBuffer = codec.dequeueFrame(),
-				outputBuffer = imageData.data;
-
-			convertYCbCr(yCbCrBuffer, outputBuffer),
-
+			var start = getTimestamp();
+			convertYCbCr(yCbCrBuffer, imageData.data);
 			ctx.putImageData(imageData,
 							 0, 0,
 							 videoInfo.picX, videoInfo.picY,
 							 videoInfo.picWidth, videoInfo.picHeight);
 		}
 		
-		var lastFrameDecodeTime = 0.0;
-		function process() {
-			if (!codec.dataReady()) {
+		var lastFrameDecodeTime = 0.0;		
+		var targetFrameTime = getTimestamp() + 1000.0 / fps;
+		function pingProcessing(delay) {
+			if (delay === undefined) {
+				delay = 0;
+			}
+			if (nextProcessingTimer) {
+				// already scheduled
+				return;
+			}
+			nextProcessingTimer = setTimeout(function() {
+				var currentTime = getTimestamp();
+
 				// Process until we run out of data or
 				// completely decode a video frame...
 				var start = getTimestamp();
-				
-				var pos, empty;
-				if (codec.hasAudio) {
-					var state = audioFeeder.getPlaybackState();
+			
+				var state, pos, empty;
+				var hasAudio = codec.hasAudio,
+					hasVideo = codec.hasVideo;
+				if (hasAudio) {
+					state = audioFeeder.getPlaybackState();
 					pos = state.playbackPosition;
 					empty = state.samplesQueued < (audioFeeder.bufferSize * 2);
 				} else {
@@ -824,7 +844,7 @@
 					empty = true;
 				}
 				more = codec.process(pos, empty);
-				
+			
 				var delta = (getTimestamp() - start);
 				lastFrameDecodeTime += delta;
 				decodingTime += delta / 1000;
@@ -841,64 +861,70 @@
 						}, 0);
 					}
 				}
-			}
-		}
-		
-		var targetFrameTime = getTimestamp() + 1000.0 / fps;
-		function pingAnimationFrame() {
-			nextFrameTimer = requestAnimationFrame(function() {
-				nextFrameTimer = null;
-				if (codec) {
-					var currentTime = getTimestamp();
-					if (paused) {
-						// do nothing
-					} else if (codec.hasAudio) {
-						// Drive on the audio clock!
-						while (codec.audioReady) {
-							var buffer = codec.dequeueAudio();
-							audioFeeder.bufferData(buffer);
-						}
-						if (codec.frameReady) {
-							drawFrame();
-							var delta = getTimestamp() - currentTime;
-							recordBenchmarkPoint(lastFrameDecodeTime);
-							lastFrameDecodeTime = 0.0;
+				
+				function scheduleDrawFrame(callback) {
+					prepareFrame();
+					nextFrameTimer = requestAnimationFrame(function() {
+						
+						drawFrame();
+						var delta = getTimestamp() - currentTime;
+						recordBenchmarkPoint(lastFrameDecodeTime);
+						lastFrameDecodeTime = 0.0;
 
-							framesProcessed++;
-							drawingTime += delta / 1000.0;
+						framesProcessed++;
+						drawingTime += delta / 1000.0;
 
-							targetFrameTime += 1000.0 / fps;
-						}
-						process();
+						nextFrameTimer = null;
+						callback();
+					});
+				}
+				
+				if (hasAudio) {
+					// Drive on the audio clock!
+					var audioBufferedDuration = 0;
+					if (state) {
+						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize) / audioFeeder.targetRate) * 1000;
+					}
+					while (codec.audioReady) {
+						var buffer = codec.dequeueAudio();
+						audioFeeder.bufferData(buffer);
+						audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+					}
+					if (codec.frameReady) {
+						scheduleDrawFrame(function() {
+							// ??
+						});
+						targetFrameTime = currentTime + 1000.0 / fps;
+					} else {
 						if (!codec.hasVideo) {
 							recordBenchmarkPoint(lastFrameDecodeTime);
 							lastFrameDecodeTime = 0.0;
 						}
-					} else {
-						// Video-only: drive on the video clock
-						
-						if (currentTime >= targetFrameTime) {
-							// It's time to draw a frame, if we have one
-							if (codec.frameReady) {
-								drawFrame();
-								var delta = getTimestamp() - currentTime;
-								recordBenchmarkPoint(lastFrameDecodeTime);
-								lastFrameDecodeTime = 0.0;
-
-								framesProcessed++;
-								drawingTime += delta / 1000.0;
-
-								targetFrameTime += 1000.0 / fps;
-							} else {
-								console.log("Late video frame!");
-								targetFrameTime = getTimestamp() + 1000.0 / fps;
-							}
-							process();
-						}
 					}
-					pingAnimationFrame();
+					var videoBufferedDuration = Math.max(0, targetFrameTime - getTimestamp());
+					nextProcessingTimer = null;
+					pingProcessing(Math.min(audioBufferedDuration, videoBufferedDuration));
+				} else if (hasVideo) {
+					// Video-only: drive on the video clock
+					if (codec.frameReady && getTimestamp() >= targetFrameTime) {
+						// it's time to draw
+						scheduleDrawFrame(function() {
+							targetFrameTime += 1000.0 / fps;
+							nextProcessingTimer = null;
+							pingProcessing();
+						});
+					} else {
+						// check in again soon!
+						nextProcessingTimer = null;
+						pingProcessing(targetFrameTime - getTimestamp());
+					}
+				} else {
+					// Ok we're just waiting for more input.
+					console.log('Still waiting for headers...');
+					nextProcessingTimer = null;
+					pingProcessing();
 				}
-			});
+			}, delay);
 		}
 		
 		var totalRead = 0;
@@ -909,8 +935,7 @@
 			onstart: function() {
 				console.log('stream.onstart');
 				// Fire off the read/decode/draw loop...
-				process();
-				pingAnimationFrame();
+				pingProcessing();
 			},
 			onbuffer: function() {
 				progress.buffered = stream.bytesBuffered;
@@ -920,7 +945,6 @@
 				
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
-				process();
 			},
 			ondone: function() {
 				console.log("reading done.");
@@ -940,10 +964,11 @@
 				*/
 			}
 		});
-		//stream.readBytes();
 
 		// We have to initialize audio here...
 		audioFeeder = new AudioFeeder(2, 44100);
+
+		pingProcessing();
 	}
 
 	controls.querySelector('.play').addEventListener('click', playVideo);
