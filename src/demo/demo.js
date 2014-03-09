@@ -862,7 +862,17 @@
 
 			start = getTimestamp();
 			
-			convertYCbCr(yCbCrBuffer, imageData.data);
+			var data = imageData.data,
+				rgba = convertYCbCr(yCbCrBuffer, 0, videoInfo.frameHeight);
+			if (data.set !== undefined) {
+				data.set(rgba);
+			} else {
+				// IE 10/11 still use CanvasPixelArray which isn't interoperable
+				var len = videoInfo.frameWidth * videoInfo.frameHeight * 4;
+				for (var i = 0; i < len; i++) {
+					data[i] = rgba[i];
+				}
+			}
 			
 			delta = getTimestamp() - start;
 			colorTime += delta;
