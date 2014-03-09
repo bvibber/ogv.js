@@ -807,7 +807,6 @@
 		}
 		
 		function drawFrame() {
-			var start = getTimestamp();
 			convertYCbCr(yCbCrBuffer, imageData.data);
 			ctx.putImageData(imageData,
 							 0, 0,
@@ -866,8 +865,9 @@
 					prepareFrame();
 					nextFrameTimer = requestAnimationFrame(function() {
 						
+						var start = getTimestamp();
 						drawFrame();
-						var delta = getTimestamp() - currentTime;
+						var delta = getTimestamp() - start;
 						recordBenchmarkPoint(lastFrameDecodeTime);
 						lastFrameDecodeTime = 0.0;
 
