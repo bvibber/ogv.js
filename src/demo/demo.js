@@ -704,8 +704,14 @@
 		canvas.addEventListener('click', playVideo);
 	}
 	
+	var continueVideo = null;
 	function togglePauseVideo() {
-		paused = !paused;
+		if (nextProcessingTimer) {
+			clearTimeout(nextProcessingTimer);
+			nextProcessingTimer = null;
+		} else {
+			continueVideo();
+		}
 	}
 	
 	function playVideo() {
@@ -742,8 +748,6 @@
 		}
 		window.addEventListener('error', errorHandler);
 
-		var fps = 60;
-
 		document.getElementById('video-fps').textContent = '';
 		document.getElementById('video-frame-width').textContent = '';
 		document.getElementById('video-frame-height').textContent = '';
@@ -751,10 +755,12 @@
 		document.getElementById('video-pic-height').textContent = '';
 		document.getElementById('video-pic-x').textContent = '';
 		document.getElementById('video-pic-y').textContent = '';
+		var fps = 60;
+
 		var videoInfo,
 			audioInfo,
-			imageData,
-			options = {};
+			imageData;
+		var options = {};
 		
 		// Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1
 		if (navigator.userAgent.match(/Version\/6\.0\.[0-9a-z.]+ Safari/)) {
@@ -911,7 +917,7 @@
 					// Drive on the audio clock!
 					var audioBufferedDuration = 0;
 					if (state) {
-						audioBufferedDuration = ((state.samplesQueued - audioFeeder.bufferSize * 2) / audioFeeder.targetRate) * 1000;
+						audioBufferedDuration = ((state.samplesQueued) / audioFeeder.targetRate) * 1000;
 					}
 					if (codec.audioReady) {
 						var start = getTimestamp();
@@ -980,6 +986,7 @@
 				}
 			}, delay);
 		}
+		continueVideo = pingProcessing;
 		
 		var totalRead = 0;
 		
