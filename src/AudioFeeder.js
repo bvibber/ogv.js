@@ -175,7 +175,6 @@ function AudioFeeder() {
 			if(resamples.length > 0 && flashElement.write) {
 				flashElement.write(resamples.join(' '));
 			}
-			bufferHead += (samplesPerChannel[0].length / rate);
 		} else if (buffers) {
 			samples = resample(samplesPerChannel);
 			pushSamples(samples);
