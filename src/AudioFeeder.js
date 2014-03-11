@@ -135,12 +135,13 @@ function AudioFeeder() {
 		var sampleincr = rate / 44100;
 		var samplecount = (samples[0].length * (44100 / rate)) | 0;
 		var newSamples = new Array(samplecount * 2);
-		var channel1 = channels > 1 ? 1 : 0;
+		var chanLeft = samples[0];
+		var chanRight = channels > 1 ? samples[1] : chanLeft;
 		for(var s = 0; s < samplecount; s++) {
 			var idx = (s * sampleincr) | 0;
 			var idx_out = s * 2;
-			newSamples[idx_out] = (samples[0][idx] * 32768) | 0;
-			newSamples[idx_out + 1] = (samples[channel1][idx] * 32768) | 0;
+			newSamples[idx_out] = (chanLeft[idx] * 32768) | 0;
+			newSamples[idx_out + 1] = (chanRight[idx] * 32768) | 0;
 		}
 		return newSamples;
 	}
