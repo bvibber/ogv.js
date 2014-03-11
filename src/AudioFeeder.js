@@ -145,6 +145,12 @@ function AudioFeeder() {
 		return newSamples;
 	}
 
+	function resampleFlashMuted(samples) {
+		// if muted: generate fitting number of samples for audio clock
+		var samplecount = (samples[0].length * (44100 / rate)) | 0;
+		return new Array(samplecount * channels);
+	}
+
 	
 	function pushSamples(samples) {
 		var firstChannel = samples[0],
@@ -170,7 +176,7 @@ function AudioFeeder() {
 	
 	this.bufferData = function(samplesPerChannel) {
 		if(this.flashaudio) {
-			var resamples = resampleFlash(samplesPerChannel);
+			var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 			var flashElement = this.flashaudio.flashElement;
 			if(resamples.length > 0 && flashElement.write) {
 				flashElement.write(resamples.join(' '));
@@ -303,6 +309,7 @@ DynamicAudio.prototype = {
 		if (opts && typeof opts['swf'] !== 'undefined') {
 			self.swf = opts['swf'];
 		}
+
 
 		self.flashWrapper = document.createElement('div');
 		self.flashWrapper.id = 'dynamicaudio-flashwrapper-'+self.id;
