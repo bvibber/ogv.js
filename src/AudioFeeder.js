@@ -134,7 +134,7 @@ function AudioFeeder() {
 	function resampleFlash(samples) {
 		var sampleincr = rate / 44100;
 		var samplecount = (samples[0].length * (44100 / rate)) | 0;
-		var newSamples = new Array(samplecount * channels);
+		var newSamples = new Array(samplecount * 2);
 		var channel1 = channels > 1 ? 1 : 0;
 		for(var s = 0; s < samplecount; s++) {
 			var idx = (s * sampleincr) | 0;
@@ -148,7 +148,7 @@ function AudioFeeder() {
 	function resampleFlashMuted(samples) {
 		// if muted: generate fitting number of samples for audio clock
 		var samplecount = (samples[0].length * (44100 / rate)) | 0;
-		return new Array(samplecount * channels);
+		return new Array(samplecount * 2);
 	}
 
 	
