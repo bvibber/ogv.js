@@ -12,7 +12,7 @@ OgvJs = (function(options) {
     		console.log("OgvJs: " + str);
     	}
     };
-    //import "../build/intermediate/ogv-libs.js"
+    //import "../build/js/ogv-libs.js"
     
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);

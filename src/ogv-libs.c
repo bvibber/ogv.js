@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/timeb.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -60,6 +59,7 @@ static void sigint_handler (int signal) {
   got_sigint = 1;
 }
 
+// Callbacks
 extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            int hdec, int vdec,
                            double fps,
@@ -416,3 +416,4 @@ void OgvJsDestroy() {
   }
   ogg_sync_clear(&oggSyncState);
 }
+

@@ -18,21 +18,3 @@ if [ ! -f configure ]; then
   sed -i.bak 's/$ac_cv_func_oggpack_writealign/yes/' configure
 fi
 cd ..
-
-# set up the build directory
-mkdir build
-cd build
-
-mkdir root
-mkdir libvorbis
-cd libvorbis
-  
-# finally, run configuration script
-emconfigure ../../libvorbis/configure --disable-shared --disable-oggtest --prefix=$dir/build/root
-
-# compile libvorbis
-emmake make
-emmake make install
-
-cd ..
-cd ..

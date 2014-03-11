@@ -5,25 +5,30 @@ package {
     import flash.media.Sound;
     import flash.media.SoundChannel;
     
-    public class dynamicaudio extends Sprite {
+    import com.brionv.ogvlibs.CModule;
+    import com.brionv.ogvlibs.OgvSwfInit;
+    import com.brionv.ogvlibs.OgvSwfDestroy;
+    import com.brionv.ogvlibs.OgvSwfReceiveInput;
+    import com.brionv.ogvlibs.OgvSwfProcess;
+    import com.brionv.ogvlibs.OgvSwfDecodeFrame;
+    import com.brionv.ogvlibs.OgvSwfDecodeAudio;
+
+    public class ogv extends Sprite {
         public var bufferSize:Number = 2048; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
-        public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
-        public var multiplier:Number = 1/32768;
         
-        public function dynamicaudio() {
-            ExternalInterface.addCallback('write',  write);
-            ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
+        public function ogv() {
+        	OgvSwfInit(1, 1);
         }
         
         // Called from JavaScript to add samples to the buffer
         // Note we are using a space separated string of samples instead of an 
         // array. Flash's stupid ExternalInterface passes every sample as XML, 
         // which is incredibly expensive to encode/decode
-        public function write(s:Array):void {
+        public function write(s:String):void {
             if (!this.sound) {
                 this.sound = new Sound(); 
                 this.sound.addEventListener(
@@ -34,7 +39,7 @@ package {
             }
 
             for each (var samp:String in s.split(" ")) {
-                buffer.push(parseInt(samp, 10) * multiplier);
+                buffer.push(parseInt(samp, 10));
             }
         }
 

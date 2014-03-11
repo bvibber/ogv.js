@@ -1,6 +1,12 @@
-.FAKE : all clean cleanswf swf
+.FAKE : all clean cleanswf swf js flash demo
 
-all : build/ogv.js build/demo/index.html
+all : js flash demo
+
+js : build/ogv.js
+
+flash : build/ogv.swf
+
+demo : build/demo/index.html
 
 clean:
 	rm -rf build
@@ -14,34 +20,30 @@ clean:
 	test -f libtheora/Makefile && (cd libtheora && make distclean) || true
 	rm -f libtheora/configure
 
-build/root/lib/libogg.a : compileOgg.sh
+build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
-	test -d build/intermediate || mkdir build/intermediate
-	./compileOgg.sh
+	./configureOgg.sh
+	./compileOggJs.sh
 
-build/root/lib/libtheora.a : build/root/lib/libogg.a compileTheora.sh
+build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a configureVorbis.sh compileVorbisJs.sh
 	test -d build || mkdir build
-	test -d build/intermediate || mkdir build/intermediate
-	./compileTheora.sh
+	./configureVorbis.sh
+	./compileVorbisJs.sh
 
-build/root/lib/libvorbis.a : build/root/lib/libogg.a compileVorbis.sh
+build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh compileTheoraJs.sh
 	test -d build || mkdir build
-	test -d build/intermediate || mkdir build/intermediate
-	./compileVorbis.sh
+	./configureTheora.sh
+	./compileTheoraJs.sh
 
-build/root/lib/libvorbisidec.a : build/root/lib/libogg.a compileTremor.sh
+build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a compileOgvJs.sh
 	test -d build || mkdir build
-	test -d build/intermediate || mkdir build/intermediate
-	./compileTremor.sh
+	./compileOgvJs.sh
 
-build/intermediate/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/root/lib/libogg.a build/root/lib/libtheora.a build/root/lib/libvorbis.a compileOgv.sh
-	test -d build || mkdir build
-	test -d build/intermediate || mkdir build/intermediate
-	./compileOgv.sh
-
-build/ogv.js : src/ogv-main.js build/intermediate/ogv-libs.js
+build/ogv.js : src/ogv-main.js build/js/ogv-libs.js
 	importer src/ogv-main.js build/ogv.js
 
+
+# The player demo
 build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf
 	test -d build/demo || mkdir build/demo
 	cp src/demo/index.html build/demo/index.html
@@ -76,3 +78,29 @@ cleanswf:
 
 src/dynamicaudio.swf : src/dynamicaudio.as
 	mxmlc -o src/dynamicaudio.swf -file-specs src/dynamicaudio.as
+
+
+# And the Flash version of the decoder...
+
+build/flash/root/lib/libogg.a : configureOgg.sh compileOggFlash.sh
+	test -d build || mkdir build
+	./configureOgg.sh
+	./compileOggFlash.sh
+
+build/flash/root/lib/libvorbis.a : build/flash/root/lib/libogg.a configureVorbis.sh compileVorbisFlash.sh
+	test -d build || mkdir build
+	./configureVorbis.sh
+	./compileVorbisFlash.sh
+
+build/flash/root/lib/libtheoradec.a : build/flash/root/lib/libogg.a configureTheora.sh compileTheoraFlash.sh
+	test -d build || mkdir build
+	./configureTheora.sh
+	./compileTheoraFlash.sh
+
+build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c build/flash/root/lib/libogg.a build/flash/root/lib/libtheoradec.a build/flash/root/lib/libvorbis.a compileOgvFlash.sh
+	test -d build || mkdir build
+	./compileOgvFlash.sh
+
+build/ogv.swf : src/ogv.as build/flash/ogv-libs.swc
+	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc src/ogv.as
+
