@@ -86,7 +86,11 @@ function AudioFeeder() {
 					}
 				}
 			} else {
-				if (!inputBuffer) {
+				if (inputBuffer) {
+					// Pretend we played this audio
+					bufferHead += (bufferSize / context.sampleRate);
+					playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
+				} else {
 					console.log("Starved for audio!");
 				}
 				for (var channel = 0; channel < outputChannels; channel++) {
