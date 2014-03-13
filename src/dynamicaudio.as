@@ -13,10 +13,18 @@ package {
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
         public var multiplier:Number = 1/32768;
+        public var hexValues:Array = [];
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
+            
+            // Create a hex digit lookup table
+            var hexDigits:Array = ['0', '1', '2', '3', '4', '5', '6', '7',
+                                   '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+            for (var i:int = 0; i < hexDigits.length; i++) {
+            	this.hexValues[hexDigits[i].charCodeAt(0)] = i;
+            }
         }
         
         // Called from JavaScript to add samples to the buffer
@@ -33,8 +41,17 @@ package {
                 this.soundChannel = this.sound.play();
             }
 
-            for each (var samp:String in s.split(" ")) {
-                buffer.push(parseInt(samp, 10) * multiplier);
+            var hexValues:Array = this.hexValues;
+            for (var i:int = 0; i < s.length; i += 4) {
+            	var sample:Number = (hexValues[s.charCodeAt(i)]) +
+            	                    (hexValues[s.charCodeAt(i + 1)] << 4) +
+            	                    (hexValues[s.charCodeAt(i + 2)] << 8) +
+            	                    (hexValues[s.charCodeAt(i + 3)] << 12);
+            	if (sample & 0x8000) {
+            		// sign extension from 16 to 32-bit int!
+            		sample = sample - 0x10000;
+            	}
+            	this.buffer.push(sample * multiplier);
             }
         }
 

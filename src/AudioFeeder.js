@@ -182,12 +182,28 @@ function AudioFeeder() {
 		pendingBuffer = freshBuffer();
 	};
 	
+	var hexDigits = ['0', '1', '2', '3', '4', '5', '6', '7',
+					 '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+	function uint16HexString(samples) {
+		var digits = [];
+		for (var i = 0; i < samples.length; i++) {
+			var sample = samples[i];
+			digits.push(hexDigits[(sample & 0x000f)]);
+			digits.push(hexDigits[(sample & 0x00f0) >> 4]);
+			digits.push(hexDigits[(sample & 0x0f00) >> 8]);
+			digits.push(hexDigits[(sample & 0xf000) >> 12]);
+		}
+		return digits.join("");
+	}
+	
 	this.bufferData = function(samplesPerChannel) {
 		if(this.flashaudio) {
 			var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 			var flashElement = this.flashaudio.flashElement;
 			if(resamples.length > 0 && flashElement.write) {
-				flashElement.write(resamples.join(' '));
+				var str = uint16HexString(resamples)
+				//console.log(str.length + ' bytes sent to Flash');
+				flashElement.write(str);
 			}
 		} else if (buffers) {
 			samples = resample(samplesPerChannel);
