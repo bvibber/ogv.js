@@ -42,7 +42,8 @@ function AudioFeeder() {
 		pendingPos = 0,
 		muted = false,
 		bufferHead = 0,
-		playbackTimeAtBufferHead = 0;
+		playbackTimeAtBufferHead = 0,
+		targetRate;
 
 	if(AudioContext) {
 		context = new AudioContext;
@@ -53,7 +54,9 @@ function AudioFeeder() {
 		} else {
 			throw new Error("Bad version of web audio API?");
 		}
-		var targetRate = this.targetRate = context.sampleRate;
+		targetRate = this.targetRate = context.sampleRate;
+	} else {
+		targetRate = this.targetRate = 44100; // flash fallback
 	}
 	
 	function popNextBuffer() {
@@ -202,7 +205,7 @@ function AudioFeeder() {
 			});
 			
 			var bufferedSamples = samplesQueued;
-			var remainingSamples = (playbackTimeAtBufferHead - context.currentTime) * context.sampleRate;
+			var remainingSamples = Math.floor(Math.max(0, (playbackTimeAtBufferHead - context.currentTime)) * context.sampleRate);
 			
 			return bufferedSamples + remainingSamples;
 		} else {

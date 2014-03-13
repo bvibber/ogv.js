@@ -17,7 +17,7 @@ OgvJs = (function(options) {
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
     var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
-    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', ['number', 'number']);
+    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
     var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'int', []);
     var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'int', []);
 
@@ -43,9 +43,8 @@ OgvJs = (function(options) {
 		}
 	}
 	
-	function OgvJsOutputFrameReadyCallback(videoPosition) {
+	function OgvJsOutputFrameReadyCallback() {
 		self.frameReady = true;
-		self.videoPosition = videoPosition;
 	}
 
 	var queuedFrame = null;
@@ -135,8 +134,8 @@ OgvJs = (function(options) {
 	/**
 	 * Process the next packet in the stream
 	 */
-	self.process = function(audioPosition, audioReady) {
-		return OgvJsProcess(audioPosition, audioReady ? 1 : 0);
+	self.process = function() {
+		return OgvJsProcess();
 	}
 	
 	/**
@@ -207,11 +206,7 @@ OgvJs = (function(options) {
 	 * @return boolean
 	 */	
 	self.dataReady = function() {
-		if (self.hasAudio) {
-			return self.audioReady;
-		} else {
-			return self.frameReady;
-		}
+		return self.audioReady || self.frameReady;
 	}
 
 	OgvJsInit(processAudio ? 1 : 0, processVideo ? 1 : 0);

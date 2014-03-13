@@ -27,7 +27,8 @@ mergeInto(LibraryManager.library, {
 	                           bufferCb, strideCb,
 	                           bufferCr, strideCr,
 	                           width, height,
-	                           hdec, vdec) {
+	                           hdec, vdec,
+	                           timestamp) {
 		
 		if (bufferY == 0) {
 			OgvJsFrameCallback(null);
@@ -42,34 +43,23 @@ mergeInto(LibraryManager.library, {
 			countBytesY = strideY * height,
 			countBytesCb = strideCb * heightColor,
 			countBytesCr = strideCr * heightColor,
-			inDwordsY = HEAPU32.subarray(bufferY / 4, (bufferY + countBytesY) / 4),
-			inDwordsCb = HEAPU32.subarray(bufferCb / 4, (bufferCb + countBytesCb) / 4),
-			inDwordsCr = HEAPU32.subarray(bufferCr / 4, (bufferCr + countBytesCr) / 4),
-			bufferY = new ArrayBuffer(countBytesY),
-			bufferCb = new ArrayBuffer(countBytesCb),
-			bufferCr = new ArrayBuffer(countBytesCr),
-			dwordsY = new Uint32Array(bufferY),
-			dwordsCb = new Uint32Array(bufferCb),
-			dwordsCr = new Uint32Array(bufferCr);
-
-		// These copies may not be packed efficiently,
-		// but it's easier than guessing the internal format.
-		dwordsY.set(inDwordsY);
-		dwordsCb.set(inDwordsCb);
-		dwordsCr.set(inDwordsCr);
+			bytesY = HEAPU8.subarray(bufferY, (bufferY + countBytesY)),
+			bytesCb = HEAPU8.subarray(bufferCb, (bufferCb + countBytesCb)),
+			bytesCr = HEAPU8.subarray(bufferCr, (bufferCr + countBytesCr));
 
 		// And queue up the output buffer!
 		OgvJsFrameCallback({
-			bufferY: bufferY,
-			bufferCb: bufferCb,
-			bufferCr: bufferCr,
+			bytesY: bytesY,
+			bytesCb: bytesCb,
+			bytesCr: bytesCr,
 			strideY: strideY,
 			strideCb: strideCb,
 			strideCr: strideCr,
 			width: width,
 			height: height,
 			hdec: hdec,
-			vdec: vdec
+			vdec: vdec,
+			timestamp: timestamp
 		});
 	},
 	
