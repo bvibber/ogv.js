@@ -28,7 +28,7 @@ package {
         }
         
         // Called from JavaScript to add samples to the buffer
-        // Note we are using a space separated string of samples instead of an 
+        // Note we are using a hex string of 16-bit int samples instead of an
         // array. Flash's stupid ExternalInterface passes every sample as XML, 
         // which is incredibly expensive to encode/decode
         public function write(s:String):void {

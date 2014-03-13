@@ -141,14 +141,14 @@ function AudioFeeder() {
 	function resampleFlash(samples) {
 		var sampleincr = rate / 44100;
 		var samplecount = (samples[0].length * (44100 / rate)) | 0;
-		var newSamples = new Array(samplecount * 2);
+		var newSamples = new Int16Array(samplecount * 2);
 		var chanLeft = samples[0];
 		var chanRight = channels > 1 ? samples[1] : chanLeft;
 		for(var s = 0; s < samplecount; s++) {
 			var idx = (s * sampleincr) | 0;
 			var idx_out = s * 2;
-			newSamples[idx_out] = (chanLeft[idx] * 32768) | 0;
-			newSamples[idx_out + 1] = (chanRight[idx] * 32768) | 0;
+			newSamples[idx_out] = (chanLeft[idx] * 32768);
+			newSamples[idx_out + 1] = (chanRight[idx] * 32768);
 		}
 		return newSamples;
 	}
@@ -156,7 +156,7 @@ function AudioFeeder() {
 	function resampleFlashMuted(samples) {
 		// if muted: generate fitting number of samples for audio clock
 		var samplecount = (samples[0].length * (44100 / rate)) | 0;
-		return new Array(samplecount * 2);
+		return new Int16Array(samplecount * 2);
 	}
 
 	
@@ -184,14 +184,17 @@ function AudioFeeder() {
 	
 	var hexDigits = ['0', '1', '2', '3', '4', '5', '6', '7',
 					 '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-	function uint16HexString(samples) {
-		var digits = [];
-		for (var i = 0; i < samples.length; i++) {
+	var hexBytes = [];
+	for (var i = 0; i < 256; i++) {
+		hexBytes[i] = hexDigits[(i & 0x0f)] +
+		              hexDigits[(i & 0xf0) >> 4];
+	}
+	function hexString(buffer) {
+		var samples = new Uint8Array(buffer);
+		var digits = [], len = samples.length;
+		for (var i = 0; i < len; i++) {
 			var sample = samples[i];
-			digits.push(hexDigits[(sample & 0x000f)]);
-			digits.push(hexDigits[(sample & 0x00f0) >> 4]);
-			digits.push(hexDigits[(sample & 0x0f00) >> 8]);
-			digits.push(hexDigits[(sample & 0xf000) >> 12]);
+			digits.push(hexBytes[sample]);
 		}
 		return digits.join("");
 	}
@@ -201,7 +204,7 @@ function AudioFeeder() {
 			var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 			var flashElement = this.flashaudio.flashElement;
 			if(resamples.length > 0 && flashElement.write) {
-				var str = uint16HexString(resamples)
+				var str = hexString(resamples.buffer)
 				//console.log(str.length + ' bytes sent to Flash');
 				flashElement.write(str);
 			}
