@@ -43,14 +43,12 @@ package {
 
             var hexValues:Vector.<int> = this.hexValues;
             for (var i:int = 0; i < s.length; i += 4) {
-            	var sample:int = (hexValues[s.charCodeAt(i)]) +
-            	                 (hexValues[s.charCodeAt(i + 1)] << 4) +
-            	                 (hexValues[s.charCodeAt(i + 2)] << 8) +
+            	var sample:int = (hexValues[s.charCodeAt(i)]) |
+            	                 (hexValues[s.charCodeAt(i + 1)] << 4) |
+            	                 (hexValues[s.charCodeAt(i + 2)] << 8) |
             	                 (hexValues[s.charCodeAt(i + 3)] << 12);
-            	if (sample & 0x8000) {
-            		// sign extension from 16 to 32-bit int!
-            		sample = sample - 0x10000;
-            	}
+		// sign extension to 32 bits via arithmetic shift            	
+		sample = (sample << 16) >> 16;
             	this.buffer.push(sample * multiplier);
             }
         }
