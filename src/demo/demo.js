@@ -64,7 +64,11 @@
 			fps60 = 1000.0 / 60.0,
 			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps60),
 			maxTime = fpsTarget * 2,
-			maxItems = benchmarkData.length;
+			chunkSize = benchmarkTargetFps * 5, // show last 5 seconds
+			maxItems = Math.min(chunkSize, benchmarkData.length);
+		
+		var clockData = benchmarkClockData.slice(-chunkSize),
+			cpuData = benchmarkData.slice(-chunkSize);
 		
 		// Draw!
 		
@@ -80,18 +84,18 @@
 		// Wall-clock time
 		ctx.beginPath();
 		ctx.strokeStyle = 'blue';
-		ctx.moveTo(0, (height - 1) - benchmarkClockData[0] * (height - 1) / maxTime);
+		ctx.moveTo(0, (height - 1) - clockData[0] * (height - 1) / maxTime);
 		for (i = 1; i < maxItems; i++) {
-			ctx.lineTo(x(i), y(benchmarkClockData[i]));
+			ctx.lineTo(x(i), y(clockData[i]));
 		}
 		ctx.stroke();
 
 		// CPU time
 		ctx.beginPath();
 		ctx.strokeStyle = 'black';
-		ctx.moveTo(0, (height - 1) - benchmarkData[0] * (height - 1) / maxTime);
+		ctx.moveTo(0, (height - 1) - cpuData[0] * (height - 1) / maxTime);
 		for (i = 1; i < maxItems; i++) {
-			ctx.lineTo(x(i), y(benchmarkData[i]));
+			ctx.lineTo(x(i), y(cpuData[i]));
 		}
 		ctx.stroke();
 		
