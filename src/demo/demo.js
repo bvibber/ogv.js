@@ -724,7 +724,7 @@
 	var continueVideo = null;
 	function togglePauseVideo() {
 		if (nextProcessingTimer) {
-			clearTimeout(nextProcessingTimer);
+			cancelAnimationFrame(nextProcessingTimer);
 			nextProcessingTimer = null;
 		} else {
 			continueVideo();
