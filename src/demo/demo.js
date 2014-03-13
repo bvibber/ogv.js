@@ -31,14 +31,23 @@
 		averageDrawingTime = 0; // ms
 
 	var benchmarkData = [],
+		benchmarkClockData = [],
 		benchmarkDirty = false,
-		benchmarkTargetFps = 0;
+		benchmarkTargetFps = 0,
+		lastBenchmarkPoint;
 	function clearBenchmark() {
 		benchmarkData = [];
+		benchmarkClockData = [];
 		benchmarkDirty = true;
+		lastBenchmarkPoint = getTimestamp();
 	}
 	function recordBenchmarkPoint(ms) {
 		benchmarkData.push(ms);
+
+		var now = getTimestamp();
+		benchmarkClockData.push(now - lastBenchmarkPoint);
+		lastBenchmarkPoint = now;
+		
 		benchmarkDirty = true;
 	}
 	function showBenchmark() {
@@ -67,11 +76,23 @@
 		function y(ms) {
 			return (height - 1) - ms * (height - 1) / maxTime;
 		}
-		
+				
+		// Wall-clock time
 		ctx.beginPath();
 		ctx.strokeStyle = 'blue';
-		ctx.moveTo(x(0), y(fps60));
-		ctx.lineTo(x(maxItems - 1), y(fps60));
+		ctx.moveTo(0, (height - 1) - benchmarkClockData[0] * (height - 1) / maxTime);
+		for (i = 1; i < maxItems; i++) {
+			ctx.lineTo(x(i), y(benchmarkClockData[i]));
+		}
+		ctx.stroke();
+
+		// CPU time
+		ctx.beginPath();
+		ctx.strokeStyle = 'black';
+		ctx.moveTo(0, (height - 1) - benchmarkData[0] * (height - 1) / maxTime);
+		for (i = 1; i < maxItems; i++) {
+			ctx.lineTo(x(i), y(benchmarkData[i]));
+		}
 		ctx.stroke();
 		
 		if (benchmarkTargetFps) {
@@ -81,14 +102,6 @@
 			ctx.lineTo(x(maxItems - 1), y(fpsTarget));
 			ctx.stroke();
 		}
-
-		ctx.beginPath();
-		ctx.strokeStyle = 'black';
-		ctx.moveTo(0, (height - 1) - benchmarkData[0] * (height - 1) / maxTime);
-		for (i = 1; i < maxItems; i++) {
-			ctx.lineTo(x(i), y(benchmarkData[i]));
-		}
-		ctx.stroke();
 	}
 	
 	function round2(n) {
