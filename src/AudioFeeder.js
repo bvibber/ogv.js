@@ -132,15 +132,6 @@ function AudioFeeder() {
 		}
 	}
 
-	function clamp16bit(val) {
-		if (val > 32767) {
-			return 32767;
-		} else if (val < -32768) {
-			return -32768;
-		} else {
-			return val;
-		}
-	}
 	/**
 	 * Resampling, scaling and reordering for the Flash fallback.
 	 * The Flash fallback expects 44.1 kHz, stereo
@@ -153,11 +144,13 @@ function AudioFeeder() {
 		var newSamples = new Int16Array(samplecount * 2);
 		var chanLeft = samples[0];
 		var chanRight = channels > 1 ? samples[1] : chanLeft;
+		var multiplier = 16384; // smaller than 32768 to allow some headroom from those floats
 		for(var s = 0; s < samplecount; s++) {
 			var idx = (s * sampleincr) | 0;
 			var idx_out = s * 2;
-			newSamples[idx_out] = clamp16bit(chanLeft[idx] * 32768);
-			newSamples[idx_out + 1] = clamp16bit(chanRight[idx] * 32768);
+			// Use a smaller
+			newSamples[idx_out] = chanLeft[idx] * multiplier;
+			newSamples[idx_out + 1] = chanRight[idx] * multiplier;
 		}
 		return newSamples;
 	}

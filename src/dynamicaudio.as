@@ -12,7 +12,7 @@ package {
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
-        public var multiplier:Number = 1/32768;
+        public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
         public var hexValues:Vector.<int> = new Vector.<int>(256);
         
         public function dynamicaudio() {
