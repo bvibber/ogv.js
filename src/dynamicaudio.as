@@ -13,7 +13,7 @@ package {
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
         public var multiplier:Number = 1/32768;
-        public var hexValues:Array = [];
+        public var hexValues:Vector.<int> = new Vector.<int>(256);
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -41,12 +41,12 @@ package {
                 this.soundChannel = this.sound.play();
             }
 
-            var hexValues:Array = this.hexValues;
+            var hexValues:Vector.<int> = this.hexValues;
             for (var i:int = 0; i < s.length; i += 4) {
-            	var sample:Number = (hexValues[s.charCodeAt(i)]) +
-            	                    (hexValues[s.charCodeAt(i + 1)] << 4) +
-            	                    (hexValues[s.charCodeAt(i + 2)] << 8) +
-            	                    (hexValues[s.charCodeAt(i + 3)] << 12);
+            	var sample:int = (hexValues[s.charCodeAt(i)]) +
+            	                 (hexValues[s.charCodeAt(i + 1)] << 4) +
+            	                 (hexValues[s.charCodeAt(i + 2)] << 8) +
+            	                 (hexValues[s.charCodeAt(i + 3)] << 12);
             	if (sample & 0x8000) {
             		// sign extension from 16 to 32-bit int!
             		sample = sample - 0x10000;
