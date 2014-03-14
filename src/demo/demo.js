@@ -947,6 +947,12 @@
 					var delta = (getTimestamp() - start);
 					lastFrameDecodeTime += delta;
 					bufferTime += delta;
+
+					if (!codec.hasVideo) {
+						framesProcessed++; // pretend!
+						recordBenchmarkPoint(lastFrameDecodeTime);
+						lastFrameDecodeTime = 0.0;
+					}
 				}
 			}
 			if (codec.hasAudio) {
@@ -1026,12 +1032,6 @@
 							audioBuffers.push(buffer);
 							audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
 							decodedSamples += buffer[0].length;
-						}
-					
-						if (!codec.hasVideo) {
-							framesProcessed++; // pretend!
-							recordBenchmarkPoint(lastFrameDecodeTime);
-							lastFrameDecodeTime = 0.0;
 						}
 					}
 					if (codec.frameReady && readyForFrame) {
@@ -1159,6 +1159,8 @@
 
 		// We have to initialize audio here...
 		audioFeeder = new AudioFeeder(2, 44100);
+		benchmarkTargetFps = audioFeeder.targetRate / audioFeeder.bufferSize * 2;
+		targetPerFrameTime = 1000 / benchmarkTargetFps;
 		
 		stream.readBytes();
 	}
