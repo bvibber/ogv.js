@@ -65,12 +65,13 @@ extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            double fps,
                            int picWidth, int picHeight,
                            int picX, int picY);
-extern void OgvJsOutputFrameReady(double videoPosition);
+extern void OgvJsOutputFrameReady();
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
                              int width, int height,
-                             int hdec, int vdec);
+                             int hdec, int vdec,
+                             double timestamp);
 
 extern void OgvJsInitAudio(int channels, int rate);
 extern void OgvJsOutputAudioReady();
@@ -89,7 +90,8 @@ static void video_write(void){
 	                 ycbcr[1].data, ycbcr[1].stride,
 	                 ycbcr[2].data, ycbcr[2].stride,
 	                 theoraInfo.frame_width, theoraInfo.frame_height,
-	                 hdec, vdec);
+	                 hdec, vdec,
+	                 videobuf_time);
 }
 
 /* dump the theora comment header */
@@ -297,19 +299,19 @@ static void processHeaders() {
 
 static int needData = 1;
 
-static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
+static void processDecoding() {
 	needData = 0;
-	if (theora_p && !videobuf_ready && ((audiobuf_time < 0) || (audiobuf_time >= videobuf_time))) {
+	if (theora_p && !videobuf_ready) {
 		/* theora is one in, one out... */
 		if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0 ){
 			videobuf_ready=1;
-			OgvJsOutputFrameReady(videobuf_time);
+			OgvJsOutputFrameReady();
 		} else {
 		  	needData = 1;
 		}
 	}
 	
-	if (vorbis_p && !audiobuf_ready && audiobuffer_empty) {
+	if (vorbis_p && !audiobuf_ready) {
 		if (ogg_stream_packetpeek(&vo, &audioPacket) > 0) {
 			audiobuf_ready = 1;
 			OgvJsOutputAudioReady();
@@ -317,8 +319,6 @@ static int processDecoding(double audiobuf_time, int audiobuffer_empty) {
 			needData = 1;
 		}
 	}
-	
-	return 1;
 }
 
 int OgvJsDecodeFrame() {
@@ -387,7 +387,7 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 	}
 }
 
-int OgvJsProcess(double audiobuf_time, int audiobuffer_empty) {
+int OgvJsProcess() {
 	if (needData) {
 		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 			queue_page(&oggPage);
@@ -401,7 +401,7 @@ int OgvJsProcess(double audiobuf_time, int audiobuffer_empty) {
 	} else if (appState == STATE_HEADERS) {
 		processHeaders();
 	} else if (appState == STATE_DECODING) {
-		return processDecoding(audiobuf_time, audiobuffer_empty);
+		processDecoding();
 	}
 	return 1;
 }

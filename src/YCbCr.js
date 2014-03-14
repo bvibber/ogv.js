@@ -2,7 +2,7 @@
 	var global = this;
 
 	/**
-	 * @param ybcbr {bufferY, bufferCb, bufferCr, strideY, strideCb, strideCr, width, height, hdec, vdec}
+	 * @param ybcbr {bytesY, bytesCb, bytesCr, strideY, strideCb, strideCr, width, height, hdec, vdec}
 	 * @param TypedArray output: CanvasPixelArray or Uint8ClampedArray to draw RGB into
 	 */
 	global.convertYCbCr = function convertYCbCr(ybcbr, output) {
@@ -10,9 +10,9 @@
 			height = ybcbr.height,
 			hdec = ybcbr.hdec,
 			vdec = ybcbr.vdec,
-			bytesY = new Uint8Array(ybcbr.bufferY),
-			bytesCb = new Uint8Array(ybcbr.bufferCb),
-			bytesCr = new Uint8Array(ybcbr.bufferCr),
+			bytesY = ybcbr.bytesY,
+			bytesCb = ybcbr.bytesCb,
+			bytesCr = ybcbr.bytesCr,
 			processLine,
 			strideY = ybcbr.strideY,
 			strideCb = ybcbr.strideCb,

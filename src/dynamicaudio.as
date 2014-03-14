@@ -12,15 +12,23 @@ package {
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
-        public var multiplier:Number = 1/32768;
+        public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
+        public var hexValues:Vector.<int> = new Vector.<int>(256);
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
+            
+            // Create a hex digit lookup table
+            var hexDigits:Array = ['0', '1', '2', '3', '4', '5', '6', '7',
+                                   '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+            for (var i:int = 0; i < hexDigits.length; i++) {
+            	this.hexValues[hexDigits[i].charCodeAt(0)] = i;
+            }
         }
         
         // Called from JavaScript to add samples to the buffer
-        // Note we are using a space separated string of samples instead of an 
+        // Note we are using a hex string of 16-bit int samples instead of an
         // array. Flash's stupid ExternalInterface passes every sample as XML, 
         // which is incredibly expensive to encode/decode
         public function write(s:Array):void {
@@ -33,8 +41,15 @@ package {
                 this.soundChannel = this.sound.play();
             }
 
-            for each (var samp:String in s.split(" ")) {
-                buffer.push(parseInt(samp, 10) * multiplier);
+            var hexValues:Vector.<int> = this.hexValues;
+            for (var i:int = 0; i < s.length; i += 4) {
+            	var sample:int = (hexValues[s.charCodeAt(i)]) |
+            	                 (hexValues[s.charCodeAt(i + 1)] << 4) |
+            	                 (hexValues[s.charCodeAt(i + 2)] << 8) |
+            	                 (hexValues[s.charCodeAt(i + 3)] << 12);
+		// sign extension to 32 bits via arithmetic shift            	
+		sample = (sample << 16) >> 16;
+            	this.buffer.push(sample * multiplier);
             }
         }
 

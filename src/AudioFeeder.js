@@ -42,7 +42,8 @@ function AudioFeeder() {
 		pendingPos = 0,
 		muted = false,
 		bufferHead = 0,
-		playbackTimeAtBufferHead = 0;
+		playbackTimeAtBufferHead = 0,
+		targetRate;
 
 	if(AudioContext) {
 		context = new AudioContext;
@@ -53,7 +54,9 @@ function AudioFeeder() {
 		} else {
 			throw new Error("Bad version of web audio API?");
 		}
-		var targetRate = this.targetRate = context.sampleRate;
+		targetRate = this.targetRate = context.sampleRate;
+	} else {
+		targetRate = this.targetRate = 44100; // flash fallback
 	}
 	
 	function popNextBuffer() {
@@ -86,7 +89,11 @@ function AudioFeeder() {
 					}
 				}
 			} else {
-				if (!inputBuffer) {
+				if (inputBuffer) {
+					// Pretend we played this audio
+					bufferHead += (bufferSize / context.sampleRate);
+					playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
+				} else {
 					console.log("Starved for audio!");
 				}
 				for (var channel = 0; channel < outputChannels; channel++) {
@@ -134,15 +141,24 @@ function AudioFeeder() {
 	function resampleFlash(samples) {
 		var sampleincr = rate / 44100;
 		var samplecount = (samples[0].length * (44100 / rate)) | 0;
-		var newSamples = new Array(samplecount * channels);
-		var channel1 = channels > 1 ? 1 : 0;
+		var newSamples = new Int16Array(samplecount * 2);
+		var chanLeft = samples[0];
+		var chanRight = channels > 1 ? samples[1] : chanLeft;
+		var multiplier = 16384; // smaller than 32768 to allow some headroom from those floats
 		for(var s = 0; s < samplecount; s++) {
 			var idx = (s * sampleincr) | 0;
 			var idx_out = s * 2;
-			newSamples[idx_out] = (samples[0][idx] * 32768) | 0;
-			newSamples[idx_out + 1] = (samples[channel1][idx] * 32768) | 0;
+			// Use a smaller
+			newSamples[idx_out] = chanLeft[idx] * multiplier;
+			newSamples[idx_out + 1] = chanRight[idx] * multiplier;
 		}
 		return newSamples;
+	}
+
+	function resampleFlashMuted(samples) {
+		// if muted: generate fitting number of samples for audio clock
+		var samplecount = (samples[0].length * (44100 / rate)) | 0;
+		return new Int16Array(samplecount * 2);
 	}
 
 	
@@ -168,12 +184,31 @@ function AudioFeeder() {
 		pendingBuffer = freshBuffer();
 	};
 	
+	var hexDigits = ['0', '1', '2', '3', '4', '5', '6', '7',
+					 '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+	var hexBytes = [];
+	for (var i = 0; i < 256; i++) {
+		hexBytes[i] = hexDigits[(i & 0x0f)] +
+		              hexDigits[(i & 0xf0) >> 4];
+	}
+	function hexString(buffer) {
+		var samples = new Uint8Array(buffer);
+		var digits = [], len = samples.length;
+		for (var i = 0; i < len; i++) {
+			var sample = samples[i];
+			digits.push(hexBytes[sample]);
+		}
+		return digits.join("");
+	}
+	
 	this.bufferData = function(samplesPerChannel) {
 		if(this.flashaudio) {
-			var resamples = resampleFlash(samplesPerChannel);
+			var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 			var flashElement = this.flashaudio.flashElement;
 			if(resamples.length > 0 && flashElement.write) {
-				flashElement.write(resamples.join(' '));
+				var str = hexString(resamples.buffer)
+				//console.log(str.length + ' bytes sent to Flash');
+				flashElement.write(str);
 			}
 		} else if (buffers) {
 			samples = resample(samplesPerChannel);
@@ -191,7 +226,7 @@ function AudioFeeder() {
 			});
 			
 			var bufferedSamples = samplesQueued;
-			var remainingSamples = (playbackTimeAtBufferHead - context.currentTime) * context.sampleRate;
+			var remainingSamples = Math.floor(Math.max(0, (playbackTimeAtBufferHead - context.currentTime)) * context.sampleRate);
 			
 			return bufferedSamples + remainingSamples;
 		} else {
@@ -303,6 +338,7 @@ DynamicAudio.prototype = {
 		if (opts && typeof opts['swf'] !== 'undefined') {
 			self.swf = opts['swf'];
 		}
+
 
 		self.flashWrapper = document.createElement('div');
 		self.flashWrapper.id = 'dynamicaudio-flashwrapper-'+self.id;
