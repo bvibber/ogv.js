@@ -904,8 +904,6 @@
 
 			recordBenchmarkPoint(lastFrameDecodeTime);
 			lastFrameDecodeTime = 0.0;
-
-			nextFrameTimer = null;
 		}
 		
 		/**
