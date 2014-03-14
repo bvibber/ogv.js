@@ -136,12 +136,32 @@ Libtheora needs a slight patch to a function signature to pass emscripten's chec
 
 ## Building
 
-1. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
-2. `git submodule update --init`
-3. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
-4. Run `make` to configure and build libogg, libvorbis, tremor, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
+1. You will need autoconf, automake, and libtool. These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
+2. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
+3. `git submodule update --init`
+4. Install [importer](https://github.com/devongovett/importer) with `npm install importer -g`.
+5. Run `make` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
 See a sample web page in build/demo/
+
+
+## Building Flash components
+
+Rebuilding dynamicaudio.swf shim for IE 10/11:
+
+1. Install [Apache Flex SDK](http://flex.apache.org/), and put it into PATH
+2. `make swf` to rebuild src/dynamicaudio.swf
+3. `make` to rebuild the demo and update its .swf
+
+Building experimental all-Flash fallback player:
+
+1. Install [Apache Flex SDK](http://flex.apache.org/), and put it into PATH
+2. Get [Crossbridge 1.0.1 download](http://sourceforge.net/projects/crossbridge/files/), and install SDK into ~/crossbridge_sdk
+3. `git submodule update --init`
+4. Run `make flash` to configure and build libogg, libvorbis, libtheora, and the C and ActionScript wrappers.
+5. Go make a cup of coffee; the Crossbridge builds are a lot slower to make than the emscripten ones!
+
+Currently this builds a non-functional build/ogv.swf which is not yet used in the demo player.
 
 
 ## License

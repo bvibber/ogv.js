@@ -1,12 +1,12 @@
 .FAKE : all clean cleanswf swf js flash demo
 
-all : js flash demo
+all : demo
 
 js : build/ogv.js
 
 flash : build/ogv.swf
 
-demo : build/demo/index.html
+demo : js build/demo/index.html
 
 clean:
 	rm -rf build
@@ -81,6 +81,7 @@ src/dynamicaudio.swf : src/dynamicaudio.as
 
 
 # And the Flash version of the decoder...
+# Still experimental, not built or used by default yet.
 
 build/flash/root/lib/libogg.a : configureOgg.sh compileOggFlash.sh
 	test -d build || mkdir build
