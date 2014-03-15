@@ -224,6 +224,8 @@ function OgvJsPlayer(canvas) {
 					stream.readBytes();
 				} else {
 					// Ran out of stream!
+					// For some reason we don't seem to hit this.
+					// This is worrying.
 					setTimeout(function() {
 						console.log('End of stream reached.');
 						stopVideo();
@@ -442,6 +444,9 @@ function OgvJsPlayer(canvas) {
 			ondone: function() {
 				console.log("reading done.");
 				stream = null;
+				
+				// Let the read/decode/draw loop know we're out!
+				pingProcessing();
 			},
 			onerror: function(err) {
 				console.log("reading error: " + err);
