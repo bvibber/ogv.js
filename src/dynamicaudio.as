@@ -25,6 +25,13 @@ package {
             for (var i:int = 0; i < hexDigits.length; i++) {
             	this.hexValues[hexDigits[i].charCodeAt(0)] = i;
             }
+
+            this.sound = new Sound(); 
+            this.sound.addEventListener(
+                SampleDataEvent.SAMPLE_DATA,
+                soundGenerator
+            );
+            this.soundChannel = this.sound.play();
         }
         
         // Called from JavaScript to add samples to the buffer
@@ -32,15 +39,6 @@ package {
         // array. Flash's stupid ExternalInterface passes every sample as XML, 
         // which is incredibly expensive to encode/decode
         public function write(s:String):void {
-            if (!this.sound) {
-                this.sound = new Sound(); 
-                this.sound.addEventListener(
-                    SampleDataEvent.SAMPLE_DATA,
-                    soundGenerator
-                );
-                this.soundChannel = this.sound.play();
-            }
-
             var hexValues:Vector.<int> = this.hexValues;
             for (var i:int = 0; i < s.length; i += 4) {
             	var sample:int = (hexValues[s.charCodeAt(i)]) |

@@ -225,10 +225,20 @@ function OgvJsPlayer(canvas) {
 					stream.readBytes();
 				} else {
 					// Ran out of stream!
-					console.log('End of stream reached in ' + audioBufferedDuration + ' ms.');
+					var finalDelay = 0;
+					if (hasAudio) {
+						if (self.durationHint) {
+							finalDelay = self.durationHint * 1000 - audioState.playbackPosition;
+						} else {
+							// This doesn't seem to be enough with Flash audio shim.
+							// Not quite sure why.
+							finalDelay = audioBufferedDuration;
+						}
+					}
+					console.log('End of stream reached in ' + finalDelay + ' ms.');
 					setTimeout(function() {
 						stopVideo();
-					}, audioBufferedDuration);
+					}, finalDelay);
 				}
 				return;
 			}
