@@ -334,9 +334,11 @@ int OgvJsDecodeFrame() {
 		video_write();
 		return 1;
 	} else if (ret == TH_DUPFRAME) {
-		printf("Duplicate frame\n");
+		// Duplicated frame, advance time
+		videobuf_time += 1.0 / ((double)theoraInfo.fps_numerator / theoraInfo.fps_denominator);
 		frames++;
-		return 0;
+		video_write();
+		return 1;
 	} else {
 		printf("Theora decoder failed mysteriously? %d\n", ret);
 		return 0;
