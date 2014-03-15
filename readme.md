@@ -12,7 +12,7 @@ appear under build/demo/
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
-* streaming: mostly works (buffering varies by browser)
+* streaming: yes (buffering varies by browser)
 * color: yes
 * audio: yes, with a/v sync
 * background threading: no
@@ -31,9 +31,10 @@ Short-ish clips of a few seconds to at most a few minutes at SD resolution or be
 The primary target browsers are:
 * Safari 6.1+ on Mac OS X
 * Internet Explorer 10+ on Windows
+* Safari on iOS 7+ 64-bit
 
 And for lower-resolution files (testing 160p/15fps):
-* Safari on iOS 7+
+* Safari on iOS 7+ 32-bit
 * Internet Explorer 10+ on Windows RT
 
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS or Windows RT.)
@@ -67,7 +68,9 @@ In both cases, a native application looms as a possibly better alternative. If i
 
 *Test browsers*
 
-Firefox 27 performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed.
+Firefox 27 performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed. (This has been fixed as of Firefox 30 nightly builds.)
+
+Firefox on Windows occasionally halts playback and doesn't continue; this seems to be a problem with the audio.
 
 Chrome 32 performs pretty well, but not quite as snappy as Firefox's asm.js mode.
 
@@ -80,11 +83,13 @@ YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11, Chro
 
 *Threading*
 
-Currently the video and audio codecs run on the UI thread, which can make the UI jumpy and the audio crackly.
+Currently the video and audio codecs run on the UI thread.
 
-WebWorkers will be used to background the decoder as a subprocess, sending video frames and audio data back to the parent web page for output. This should be supported by all target and test browsers.
+WebWorkers may be used to background the decoder as a subprocess, sending video frames and audio data back to the parent web page for output. This should be supported by all target and test browsers.
 
-It may not be possible to split up the codec work over multiple workers, but this will at least get us off the UI thread and make the page more responsive during playback.
+However there will be communication overhead that may make this not worth it; in particular on Internet Explorer 10/11 transferring ownership of ArrayBuffers across threads is not possible, so this will require extra data copies (extraction from heap, copy across boundary, insertion to heap).
+
+See [Threading notes on the wiki](https://github.com/brion/ogv.js/wiki/Threading) for thoughts on how work could be broken over a couple of threads.
 
 
 *Streaming*
