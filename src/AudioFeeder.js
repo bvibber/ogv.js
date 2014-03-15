@@ -43,7 +43,8 @@ function AudioFeeder() {
 		muted = false,
 		bufferHead = 0,
 		playbackTimeAtBufferHead = 0,
-		targetRate;
+		targetRate,
+		dropped = 0;
 
 	if(AudioContext) {
 		context = new AudioContext;
@@ -94,7 +95,7 @@ function AudioFeeder() {
 					bufferHead += (bufferSize / context.sampleRate);
 					playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
 				} else {
-					console.log("Starved for audio!");
+					dropped++;
 				}
 				for (var channel = 0; channel < outputChannels; channel++) {
 					var output = event.outputBuffer.getChannelData(channel);
@@ -242,13 +243,15 @@ function AudioFeeder() {
 			} else {
 				return {
 					playbackPosition: 0,
-					samplesQueued: 0
+					samplesQueued: 0,
+					dropped: 0
 				};
 			}
 		} else {
 			return {
 				playbackPosition: bufferHead - (playbackTimeAtBufferHead - context.currentTime),
-				samplesQueued: samplesQueued()
+				samplesQueued: samplesQueued(),
+				dropped: dropped
 			}
 		}
 	}

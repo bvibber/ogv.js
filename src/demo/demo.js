@@ -135,6 +135,8 @@
 			document.getElementById('bench-yuv').textContent = round1_0(averageColorTime);
 			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
 			
+			document.getElementById('audio-drops').textContent = info.droppedAudio;
+			
 			
 			// keep it a rolling average
 			player.resetPlaybackStats();

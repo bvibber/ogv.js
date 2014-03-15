@@ -52,6 +52,8 @@ function OgvJsPlayer(canvas) {
 		bufferTime = 0, // ms
 		colorTime = 0, // ms
 		drawingTime = 0; // ms
+	// Benchmark data that doesn't clear
+	var droppedAudio = 0; // number of times we were starved for audio
 	
 	function stopVideo() {
 		// kill the previous video if any
@@ -192,6 +194,7 @@ function OgvJsPlayer(canvas) {
 		if (codec.hasAudio) {
 			var audioState = audioFeeder.getPlaybackState();
 			audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
+			droppedAudio = audioState.dropped;
 		}
 		
 		var n = 0;
@@ -531,7 +534,8 @@ function OgvJsPlayer(canvas) {
 			audioDecodingTime: audioDecodingTime,
 			bufferTime: bufferTime,
 			colorTime: colorTime,
-			drawingTime: drawingTime
+			drawingTime: drawingTime,
+			droppedAudio: droppedAudio
 		};
 	};
 	this.resetPlaybackStats = function() {

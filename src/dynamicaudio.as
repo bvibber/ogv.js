@@ -7,12 +7,13 @@ package {
     import flash.utils.setInterval;
 
     public class dynamicaudio extends Sprite {
-        public var bufferSize:Number = 2048; // In samples
+        public var bufferSize:Number = 8192; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var fudgeFactor:Number = 0;
+        public var dropped:Number = 0;
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
         public var hexValues:Vector.<int> = new Vector.<int>(256);
 
@@ -33,6 +34,12 @@ package {
         // array. Flash's stupid ExternalInterface passes every sample as XML, 
         // which is incredibly expensive to encode/decode
         public function write(s:String):void {
+            // Decode the hex string asynchronously.
+            stringBuffer.push(s);
+            setInterval(flushBuffers, 0);
+        }
+
+        public function flushBuffers():void {
             if (!this.sound) {
                 this.sound = new Sound();
                 this.sound.addEventListener(
@@ -42,12 +49,6 @@ package {
                 this.soundChannel = this.sound.play();
             }
 
-            // Decode the hex string asynchronously.
-            stringBuffer.push(s);
-            setInterval(flushBuffers, 0);
-        }
-
-        public function flushBuffers():void {
             while (stringBuffer.length > 0) {
                 var s:String = stringBuffer.shift();
                 var hexValues:Vector.<int> = this.hexValues;
@@ -66,7 +67,8 @@ package {
         public function getPlaybackState():Object {
             return {
                 playbackPosition: playbackPosition(),
-                samplesQueued: samplesQueued()
+                samplesQueued: samplesQueued(),
+                dropped: dropped
             };
         }
 
@@ -90,14 +92,15 @@ package {
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows
             if (buffer.length < bufferSize*2) {
-                for (i = 0; i < 4096; i++) {
+                for (i = 0; i < bufferSize*2; i++) {
                     event.data.writeFloat(0.0);
                 }
-                this.fudgeFactor += (2048 / 44100);
+                fudgeFactor += (bufferSize / 44100);
+                dropped++;
                 return;
             }
 
-            var count:Number = Math.min(buffer.length, 16384);
+            var count:Number = Math.min(buffer.length, bufferSize * 2);
 
             for (i = 0; i < count; i++) {
                 event.data.writeFloat(buffer[i]);
