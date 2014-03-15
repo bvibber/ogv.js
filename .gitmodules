@@ -7,6 +7,3 @@
 [submodule "libtheora"]
 	path = libtheora
 	url = https://github.com/brion/theora.git
-[submodule "tremor"]
-	path = tremor
-	url = git://git.xiph.org/tremor.git

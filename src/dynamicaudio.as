@@ -31,7 +31,7 @@ package {
         // Note we are using a hex string of 16-bit int samples instead of an
         // array. Flash's stupid ExternalInterface passes every sample as XML, 
         // which is incredibly expensive to encode/decode
-        public function write(s:Array):void {
+        public function write(s:String):void {
             if (!this.sound) {
                 this.sound = new Sound(); 
                 this.sound.addEventListener(
