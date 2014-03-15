@@ -51,7 +51,8 @@ function OgvJsPlayer(canvas) {
 		audioDecodingTime = 0, // ms
 		bufferTime = 0, // ms
 		colorTime = 0, // ms
-		drawingTime = 0; // ms
+		drawingTime = 0, // ms
+		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0; // number of times we were starved for audio
 	
@@ -129,12 +130,19 @@ function OgvJsPlayer(canvas) {
 	var lastFrameDecodeTime = 0.0;		
 	var targetFrameTime;
 	
+	var lastFrameTimestamp = 0.0;
 	function doDrawFrame() {
 		prepareFrame();
 		drawFrame();
 		if (self.onframecallback) {
+			var newFrameTimestamp = getTimestamp(),
+				wallClockTime = newFrameTimestamp - lastFrameTimestamp,
+				jitter = Math.abs(wallClockTime - 1000 / videoInfo.fps);
+			totalJitter += jitter;
+
 			self.onframecallback(lastFrameDecodeTime);
 			lastFrameDecodeTime = 0;
+			lastFrameTimestamp = newFrameTimestamp;
 		}
 	}
 	
@@ -216,8 +224,9 @@ function OgvJsPlayer(canvas) {
 			more = codec.process();
 			if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
 				// we just fell over from headers into content; reinit
+				lastFrameTimestamp = getTimestamp();
+				targetFrameTime = lastFrameTimestamp + 1000.0 / fps
 				pingProcessing();
-				targetFrameTime = getTimestamp() + 1000.0 / fps
 				return;
 			}
 	
@@ -535,7 +544,8 @@ function OgvJsPlayer(canvas) {
 			bufferTime: bufferTime,
 			colorTime: colorTime,
 			drawingTime: drawingTime,
-			droppedAudio: droppedAudio
+			droppedAudio: droppedAudio,
+			jitter: totalJitter / framesProcessed
 		};
 	};
 	this.resetPlaybackStats = function() {
@@ -546,6 +556,7 @@ function OgvJsPlayer(canvas) {
 		bufferTime = 0;
 		colorTime = 0;
 		drawingTime = 0;
+		totalJitter = 0;
 	};
 	
 	/**

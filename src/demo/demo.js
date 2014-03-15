@@ -135,6 +135,7 @@
 			document.getElementById('bench-yuv').textContent = round1_0(averageColorTime);
 			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
 			
+			document.getElementById('video-jitter').textContent = round2(info.jitter);
 			document.getElementById('audio-drops').textContent = info.droppedAudio;
 			
 			
@@ -756,24 +757,17 @@
 		window.addEventListener('error', errorHandler);
 
 		document.getElementById('video-fps').textContent = '';
-		document.getElementById('video-frame-width').textContent = '';
-		document.getElementById('video-frame-height').textContent = '';
 		document.getElementById('video-pic-width').textContent = '';
 		document.getElementById('video-pic-height').textContent = '';
-		document.getElementById('video-pic-x').textContent = '';
-		document.getElementById('video-pic-y').textContent = '';
+		document.getElementById('video-jitter').textContent = '0';
 		player.oninitvideo = function(info) {
 			resizeVideo();
 			
 			benchmarkTargetFps = info.fps;
 
 			document.getElementById('video-fps').textContent = (Math.round(info.fps * 100) / 100);
-			document.getElementById('video-frame-width').textContent = info.frameWidth;
-			document.getElementById('video-frame-height').textContent = info.frameHeight;
 			document.getElementById('video-pic-width').textContent = info.picWidth;
 			document.getElementById('video-pic-height').textContent = info.picHeight;
-			document.getElementById('video-pic-x').textContent = info.picX;
-			document.getElementById('video-pic-y').textContent = info.picY;
 		};
 
 		document.getElementById('audio-channels').textContent = '';
