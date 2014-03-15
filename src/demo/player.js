@@ -413,6 +413,10 @@ function OgvJsPlayer(canvas) {
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
 			imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
+			// Prefill the alpha to opaque
+			for (var i = 0; i < info.frameWidth * info.frameHeight * 4; i += 4) {
+				imageData.data[i + 3] = 255;
+			}
 
 			if (self.oninitvideo) {
 				self.oninitvideo(info);
