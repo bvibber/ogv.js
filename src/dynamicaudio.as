@@ -4,6 +4,7 @@ package {
     import flash.external.ExternalInterface;
     import flash.media.Sound;
     import flash.media.SoundChannel;
+    import flash.utils.setInterval;
 
     public class dynamicaudio extends Sprite {
         public var bufferSize:Number = 2048; // In samples
@@ -41,15 +42,24 @@ package {
                 this.soundChannel = this.sound.play();
             }
 
-            var hexValues:Vector.<int> = this.hexValues;
-            for (var i:int = 0; i < s.length; i += 4) {
-                var sample:int = (hexValues[s.charCodeAt(i)]) |
-                                 (hexValues[s.charCodeAt(i + 1)] << 4) |
-                                 (hexValues[s.charCodeAt(i + 2)] << 8) |
-                                (hexValues[s.charCodeAt(i + 3)] << 12);
-                // sign extension to 32 bits via arithmetic shift
-                sample = (sample << 16) >> 16;
-                this.buffer.push(sample * multiplier);
+            // Decode the hex string asynchronously.
+            stringBuffer.push(s);
+            setInterval(flushBuffers, 0);
+        }
+
+        public function flushBuffers():void {
+            while (stringBuffer.length > 0) {
+                var s:String = stringBuffer.shift();
+                var hexValues:Vector.<int> = this.hexValues;
+                for (var i:int = 0; i < s.length; i += 4) {
+                    var sample:int = (hexValues[s.charCodeAt(i)]) |
+                                     (hexValues[s.charCodeAt(i + 1)] << 4) |
+                                     (hexValues[s.charCodeAt(i + 2)] << 8) |
+                                     (hexValues[s.charCodeAt(i + 3)] << 12);
+                    // sign extension to 32 bits via arithmetic shift
+                    sample = (sample << 16) >> 16;
+                    this.buffer.push(sample * multiplier);
+                }
             }
         }
 
@@ -61,6 +71,7 @@ package {
         }
 
         public function samplesQueued():Number {
+            flushBuffers();
             return buffer.length / 2;
         }
 
@@ -74,6 +85,7 @@ package {
 
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
+            flushBuffers();
 
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows
