@@ -101,26 +101,6 @@ mergeInto(LibraryManager.library, {
 		}
 
 		OgvJsAudioCallback(outputBuffers);
-	},
-
-	OgvJsOutputAudioInt: function(buffers, channels, sampleCount) {
-		// buffers is an array of pointers to int arrays for each channel
-		var HEAP32 = Module.HEAP32;
-		
-		var outputBuffers = [];
-		var inBuffer, outBuffer, outArray, i;
-		for (var channel = 0; channel < channels; channel++) {
-			inBuffer = HEAP32[buffers / 4 + channel];
-			outBuffer = new ArrayBuffer(sampleCount * 4);
-			outArray = new Float32Array(outBuffer);
-			for (i = 0; i < sampleCount; i++) {
-				// not 100% sure but we think it's 8.24 fixed point
-				outArray[i] = HEAP32[inBuffer / 4 + i] / 16777216 ;
-			}
-			outputBuffers.push(outArray);
-		}
-
-		OgvJsAudioCallback(outputBuffers);
 	}
 
 });

@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-libogg, libvorbis/tremor, and libtheora compiled to JavaScript with Emscripten.
+libogg, libvorbis, and libtheora compiled to JavaScript with Emscripten.
 
 
 ## Current status
@@ -129,7 +129,7 @@ Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscr
 
 ## Upstream library notes
 
-We've experimented with tremor (libivorbis), an integer-only variant of libvorbis. This actually does *not* decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library. However on slow devices like iPod Touch 5th-generation, it makes a significant impact on the decode time.
+We've experimented with tremor (libivorbis), an integer-only variant of libvorbis. This actually does *not* decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library. However on slow devices like iPod Touch 5th-generation, it makes a significant negative impact on the decode time so we've gone back to libvorbis.
 
 Libtheora needs a slight patch to a function signature to pass emscripten's checks for asm.js-mode function pointer compatibility.
 
@@ -166,7 +166,7 @@ Currently this builds a non-functional build/ogv.swf which is not yet used in th
 
 ## License
 
-libogg, libvorbis, tremor, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
+libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
 
 Based on build scripts from https://github.com/devongovett/ogg.js
 

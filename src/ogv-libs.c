@@ -8,12 +8,7 @@
 
 #include <ogg/ogg.h>
 
-//#define TREMOR 1
-#ifdef TREMOR
-#include "ivorbiscodec.h"
-#else
 #include <vorbis/codec.h>
-#endif
 
 #include <theora/theoradec.h>
 
@@ -76,7 +71,6 @@ extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
 extern void OgvJsInitAudio(int channels, int rate);
 extern void OgvJsOutputAudioReady();
 extern void OgvJsOutputAudio(float **buffers, int channels, int sampleCount);
-extern void OgvJsOutputAudioInt(int **buffers, int channels, int sampleCount);
 
 /*Write out the planar YUV frame, uncropped.*/
 static void video_write(void){
@@ -359,17 +353,10 @@ int OgvJsDecodeAudio() {
 			foundSome = 1;
 			vorbis_synthesis_blockin(&vd,&vb);
 
-			// fixme -- timing etc!
-	#ifdef TREMOR
-			ogg_int32_t **pcm;
-			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-			OgvJsOutputAudioInt(pcm, vi.channels, sampleCount);
-	#else
 			float **pcm;
 			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
 			OgvJsOutputAudio(pcm, vi.channels, sampleCount);
 
-	#endif
 			vorbis_synthesis_read(&vd, sampleCount);
 		} else {
 			printf("Vorbis decoder failed mysteriously? %d", ret);
