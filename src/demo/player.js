@@ -409,15 +409,16 @@ function OgvJsPlayer(canvas) {
 		if (muted) {
 			audioFeeder.mute();
 		}
-
-		// Start reading!
-		if (started) {
-			stream.readBytes();
-		} else {
-			onstart = function() {
+		audioFeeder.waitUntilReady(function(feeder) {
+			// Start reading!
+			if (started) {
 				stream.readBytes();
-			};
-		}
+			} else {
+				onstart = function() {
+					stream.readBytes();
+				};
+			}
+		});
 	}
 	
 	var started = false;
