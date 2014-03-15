@@ -40,7 +40,7 @@ build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/li
 	./compileOgvJs.sh
 
 build/ogv.js : src/ogv-main.js build/js/ogv-libs.js
-	importer src/ogv-main.js build/ogv.js
+	 cpp -E -w -P -CC src/ogv-main.js > build/ogv.js
 
 
 # The player demo
