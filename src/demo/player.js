@@ -73,7 +73,8 @@ function OgvJsPlayer(canvas) {
 			audioFeeder = null;
 		}
 		if (nextProcessingTimer) {
-			cancelAnimationFrame(nextProcessingTimer);
+			//cancelAnimationFrame(nextProcessingTimer);
+			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
 	}
@@ -197,7 +198,10 @@ function OgvJsPlayer(canvas) {
 		while (true) {
 			n++;
 			if (n > 100) {
-				throw new Error("Got stuck in the loop!");
+				//throw new Error("Got stuck in the loop!");
+				console.log("Got stuck in the loop!");
+				pingProcessing(10);
+				return;
 			}
 			// Process until we run out of data or
 			// completely decode a video frame...
@@ -256,6 +260,7 @@ function OgvJsPlayer(canvas) {
 					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
 					frameDelay = (frameEndTimestamp - audioState.playbackPosition) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
+				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
 					var start = getTimestamp();
 					var ok = codec.decodeAudio();
@@ -298,15 +303,21 @@ function OgvJsPlayer(canvas) {
 					
 					if (hasVideo) {
 						// Check in when the next frame is due
-						nextDelays.push(frameDelay);
+						// Subtract time we already spent decoding
+						var deltaTimeSpent = getTimestamp() - startTimeSpent;
+						nextDelays.push(frameDelay - deltaTimeSpent);
 					}
 				}
 				
 				//console.log(n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']');
 				var nextDelay = Math.min.apply(Math, nextDelays);
 				if (nextDelays.length > 0) {
+					// Keep track of how much time we spend queueing audio as well
+					// This is slow when using the Flash shim on IE 10/11
+					var start = getTimestamp();
 					queueAudio();
-					pingProcessing(nextDelay);
+					var delta = getTimestamp() - start;
+					pingProcessing(nextDelay - delta);
 					return;
 				}
 			} else if (hasVideo) {
@@ -347,8 +358,8 @@ function OgvJsPlayer(canvas) {
 			return;
 		}
 		//console.log('delaying for ' + delay);
-		//nextProcessingTimer = setTimeout(doProcessing, delay);
-		nextProcessingTimer = requestAnimationFrame(doProcessing);
+		nextProcessingTimer = setTimeout(doProcessing, delay);
+		//nextProcessingTimer = requestAnimationFrame(doProcessing);
 	}
 
 	var fps = 60;
@@ -543,7 +554,8 @@ function OgvJsPlayer(canvas) {
 			this.load();
 		} else if (!paused) {
 			console.log('pausing');
-			cancelAnimationFrame(nextProcessingTimer);
+			//cancelAnimationFrame(nextProcessingTimer);
+			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			paused = true;
 		}
