@@ -156,7 +156,7 @@ Rebuilding dynamicaudio.swf shim for IE 10/11:
 Building experimental all-Flash fallback player:
 
 1. Install [Apache Flex SDK](http://flex.apache.org/), and put it into PATH
-2. Get [Crossbridge 1.0.1 download](http://sourceforge.net/projects/crossbridge/files/), and install SDK into ~/crossbridge_sdk
+2. Get [Crossbridge 1.0.1 download](http://sourceforge.net/projects/crossbridge/files/), and install SDK into ~/crossbridge
 3. `git submodule update --init`
 4. Run `make flash` to configure and build libogg, libvorbis, libtheora, and the C and ActionScript wrappers.
 5. Go make a cup of coffee; the Crossbridge builds are a lot slower to make than the emscripten ones!
