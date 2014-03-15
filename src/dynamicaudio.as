@@ -14,6 +14,7 @@ package {
         public var fudgeFactor:Number = 0;
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
         public var hexValues:Vector.<int> = new Vector.<int>(256);
+        public var delayFactor:Number = 0;
         
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -61,7 +62,7 @@ package {
         }
         
         public function samplesQueued():Number {
-        	return buffer.length / 2;
+        	return buffer.length / 2 + delayFactor;
         }
         
         public function playbackPosition():Number {
@@ -74,6 +75,9 @@ package {
 
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
+            
+            // Count how many samples in we are...?
+            delayFactor = event.data.position / 2;
             
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows

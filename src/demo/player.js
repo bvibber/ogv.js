@@ -186,10 +186,11 @@ function OgvJsPlayer(canvas) {
 				}
 			}
 		}
+		var audioBufferedDuration = 0,
+			decodedSamples = 0;
 		if (codec.hasAudio) {
 			var audioState = audioFeeder.getPlaybackState();
-			var audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
-			var decodedSamples = 0;
+			audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
 		}
 		
 		var n = 0;
@@ -224,12 +225,10 @@ function OgvJsPlayer(canvas) {
 					stream.readBytes();
 				} else {
 					// Ran out of stream!
-					// For some reason we don't seem to hit this.
-					// This is worrying.
+					console.log('End of stream reached in ' + audioBufferedDuration + ' ms.');
 					setTimeout(function() {
-						console.log('End of stream reached.');
 						stopVideo();
-					}, 0);
+					}, audioBufferedDuration);
 				}
 				return;
 			}
