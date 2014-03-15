@@ -450,7 +450,7 @@ function OgvJsPlayer(canvas) {
 		started = false;
 		stream = new StreamFile({
 			url: this.src,
-			bufferSize: 65536,
+			bufferSize: 256 * 1024,
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
 				started = true;
