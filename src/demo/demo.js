@@ -738,8 +738,7 @@
 
 		function showStatus(str) {		
 			status.className = 'status-visible';
-			status.innerHTML = '';
-			status.appendChild(document.createTextNode(str));
+			status.textContent = str;
 		}
 	
 		function errorHandler(event) {
