@@ -44,12 +44,13 @@ build/ogv.js : src/ogv-main.js build/js/ogv-libs.js
 
 
 # The player demo
-build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf
+build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/player.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf
 	test -d build/demo || mkdir build/demo
 	cp src/demo/index.html build/demo/index.html
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
+	cp src/demo/player.js build/demo/player.js
 	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
 	
 	test -d build/demo/lib || mkdir build/demo/lib

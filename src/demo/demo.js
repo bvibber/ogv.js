@@ -1,7 +1,5 @@
 (function() {
 
-	var codec, audioFeeder;
-	
 	var getTimestamp;
 	if (window.performance === undefined) {
 		console.log("window.performance is not available; using Date.now() for benchmarking");
@@ -15,15 +13,9 @@
 		}
 	}
 
-	var targetPerFrameTime = 0, // seconds
-		framesProcessed = 0, // frames
-		demuxingTime = 0, // seconds
-		videoDecodingTime = 0, // ms
-		audioDecodingTime = 0, // ms
-		bufferTime = 0, // ms
-		colorTime = 0, // ms
-		drawingTime = 0, // ms
-		averageDemuxingTime = 0, // ms
+	var player;
+	var durationHint, byteLengthHint;
+	var averageDemuxingTime = 0, // ms
 		averageVideoDecodingTime = 0, // ms
 		averageAudioDecodingTime = 0, // ms
 		averageBufferTime = 0, // ms
@@ -33,7 +25,7 @@
 	var benchmarkData = [],
 		benchmarkClockData = [],
 		benchmarkDirty = false,
-		benchmarkTargetFps = 0,
+		benchmarkTargetFps = -1,
 		lastBenchmarkPoint;
 	function clearBenchmark() {
 		benchmarkData = [];
@@ -120,14 +112,20 @@
 		return s;
 	}
 	function showAverageRate() {
-		if (framesProcessed) {
-			averageDemuxingTime = demuxingTime / framesProcessed;
-			averageVideoDecodingTime = videoDecodingTime / framesProcessed;
-			averageAudioDecodingTime = audioDecodingTime / framesProcessed;
-			averageBufferTime = bufferTime / framesProcessed;
-			averageColorTime = colorTime / framesProcessed;
-			averageDrawingTime = drawingTime / framesProcessed;
+		if (!player) {
+			return;
+		}
+		
+		var info = player.getPlaybackStats();
+		if (info.framesProcessed) {
+			averageDemuxingTime = info.demuxingTime / info.framesProcessed;
+			averageVideoDecodingTime = info.videoDecodingTime / info.framesProcessed;
+			averageAudioDecodingTime = info.audioDecodingTime / info.framesProcessed;
+			averageBufferTime = info.bufferTime / info.framesProcessed;
+			averageColorTime = info.colorTime / info.framesProcessed;
+			averageDrawingTime = info.drawingTime / info.framesProcessed;
 
+			var targetPerFrameTime = 1000 / benchmarkTargetFps;
 			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime);
 			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageBufferTime + averageColorTime + averageDrawingTime);
 			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime);
@@ -139,30 +137,26 @@
 			
 			
 			// keep it a rolling average
-			demuxingTime = 0;
-			videoDecodingTime = 0;
-			audioDecodingTime = 0;
-			bufferTime = 0;
-			colorTime = 0;
-			drawingTime = 0;
-			framesProcessed = 0;
+			player.resetPlaybackStats();
 		}
 	}
 	
-	var progress = {
-		total: 1,
-		buffered: 0,
-		processed: 0
-	};
 	function updateProgress() {
-		function percent(val) {
-			var ratio = val / progress.total,
-				percentage = ratio * 100.0;
-			return percentage + '%';
+		if (player) {
+			var total = player.duration,
+				processed = player.currentTime,
+				buffered = player.buffered.end(0);
+
+			function percent(val) {
+				var ratio = val / total,
+					percentage = ratio * 100.0;
+				return percentage + '%';
+			}
+		
+			document.getElementById('progress-total').title = total;
+			document.getElementById('progress-buffered').style.width = percent(buffered);
+			document.getElementById('progress-processed').style.width = percent(processed);
 		}
-		document.getElementById('progress-total').title = progress.total;
-		document.getElementById('progress-buffered').style.width = percent(progress.buffered);
-		document.getElementById('progress-processed').style.width = percent(progress.processed);
 	}
 	
 	/**
@@ -389,24 +383,19 @@
 					date = bits[0],
 					filename = bits[1];
 				if (filename && !filename.match(/\.gif$/i)) {
-					console.log(filename);
+					//console.log(filename);
 					motd[date] = filename;
 				} else {
-					console.log('motd update skipping ' + filename);
+					//console.log('motd update skipping ' + filename);
 				}
 			});
 			callback();
 		});
 	}
 
-	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-	if (!requestAnimationFrame) {
-		throw new Error("No requestAnimationFrame available!");
-	}
-
-	var player = document.getElementById('player'),
+	var container = document.getElementById('player'),
 		controls = document.getElementById('controls'),
-		canvas = player.querySelector('canvas'),
+		canvas = container.querySelector('canvas'),
 		//nativePlayer = document.getElementById('native'),
 		//nativeVideo = nativePlayer.querySelector('video'),
 		ctx = canvas.getContext('2d'),
@@ -652,6 +641,11 @@
 			
 			selectedUrl = selected.url;
 			console.log("Going to try streaming data from " + selectedUrl);
+			
+			// Currently the player can't determine the file duration
+			// as there's no way to seek to the end etc.
+			durationHint = mediaInfo.duration;
+			byteLengthHint = selected.size;
 
 			if (selected.height > 0) {
 				canvas.width = selected.width;
@@ -662,6 +656,9 @@
 			}
 			resizeVideo();
 			drawPlayButton();
+
+			canvas.removeEventListener('click', togglePause);
+			canvas.addEventListener('click', playVideo);
 			
 			var thumbnail = new Image();
 			thumbnail.src = mediaInfo.thumburl;
@@ -670,9 +667,6 @@
 				drawPlayButton();
 			});
 
-			progress.total = selected.size;
-			progress.buffered = 0;
-			progress.processed = 0;
 			updateProgress();
 			
 			//nativeVideo.width = selected.width;
@@ -713,48 +707,30 @@
 		console.log('media list updated');
 	});
 
-	var stream, nextProcessingTimer, paused = false;
-	
 	function stopVideo() {
-		// kill the previous video if any
-		if (stream) {
-			stream.abort();
-			stream = null;
+		if (player) {
+			player.stop();
+			player = null;
 		}
-		if (codec) {
-			codec.destroy();
-			codec = null;
-		}
-		if (audioFeeder) {
-			audioFeeder.close();
-			audioFeeder = null;
-		}
-		if (nextProcessingTimer) {
-			cancelAnimationFrame(nextProcessingTimer);
-			nextProcessingTimer = null;
-		}
-		drawPlayButton();
-		canvas.removeEventListener('click', togglePauseVideo);
-		canvas.addEventListener('click', playVideo);
 	}
 	
-	var continueVideo = null;
-	function togglePauseVideo() {
-		if (nextProcessingTimer) {
-			cancelAnimationFrame(nextProcessingTimer);
-			nextProcessingTimer = null;
+	function togglePause() {
+		if (player.paused) {
+			player.play();
 		} else {
-			continueVideo();
+			player.pause();
 		}
 	}
 	
 	function playVideo() {
-		stopVideo();
-		paused = false;
-		clearBenchmark();
-		
 		canvas.removeEventListener('click', playVideo);
-		canvas.addEventListener('click', togglePauseVideo);
+		canvas.addEventListener('click', togglePause);
+
+		player = new OgvJsPlayer(canvas);
+		player.src = selectedUrl;
+		player.durationHint = durationHint;
+		player.byteLengthHint = byteLengthHint;
+		player.muted = controls.querySelector('#mute').checked;
 
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
@@ -765,12 +741,8 @@
 			status.innerHTML = '';
 			status.appendChild(document.createTextNode(str));
 		}
-		
+	
 		function errorHandler(event) {
-			if (stream) {
-				stream.abort();
-				stream = null;
-			}
 			var str;
 			if ('message' in event) {
 				str = event.message;
@@ -789,51 +761,10 @@
 		document.getElementById('video-pic-height').textContent = '';
 		document.getElementById('video-pic-x').textContent = '';
 		document.getElementById('video-pic-y').textContent = '';
-		var fps = 60;
-
-		var videoInfo,
-			audioInfo,
-			imageData;
-		var options = {};
-		
-		// Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1
-		if (navigator.userAgent.match(/Version\/6\.0\.[0-9a-z.]+ Safari/)) {
-			// Something may be wrong with the JIT compiler in Safari 6.0;
-			// when we decode Vorbis with the debug console closed it falls
-			// into 100% CPU loop and never exits.
-			//
-			// Blacklist audio decoding for this browser.
-			//
-			// Known working in Safari 6.1 and 7.
-			options.audio = false;
-			showStatus('Audio disabled due to bug on Safari 6.0');
-		}
-		
-		if (skipAudio) {
-			options.audio = false;
-			showStatus('Skipping audio');
-		}
-		
-		framesProcessed = 0;
-		demuxingTime = 0;
-		videoDecodingTime = 0;
-		audioDecodingTime = 0;
-		bufferTime = 0;
-		drawingTime = 0;
-
-		codec = new OgvJs(options);
-		codec.oninitvideo = function(info) {
-			videoInfo = info;
-			fps = info.fps;
-			benchmarkTargetFps = info.fps;
-			
-			targetPerFrameTime = 1000 / info.fps;
-
-			canvas.width = info.picWidth;
-			canvas.height = info.picHeight;
-			imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
-
+		player.oninitvideo = function(info) {
 			resizeVideo();
+			
+			benchmarkTargetFps = info.fps;
 
 			document.getElementById('video-fps').textContent = (Math.round(info.fps * 100) / 100);
 			document.getElementById('video-frame-width').textContent = info.frameWidth;
@@ -842,348 +773,61 @@
 			document.getElementById('video-pic-height').textContent = info.picHeight;
 			document.getElementById('video-pic-x').textContent = info.picX;
 			document.getElementById('video-pic-y').textContent = info.picY;
-		}
+		};
+
 		document.getElementById('audio-channels').textContent = '';
 		document.getElementById('audio-rate').textContent = '';
-		codec.oninitaudio = function(info) {
-			audioInfo = info;
+		player.oninitaudio = function(info) {
+			if (benchmarkTargetFps == -1) {
+				//benchmarkTargetFps = audioFeeder.targetRate / audioFeeder.bufferSize * 2;
+				// quick hack
+				benchmarkTargetFps = 44100 / 4096 * 2;
+			}
+
 			document.getElementById('audio-channels').textContent = info.channels;
 			document.getElementById('audio-rate').textContent = info.rate;
-			audioFeeder.init(info.channels, info.rate);
-			if (audioFeeder.stub === true) {
-				showStatus('No audio support in browser.');
-				document.getElementById('mute').disabled = true;
-			} else {
-				document.getElementById('mute').disabled = false;
-			}
-			if (document.getElementById('mute').checked) {
-				audioFeeder.mute();
-			}
-		}
+		};
 
-		var lastFrameTime = getTimestamp(),
-			frameEndTimestamp = 0.0,
-			frameScheduled = false,
-			imageData = null,
-			yCbCrBuffer = null;
-
-		function prepareFrame() {
-			yCbCrBuffer = codec.dequeueFrame();
-			frameEndTimestamp = yCbCrBuffer.timestamp;
-		}
-		
-		function drawFrame() {
-			var start, delta;
-
-			start = getTimestamp();
-			
-			convertYCbCr(yCbCrBuffer, imageData.data);
-			
-			delta = getTimestamp() - start;
-			colorTime += delta;
-			lastFrameDecodeTime += delta;
-
-			start = getTimestamp();
-			ctx.putImageData(imageData,
-							 0, 0,
-							 videoInfo.picX, videoInfo.picY,
-							 videoInfo.picWidth, videoInfo.picHeight);
-			delta = getTimestamp() - start;
-
-			lastFrameDecodeTime += delta;
-			drawingTime += delta;
-			framesProcessed++;
-		}
-		
-		var lastFrameDecodeTime = 0.0;		
-		var targetFrameTime = getTimestamp() + 1000.0 / fps;
-		
-		function doDrawFrame() {
-			prepareFrame();
-			drawFrame();
-
+		clearBenchmark();
+		player.onframecallback = function(lastFrameDecodeTime) {
 			recordBenchmarkPoint(lastFrameDecodeTime);
 			lastFrameDecodeTime = 0.0;
-		}
-		
-		/**
-		 * In IE, pushing data to the Flash shim is expensive.
-		 * Combine multiple small Vorbis packet outputs into
-		 * larger buffers so we don't have to make as many calls.
-		 */
-		function joinAudioBuffers(buffers) {
-			if (buffers.length == 1) {
-				return buffers[0];
-			}
-			var sampleCount = 0,
-				channelCount = buffers[0].length,
-				i,
-				c,
-				out = [];
-			for (i = 0; i < buffers.length; i++) {
-				sampleCount += buffers[i][0].length;
-			}
-			for (c = 0; c < channelCount; c++) {
-				var channelOut = new Float32Array(sampleCount);
-				var position = 0;
-				for (i = 0; i < buffers.length; i++) {
-					var channelIn = buffers[i][c];
-					channelOut.set(channelIn, position);
-					position += channelIn.length;
-				}
-				out.push(channelOut);
-			}
-			return out;
-		}
-	
-		function doProcessing() {
-			nextProcessingTimer = null;
-			
-			var audioBuffers = [];
-			function queueAudio() {
-				if (audioBuffers.length > 0) {
-					var start = getTimestamp();
-					audioFeeder.bufferData(joinAudioBuffers(audioBuffers));
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					bufferTime += delta;
+		};
 
-					if (!codec.hasVideo) {
-						framesProcessed++; // pretend!
-						recordBenchmarkPoint(lastFrameDecodeTime);
-						lastFrameDecodeTime = 0.0;
-					}
-				}
-			}
-			if (codec.hasAudio) {
-				var audioState = audioFeeder.getPlaybackState();
-				var audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
-				var decodedSamples = 0;
-			}
-			
-			var n = 0;
-			while (true) {
-				n++;
-				if (n > 100) {
-					throw new Error("Got stuck in the loop!");
-					//console.log("Stuck in the loop, worried");
-					//console.log(codec.hasVideo, codec.hasAudio, codec.frameReady, codec.audioReady);
-					//pingProcessing();
-					//return;
-				}
-				// Process until we run out of data or
-				// completely decode a video frame...
-				var currentTime = getTimestamp();
-				var start = getTimestamp();
-		
-				var hasAudio = codec.hasAudio,
-					hasVideo = codec.hasVideo;
-				more = codec.process();
-				if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
-					// we just fell over from headers into content; reinit
-					pingProcessing();
-					return;
-				}
-		
-				var delta = (getTimestamp() - start);
-				lastFrameDecodeTime += delta;
-				demuxingTime += delta;
-
-				if (!more) {
-					queueAudio();
-					if (stream) {
-						// Ran out of buffered input
-						stream.readBytes();
-					} else {
-						// Ran out of stream!
-						setTimeout(function() {
-							showStatus('End of stream reached.');
-							stopVideo();
-						}, 0);
-					}
-					return;
-				}
-				
-				if ((hasAudio || hasVideo) && !(codec.audioReady || codec.frameReady)) {
-					// Have to process some more pages to find data. Continue the loop.
-					//console.log('No output data, relooping');
-					continue;
-				}
-			
-				if (hasAudio) {
-					// Drive on the audio clock!
-					var fudgeDelta = 0.1,
-						//readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
-						//readyForFrame = (audioState.playbackPosition >= frameEndTimestamp);
-						readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
-						frameDelay = (frameEndTimestamp - audioState.playbackPosition) * 1000,
-						readyForFrame = (frameDelay <= fudgeDelta);
-					if (codec.audioReady && readyForAudio) {
-						var start = getTimestamp();
-						var ok = codec.decodeAudio();
-						var delta = (getTimestamp() - start);
-						lastFrameDecodeTime += delta;
-						audioDecodingTime += delta;
-					
-						var start = getTimestamp();
-						if (ok) {
-							var buffer = codec.dequeueAudio();
-							//audioFeeder.bufferData(buffer);
-							audioBuffers.push(buffer);
-							audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
-							decodedSamples += buffer[0].length;
-						}
-					}
-					if (codec.frameReady && readyForFrame) {
-						var start = getTimestamp();
-						var ok = codec.decodeFrame();
-						var delta = (getTimestamp() - start);
-						lastFrameDecodeTime += delta;
-						videoDecodingTime += delta;
-						if (ok) {
-							doDrawFrame();
-						} else {
-							// Bad packet or something.
-							console.log('Bad video packet or something');
-						}
-						targetFrameTime = currentTime + 1000.0 / fps;
-					}
-				
-					// Check in when all audio runs out
-					var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 1000;
-					var nextDelays = [];
-					if (audioBufferedDuration <= bufferDuration * 2) {
-						// NEED MOAR BUFFERS
-					} else {
-						// Check in when the audio buffer runs low again...
-						nextDelays.push(bufferDuration);
-						
-						if (hasVideo) {
-							// Check in when the next frame is due
-							nextDelays.push(frameDelay);
-						}
-					}
-					
-					//console.log(n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']');
-					var nextDelay = Math.min.apply(Math, nextDelays);
-					if (nextDelays.length > 0) {
-						queueAudio();
-						pingProcessing(nextDelay);
-						return;
-					}
-				} else if (hasVideo) {
-					// Video-only: drive on the video clock
-					if (codec.frameReady && getTimestamp() >= targetFrameTime) {
-						// it's time to draw
-						var start = getTimestamp();
-						var ok = codec.decodeFrame();
-						var delta = (getTimestamp() - start);
-						lastFrameDecodeTime += delta;
-						videoDecodingTime += delta;
-						if (ok) {
-							doDrawFrame();
-							targetFrameTime += 1000.0 / fps;
-							pingProcessing();
-						} else {
-							console.log('Bad video packet or something');
-							pingProcessing(targetFrameTime - getTimestamp());
-						}
-					} else {
-						// check in again soon!
-						pingProcessing(targetFrameTime - getTimestamp());
-					}
-					return;
-				} else {
-					// Ok we're just waiting for more input.
-					console.log('Still waiting for headers...');
-				}
-			}
-		}
-
-		function pingProcessing(delay) {
-			if (delay === undefined) {
-				delay = 0;
-			}
-			if (nextProcessingTimer) {
-				// already scheduled
-				return;
-			}
-			//console.log('delaying for ' + delay);
-			//nextProcessingTimer = setTimeout(doProcessing, delay);
-			nextProcessingTimer = requestAnimationFrame(doProcessing);
-		}
-		continueVideo = pingProcessing;
-		
-		var totalRead = 0;
-		
-		stream = new StreamFile({
-			url: selectedUrl,
-			bufferSize: 65536,
-			onstart: function() {
-				console.log('stream.onstart');
-
-				// Fire off the read/decode/draw loop...
-				pingProcessing();
-			},
-			onbuffer: function() {
-				progress.buffered = stream.bytesBuffered;
-			},
-			onread: function(data) {
-				//console.log('stream.onread');
-				progress.processed = stream.bytesRead;
-				
-				// Pass chunk into the codec's buffer
-				codec.receiveInput(data);
-
-				// Continue the read/decode/draw loop...
-				pingProcessing();
-			},
-			ondone: function() {
-				console.log("reading done.");
-				window.removeEventListener('error', errorHandler);
-				stream = null;
-			},
-			onerror: function(err) {
-				console.log("reading error: " + err);
-				showStatus("reading error: " + err);
-				/*
-				window.removeEventListener('error', errorHandler);
-				if (audioFeeder) {
-					audioFeeder.close();
-					audioFeeder = null;
-				}
-				stream = null;
-				*/
-			}
-		});
-
-		// We have to initialize audio here...
-		audioFeeder = new AudioFeeder(2, 44100);
-		benchmarkTargetFps = audioFeeder.targetRate / audioFeeder.bufferSize * 2;
-		targetPerFrameTime = 1000 / benchmarkTargetFps;
-		
-		stream.readBytes();
+		player.load();
+		player.play();
 	}
 
-	controls.querySelector('.play').addEventListener('click', playVideo);
-	controls.querySelector('.stop').addEventListener('click', stopVideo);
-	controls.querySelector('#mute').addEventListener('click', function() {
-		if (codec && audioFeeder) {
-			if (this.checked) {
-				audioFeeder.mute();
+	controls.querySelector('.play').addEventListener('click', function() {
+		if (player) {
+			if (player.paused) {
+				player.play();
 			} else {
-				audioFeeder.unmute();
+				player.pause();
 			}
+		} else {
+			playVideo();
+		}
+	});
+	controls.querySelector('.stop').addEventListener('click', function() {
+		if (player) {
+			stopVideo();
+			showVideo();
+		}
+	});
+	controls.querySelector('#mute').addEventListener('click', function() {
+		if (player) {
+			player.muted = this.checked;
 		}
 		setHash();
 	});
 	controls.querySelector('.fullscreen').addEventListener('click', function() {
 		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-		if (fullscreenElement == player) {
+		if (fullscreenElement == container) {
 			var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
 			cancelFullscreen();
 		} else {
-			var requestFullscreen = (player.requestFullscreen || player.mozRequestFullScreen || player.webkitRequestFullscreen || player.msRequestFullscreen).bind(player);
+			var requestFullscreen = (container.requestFullscreen || container.mozRequestFullScreen || container.webkitRequestFullscreen || container.msRequestFullscreen).bind(container);
 			requestFullscreen();
 		}
 	});
@@ -1221,7 +865,7 @@
 			topPanel.style.opacity = 1.0;
 		}
 	}
-	player.addEventListener('mousemove', function() {
+	container.addEventListener('mousemove', function() {
 		showControlPanel();
 		delayHideControlPanel();
 	});
@@ -1232,7 +876,7 @@
 	//}
 	
 	window.setInterval(function() {
-		if (benchmarkData.length > 0) {
+		if (player && benchmarkData.length > 0) {
 			showBenchmark();
 			showAverageRate();
 			updateProgress();

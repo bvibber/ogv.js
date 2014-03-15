@@ -254,13 +254,13 @@ function AudioFeeder() {
 	}
 	
 	this.mute = function() {
-		muted = true;
+		this.muted = muted = true;
 	};
 	
 	this.unmute = function() {
-		muted = false;
+		this.muted = muted = false;
 	}
-	
+		
 	this.close = function() {
 		if(this.flashaudio) {
 			var wrapper = this.flashaudio.flashWrapper;
