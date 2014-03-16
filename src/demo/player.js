@@ -19,8 +19,15 @@ function OgvJsTimeRanges(ranges) {
 	return this;
 }
 
-function OgvJsPlayer(canvas) {
+function OgvJsPlayer() {
+	var canvas = document.createElement('canvas');
 	var ctx = canvas.getContext('2d');
+	
+	// Return a magical custom element!
+	var self = document.createElement('ogvjs');
+	self.style.display = 'inline-block';
+	self.style.position = 'relative';
+	self.appendChild(canvas);
 
 	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 	if (!requestAnimationFrame) {
@@ -34,7 +41,6 @@ function OgvJsPlayer(canvas) {
 		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
-	var self = this;
 	var codec, audioFeeder;
 	var stream, nextProcessingTimer, paused = true;
 	var muted = false;
@@ -451,7 +457,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement load method
 	 */
-	this.load = function() {
+	self.load = function() {
 		if (stream) {
 			// already loaded.
 			return;
@@ -459,7 +465,7 @@ function OgvJsPlayer(canvas) {
 		
 		started = false;
 		stream = new StreamFile({
-			url: this.src,
+			url: self.src,
 			bufferSize: 256 * 1024,
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
@@ -493,7 +499,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement canPlayType method
 	 */
-	this.canPlayType = function(type) {
+	self.canPlayType = function(type) {
 		// @todo: implement better parsing
 		if (type === 'audio/ogg; codecs="vorbis"') {
 			return 'probably';
@@ -513,9 +519,9 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement play method
 	 */
-	this.play = function() {
+	self.play = function() {
 		if (!stream) {
-			this.load();
+			self.load();
 		}
 		
 		if (paused) {
@@ -531,7 +537,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * custom getPlaybackStats method
 	 */
-	this.getPlaybackStats = function() {
+	self.getPlaybackStats = function() {
 		return {
 			framesProcessed: framesProcessed,
 			demuxingTime: demuxingTime,
@@ -544,7 +550,7 @@ function OgvJsPlayer(canvas) {
 			jitter: totalJitter / framesProcessed
 		};
 	};
-	this.resetPlaybackStats = function() {
+	self.resetPlaybackStats = function() {
 		framesProcessed = 0;
 		demuxingTime = 0;
 		videoDecodingTime = 0;
@@ -558,11 +564,11 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement pause method
 	 */
-	this.pause = function() {
+	self.pause = function() {
 		if (!stream) {
 			console.log('initializing stream');
 			paused = true;
-			this.load();
+			self.load();
 		} else if (!paused) {
 			console.log('pausing');
 			//cancelAnimationFrame(nextProcessingTimer);
@@ -575,22 +581,22 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * custom 'stop' method
 	 */
-	this.stop = function() {
+	self.stop = function() {
 		stopVideo();
 	};
 
 	/**
 	 * HTMLMediaElement src property
 	 */
-	this.src = "";
+	self.src = "";
 	
 	/**
 	 */
-	Object.defineProperty(this, "buffered", {
+	Object.defineProperty(self, "buffered", {
 		get: function getBuffered() {
 			var estimatedBufferTime;
-			if (stream && this.byteLengthHint && this.durationHint) {
-				estimatedBufferTime = (stream.bytesBuffered / this.byteLengthHint) * this.durationHint;
+			if (stream && self.byteLengthHint && self.durationHint) {
+				estimatedBufferTime = (stream.bytesBuffered / self.byteLengthHint) * self.durationHint;
 			} else {
 				estimatedBufferTime = 0;
 			}
@@ -601,7 +607,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement currentTime property
 	 */
-	Object.defineProperty(this, "currentTime", {
+	Object.defineProperty(self, "currentTime", {
 		get: function getCurrentTime() {
 			if (codec && codec.hasAudio) {
 				return audioFeeder.getPlaybackState().playbackPosition;
@@ -616,21 +622,21 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * custom durationHint property
 	 */
-	this.durationHint = null;
+	self.durationHint = null;
 	
 	/**
 	 * custom byteLengthHint property
 	 */
-	this.byteLengthHint = null;
+	self.byteLengthHint = null;
 	
 	/**
 	 * HTMLMediaElement duration property
 	 */
-	Object.defineProperty(this, "duration", {
+	Object.defineProperty(self, "duration", {
 		get: function getDuration() {
 			if (codec && (codec.hasAudio || codec.hasVideo)) {
-				if (this.durationHint) {
-					return this.durationHint;
+				if (self.durationHint) {
+					return self.durationHint;
 				} else {
 					// @todo figure out how to estimate it
 					return Infinity;
@@ -644,7 +650,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement paused property
 	 */
-	Object.defineProperty(this, "paused", {
+	Object.defineProperty(self, "paused", {
 		get: function getPaused() {
 			return paused;
 		}
@@ -653,7 +659,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement ended property
 	 */
-	Object.defineProperty(this, "ended", {
+	Object.defineProperty(self, "ended", {
 		get: function getEnded() {
 			return ended;
 		}
@@ -662,7 +668,7 @@ function OgvJsPlayer(canvas) {
 	/**
 	 * HTMLMediaElement muted property
 	 */
-	Object.defineProperty(this, "muted", {
+	Object.defineProperty(self, "muted", {
 		get: function getMuted() {
 			return muted;
 		},
@@ -679,7 +685,7 @@ function OgvJsPlayer(canvas) {
 	});
 	
 	var poster;
-	Object.defineProperty(this, "poster", {
+	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
 		},
@@ -690,6 +696,8 @@ function OgvJsPlayer(canvas) {
 				thumbnail.src = poster;
 				thumbnail.addEventListener('load', function() {
 					if (!started) {
+						canvas.width = thumbnail.width;
+						canvas.height = thumbnail.height;
 						ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
 					}
 				});
@@ -698,7 +706,7 @@ function OgvJsPlayer(canvas) {
 	});
 	
 	// Video metadata properties...
-	Object.defineProperty(this, "videoWidth", {
+	Object.defineProperty(self, "videoWidth", {
 		get: function getVideoWidth() {
 			if (videoInfo) {
 				return videoInfo.picWidth;
@@ -707,7 +715,7 @@ function OgvJsPlayer(canvas) {
 			}
 		}
 	});
-	Object.defineProperty(this, "videoHeight", {
+	Object.defineProperty(self, "videoHeight", {
 		get: function getVideoHeight() {
 			if (videoInfo) {
 				return videoInfo.picHeight;
@@ -716,7 +724,7 @@ function OgvJsPlayer(canvas) {
 			}
 		}
 	});
-	Object.defineProperty(this, "ogvjsVideoFrameRate", {
+	Object.defineProperty(self, "ogvjsVideoFrameRate", {
 		get: function getOgvJsVideoFrameRate() {
 			if (videoInfo) {
 				return videoInfo.fps;
@@ -727,7 +735,7 @@ function OgvJsPlayer(canvas) {
 	});
 	
 	// Audio metadata properties...
-	Object.defineProperty(this, "ogvjsAudioChannels", {
+	Object.defineProperty(self, "ogvjsAudioChannels", {
 		get: function getOgvJsAudioChannels() {
 			if (audioInfo) {
 				return audioInfo.channels;
@@ -736,7 +744,7 @@ function OgvJsPlayer(canvas) {
 			}
 		}
 	});
-	Object.defineProperty(this, "ogvjsAudioSampleRate", {
+	Object.defineProperty(self, "ogvjsAudioSampleRate", {
 		get: function getOgvJsAudioChannels() {
 			if (audioInfo) {
 				return audioInfo.rate;
@@ -746,6 +754,27 @@ function OgvJsPlayer(canvas) {
 		}
 	});
 	
+	// Display size...
+	var width = 0, height = 0;
+	Object.defineProperty(self, "width", {
+		get: function getWidth() {
+			return width;
+		},
+		set: function setWidth(val) {
+			width = parseInt(val, 10);
+			canvas.style.width = width + 'px';
+		}
+	});
+	
+	Object.defineProperty(self, "height", {
+		get: function getHeight() {
+			return height;
+		},
+		set: function setHeight(val) {
+			height = parseInt(val, 10);
+			canvas.style.height = height + 'px';
+		}
+	});
 
 	// Events!
 
@@ -760,5 +789,5 @@ function OgvJsPlayer(canvas) {
 	 */
 	self.onloadedmetadata = null;
 	
-	return this;
+	return self;
 }

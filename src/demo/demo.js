@@ -397,8 +397,6 @@
 
 	var container = document.getElementById('player'),
 		controls = document.getElementById('controls'),
-		//canvas = container.querySelector('canvas#thumb'),
-		//ctx = canvas.getContext('2d'),
 		videoChooser = document.getElementById('video-chooser'),
 		selectedTitle = null,
 		selectedUrl = null,
@@ -539,10 +537,10 @@
 		item.appendChild(img);
 		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
 		item.addEventListener('click', function() {
+			stopVideo();
 			selectedTitle = title;
 			setHash();
 			dismissChooser();
-			showVideo();
 		});
 
 		mediaList.appendChild(item);
@@ -598,23 +596,32 @@
 			containerWidth = parseInt(computedStyle.getPropertyValue('width')),
 			containerHeight = parseInt(computedStyle.getPropertyValue('height'));
 
+		var videoWidth = player.videoWidth,
+			videoHeight = player.videoHeight;
+		if (videoWidth == 0 || videoHeight == 0) {
+			// hack hack
+			// we already set these at poster setup time
+			// warning these get corrupted over time if we resize the poster a lot
+			videoWidth = player.width;
+			videoHeight = player.height;
+		}
 		var width = containerWidth,
-			height = playerElement.height * width / playerElement.width,
+			height = videoHeight * width / videoWidth,
 			top = 0;
 
 		if (height > containerHeight) {
 			height = containerHeight;
-			width = playerElement.width * height / playerElement.height;
+			width = videoWidth * height / videoHeight;
 		} else {
 			top = Math.round((containerHeight - height) / 2);
 		}
 		
-		playerElement.style.width = width + 'px';
-		playerElement.style.height = height + 'px';
-		playerElement.style.marginTop = top + 'px';
+		player.width = width;
+		player.height = height;
+		player.style.marginTop = top + 'px';
 	}
 	window.addEventListener('resize', function() {
-		if (playerElement) {
+		if (player) {
 			resizeVideo();
 		}
 	});
@@ -672,15 +679,13 @@
 			byteLengthHint = selected.size;
 
 			if (playerBackend == 'js') {
-				playerElement = document.createElement('canvas');
-				player = new OgvJsPlayer(playerElement);
+				player = new OgvJsPlayer();
 				player.durationHint = durationHint;
 				player.byteLengthHint = byteLengthHint;
 			} else if (playerBackend == 'flash') {
 				throw new Error('flash not implemented');
 			} else if (playerBackend == 'native') {
-				playerElement = document.createElement('video');
-				player = playerElement;
+				player = document.createElement('video');
 			} else {
 				throw new Error('unknown player backend');
 			}
@@ -725,20 +730,20 @@
 			player.muted = controls.querySelector('#mute').checked;
 			
 			var container = document.getElementById('player');
-			container.insertBefore(playerElement, container.firstChild);
+			container.insertBefore(player, container.firstChild);
 
 			if (selected.height > 0) {
-				playerElement.width = selected.width;
-				playerElement.height = selected.height;
+				player.width = selected.width;
+				player.height = selected.height;
 			} else {
-				playerElement.width = 256; // hack for audio
-				playerElement.height = 256;
+				player.width = 256; // hack for audio
+				player.height = 256;
 			}
 			resizeVideo();
 			//drawPlayButton();
 
-			playerElement.removeEventListener('click', togglePause);
-			playerElement.addEventListener('click', playVideo);
+			player.removeEventListener('click', togglePause);
+			player.addEventListener('click', playVideo);
 
 			player.poster = mediaInfo.thumburl;
 
@@ -789,10 +794,8 @@
 				// CUSTOM
 				player.stop();
 			}
+			player.parentElement.removeChild(player);
 			player = null;
-			
-			playerElement.parentElement.removeChild(playerElement);
-			playerElement = null;
 		}
 	}
 	
@@ -805,8 +808,8 @@
 	}
 	
 	function playVideo() {
-		playerElement.removeEventListener('click', playVideo);
-		playerElement.addEventListener('click', togglePause);
+		player.removeEventListener('click', playVideo);
+		player.addEventListener('click', togglePause);
 
 		var status = document.getElementById('status-view');
 		status.className = 'status-invisible';
@@ -847,7 +850,6 @@
 	});
 	controls.querySelector('.stop').addEventListener('click', function() {
 		if (player) {
-			stopVideo();
 			showVideo();
 		}
 	});
