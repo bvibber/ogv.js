@@ -194,12 +194,14 @@ function AudioFeeder() {
 	}
 	function hexString(buffer) {
 		var samples = new Uint8Array(buffer);
-		var digits = [], len = samples.length;
+		var digits = "",
+			len = samples.length;
 		for (var i = 0; i < len; i++) {
-			var sample = samples[i];
-			digits.push(hexBytes[sample]);
+			// Note that in IE 11 strong concatenation is twice as fast as
+			// the traditional make-an-array-and-join here.
+			digits += hexBytes[samples[i]];
 		}
-		return digits.join("");
+		return digits;
 	}
 	
 	this.bufferData = function(samplesPerChannel) {
