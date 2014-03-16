@@ -37,6 +37,12 @@ OgvJs = (function(options) {
 		return inputBuffer;
 	}
 	
+	function OgvJsMetadataLoadedCallback() {
+		if (self.onmetadataloaded) {
+			self.onmetadataloaded();
+		}
+	}
+	
 	function OgvJsInitVideoCallback(info) {
 		self.hasVideo = true;
 		if (self.oninitvideo) {

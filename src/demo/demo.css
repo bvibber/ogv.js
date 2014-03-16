@@ -107,7 +107,8 @@ body {
 	right: 0;
 }
 
-#player canvas {
+#player canvas,
+#player video {
 	cursor: pointer;
 }
 

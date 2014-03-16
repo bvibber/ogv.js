@@ -416,18 +416,16 @@ function OgvJsPlayer(canvas) {
 			for (var i = 0; i < pixelCount; i += 4) {
 				data[i + 3] = 255;
 			}
-
-			if (self.oninitvideo) {
-				self.oninitvideo(info);
-			}
-		}
+		};
 		codec.oninitaudio = function(info) {
 			audioInfo = info;
-			if (self.oninitaudio) {
-				self.oninitaudio(info);
-			}
 			audioFeeder.init(info.channels, info.rate);
-		}
+		};
+		codec.onmetadataloaded = function() {
+			if (self.onloadedmetadata) {
+				self.onloadedmetadata();
+			}
+		};
 
 		continueVideo = pingProcessing;
 
@@ -529,11 +527,6 @@ function OgvJsPlayer(canvas) {
 			}
 		}
 	};
-	
-	/**
-	 * custom onframecallback, takes frame decode time in ms
-	 */
-	this.onframecallback = null;
 	
 	/**
 	 * custom getPlaybackStats method
@@ -703,5 +696,69 @@ function OgvJsPlayer(canvas) {
 			}
 		}
 	});
+	
+	// Video metadata properties...
+	Object.defineProperty(this, "videoWidth", {
+		get: function getVideoWidth() {
+			if (videoInfo) {
+				return videoInfo.picWidth;
+			} else {
+				return 0;
+			}
+		}
+	});
+	Object.defineProperty(this, "videoHeight", {
+		get: function getVideoHeight() {
+			if (videoInfo) {
+				return videoInfo.picHeight;
+			} else {
+				return 0;
+			}
+		}
+	});
+	Object.defineProperty(this, "ogvjsVideoFrameRate", {
+		get: function getOgvJsVideoFrameRate() {
+			if (videoInfo) {
+				return videoInfo.fps;
+			} else {
+				return 0;
+			}
+		}
+	});
+	
+	// Audio metadata properties...
+	Object.defineProperty(this, "ogvjsAudioChannels", {
+		get: function getOgvJsAudioChannels() {
+			if (audioInfo) {
+				return audioInfo.channels;
+			} else {
+				return 0;
+			}
+		}
+	});
+	Object.defineProperty(this, "ogvjsAudioSampleRate", {
+		get: function getOgvJsAudioChannels() {
+			if (audioInfo) {
+				return audioInfo.rate;
+			} else {
+				return 0;
+			}
+		}
+	});
+	
+
+	// Events!
+
+	/**
+	 * custom onframecallback, takes frame decode time in ms
+	 */
+	self.onframecallback = null;
+	
+	/**
+	 * Called when all metadata is available.
+	 * Note in theory we must know 'duration' at this point.
+	 */
+	self.onloadedmetadata = null;
+	
 	return this;
 }

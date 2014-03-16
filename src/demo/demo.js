@@ -689,34 +689,36 @@
 			document.getElementById('video-fps').textContent = '';
 			document.getElementById('video-pic-width').textContent = '';
 			document.getElementById('video-pic-height').textContent = '';
-			document.getElementById('video-jitter').textContent = '0';
-			player.oninitvideo = function(info) {
-				resizeVideo();
-			
-				benchmarkTargetFps = info.fps;
-
-				document.getElementById('video-fps').textContent = (Math.round(info.fps * 100) / 100);
-				document.getElementById('video-pic-width').textContent = info.picWidth;
-				document.getElementById('video-pic-height').textContent = info.picHeight;
-			};
-
+			document.getElementById('video-jitter').textContent = '';
 			document.getElementById('audio-channels').textContent = '';
 			document.getElementById('audio-rate').textContent = '';
-			player.oninitaudio = function(info) {
-				if (benchmarkTargetFps == -1) {
-					//benchmarkTargetFps = audioFeeder.targetRate / audioFeeder.bufferSize * 2;
-					// quick hack
-					benchmarkTargetFps = 44100 / 4096 * 2;
+			document.getElementById('audio-drops').textContent = '';
+			player.onloadedmetadata = function() {
+				var fps;
+				if (typeof player.ogvjsVideoFrameRate === 'number') {
+					benchmarkTargetFps = player.ogvjsVideoFrameRate;
+					fps = round2(player.ogvjsVideoFrameRate);
+				} else {
+					// Native video element doesn't seem to expose frame rate?!
+					benchmarkTargetFps = 60;
+					fps = '?';
 				}
+				document.getElementById('video-fps').textContent = fps;
+				document.getElementById('video-pic-width').textContent = player.videoWidth;
+				document.getElementById('video-pic-height').textContent = player.videoHeight;
 
-				document.getElementById('audio-channels').textContent = info.channels;
-				document.getElementById('audio-rate').textContent = info.rate;
+				if (typeof player.ogvjsAudioChannels === 'number') {
+					document.getElementById('audio-channels').textContent = player.ogvjsAudioChannels;
+					document.getElementById('audio-rate').textContent = player.ogvjsAudioSampleRate;
+				}
 			};
 
 			clearBenchmark();
+			// There is a 'timeupdate' event on HTMLMediaElement, but it only
+			// seems to fire every quarter second. No per-frame callback for
+			// native video, sorry!
 			player.onframecallback = function(lastFrameDecodeTime) {
 				recordBenchmarkPoint(lastFrameDecodeTime);
-				lastFrameDecodeTime = 0.0;
 			};
 
 			player.src = selectedUrl;

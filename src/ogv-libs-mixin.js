@@ -1,5 +1,9 @@
 mergeInto(LibraryManager.library, {
 	
+	OgvJsMetadataLoaded: function() {
+		OgvJsMetadataLoadedCallback();
+	},
+	
 	OgvJsInitVideo: function(frameWidth, frameHeight,
 	                         hdec, vdec,
                              fps,

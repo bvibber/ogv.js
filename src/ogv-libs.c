@@ -55,6 +55,8 @@ static void sigint_handler (int signal) {
 }
 
 // Callbacks
+extern void OgvJsMetadataLoaded();
+
 extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            int hdec, int vdec,
                            double fps,
@@ -288,6 +290,7 @@ static void processHeaders() {
 
 		  appState = STATE_DECODING;
 		  printf("Done with headers step\n");
+		  OgvJsMetadataLoaded();
 	}
 }
 
