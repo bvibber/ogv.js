@@ -744,6 +744,21 @@
 
 			player.removeEventListener('click', togglePause);
 			player.addEventListener('click', playVideo);
+			
+			document.querySelector('.play').style.display = 'inline';
+			document.querySelector('.pause').style.display = 'none';
+			player.onplay = function() {
+				document.querySelector('.play').style.display = 'none';
+				document.querySelector('.pause').style.display = 'inline';
+			};
+			player.onpause = function() {
+				document.querySelector('.play').style.display = 'inline';
+				document.querySelector('.pause').style.display = 'none';
+			};
+			player.onended = function() {
+				document.querySelector('.play').style.display = 'inline';
+				document.querySelector('.pause').style.display = 'none';
+			};
 
 			player.poster = mediaInfo.thumburl;
 
@@ -839,13 +854,12 @@
 
 	controls.querySelector('.play').addEventListener('click', function() {
 		if (player) {
-			if (player.paused) {
-				player.play();
-			} else {
-				player.pause();
-			}
-		} else {
-			playVideo();
+			player.play();
+		}
+	});
+	controls.querySelector('.pause').addEventListener('click', function() {
+		if (player) {
+			player.pause();
 		}
 	});
 	controls.querySelector('.stop').addEventListener('click', function() {

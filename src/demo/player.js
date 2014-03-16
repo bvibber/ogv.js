@@ -255,7 +255,11 @@ function OgvJsPlayer() {
 					}
 					console.log('End of stream reached in ' + finalDelay + ' ms.');
 					setTimeout(function() {
-						stopVideo();
+						//stopVideo();
+						ended = true;
+						if (self.onended) {
+							self.onended();
+						}
 					}, finalDelay);
 				}
 				return;
@@ -531,6 +535,9 @@ function OgvJsPlayer() {
 			} else {
 				playVideo();
 			}
+			if (self.onplay) {
+				self.onplay();
+			}
 		}
 	};
 	
@@ -575,6 +582,9 @@ function OgvJsPlayer() {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			paused = true;
+			if (self.onpause) {
+				self.onpause();
+			}
 		}
 	};
 	
@@ -788,6 +798,21 @@ function OgvJsPlayer() {
 	 * Note in theory we must know 'duration' at this point.
 	 */
 	self.onloadedmetadata = null;
+	
+	/**
+	 * Called when we start playback
+	 */
+	self.onplay = null;
+	
+	/**
+	 * Called when we get paused
+	 */
+	self.onpause = null;
+	
+	/**
+	 * Called when playback ends
+	 */
+	self.onended = null;
 	
 	return self;
 }
