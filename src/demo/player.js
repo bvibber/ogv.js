@@ -685,5 +685,23 @@ function OgvJsPlayer(canvas) {
 		}
 	});
 	
+	var poster;
+	Object.defineProperty(this, "poster", {
+		get: function getPoster() {
+			return poster;
+		},
+		set: function setPoster(val) {
+			poster = val;
+			if (!started) {
+				var thumbnail = new Image();
+				thumbnail.src = poster;
+				thumbnail.addEventListener('load', function() {
+					if (!started) {
+						ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
+					}
+				});
+			}
+		}
+	});
 	return this;
 }
