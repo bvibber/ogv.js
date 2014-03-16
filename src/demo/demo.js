@@ -585,6 +585,7 @@
 	});
 	
 	document.querySelector('#player-backend').addEventListener('change', function() {
+		stopVideo();
 		playerBackend = this.value;
 		setHash();
 		showVideo();
@@ -788,7 +789,7 @@
 			}
 			player = null;
 			
-			document.getElementById('player').removeChild(playerElement);
+			playerElement.parentElement.removeChild(playerElement);
 			playerElement = null;
 		}
 	}
