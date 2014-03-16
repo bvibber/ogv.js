@@ -88,14 +88,11 @@ mergeInto(LibraryManager.library, {
 		
 		var outputBuffers = [];
 		if (buffers != 0) {
-			var inBuffer, outBuffer, outArray, i;
+			var inPtr, inArray, outArray, i;
 			for (var channel = 0; channel < channels; channel++) {
-				inBuffer = HEAPU32[buffers / 4 + channel];
-				outBuffer = new ArrayBuffer(sampleCount * 4);
-				outArray = new Float32Array(outBuffer);
-				for (i = 0; i < sampleCount; i++) {
-					outArray[i] = HEAPF32[inBuffer / 4 + i] ;
-				}
+				inPtr = HEAPU32[buffers / 4 + channel];
+				inArray = HEAPF32.subarray(inPtr / 4, inPtr / 4 + sampleCount);
+				outArray = new Float32Array(inArray);
 				outputBuffers.push(outArray);
 			}
 		}
