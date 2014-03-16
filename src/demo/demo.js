@@ -562,9 +562,7 @@
 		}
 		
 		var sizeKey = document.getElementById('video-preferred-size').value;
-		if (sizeKey != preferredKey) {
-			hash += '&size=' + sizeKey;
-		}
+		hash += '&size=' + sizeKey;
 		
 		document.location.hash = hash;
 	}
@@ -683,12 +681,16 @@
 				player.durationHint = durationHint;
 				player.byteLengthHint = byteLengthHint;
 			} else if (playerBackend == 'flash') {
-				throw new Error('flash not implemented');
+				player = new OgvSwfPlayer();
+				player.durationHint = durationHint;
+				player.byteLengthHint = byteLengthHint;
 			} else if (playerBackend == 'native') {
 				player = document.createElement('video');
 			} else {
 				throw new Error('unknown player backend');
 			}
+			player.width = selected.width;
+			player.height = selected.height;
 
 
 			document.getElementById('video-fps').textContent = '';

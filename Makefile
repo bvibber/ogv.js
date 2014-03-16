@@ -44,7 +44,7 @@ build/ogv.js : src/ogv-main.js build/js/ogv-libs.js
 
 
 # The player demo
-build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/player.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf
+build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/player.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
 	test -d build/demo || mkdir build/demo
 	cp src/demo/index.html build/demo/index.html
 	cp src/demo/demo.css build/demo/demo.css
@@ -58,6 +58,8 @@ build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js s
 	cp src/AudioFeeder.js build/demo/lib/AudioFeeder.js
 	cp src/YCbCr.js build/demo/lib/YCbCr.js
 	cp build/ogv.js build/demo/lib/ogv.js
+	cp build/ogvswf.js build/demo/lib/ogvswf.js
+	cp build/ogv.swf build/demo/lib/ogv.swf
 
 
 # There is a Flash shim for audio on Internet Explorer which doesn't
@@ -103,6 +105,11 @@ build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c build/flash
 	test -d build || mkdir build
 	./compileOgvFlash.sh
 
-build/ogv.swf : src/ogv.as build/flash/ogv-libs.swc
+build/ogv.swf : src/ogv.as src/OgvCodec.as src/YCbCr.as build/flash/ogv-libs.swc
 	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc src/ogv.as
 
+build/ogvswf-version.js : build/ogv.swf
+	echo 'OgvSwfPlayer.buildDate = "'`date -u`'";' > build/ogvswf-version.js
+
+build/ogvswf.js : src/ogvswf.js build/ogvswf-version.js
+	cat src/ogvswf.js build/ogvswf-version.js > build/ogvswf.js

@@ -1,3 +1,13 @@
+/**
+ * Low-level interface wrapped around ogg/vorbis/theora libraries
+ * cross-compiled with emscripten.
+ *
+ * Used by the high-level player interface.
+ *
+ * @author Brion Vibber <brion@pobox.com>
+ * @copyright 2013-2014
+ * @license MIT-style
+ */
 OgvJs = (function(options) {
 	options = options || {};
 	var self = this,
@@ -162,7 +172,7 @@ OgvJs = (function(options) {
 	/**
 	 * Return the last-decoded frame, if any.
 	 *
-	 * @return ImageData
+	 * @return Object {yBytes, cbBytes, crBytes, yStride, cbStride, crStride, width, height, hdec, vdec, timestamp}
 	 */
 	self.dequeueFrame = function() {
 		if (queuedFrame) {

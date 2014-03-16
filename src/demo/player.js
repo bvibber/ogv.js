@@ -99,13 +99,14 @@ function OgvJsPlayer() {
 		frameScheduled = false,
 		imageData = null,
 		yCbCrBuffer = null;
+	var lastFrameDecodeTime = 0.0;		
+	var targetFrameTime;
+	var lastFrameTimestamp = 0.0;
 
-	function prepareFrame() {
+	function drawFrame() {
 		yCbCrBuffer = codec.dequeueFrame();
 		frameEndTimestamp = yCbCrBuffer.timestamp;
-	}
-	
-	function drawFrame() {
+
 		var start, delta;
 
 		start = getTimestamp();
@@ -127,15 +128,7 @@ function OgvJsPlayer() {
 		drawingTime += delta;
 		framesProcessed++;
 		framesPlayed++;
-	}
-	
-	var lastFrameDecodeTime = 0.0;		
-	var targetFrameTime;
-	
-	var lastFrameTimestamp = 0.0;
-	function doDrawFrame() {
-		prepareFrame();
-		drawFrame();
+
 		if (self.onframecallback) {
 			var newFrameTimestamp = getTimestamp(),
 				wallClockTime = newFrameTimestamp - lastFrameTimestamp,
@@ -223,7 +216,7 @@ function OgvJsPlayer() {
 	
 			var hasAudio = codec.hasAudio,
 				hasVideo = codec.hasVideo;
-			more = codec.process();
+			var more = codec.process();
 			if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
 				// we just fell over from headers into content; reinit
 				lastFrameTimestamp = getTimestamp();
@@ -302,7 +295,7 @@ function OgvJsPlayer() {
 					lastFrameDecodeTime += delta;
 					videoDecodingTime += delta;
 					if (ok) {
-						doDrawFrame();
+						drawFrame();
 					} else {
 						// Bad packet or something.
 						console.log('Bad video packet or something');
@@ -348,7 +341,7 @@ function OgvJsPlayer() {
 					lastFrameDecodeTime += delta;
 					videoDecodingTime += delta;
 					if (ok) {
-						doDrawFrame();
+						drawFrame();
 						targetFrameTime += 1000.0 / fps;
 						pingProcessing();
 					} else {
