@@ -29,13 +29,9 @@ function OgvJsPlayer(canvas) {
 
 	var getTimestamp;
 	if (window.performance === undefined) {
-		getTimestamp = function() {
-			return Date.now();
-		}
+		getTimestamp = Date.now;
 	} else {
-		getTimestamp = function() {
-			return window.performance.now();
-		}
+		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
 	var self = this;

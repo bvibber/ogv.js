@@ -3,14 +3,10 @@
 	var getTimestamp;
 	if (window.performance === undefined) {
 		console.log("window.performance is not available; using Date.now() for benchmarking");
-		getTimestamp = function() {
-			return Date.now();
-		}
+		getTimestamp = Date.now;
 	} else {
 		console.log("window.performance is available; using window.performance.now() for benchmarking");
-		getTimestamp = function() {
-			return window.performance.now();
-		}
+		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
 	var player;
