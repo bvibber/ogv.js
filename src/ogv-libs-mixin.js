@@ -30,22 +30,16 @@ mergeInto(LibraryManager.library, {
 	                           hdec, vdec,
 	                           timestamp) {
 		
-		if (bufferY == 0) {
-			OgvJsFrameCallback(null);
-			return;
-		}
-		
 		// Create typed array views of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
-			HEAPU32 = Module.HEAPU32,
 			widthColor = width >> hdec,
 			heightColor = height >> vdec,
 			countBytesY = strideY * height,
 			countBytesCb = strideCb * heightColor,
 			countBytesCr = strideCr * heightColor,
-			bytesY = HEAPU8.subarray(bufferY, (bufferY + countBytesY)),
-			bytesCb = HEAPU8.subarray(bufferCb, (bufferCb + countBytesCb)),
-			bytesCr = HEAPU8.subarray(bufferCr, (bufferCr + countBytesCr));
+			bytesY = HEAPU8.subarray(bufferY, bufferY + countBytesY),
+			bytesCb = HEAPU8.subarray(bufferCb, bufferCb + countBytesCb),
+			bytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesCr);
 
 		// And queue up the output buffer!
 		OgvJsFrameCallback({
@@ -82,7 +76,6 @@ mergeInto(LibraryManager.library, {
 		}
 		
 		// buffers is an array of pointers to float arrays for each channel
-		var HEAPU8 = Module.HEAPU8;
 		var HEAPU32 = Module.HEAPU32;
 		var HEAPF32 = Module.HEAPF32;
 		
