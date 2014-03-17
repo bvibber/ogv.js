@@ -10,8 +10,12 @@ function OgvSwfPlayer() {
 			'onframecallback',
 			'onplay',
 			'onpause',
-			'onended'
+			'onended',
+			'ontrace'
 		];
+	self.ontrace = function(str) {
+		console.log('Flash: ' + str);
+	};
 	
 	// Register a global function for callbacks. :P
 	window[callbackName] = function ogvSwfFlashCallback(eventName, args) {

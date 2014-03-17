@@ -92,6 +92,14 @@ package {
         private var audioBuffers:Vector.<Vector.<ByteArray>> = new Vector.<Vector.<ByteArray>>();
         private var fudgeFactor:Number = 0;
 
+        // Log debug stuff to the JS console for convenience
+        private function log(str:String):void {
+            if (jsCallbackName == "") {
+                trace(str);
+            } else {
+                jsCallback('ontrace', str);
+            }
+        }
 
         public function ogv() {
             // First, make the coordinate system sane.
@@ -109,7 +117,7 @@ package {
 
             // Who you gonna call?
             jsCallbackName = loaderInfo.parameters.jsCallbackName;
-            trace('jsCallbackName: ' + jsCallbackName);
+            log('jsCallbackName: ' + jsCallbackName);
             
             // Aaaand, setup the codec.        
             codec = new OgvCodec({
@@ -212,9 +220,9 @@ package {
 
             // Some properties
             ExternalInterface.addCallback('_setSrc', function _setSrc(_src:String):void {
-                trace("setting src: " + _src);
+                log("setting src: " + _src);
                 src = _src;
-                trace("set src: " + src);
+                log("set src: " + src);
             });
         
             // Playback state
@@ -302,13 +310,13 @@ package {
          * Don't trigger any processing just yet.
          */
         public function load():void {
-            trace("ogv load! src: " + src);
+            log("ogv load! src: " + src);
             started = true;
             needInput = false;
 
             stream = new URLStream();
             stream.addEventListener(Event.OPEN, function _streamOnOpen(event:Event):void {
-                trace("open");
+                log("open");
             });
             stream.addEventListener(ProgressEvent.PROGRESS, function _streamOnProgress(event:ProgressEvent):void {
                 // @todo read into the ogg buffer on demand rather than on download
@@ -318,11 +326,11 @@ package {
                 }
             });
             stream.addEventListener(Event.COMPLETE, function _streamOnComplete(event:Event):void {
-                trace("complete");
+                log("complete");
                 streamComplete = true;
             });
             stream.addEventListener(IOErrorEvent.IO_ERROR, function _streamOnIOError(event:IOErrorEvent):void {
-                trace("error");
+                log("error");
             });
 
             req = new URLRequest(src);
@@ -332,11 +340,11 @@ package {
         private function readStreamBytes():void {
             if (stream.bytesAvailable >= streamBufferSize) {
                 // Advance!
-                trace("buffering " + streamBufferSize);
+                log("buffering " + streamBufferSize);
                 codec.receiveInput(stream, streamBufferSize);
                 pingProcessing(0);
             } else if (streamComplete) {
-                trace("buffering " + stream.bytesAvailable);
+                log("buffering " + stream.bytesAvailable);
                 codec.receiveInput(stream, stream.bytesAvailable);
                 pingProcessing(0);
             
@@ -344,12 +352,12 @@ package {
                 stream = null;
             } else {
                 needInput = true;
-                trace("waiting for more data");
+                log("waiting for more data");
             }
         }
     
         public function play():void {
-            trace("ogv play! " + src);
+            log("ogv play! " + src);
             if (!started) {
                 load();
             }
@@ -361,7 +369,7 @@ package {
         }
     
         public function pause():void {
-            trace("ogv pause!");
+            log("ogv pause!");
             if (!paused) {
                 paused = true;
                 if (nextProcessingTimer) {
@@ -396,7 +404,7 @@ package {
             while (true) {
                 n++;
                 if (n > 100) {
-                    trace("Got stuck in the loop!");
+                    log("Got stuck in the loop!");
                     pingProcessing(10);
                     return;
                 }
@@ -437,7 +445,7 @@ package {
                                 finalDelay = audioBufferedDuration;
                             }
                         }
-                        trace('End of stream reached in ' + finalDelay + ' ms.');
+                        log('End of stream reached in ' + finalDelay + ' ms.');
                         setTimeout(function():void {
                             ended = true;
                             jsCallback('onended');
@@ -484,7 +492,7 @@ package {
                             drawFrame();
                         } else {
                             // Bad packet or something.
-                            trace('Bad video packet or something');
+                            log('Bad video packet or something');
                         }
                         targetFrameTime = currentTime + 1000.0 / fps;
                     }
@@ -506,7 +514,7 @@ package {
                         }
                     }
             
-                    //trace([n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']'].join(", "));
+                    //log([n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']'].join(", "));
                     var nextDelay:Number = Math.min.apply(Math, nextDelays);
                     if (nextDelays.length > 0) {
                         pingProcessing(nextDelay - delta);
@@ -526,7 +534,7 @@ package {
                             targetFrameTime += 1000.0 / fps;
                             pingProcessing(0);
                         } else {
-                            trace('Bad video packet or something');
+                            log('Bad video packet or something');
                             pingProcessing(targetFrameTime - getTimestamp());
                         }
                     } else {
@@ -536,7 +544,7 @@ package {
                     return;
                 } else {
                     // Ok we're just waiting for more input.
-                    trace('Still waiting for headers...');
+                    log('Still waiting for headers...');
                 }
             }
         }
@@ -615,7 +623,7 @@ package {
         private function samplesQueued():Number {
             var sampleCount:int = 0;
             for (var i:int = 0; i < audioBuffers.length; i++) {
-                i += audioBuffers[i][0].length / 4;
+                sampleCount += audioBuffers[i][0].length / 4;
             }
             return sampleCount;
         }
@@ -636,7 +644,7 @@ package {
             while (samplesWritten < audioBufferSize) {
             
                 if (audioBuffers.length == 0) {
-                    //trace('dropped audio!');
+                    //log('dropped audio!');
                     // Out of data? Write some silence to round it out,
                     // and wait for the next set of data...
                     droppedAudio++;
