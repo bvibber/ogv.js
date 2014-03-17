@@ -82,7 +82,6 @@ src/dynamicaudio.swf : src/dynamicaudio.as
 
 
 # And the Flash version of the decoder...
-# Still experimental, not built or used by default yet.
 
 build/flash/root/lib/libogg.a : configureOgg.sh compileOggFlash.sh
 	test -d build || mkdir build
@@ -103,8 +102,11 @@ build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c build/flash
 	test -d build || mkdir build
 	./compileOgvFlash.sh
 
-build/ogv.swf : src/ogv.as src/OgvCodec.as src/YCbCr.as build/flash/ogv-libs.swc
-	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc src/ogv.as
+build/YCbCr.as : src/YCbCr.as.in
+	 cpp -E -w -P -CC src/YCbCr.as.in > build/YCbCr.as
+
+build/ogv.swf : src/ogv.as src/OgvCodec.as build/YCbCr.as build/flash/ogv-libs.swc
+	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc -source-path+=build src/ogv.as
 
 build/ogvswf-version.js : build/ogv.swf
 	echo 'OgvSwfPlayer.buildDate = "'`date -u`'";' > build/ogvswf-version.js

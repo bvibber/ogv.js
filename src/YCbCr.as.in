@@ -5,6 +5,17 @@
  * @copyright 2014
  * @license MIT-style
  */
+
+// Believe it or not these ifs are faster than ?:
+// and WAY faster than a function call!
+#define CLAMP_FFFF(val) if (val & 0xffff0000) { \
+							if (val < 0) { \
+								val = 0; \
+							} else { \
+								val = 0xffff; \
+							} \
+						}
+
 package {
     import flash.utils.ByteArray;
 
@@ -60,29 +71,9 @@ package {
 						r = multY + multCrR;
 						g = multY - multCbCrG;
 						b = multY + multCbB;
-						// Believe it or not these ifs are faster than ?:
-						// and WAY faster than a function call!
-						if (r & 0xffff0000) {
-							if (r < 0) {
-								r = 0;
-							} else {
-								r = 0xffff;
-							}
-						}
-						if (g & 0xffff0000) {
-							if (g < 0) {
-								g = 0;
-							} else {
-								g = 0xffff;
-							}
-						}
-						if (b & 0xffff0000) {
-							if (b < 0) {
-								b = 0;
-							} else {
-								b = 0xffff;
-							}
-						}
+						CLAMP_FFFF(r);
+						CLAMP_FFFF(g);
+						CLAMP_FFFF(b);
 						outPtr0++;
 						output[outPtr0++] = r >> 8;
 						output[outPtr0++] = g >> 8;
@@ -92,27 +83,9 @@ package {
 						r = multY + multCrR;
 						g = multY - multCbCrG;
 						b = multY + multCbB;
-						if (r & 0xffff0000) {
-							if (r < 0) {
-								r = 0;
-							} else {
-								r = 0xffff;
-							}
-						}
-						if (g & 0xffff0000) {
-							if (g < 0) {
-								g = 0;
-							} else {
-								g = 0xffff;
-							}
-						}
-						if (b & 0xffff0000) {
-							if (b < 0) {
-								b = 0;
-							} else {
-								b = 0xffff;
-							}
-						}
+						CLAMP_FFFF(r);
+						CLAMP_FFFF(g);
+						CLAMP_FFFF(b);
 						outPtr0++;
 						output[outPtr0++] = r >> 8;
 						output[outPtr0++] = g >> 8;
@@ -122,27 +95,9 @@ package {
 						r = multY + multCrR;
 						g = multY - multCbCrG;
 						b = multY + multCbB;
-						if (r & 0xffff0000) {
-							if (r < 0) {
-								r = 0;
-							} else {
-								r = 0xffff;
-							}
-						}
-						if (g & 0xffff0000) {
-							if (g < 0) {
-								g = 0;
-							} else {
-								g = 0xffff;
-							}
-						}
-						if (b & 0xffff0000) {
-							if (b < 0) {
-								b = 0;
-							} else {
-								b = 0xffff;
-							}
-						}
+						CLAMP_FFFF(r);
+						CLAMP_FFFF(g);
+						CLAMP_FFFF(b);
 						outPtr1++;
 						output[outPtr1++] = r >> 8;
 						output[outPtr1++] = g >> 8;
@@ -152,27 +107,9 @@ package {
 						r = multY + multCrR;
 						g = multY - multCbCrG;
 						b = multY + multCbB;
-						if (r & 0xffff0000) {
-							if (r < 0) {
-								r = 0;
-							} else {
-								r = 0xffff;
-							}
-						}
-						if (g & 0xffff0000) {
-							if (g < 0) {
-								g = 0;
-							} else {
-								g = 0xffff;
-							}
-						}
-						if (b & 0xffff0000) {
-							if (b < 0) {
-								b = 0;
-							} else {
-								b = 0xffff;
-							}
-						}
+						CLAMP_FFFF(r);
+						CLAMP_FFFF(g);
+						CLAMP_FFFF(b);
 						outPtr1++;
 						output[outPtr1++] = r >> 8;
 						output[outPtr1++] = g >> 8;
@@ -203,27 +140,9 @@ package {
 						r = multY + (409 * colorCr) - 57088;
 						g = multY - (100 * colorCb) - (208 * colorCr) + 34816;
 						b = multY + (516 * colorCb) - 70912;
-						if (r & 0xffff0000) {
-							if (r < 0) {
-								r = 0;
-							} else {
-								r = 0xffff;
-							}
-						}
-						if (g & 0xffff0000) {
-							if (g < 0) {
-								g = 0;
-							} else {
-								g = 0xffff;
-							}
-						}
-						if (b & 0xffff0000) {
-							if (b < 0) {
-								b = 0;
-							} else {
-								b = 0xffff;
-							}
-						}
+						CLAMP_FFFF(r);
+						CLAMP_FFFF(g);
+						CLAMP_FFFF(b);
 						outPtr++;
 						output[outPtr++] = r >> 8;
 						output[outPtr++] = g >> 8;
