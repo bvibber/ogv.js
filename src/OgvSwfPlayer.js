@@ -39,14 +39,22 @@ function OgvSwfPlayer() {
 		return el;
 	}
 	
+	var swfUrl = 'lib/ogv.swf?buildDate=' + encodeURIComponent(OgvSwfPlayer.buildDate);
+
 	var flash = document.createElement('object');
-	flash.appendChild(param('allowscriptaccess', 'always'));
-	flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
 	flash.id = 'ogvswf-flashelement-' + idkey;
 	flash.width = 320;
 	flash.height = 240;
+	// For IE <= 9:
+	if (typeof flash.classid == 'string') {
+		flash.appendChild(param('movie', swfUrl));
+		flash.setAttribute('classid', 'clsid:D27CDB6E-AE6D-11cf-96B8-444553540000');
+	}
+	// And for everybody else:
+	flash.appendChild(param('allowscriptaccess', 'always'));
+	flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
 	flash.type = 'application/x-shockwave-flash';
-	flash.data = 'lib/ogv.swf?buildDate=' + encodeURIComponent(OgvSwfPlayer.buildDate);
+	flash.data = swfUrl;
 
 	self.appendChild(flash);
 	
