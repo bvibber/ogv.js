@@ -42,20 +42,20 @@ package {
         private var poster:String = "";
         private var durationHint:Number = 0;
         private var byteLengthHint:int = 0;
-    
+
         // Playback state vars
         private var started:Boolean = false;
         private var paused:Boolean = true;
         private var ended:Boolean = false;
         private var muted:Boolean = false;
-    
+
         // Metadata and internals...
         private var jsCallbackName:String = null;
         private var codec:OgvCodec = null;
         private var videoInfo:Object = null;
         private var audioInfo:Object = null;
         private var nextProcessingTimer:int = 0;
-    
+
         // Networking state
         private var req:URLRequest = null;
         private var stream:URLStream = null;
@@ -76,10 +76,10 @@ package {
         private var drawingTime:Number = 0;
         private var totalJitter:Number = 0;
         private var lastFrameDecodeTime:Number = 0;
-    
+
         // Poster internals
         private var posterLoader:Loader = null;
-        
+
         // Video internals
         private var fps:Number = 0;
         private var lastFrameTimestamp:Number = 0;
@@ -88,7 +88,7 @@ package {
         private var pixelBuffer:ByteArray = null;
         private var bitmapData:BitmapData = null;
         private var bitmap:Bitmap = null;
-            
+
         // Audio internals
         private var audioBufferSize:Number = 4096; // In samples
         private var targetRate:Number = 44100; // Flash audio is always 44.1 kHz stereo
@@ -115,7 +115,7 @@ package {
             // But this means we will have to manually set scale on the bitmap. Meh.
             stage.addEventListener(Event.RESIZE, function(event:Event):void {
                 resizeForStage();
-            
+
                 // since it seems to lag a lot during browser resizes...
                 setTimeout(resizeForStage, 1);
             });
@@ -123,7 +123,7 @@ package {
             // Who you gonna call?
             jsCallbackName = loaderInfo.parameters.jsCallbackName;
             log('jsCallbackName: ' + jsCallbackName);
-            
+
             // Aaaand, setup the codec.        
             codec = new OgvCodec({
                 audio: true,
@@ -154,7 +154,7 @@ package {
                 }
                 // @todo crop to the picture size
                 bitmapData = new BitmapData(videoInfo.frameWidth, videoInfo.frameHeight, true, 0xff000000);
-            
+
                 bitmap = new Bitmap(bitmapData);
                 bitmap.x = 0;
                 bitmap.y = 0;
@@ -164,10 +164,10 @@ package {
             codec.onmetadataloaded = function():void {
                 jsCallback('onmetadataloaded');
             };
-        
+
             setupCallbacks();
         }
-    
+
         private function resizeForStage():void {
             if (bitmap) {
                 bitmap.scaleX = stage.stageWidth / videoInfo.frameWidth;
@@ -184,7 +184,7 @@ package {
             // This gives only millisecond precision, which ain't great.
             return flash.utils.getTimer();
         }
-    
+
         private function jsCallback(cb:String, args:*=null):void {
             // Call on next tick to avoid surprises
             setTimeout(function():void {
@@ -196,7 +196,7 @@ package {
         private function setupCallbacks():void {
             // your basic player controls!
             ExternalInterface.addCallback('_load', load);
-        
+
             ExternalInterface.addCallback('_play', play);
 
             ExternalInterface.addCallback('_pause', pause);
@@ -233,7 +233,7 @@ package {
                 src = _src;
                 log("set src: " + src);
             });
-        
+
             // Playback state
             ExternalInterface.addCallback('_getBufferedTime', function _getBufferedTime():Number {
                 // @todo: implement
@@ -259,7 +259,7 @@ package {
                 poster = _poster;
                 loadPoster();
             });
-        
+
             // Various metadata!
             ExternalInterface.addCallback('_setDurationHint', function _setDurationHint(_durationHint:Number):void {
                 this.durationHint = _durationHint;
@@ -305,16 +305,15 @@ package {
                     return 0;
                 }
             });
-        
 
             // The JS side will check that this callback has been added
             // to determine if we're ready to roll.
             ExternalInterface.addCallback('_isReady', function _isReady():Boolean {
                 return true;
             });
-        
+
         }
-        
+
         private function loadPoster():void {
             if (posterLoader) {
                 removeChild(posterLoader);
@@ -332,13 +331,13 @@ package {
                 posterLoader.height = stage.stageHeight;
                 posterLoader.load(urlRequest);
                 addChild(posterLoader);
-                
+
                 posterLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function():void {
                     resizeForStage();
                 });
             }
         }
-    
+
         /**
          * Start loading the source file over the network.
          * Don't trigger any processing just yet.
@@ -370,7 +369,7 @@ package {
             req = new URLRequest(src);
             stream.load(req);
         }
-    
+
         private function readStreamBytes():void {
             if (stream.bytesAvailable >= streamBufferSize) {
                 // Advance!
@@ -381,7 +380,7 @@ package {
                 log("buffering " + stream.bytesAvailable);
                 codec.receiveInput(stream, stream.bytesAvailable);
                 pingProcessing(0);
-            
+
                 // Kill the stream...
                 stream = null;
             } else {
@@ -389,7 +388,7 @@ package {
                 log("waiting for more data");
             }
         }
-    
+
         public function play():void {
             log("ogv play! " + src);
             if (!started) {
@@ -401,7 +400,7 @@ package {
             }
             jsCallback('onplay');
         }
-    
+
         public function pause():void {
             log("ogv pause!");
             if (!paused) {
@@ -412,7 +411,7 @@ package {
                 jsCallback('onpause');
             }
         }
-    
+
         private function pingProcessing(delay:Number):void {
             if (nextProcessingTimer) {
                 // already scheduled
@@ -423,7 +422,7 @@ package {
                 nextProcessingTimer = setTimeout(doProcessing, delay);
             }
         }
-    
+
         private function doProcessing():void {
             nextProcessingTimer = 0;
 
@@ -433,7 +432,7 @@ package {
                 var audioState:Object = getPlaybackState();
                 audioBufferedDuration = (audioState.samplesQueued / targetRate) * 1000;
             }
-    
+
             var n:int = 0;
             while (true) {
                 n++;
@@ -487,12 +486,12 @@ package {
                     }
                     return;
                 }
-        
+
                 if ((hasAudio || hasVideo) && !(codec.audioReady || codec.frameReady)) {
                     // Have to process some more pages to find data. Continue the loop.
                     continue;
                 }
-    
+
                 if (hasAudio) {
                     // Drive on the audio clock!
                     var fudgeDelta:Number = 0.1,
@@ -506,7 +505,7 @@ package {
                         delta = (getTimestamp() - start);
                         lastFrameDecodeTime += delta;
                         audioDecodingTime += delta;
-            
+
                         start = getTimestamp();
                         if (ok) {
                             var buffer:Vector.<ByteArray> = codec.dequeueAudio();
@@ -530,7 +529,7 @@ package {
                         }
                         targetFrameTime = currentTime + 1000.0 / fps;
                     }
-        
+
                     // Check in when all audio runs out
                     var bufferDuration:Number = (audioBufferSize / targetRate) * 1000;
                     var nextDelays:Array = [];
@@ -539,7 +538,7 @@ package {
                     } else {
                         // Check in when the audio buffer runs low again...
                         nextDelays.push(bufferDuration);
-                
+
                         if (hasVideo) {
                             // Check in when the next frame is due
                             // Subtract time we already spent decoding
@@ -547,7 +546,7 @@ package {
                             nextDelays.push(frameDelay - deltaTimeSpent);
                         }
                     }
-            
+
                     //log([n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']'].join(", "));
                     var nextDelay:Number = Math.min.apply(Math, nextDelays);
                     if (nextDelays.length > 0) {
@@ -582,21 +581,21 @@ package {
                 }
             }
         }
-    
+
         // Video output functions...
         private function drawFrame():void {
             var yCbCrBuffer:Object = codec.dequeueFrame();
             frameEndTimestamp = yCbCrBuffer.timestamp;
 
             var start:Number, delta:Number;
-        
+
             // colorspace conversion        	
             start = getTimestamp();
             YCbCr.convertYCbCr(yCbCrBuffer, pixelBuffer);
             delta = getTimestamp() - start;
             colorTime += delta;
             lastFrameDecodeTime += delta;
-        
+
             // drawing
             start = getTimestamp();
             var rect:Rectangle = new Rectangle(0, 0, videoInfo.frameWidth, videoInfo.frameHeight);
@@ -608,7 +607,7 @@ package {
             drawingTime += delta;
             framesProcessed++;
             framesPlayed++;
-        
+
             var newFrameTimestamp:Number = getTimestamp(),
                 wallClockTime:Number = newFrameTimestamp - lastFrameTimestamp,
                 jitter:Number = Math.abs(wallClockTime - 1000 / videoInfo.fps);
@@ -627,7 +626,7 @@ package {
                 dropped: droppedAudio
             };
         }
-    
+
         private function samplesQueued():Number {
             var sampleCount:int = 0;
             for (var i:int = 0; i < audioBuffers.length; i++) {
@@ -635,7 +634,7 @@ package {
             }
             return sampleCount;
         }
-    
+
         private function playbackPosition():Number {
             if (soundChannel == null) {
                 return 0;
@@ -648,9 +647,9 @@ package {
             var i:int;
             var samplesWritten:int = 0;
             var leftSample:Number, rightSample:Number;
-        
+
             while (samplesWritten < audioBufferSize) {
-            
+
                 if (audioBuffers.length == 0) {
                     //log('dropped audio!');
                     // Out of data? Write some silence to round it out,
@@ -660,17 +659,17 @@ package {
                     while (samplesWritten < audioBufferSize) {
                         event.data.writeFloat(0.0);
                         event.data.writeFloat(0.0);
-                    
+
                         samplesWritten++;
                     }
                 } else {
                     var buffer:Vector.<ByteArray> = audioBuffers.shift();
-                
+
                     var channel0:ByteArray = buffer[0];
                     channel0.position = 0;
 
                     var bufSamples:int = channel0.length / 4;
-                
+
                     var channel1:ByteArray;
                     if (buffer.length > 1) {
                         // @todo downmix >2 channels
@@ -679,7 +678,7 @@ package {
                     } else {
                         channel1 = null;
                     }
-                
+
                     // Vorbis gave us separate channels, Flash wants interleaved samples.
                     for (i = 0; i < bufSamples; i++) {
                         leftSample = channel0.readFloat();
@@ -699,4 +698,3 @@ package {
         }
     }
 }
-
