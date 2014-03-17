@@ -11,10 +11,12 @@
 package {
     import flash.display.Bitmap;
     import flash.display.BitmapData;
+    import flash.display.Loader;
     import flash.display.Sprite;
     import flash.display.Stage;
     import flash.display.StageAlign;
     import flash.display.StageScaleMode;
+    import flash.events.AsyncErrorEvent;
     import flash.events.Event;
     import flash.events.IOErrorEvent;
     import flash.events.ProgressEvent;
@@ -75,6 +77,9 @@ package {
         private var totalJitter:Number = 0;
         private var lastFrameDecodeTime:Number = 0;
     
+        // Poster internals
+        private var posterLoader:Loader = null;
+        
         // Video internals
         private var fps:Number = 0;
         private var lastFrameTimestamp:Number = 0;
@@ -168,6 +173,10 @@ package {
                 bitmap.scaleX = stage.stageWidth / videoInfo.frameWidth;
                 bitmap.scaleY = stage.stageHeight / videoInfo.frameHeight;
             }
+            if (posterLoader) {
+                posterLoader.width = stage.stageWidth;
+                posterLoader.height = stage.stageHeight;
+            }
         }
 
         private function getTimestamp():Number {
@@ -247,7 +256,8 @@ package {
                 return muted;
             });
             ExternalInterface.addCallback('_setPoster', function _setPoster(_poster:String):void {
-                this.poster = _poster;
+                poster = _poster;
+                loadPoster();
             });
         
             // Various metadata!
@@ -303,6 +313,30 @@ package {
                 return true;
             });
         
+        }
+        
+        private function loadPoster():void {
+            if (posterLoader) {
+                removeChild(posterLoader);
+                posterLoader = null;
+            }
+            if (poster == "" || poster == null) {
+                // no poster for you
+            } else {
+                var urlRequest:URLRequest = new URLRequest(poster);
+
+                posterLoader = new Loader();
+                posterLoader.x = 0;
+                posterLoader.y = 0;
+                posterLoader.width = stage.stageWidth;
+                posterLoader.height = stage.stageHeight;
+                posterLoader.load(urlRequest);
+                addChild(posterLoader);
+                
+                posterLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function():void {
+                    resizeForStage();
+                });
+            }
         }
     
         /**

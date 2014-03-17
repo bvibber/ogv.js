@@ -304,7 +304,7 @@ function OgvSwfPlayer() {
 		},
 		set: function setPoster(val) {
 			waitForFlash(function() {
-				flash._setPoster(poster);
+				flash._setPoster(val);
 			});
 		}
 	});
