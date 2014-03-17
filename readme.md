@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-libogg, libvorbis, and libtheora compiled to JavaScript with Emscripten.
+libogg, libvorbis, and libtheora compiled to JavaScript with Emscripten, and to Flash with Crossbridge.
 
 
 ## Current status
@@ -43,6 +43,9 @@ Testing browsers (these support .ogv natively):
 * Firefox 27
 * Chrome 32
 
+Experimental all-Flash support not yet tested on:
+* Internet Explorer 7/8/9 on Windows XP/Vista/7
+
 
 ## Performance
 
@@ -79,6 +82,11 @@ It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11, Chrome, Firefox), if that makes a measurable difference.
 
 
+*Flash decoder fallback*
+
+The Flash version seems to decode video fairly well, but the YCbCr->ARGB conversion is significantly slower than the JavaScript version even on IE. There is likely a better way to do that in Flash anyway though... might also try moving that code into C, in case the compiler does better.
+
+
 ## Difficulties
 
 *Threading*
@@ -91,6 +99,8 @@ However there will be communication overhead that may make this not worth it; in
 
 See [Threading notes on the wiki](https://github.com/brion/ogv.js/wiki/Threading) for thoughts on how work could be broken over a couple of threads.
 
+Note that in Flash, more direct heap sharing may be possible.
+
 
 *Streaming*
 
@@ -100,10 +110,12 @@ In Firefox, the 'moz-chunked-array' responseType on XHR is used to stream data, 
 
 Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This has no flow control so will buffer into memory as fast as possible. This will also buffer up to twice the size of the total file in memory for the entire lifetime of the player, which is wasteful but there doesn't seem to be a way around it without dividing up into subrange requests.
 
+In Flash, a URLStream is used. This is similar to the XHR+binary string in terms of flow control, but uses less memory.
+
 
 *Seeking*
 
-Seeking is tough. Need to do some research:
+Seeking is tough; not yet implemented. Need to do some research:
 * how to determine file length in time
 * how to estimate position in file to seek to based on time target
 * how to reinitialize the decoder context after seeking
@@ -121,6 +133,8 @@ Firefox supports Web Audio API in recent versions.
 
 IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
 
+The all-Flash decoder fallback also supports audio.
+
 A/V synchronization is performed on files with both audio and video, and seems to
 actually work. Yay!
 
@@ -132,6 +146,15 @@ Something in the combination of the relooper and the code generation in the curr
 Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscripten/wiki/LLVM-Backend) seems to avoid hitting the iOS JIT bug while retaining full relooper performance.
 
 
+## Crossbridge issues
+
+Crossbridge compiles hella slow, especially on the configure scripts.
+
+Have not yet tested using Crossbridge on Linux (only on Mac).
+
+Have not yet attempted link-time optimizations on the Flash build.
+
+
 ## Upstream library notes
 
 We've experimented with tremor (libivorbis), an integer-only variant of libvorbis. This actually does *not* decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library. However on slow devices like iPod Touch 5th-generation, it makes a significant negative impact on the decode time so we've gone back to libvorbis.
@@ -139,7 +162,7 @@ We've experimented with tremor (libivorbis), an integer-only variant of libvorbi
 Libtheora needs a slight patch to a function signature to pass emscripten's checks for asm.js-mode function pointer compatibility.
 
 
-## Building
+## Building JS components
 
 1. You will need autoconf, automake, and libtool. These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
 2. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
@@ -171,6 +194,8 @@ Currently this builds a non-functional build/ogv.swf which is not yet used in th
 ## Building the demo
 
 If you did all the setup above, just run `make demo` or `make`. Look in build/demo/ and enjoy!
+
+Note that the demo includes the JS and Flash players, so will take a while to build from scratch but is right quick once they're built.
 
 
 ## License
