@@ -1,3 +1,10 @@
+/**
+ * Basic YCbCr->RGB conversion
+ *
+ * @author Brion Vibber <brion@pobox.com>
+ * @copyright 2014
+ * @license MIT-style
+ */
 (function() {
 	var global = this;
 

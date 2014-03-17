@@ -144,9 +144,9 @@ Libtheora needs a slight patch to a function signature to pass emscripten's chec
 1. You will need autoconf, automake, and libtool. These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
 2. Install [Emscripten](https://github.com/kripken/emscripten/wiki/Tutorial).
 3. `git submodule update --init`
-4. Run `make` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
+4. Run `make js` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
-See a sample web page in build/demo/
+To build the demo into build/demo/, you'll have to build the Flash bits as well. Be warned!
 
 
 ## Building Flash components
@@ -168,6 +168,11 @@ Building experimental all-Flash fallback player:
 Currently this builds a non-functional build/ogv.swf which is not yet used in the demo player.
 
 
+## Building the demo
+
+If you did all the setup above, just run `make demo` or `make`. Look in build/demo/ and enjoy!
+
+
 ## License
 
 libogg, libvorbis, and libtheora are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
@@ -175,3 +180,5 @@ libogg, libvorbis, and libtheora are available under their respective licenses, 
 Based on build scripts from https://github.com/devongovett/ogg.js
 
 dynamicaudio.as and other Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman (see src/AudioFeeder.js flash fallback section).
+
+Flash/ActionScript3 player variant under MIT license.

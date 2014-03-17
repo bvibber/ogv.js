@@ -7,6 +7,10 @@
  * IE 10: uses MSStream / MSStreamReader for true streaming
  * Firefox: uses moz-chunked-arraybuffer to buffer & deliver during download
  * Safari, Chrome: uses binary string to buffer & deliver during download
+ *
+ * @author Brion Vibber <brion@pobox.com>
+ * @copyright 2014
+ * @license MIT-style
  */
 function StreamFile(options) {
 	var self = this,
