@@ -16,6 +16,19 @@
 							} \
 						}
 
+// This gets repetitive.
+#define PIXEL_OUT(ptr) 	r = multY + multCrR; \
+						g = multY - multCbCrG; \
+						b = multY + multCbB; \
+						CLAMP_FFFF(r); \
+						CLAMP_FFFF(g); \
+						CLAMP_FFFF(b); \
+						ptr++; \
+						output[ptr++] = r >> 8; \
+						output[ptr++] = g >> 8; \
+						output[ptr++] = b >> 8;
+
+
 package {
     import flash.utils.ByteArray;
 
@@ -68,52 +81,16 @@ package {
 						multCbB   = (516 * colorCb) - 70912;
 
 						multY = (298 * bytesY[Y0Ptr++]);
-						r = multY + multCrR;
-						g = multY - multCbCrG;
-						b = multY + multCbB;
-						CLAMP_FFFF(r);
-						CLAMP_FFFF(g);
-						CLAMP_FFFF(b);
-						outPtr0++;
-						output[outPtr0++] = r >> 8;
-						output[outPtr0++] = g >> 8;
-						output[outPtr0++] = b >> 8;
+						PIXEL_OUT(outPtr0);
 
 						multY = (298 * bytesY[Y0Ptr++]);
-						r = multY + multCrR;
-						g = multY - multCbCrG;
-						b = multY + multCbB;
-						CLAMP_FFFF(r);
-						CLAMP_FFFF(g);
-						CLAMP_FFFF(b);
-						outPtr0++;
-						output[outPtr0++] = r >> 8;
-						output[outPtr0++] = g >> 8;
-						output[outPtr0++] = b >> 8;
+						PIXEL_OUT(outPtr0);
 
 						multY = (298 * bytesY[Y1Ptr++]);
-						r = multY + multCrR;
-						g = multY - multCbCrG;
-						b = multY + multCbB;
-						CLAMP_FFFF(r);
-						CLAMP_FFFF(g);
-						CLAMP_FFFF(b);
-						outPtr1++;
-						output[outPtr1++] = r >> 8;
-						output[outPtr1++] = g >> 8;
-						output[outPtr1++] = b >> 8;
+						PIXEL_OUT(outPtr1);
 
 						multY = (298 * bytesY[Y1Ptr++]);
-						r = multY + multCrR;
-						g = multY - multCbCrG;
-						b = multY + multCbB;
-						CLAMP_FFFF(r);
-						CLAMP_FFFF(g);
-						CLAMP_FFFF(b);
-						outPtr1++;
-						output[outPtr1++] = r >> 8;
-						output[outPtr1++] = g >> 8;
-						output[outPtr1++] = b >> 8;
+						PIXEL_OUT(outPtr1);
 					}
 					outPtr0 += outStride;
 					outPtr1 += outStride;
@@ -136,17 +113,12 @@ package {
 						// Quickie YUV conversion
 						// https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.2020_conversion
 						// multiplied by 256 for integer-friendliness
+						multCrR   = (409 * colorCr) - 57088;
+						multCbCrG = (100 * colorCb) + (208 * colorCr) - 34816;
+						multCbB   = (516 * colorCb) - 70912;
+
 						multY = 298 * bytesY[YPtr++];
-						r = multY + (409 * colorCr) - 57088;
-						g = multY - (100 * colorCb) - (208 * colorCr) + 34816;
-						b = multY + (516 * colorCb) - 70912;
-						CLAMP_FFFF(r);
-						CLAMP_FFFF(g);
-						CLAMP_FFFF(b);
-						outPtr++;
-						output[outPtr++] = r >> 8;
-						output[outPtr++] = g >> 8;
-						output[outPtr++] = b >> 8;
+						PIXEL_OUT(outPtr);
 					}
 				}
 			}
