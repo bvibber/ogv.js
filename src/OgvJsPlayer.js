@@ -35,7 +35,7 @@ function OgvJsPlayer() {
 	}
 
 	var getTimestamp;
-	if (window.performance === undefined) {
+	if (window.performance === undefined || window.performance.now === undefined) {
 		getTimestamp = Date.now;
 	} else {
 		getTimestamp = window.performance.now.bind(window.performance);

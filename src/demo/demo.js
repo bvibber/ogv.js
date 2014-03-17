@@ -1,11 +1,11 @@
 (function() {
 
 	var getTimestamp;
-	if (window.performance === undefined) {
-		console.log("window.performance is not available; using Date.now() for benchmarking");
+	if (window.performance === undefined || window.performance.now === undefined) {
+		console.log("window.performance.now is not available; using Date.now() for benchmarking");
 		getTimestamp = Date.now;
 	} else {
-		console.log("window.performance is available; using window.performance.now() for benchmarking");
+		console.log("window.performance.now is available; using window.performance.now() for benchmarking");
 		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
