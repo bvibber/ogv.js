@@ -2,11 +2,11 @@
 
 all : demo
 
-js : build/ogv.js
+js : build/ogvjs.js
 
-flash : build/ogv.swf
+flash : build/ogvswf.js
 
-demo : js build/demo/index.html
+demo : build/demo/index.html
 
 clean:
 	rm -rf build
@@ -39,25 +39,23 @@ build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/li
 	test -d build || mkdir build
 	./compileOgvJs.sh
 
-build/ogv.js : src/ogv-main.js build/js/ogv-libs.js
-	 cpp -E -w -P -CC src/ogv-main.js > build/ogv.js
+build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
+	 cpp -E -w -P -CC src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
+build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/OgvJsPlayer.js build/OgvJsCodec.js
+	 cpp -E -w -P -CC src/ogvjs.js.in > build/ogvjs.js
 
 # The player demo
-build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/player.js src/demo/motd.js src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/ogv.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
+build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
 	test -d build/demo || mkdir build/demo
 	cp src/demo/index.html build/demo/index.html
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
-	cp src/demo/player.js build/demo/player.js
 	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
 	
 	test -d build/demo/lib || mkdir build/demo/lib
-	cp src/StreamFile.js build/demo/lib/StreamFile.js
-	cp src/AudioFeeder.js build/demo/lib/AudioFeeder.js
-	cp src/YCbCr.js build/demo/lib/YCbCr.js
-	cp build/ogv.js build/demo/lib/ogv.js
+	cp build/ogvjs.js build/demo/lib/ogvjs.js
 	cp build/ogvswf.js build/demo/lib/ogvswf.js
 	cp build/ogv.swf build/demo/lib/ogv.swf
 
@@ -111,5 +109,5 @@ build/ogv.swf : src/ogv.as src/OgvCodec.as src/YCbCr.as build/flash/ogv-libs.swc
 build/ogvswf-version.js : build/ogv.swf
 	echo 'OgvSwfPlayer.buildDate = "'`date -u`'";' > build/ogvswf-version.js
 
-build/ogvswf.js : src/ogvswf.js build/ogvswf-version.js
-	cat src/ogvswf.js build/ogvswf-version.js > build/ogvswf.js
+build/ogvswf.js : src/OgvSwfPlayer.js build/ogvswf-version.js
+	cat src/OgvSwfPlayer.js build/ogvswf-version.js > build/ogvswf.js
