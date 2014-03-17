@@ -558,7 +558,6 @@ package {
         
             // colorspace conversion        	
             start = getTimestamp();
-            //convertYCbCr(yCbCrBuffer, pixelBuffer);
             YCbCr.convertYCbCr(yCbCrBuffer, pixelBuffer);
             delta = getTimestamp() - start;
             colorTime += delta;
@@ -585,32 +584,7 @@ package {
             lastFrameDecodeTime = 0;
             lastFrameTimestamp = newFrameTimestamp;
         }
-    
-        private function convertYCbCr(yCbCrBuffer:Object, pixelBuffer:ByteArray):void {
-            // @todo port the actual code over
-            // @todo change to copy directly out of the heap
-            var w:int = videoInfo.frameWidth,
-                h:int = videoInfo.frameHeight,
-                strideY:int = yCbCrBuffer.strideY;
-            var bytesY:ByteArray = yCbCrBuffer.bytesY;
-            pixelBuffer.position = 0;
-            var colorY:int;
-            var x:int, y:int;
-            var yPtr:int;
-            var outPtr:int = 0;
-            for (y = 0; y < h; y++) {
-                yPtr = y * strideY;
-                for (x = 0; x < w; x++) {
-                    colorY = bytesY[yPtr++];
-                    // ARGB big-endian
-                    pixelBuffer.writeInt(0xff000000 |
-                                         colorY << 16 |
-                                         colorY << 8 |
-                                         colorY);
-                }
-            }
-        }
-    
+
         // Audio output functions...
         private function getPlaybackState():Object {
             return {
