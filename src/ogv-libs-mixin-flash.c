@@ -71,6 +71,52 @@ void OgvSwfDecodeAudio()
 }
 
 
+static unsigned char *bufferARGB = NULL;
+void OgvSwfConvertYCbCr() __attribute__((used,
+	annotate("as3sig:public function OgvSwfConvertYCbCr(bufferY:int,bufferCb:int,bufferCr:int,strideY:int,strideCb:int,strideCr:int,width:int,height:int,hdec:int,vdec:int):int"),
+	annotate("as3package:com.brionv.ogvlibs")));
+void OgvSwfConvertYCbCr()
+{
+	unsigned char *bufferY;
+	unsigned char *bufferCb;
+	unsigned char *bufferCr;
+	int strideY;
+	int strideCb;
+	int strideCr;
+	int width;
+	int height;
+	int hdec;
+	int vdec;
+
+	AS3_GetScalarFromVar(bufferY, bufferY);
+	AS3_GetScalarFromVar(bufferCb, bufferCb);
+	AS3_GetScalarFromVar(bufferCr, bufferCr);
+	AS3_GetScalarFromVar(strideY, strideY);
+	AS3_GetScalarFromVar(strideCb, strideCb);
+	AS3_GetScalarFromVar(strideCr, strideCr);
+	AS3_GetScalarFromVar(width, width);
+	AS3_GetScalarFromVar(height, height);
+	AS3_GetScalarFromVar(hdec, hdec);
+	AS3_GetScalarFromVar(vdec, vdec);
+
+	if (bufferARGB == NULL) {
+		int i;
+		bufferARGB = (unsigned char *)malloc(width * height * 8);
+		for (i = 0; i < width * height * 4; i += 4) {
+			bufferARGB[i] = 0xff; // prefill alpha
+		}
+	}
+
+	convertYCbCr(bufferY, bufferCb, bufferCr,
+	             strideY, strideCb, strideCr,
+	             width, height,
+	             hdec, vdec,
+	             bufferARGB);
+
+	AS3_Return((int)bufferARGB);
+}
+
+
 // Public vars for the callbacks...
 package_as3(
     "#package public\n"
@@ -131,7 +177,6 @@ void OgvJsOutputFrameReady(double videoPosition)
 	);
 }
 
-static unsigned char *argbBuffer = NULL;
 void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
@@ -139,18 +184,6 @@ void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              int hdec, int vdec,
                              double timestamp)
 {
-	if (argbBuffer == NULL) {
-		int i;
-		argbBuffer = (unsigned char *)malloc(width * height * 8);
-		for (i = 0; i < width * height * 4; i += 4) {
-			argbBuffer[i] = 0xff; // prefill alpha
-		}
-	}
-	convertYCbCr(bufferY, bufferCb, bufferCr,
-	             strideY, strideCb, strideCr,
-	             width, height,
-	             hdec, vdec,
-	             argbBuffer);
 	inline_as3(
 		"ogvSwfOutputFrameCallback(\n"
 		"  %0, %1,\n"
@@ -158,7 +191,7 @@ void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
 		"  %4, %5,\n"
 		"  %6, %7,\n"
 		"  %8, %9,\n"
-		"  %10, %11\n"
+		"  %10\n"
 		");\n"
 		:
 		: "r"((int)bufferY),
@@ -171,8 +204,7 @@ void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
 		  "r"(height),
 		  "r"(hdec),
 		  "r"(vdec),
-		  "r"(timestamp),
-		  "r"((int)argbBuffer)
+		  "r"(timestamp)
 	);
 }
 

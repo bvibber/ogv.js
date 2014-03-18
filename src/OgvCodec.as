@@ -10,6 +10,7 @@
  */
 package {
     import flash.utils.ByteArray;
+    import flash.utils.Endian;
     import flash.utils.IDataInput;
 
     import com.brionv.ogvlibs.CModule;
@@ -19,6 +20,7 @@ package {
     import com.brionv.ogvlibs.OgvSwfProcess;
     import com.brionv.ogvlibs.OgvSwfDecodeFrame;
     import com.brionv.ogvlibs.OgvSwfDecodeAudio;
+    import com.brionv.ogvlibs.OgvSwfConvertYCbCr;
 
     import com.brionv.ogvlibs.ogvSwfMetadataLoadedCallback;
     import com.brionv.ogvlibs.ogvSwfInitVideoCallback;
@@ -180,6 +182,18 @@ package {
                 throw new Error("called dequeueFrame when no frame ready");
             }
         }
+        
+        public function convertYCbCr(yCbCrBuffer:Object):ByteArray {
+            var bufferARGB:int = OgvSwfConvertYCbCr(
+                yCbCrBuffer.bufferY, yCbCrBuffer.bufferCb, yCbCrBuffer.bufferCr,
+                yCbCrBuffer.strideY, yCbCrBuffer.strideCb, yCbCrBuffer.strideCr,
+                yCbCrBuffer.width, yCbCrBuffer.height,
+                yCbCrBuffer.hdec, yCbCrBuffer.vdec
+            );
+            var bytesARGB:ByteArray = extractBuffer(bufferARGB, yCbCrBuffer.width * yCbCrBuffer.height * 4);
+            bytesARGB.endian = Endian.BIG_ENDIAN; // Switch the endian back or it'll get byte-swapped later
+            return bytesARGB;
+        }
 
         /**
          * Decode the last-found audio packets
@@ -255,16 +269,20 @@ package {
                                              bufferCr:int, strideCr:int,
                                              width:int, height:int,
                                              hdec:int, vdec:int,
-                                             timestamp:Number,
-                                             bufferARGB:int):void 
+                                             timestamp:Number):void 
         {
-            var bytesARGB:ByteArray = extractBuffer(bufferARGB, width * height * 4);
-
             // And queue up the output buffer!
             _queuedFrame = {
-                bytesARGB: bytesARGB,
+                bufferY: bufferY,
+                bufferCb: bufferCb,
+                bufferCr: bufferCr,
+                strideY: strideY,
+                strideCb: strideCb,
+                strideCr: strideCr,
                 width: width,
                 height: height,
+                hdec: hdec,
+                vdec: vdec,
                 timestamp: timestamp
             };
         }

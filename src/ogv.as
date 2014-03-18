@@ -591,9 +591,8 @@ package {
 
             // colorspace conversion        	
             start = getTimestamp();
-            yCbCrBuffer.bytesARGB.position = 0;
-            pixelBuffer.position = 0;
-            pixelBuffer.writeBytes(yCbCrBuffer.bytesARGB, 0, yCbCrBuffer.width * yCbCrBuffer.height * 4);
+            //YCbCr.convertYCbCr(yCbCrBuffer, pixelBuffer);
+            var bytesARGB:ByteArray = codec.convertYCbCr(yCbCrBuffer);
             delta = getTimestamp() - start;
             colorTime += delta;
             lastFrameDecodeTime += delta;
@@ -601,8 +600,8 @@ package {
             // drawing
             start = getTimestamp();
             var rect:Rectangle = new Rectangle(0, 0, videoInfo.frameWidth, videoInfo.frameHeight);
-            pixelBuffer.position = 0;
-            bitmapData.setPixels(rect, pixelBuffer);
+            bytesARGB.position = 0;
+            bitmapData.setPixels(rect, bytesARGB);
             delta = getTimestamp() - start;
 
             lastFrameDecodeTime += delta;
