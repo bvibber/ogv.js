@@ -34,7 +34,6 @@ package {
     import flash.utils.clearTimeout;
 
     import OgvCodec;
-    import YCbCr;
 
     public class ogv extends Sprite {
         // Property backing vars
@@ -591,7 +590,6 @@ package {
 
             // colorspace conversion        	
             start = getTimestamp();
-            //YCbCr.convertYCbCr(yCbCrBuffer, pixelBuffer);
             var bytesARGB:ByteArray = codec.convertYCbCr(yCbCrBuffer);
             delta = getTimestamp() - start;
             colorTime += delta;

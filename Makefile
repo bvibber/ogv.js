@@ -102,10 +102,7 @@ build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c src/YCbCr.h
 	test -d build || mkdir build
 	./compileOgvFlash.sh
 
-build/YCbCr.as : src/YCbCr.as.in
-	 cpp -E -w -P -CC src/YCbCr.as.in > build/YCbCr.as
-
-build/ogv.swf : src/ogv.as src/OgvCodec.as build/YCbCr.as build/flash/ogv-libs.swc
+build/ogv.swf : src/ogv.as src/OgvCodec.as build/flash/ogv-libs.swc
 	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc -source-path+=build src/ogv.as
 
 build/ogvswf-version.js : build/ogv.swf
