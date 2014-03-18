@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export CFLAGS=-Os
+
 dir=`pwd`
 
 # set up the build directory

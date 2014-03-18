@@ -4,7 +4,7 @@
 # Warning: -O2 enables the emscripten relooper which, on current release version hangs
 # on arm64 iOS devices in Vorbis decoding. Use with emscripten-fastcomp for iOS arm64!
 EMCC_FAST_COMPILER=1 emcc \
-  -O2 \
+  -Os \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s WARN_ON_UNDEFINED_SYMBOLS=1 \
