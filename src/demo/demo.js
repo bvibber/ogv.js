@@ -121,7 +121,8 @@
 			averageColorTime = info.colorTime / info.framesProcessed;
 			averageDrawingTime = info.drawingTime / info.framesProcessed;
 
-			var targetPerFrameTime = 1000 / benchmarkTargetFps;
+			var targetPerFrameTime = info.targetPerFrameTime;
+			benchmarkTargetFps = 1000 / targetPerFrameTime;
 			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime);
 			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageBufferTime + averageColorTime + averageDrawingTime);
 			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime);

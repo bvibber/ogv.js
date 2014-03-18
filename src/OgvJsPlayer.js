@@ -48,7 +48,8 @@ function OgvJsPlayer() {
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
 	var framesProcessed = 0, // frames
-		demuxingTime = 0, // seconds
+		targetPerFrameTime = 1000 / 60, // ms
+		demuxingTime = 0, // ms
 		videoDecodingTime = 0, // ms
 		audioDecodingTime = 0, // ms
 		bufferTime = 0, // ms
@@ -408,6 +409,7 @@ function OgvJsPlayer() {
 		codec.oninitvideo = function(info) {
 			videoInfo = info;
 			fps = info.fps;
+			targetPerFrameTime = 1000 / fps;
 			
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
@@ -539,6 +541,7 @@ function OgvJsPlayer() {
 	 */
 	self.getPlaybackStats = function() {
 		return {
+			targetPerFrameTime: targetPerFrameTime,
 			framesProcessed: framesProcessed,
 			demuxingTime: demuxingTime,
 			videoDecodingTime: videoDecodingTime,

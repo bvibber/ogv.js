@@ -67,6 +67,7 @@ package {
         private var framesPlayed:Number = 0;
         private var droppedAudio:Number = 0;
         // Playback stats, in ms
+        private var targetPerFrameTime:Number = 1000 / 60;
         private var demuxingTime:Number = 0;
         private var videoDecodingTime:Number = 0;
         private var audioDecodingTime:Number = 0;
@@ -142,6 +143,7 @@ package {
             codec.oninitvideo = function(info:Object):void {
                 videoInfo = info;
                 fps = videoInfo.fps;
+                targetPerFrameTime = 1000 / fps;
 
                 // Create our target bitmap!
                 var nbytes:int = videoInfo.frameWidth * videoInfo.frameHeight * 4;
@@ -206,6 +208,7 @@ package {
             // Custom playback stats calls...
             ExternalInterface.addCallback('_getPlaybackStats', function _getPlaybackStats():Object {
                 return {
+                    targetPerFrameTime: targetPerFrameTime,
                     framesProcessed: framesProcessed,
                     demuxingTime: demuxingTime,
                     videoDecodingTime: videoDecodingTime,
