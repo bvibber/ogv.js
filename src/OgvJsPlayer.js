@@ -136,7 +136,7 @@ function OgvJsPlayer() {
 	function doFrameComplete() {
 		var newFrameTimestamp = getTimestamp(),
 			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
-			jitter = Math.abs(wallClockTime - 1000 / videoInfo.fps);
+			jitter = Math.abs(wallClockTime - 1000 / fps);
 		totalJitter += jitter;
 
 		self.onframecallback({
