@@ -43,6 +43,7 @@ package {
         private var _videoInfo:Object = null;
         private var _frameReady:Boolean = false;
         private var _queuedFrame:Object = null;
+        private var _bytesARGB:ByteArray = null;
 
         // Public callbacks
         // @todo clean up this interface
@@ -182,7 +183,13 @@ package {
                 throw new Error("called dequeueFrame when no frame ready");
             }
         }
-        
+
+        /**
+         * @param yCbCrBuffer dequeued frame info structure
+         * @return ByteArray full of ARGB pixels ready to be drawn
+         *
+         * Warning: the buffer will be reused.
+         */
         public function convertYCbCr(yCbCrBuffer:Object):ByteArray {
             var bufferARGB:int = OgvSwfConvertYCbCr(
                 yCbCrBuffer.bufferY, yCbCrBuffer.bufferCb, yCbCrBuffer.bufferCr,
@@ -190,9 +197,12 @@ package {
                 yCbCrBuffer.width, yCbCrBuffer.height,
                 yCbCrBuffer.hdec, yCbCrBuffer.vdec
             );
-            var bytesARGB:ByteArray = extractBuffer(bufferARGB, yCbCrBuffer.width * yCbCrBuffer.height * 4);
-            bytesARGB.endian = Endian.BIG_ENDIAN; // Switch the endian back or it'll get byte-swapped later
-            return bytesARGB;
+
+            _bytesARGB.position = 0;
+            CModule.readBytes(bufferARGB, yCbCrBuffer.width * yCbCrBuffer.height * 4, _bytesARGB);
+            _bytesARGB.position = 0;
+
+            return _bytesARGB;
         }
 
         /**
@@ -255,6 +265,8 @@ package {
         private function initVideoCallback(info:Object):void {
             _hasVideo = true;
             _videoInfo = info;
+            _bytesARGB = new ByteArray();
+            _bytesARGB.length = info.width * info.height * 4;
             if (oninitvideo != null) {
                 oninitvideo(_videoInfo);
             }
