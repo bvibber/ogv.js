@@ -4,7 +4,7 @@ export PATH="$HOME/crossbridge/sdk/usr/bin:$PATH"
 
 # compile wrapper around libogg + libvorbis + libtheora
 gcc \
-  -O2 \
+  -O4 \
   -emit-swc=com.brionv.ogvlibs \
   -Ibuild/flash/root/include \
   -Lbuild/flash/root/lib \

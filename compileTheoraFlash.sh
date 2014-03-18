@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export PATH="$HOME/crossbridge/sdk/usr/bin:$PATH"
+export CFLAGS=-O4
 
 dir=`pwd`
 
