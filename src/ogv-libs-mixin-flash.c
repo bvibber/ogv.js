@@ -120,7 +120,7 @@ void OgvSwfConvertYCbCr()
 // Public vars for the callbacks...
 package_as3(
     "#package public\n"
-	"public var ogvSwfMetadataLoadedCallback:Function;\n"
+	"public var ogvSwfLoadedMetadataCallback:Function;\n"
 	"public var ogvSwfInitVideoCallback:Function;\n"
 	"public var ogvSwfOutputFrameReadyCallback:Function;\n"
 	"public var ogvSwfOutputFrameCallback:Function;\n"
@@ -130,10 +130,10 @@ package_as3(
 );
 
 // Callbacks into AS code...
-void OgvJsMetadataLoaded()
+void OgvJsLoadedMetadata()
 {
 	inline_as3(
-		"ogvSwfMetadataLoadedCallback();\n"
+		"ogvSwfLoadedMetadataCallback();\n"
 		: :
 	);
 }

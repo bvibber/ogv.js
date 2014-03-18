@@ -22,7 +22,7 @@ package {
     import com.brionv.ogvlibs.OgvSwfDecodeAudio;
     import com.brionv.ogvlibs.OgvSwfConvertYCbCr;
 
-    import com.brionv.ogvlibs.ogvSwfMetadataLoadedCallback;
+    import com.brionv.ogvlibs.ogvSwfLoadedMetadataCallback;
     import com.brionv.ogvlibs.ogvSwfInitVideoCallback;
     import com.brionv.ogvlibs.ogvSwfOutputFrameReadyCallback;
     import com.brionv.ogvlibs.ogvSwfOutputFrameCallback;
@@ -47,7 +47,7 @@ package {
 
         // Public callbacks
         // @todo clean up this interface
-        public var onmetadataloaded:Function = null;
+        public var onloadedmetadata:Function = null;
         public var oninitvideo:Function = null;
         public var oninitaudio:Function = null;
 
@@ -66,7 +66,7 @@ package {
             CModule.startAsync();
 
             // Set up the callbacks from C into our happy AS3 land
-            ogvSwfMetadataLoadedCallback = metadataLoadedCallback;
+            ogvSwfLoadedMetadataCallback = loadedMetadataCallback;
             ogvSwfInitVideoCallback = initVideoCallback;
             ogvSwfOutputFrameReadyCallback = outputFrameReadyCallback;
             ogvSwfOutputFrameCallback = outputFrameCallback;
@@ -256,9 +256,9 @@ package {
             return out;
         }
 
-        private function metadataLoadedCallback():void {
-            if (onmetadataloaded != null) {
-                onmetadataloaded();
+        private function loadedMetadataCallback():void {
+            if (onloadedmetadata != null) {
+                onloadedmetadata();
             }
         }
 

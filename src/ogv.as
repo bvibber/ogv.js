@@ -163,8 +163,8 @@ package {
                 resizeForStage();
                 addChild(bitmap);
             };
-            codec.onmetadataloaded = function():void {
-                jsCallback('onmetadataloaded');
+            codec.onloadedmetadata = function():void {
+                jsCallback('onloadedmetadata');
             };
 
             setupCallbacks();
@@ -289,7 +289,7 @@ package {
                     return 0;
                 }
             });
-            ExternalInterface.addCallback('_getVideoFrameRate', function _getVideoFrameRate():Number {
+            ExternalInterface.addCallback('_getFrameRate', function _getFrameRate():Number {
                 if (videoInfo) {
                     return videoInfo.fps;
                 } else {

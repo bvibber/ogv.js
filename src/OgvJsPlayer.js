@@ -428,7 +428,7 @@ function OgvJsPlayer() {
 			audioInfo = info;
 			audioFeeder.init(info.channels, info.rate);
 		};
-		codec.onmetadataloaded = function() {
+		codec.onloadedmetadata = function() {
 			if (self.onloadedmetadata) {
 				self.onloadedmetadata();
 			}

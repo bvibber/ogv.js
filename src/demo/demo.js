@@ -701,8 +701,13 @@
 			document.getElementById('audio-rate').textContent = '';
 			document.getElementById('audio-drops').textContent = '';
 			player.onloadedmetadata = function() {
+				// Standard metadata ain't much.
+				document.getElementById('video-pic-width').textContent = player.videoWidth;
+				document.getElementById('video-pic-height').textContent = player.videoHeight;
+
+				// And grab our custom metadata...				
 				var fps;
-				if (typeof player.ogvjsVideoFrameRate === 'number') {
+				if (typeof (player.ogvjsVideoFrameRate) === 'number') {
 					benchmarkTargetFps = player.ogvjsVideoFrameRate;
 					fps = round2(player.ogvjsVideoFrameRate);
 				} else {
@@ -711,8 +716,6 @@
 					fps = '?';
 				}
 				document.getElementById('video-fps').textContent = fps;
-				document.getElementById('video-pic-width').textContent = player.videoWidth;
-				document.getElementById('video-pic-height').textContent = player.videoHeight;
 
 				if (typeof player.ogvjsAudioChannels === 'number') {
 					document.getElementById('audio-channels').textContent = player.ogvjsAudioChannels;

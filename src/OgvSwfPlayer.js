@@ -29,7 +29,8 @@ function OgvSwfPlayer() {
 			'onplay',
 			'onpause',
 			'onended',
-			'ontrace'
+			'ontrace',
+			'onloadedmetadata'
 		];
 	self.ontrace = function(str) {
 		console.log('Flash: ' + str);

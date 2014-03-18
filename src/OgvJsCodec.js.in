@@ -47,9 +47,9 @@ OgvJs = (function(options) {
 		return inputBuffer;
 	}
 	
-	function OgvJsMetadataLoadedCallback() {
-		if (self.onmetadataloaded) {
-			self.onmetadataloaded();
+	function OgvJsLoadedMetadataCallback() {
+		if (self.onloadedmetadata) {
+			self.onloadedmetadata();
 		}
 	}
 	
