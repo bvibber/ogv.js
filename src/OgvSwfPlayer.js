@@ -1,3 +1,21 @@
+/**
+ * Constructor for an analogue of the TimeRanges class
+ * returned by various HTMLMediaElement properties
+ *
+ * Pass an array of two-element arrays, each containing a start and end time.
+ */
+function OgvSwfTimeRanges(ranges) {
+	// note: can't use Object.defineProperty on non-DOM objects in IE 8
+	this.length = ranges.length;
+	this.start = function(i) {
+		return ranges[i][0];
+	};
+	this.end = function(i) {
+		return ranges[i][1];
+	}
+	return this;
+}
+
 function OgvSwfPlayer() {
 	// Return a magical custom element!
 	var self = document.createElement('ogvswf');
@@ -53,9 +71,10 @@ function OgvSwfPlayer() {
 		flash.appendChild(param('wmode', 'opaque'));
 		// Must set all the parameters before setting classid...
 		flash.classid = 'clsid:D27CDB6E-AE6D-11cf-96B8-444553540000';
+	} else {
+		// And for everybody else:
+		flash.type = 'application/x-shockwave-flash';
 	}
-	// And for everybody else:
-	flash.type = 'application/x-shockwave-flash';
 	flash.data = swfUrl;
 
 	self.appendChild(flash);
@@ -200,7 +219,7 @@ function OgvSwfPlayer() {
 			} else {
 				bufferedTime = 0;
 			}
-			return new OgvJsTimeRanges([[0, bufferedTime]]);
+			return new OgvSwfTimeRanges([[0, bufferedTime]]);
 		}
 	});
 	
