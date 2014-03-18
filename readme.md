@@ -169,7 +169,7 @@ Libtheora needs a slight patch to a function signature to pass emscripten's chec
 3. `git submodule update --init`
 4. Run `make js` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
-To build the demo into build/demo/, you'll have to build the Flash bits as well. Be warned!
+Run `make jsdemo` to build a version of the demo skipping the Flash player. This is handy if you want to test the emscripten stuff but don't want to or can't install Crossbridge. This will output into build/jsdemo/.
 
 
 ## Building Flash components
@@ -180,7 +180,7 @@ Rebuilding dynamicaudio.swf shim for IE 10/11:
 2. `make swf` to rebuild src/dynamicaudio.swf
 3. `make` to rebuild the demo and update its .swf
 
-Building experimental all-Flash fallback player:
+Building all-Flash fallback player:
 
 1. Install [Apache Flex SDK](http://flex.apache.org/), and put it into PATH
 2. Get [Crossbridge 1.0.1 download](http://sourceforge.net/projects/crossbridge/files/), and install SDK into ~/crossbridge
@@ -188,14 +188,12 @@ Building experimental all-Flash fallback player:
 4. Run `make flash` to configure and build libogg, libvorbis, libtheora, and the C and ActionScript wrappers.
 5. Go make a cup of coffee; the Crossbridge builds are a lot slower to make than the emscripten ones!
 
-Currently this builds a non-functional build/ogv.swf which is not yet used in the demo player.
-
 
 ## Building the demo
 
 If you did all the setup above, just run `make demo` or `make`. Look in build/demo/ and enjoy!
 
-Note that the demo includes the JS and Flash players, so will take a while to build from scratch but is right quick once they're built.
+Note that the demo includes the JS and Flash players, so will take a while to build from scratch but is right quick once they're built. Once the C bits have been built, this gets much faster. :)
 
 
 ## License

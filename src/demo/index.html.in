@@ -70,7 +70,9 @@
 							Player:
 							<select height=1 id="player-backend">
 								<option value="js">JavaScript</option>
+#ifdef WITH_FLASH
 								<option value="flash">Flash</option>
+#endif
 								<option value="native">native</option>
 							</select>
 						</div>
@@ -138,7 +140,9 @@
 	</div>
 
 	<script src="lib/ogvjs.js"></script>
+#ifdef WITH_FLASH
 	<script src="lib/ogvswf.js"></script>
+#endif
 	<script src="motd.js"></script>
 	<script src="demo.js"></script>
 

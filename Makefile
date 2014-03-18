@@ -1,12 +1,14 @@
-.FAKE : all clean cleanswf swf js flash demo
+.FAKE : all clean cleanswf swf js jsdemo flash demo
 
-all : demo
+all : jsdemo demo
 
 js : build/ogvjs.js
 
 flash : build/ogvswf.js
 
 demo : build/demo/index.html
+
+jsdemo : build/jsdemo/index.html
 
 clean:
 	rm -rf build
@@ -45,10 +47,11 @@ build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
 build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/OgvJsPlayer.js build/OgvJsCodec.js
 	 cpp -E -w -P -CC src/ogvjs.js.in > build/ogvjs.js
 
-# The player demo
-build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
+# The player demo, with the JS and Flash builds
+build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
 	test -d build/demo || mkdir build/demo
-	cp src/demo/index.html build/demo/index.html
+	cpp -E -w -P -CC -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
+	
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
@@ -59,6 +62,18 @@ build/demo/index.html : src/demo/index.html src/demo/demo.css src/demo/demo.js s
 	cp build/ogvswf.js build/demo/lib/ogvswf.js
 	cp build/ogv.swf build/demo/lib/ogv.swf
 
+# The player demo, JS only without the Flash build
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
+	test -d build/jsdemo || mkdir build/jsdemo
+	cpp -E -w -P -CC -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
+	
+	cp src/demo/demo.css build/jsdemo/demo.css
+	cp src/demo/demo.js build/jsdemo/demo.js
+	cp src/demo/motd.js build/jsdemo/motd.js
+	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
+	
+	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
+	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
 
 # There is a Flash shim for audio on Internet Explorer which doesn't
 # have Web Audio API.
