@@ -130,16 +130,21 @@ function OgvJsPlayer() {
 		framesProcessed++;
 		framesPlayed++;
 
-		if (self.onframecallback) {
-			var newFrameTimestamp = getTimestamp(),
-				wallClockTime = newFrameTimestamp - lastFrameTimestamp,
-				jitter = Math.abs(wallClockTime - 1000 / videoInfo.fps);
-			totalJitter += jitter;
+		doFrameComplete();
+	}
 
-			self.onframecallback(lastFrameDecodeTime);
-			lastFrameDecodeTime = 0;
-			lastFrameTimestamp = newFrameTimestamp;
-		}
+	function doFrameComplete() {
+		var newFrameTimestamp = getTimestamp(),
+			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
+			jitter = Math.abs(wallClockTime - 1000 / videoInfo.fps);
+		totalJitter += jitter;
+
+		self.onframecallback({
+			cpuTime: lastFrameDecodeTime,
+			clockTime: wallClockTime
+		});
+		lastFrameDecodeTime = 0;
+		lastFrameTimestamp = newFrameTimestamp;
 	}
 	
 	/**
@@ -186,10 +191,7 @@ function OgvJsPlayer() {
 
 				if (!codec.hasVideo) {
 					framesProcessed++; // pretend!
-					if (self.onframecallback) {
-						self.onframecallback(lastFrameDecodeTime);
-						lastFrameDecodeTime = 0;
-					}
+					doFrameComplete();
 				}
 			}
 		}

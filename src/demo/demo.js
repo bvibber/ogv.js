@@ -21,20 +21,15 @@
 	var benchmarkData = [],
 		benchmarkClockData = [],
 		benchmarkDirty = false,
-		benchmarkTargetFps = -1,
-		lastBenchmarkPoint;
+		benchmarkTargetFps = -1;
 	function clearBenchmark() {
 		benchmarkData = [];
 		benchmarkClockData = [];
 		benchmarkDirty = true;
-		lastBenchmarkPoint = getTimestamp();
 	}
-	function recordBenchmarkPoint(ms) {
-		benchmarkData.push(ms);
-
-		var now = getTimestamp();
-		benchmarkClockData.push(now - lastBenchmarkPoint);
-		lastBenchmarkPoint = now;
+	function recordBenchmarkPoint(cpuTime, clockTime) {
+		benchmarkData.push(cpuTime);
+		benchmarkClockData.push(clockTime);
 		
 		benchmarkDirty = true;
 	}
@@ -729,8 +724,8 @@
 			// There is a 'timeupdate' event on HTMLMediaElement, but it only
 			// seems to fire every quarter second. No per-frame callback for
 			// native video, sorry!
-			player.onframecallback = function(lastFrameDecodeTime) {
-				recordBenchmarkPoint(lastFrameDecodeTime);
+			player.onframecallback = function(info) {
+				recordBenchmarkPoint(info.cpuTime, info.clockTime);
 			};
 
 			player.src = selectedUrl;

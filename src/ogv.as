@@ -613,12 +613,19 @@ package {
             framesProcessed++;
             framesPlayed++;
 
+            doFrameComplete();
+        }
+
+        private function doFrameComplete():void {
             var newFrameTimestamp:Number = getTimestamp(),
                 wallClockTime:Number = newFrameTimestamp - lastFrameTimestamp,
                 jitter:Number = Math.abs(wallClockTime - 1000 / videoInfo.fps);
             totalJitter += jitter;
 
-            jsCallback('onframecallback', lastFrameDecodeTime);
+            jsCallback('onframecallback', {
+                cpuTime: lastFrameDecodeTime,
+                clockTime: wallClockTime
+            });
             lastFrameDecodeTime = 0;
             lastFrameTimestamp = newFrameTimestamp;
         }
