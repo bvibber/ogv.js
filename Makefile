@@ -63,7 +63,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp build/ogv.swf build/demo/lib/ogv.swf
 
 # The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf
 	test -d build/jsdemo || mkdir build/jsdemo
 	cpp -E -w -P -CC -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
 	
