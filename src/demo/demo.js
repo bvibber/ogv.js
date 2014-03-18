@@ -438,7 +438,7 @@
 				return 'File:' + title;
 			}
 		}
-		return 'File:Jarry - Métro de Montréal (640×360).ogv';
+		return 'File:Jarry_-_Métro_de_Montréal_(640×360).ogv';
 	}
 
 	function dismissChooser() {
@@ -512,10 +512,14 @@
 	filter.addEventListener('paste', showChooser);
 	filter.addEventListener('focus', showChooser);
 	window.addEventListener('hashchange', function() {
+		// Warning: sometimes this triggers when we change it programatically
+		// it seems to be normalizing our unicode or something. Fun!
 		var oldTitle = selectedTitle,
-			oldFilter = filter.value;
+			oldFilter = filter.value,
+			oldSize = preferredKey,
+			oldPlayer = playerBackend;
 		selectedTitle = getDefault();
-		if (oldTitle != selectedTitle) {
+		if (oldTitle != selectedTitle || oldSize != preferredKey || oldPlayer != playerBackend) {
 			showVideo();
 		}
 		if (oldFilter != filter.value && document.getElementById('media-chooser').className == 'active') {
