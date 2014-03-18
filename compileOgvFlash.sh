@@ -14,6 +14,7 @@ gcc \
   -ltheoradec \
   src/ogv-libs.c \
   src/ogv-libs-mixin-flash.c \
+  src/YCbCr.c \
   build/flash/root/lib/libogg.a \
   build/flash/root/lib/libvorbis.a \
   build/flash/root/lib/libtheoradec.a \

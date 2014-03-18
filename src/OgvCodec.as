@@ -255,29 +255,16 @@ package {
                                              bufferCr:int, strideCr:int,
                                              width:int, height:int,
                                              hdec:int, vdec:int,
-                                             timestamp:Number):void 
+                                             timestamp:Number,
+                                             bufferARGB:int):void 
         {
-            var widthColor:int = width >> hdec,
-                heightColor:int = height >> vdec,
-                countBytesY:int = strideY * height,
-                countBytesCb:int = strideCb * heightColor,
-                countBytesCr:int = strideCr * heightColor,
-                bytesY:ByteArray = extractBuffer(bufferY, countBytesY),
-                bytesCb:ByteArray = extractBuffer(bufferCb, countBytesCb),
-                bytesCr:ByteArray = extractBuffer(bufferCr, countBytesCr);
+            var bytesARGB:ByteArray = extractBuffer(bufferARGB, width * height * 4);
 
             // And queue up the output buffer!
             _queuedFrame = {
-                bytesY: bytesY,
-                bytesCb: bytesCb,
-                bytesCr: bytesCr,
-                strideY: strideY,
-                strideCb: strideCb,
-                strideCr: strideCr,
+                bytesARGB: bytesARGB,
                 width: width,
                 height: height,
-                hdec: hdec,
-                vdec: vdec,
                 timestamp: timestamp
             };
         }

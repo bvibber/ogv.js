@@ -1,4 +1,8 @@
+#include <stdlib.h>
+
 #include "AS3/AS3.h"
+
+#include "YCbCr.h"
 
 // Stub main for the library
 int main(int argc, const char **argv) {
@@ -127,6 +131,7 @@ void OgvJsOutputFrameReady(double videoPosition)
 	);
 }
 
+static unsigned char *argbBuffer = NULL;
 void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
@@ -134,6 +139,18 @@ void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              int hdec, int vdec,
                              double timestamp)
 {
+	if (argbBuffer == NULL) {
+		int i;
+		argbBuffer = (unsigned char *)malloc(width * height * 8);
+		for (i = 0; i < width * height * 4; i += 4) {
+			argbBuffer[i] = 0xff; // prefill alpha
+		}
+	}
+	convertYCbCr(bufferY, bufferCb, bufferCr,
+	             strideY, strideCb, strideCr,
+	             width, height,
+	             hdec, vdec,
+	             argbBuffer);
 	inline_as3(
 		"ogvSwfOutputFrameCallback(\n"
 		"  %0, %1,\n"
@@ -141,7 +158,7 @@ void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
 		"  %4, %5,\n"
 		"  %6, %7,\n"
 		"  %8, %9,\n"
-		"  %10\n"
+		"  %10, %11\n"
 		");\n"
 		:
 		: "r"((int)bufferY),
@@ -154,7 +171,8 @@ void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
 		  "r"(height),
 		  "r"(hdec),
 		  "r"(vdec),
-		  "r"(timestamp)
+		  "r"(timestamp),
+		  "r"((int)argbBuffer)
 	);
 }
 

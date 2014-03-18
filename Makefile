@@ -98,7 +98,7 @@ build/flash/root/lib/libtheoradec.a : build/flash/root/lib/libogg.a configureThe
 	./configureTheora.sh
 	./compileTheoraFlash.sh
 
-build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c build/flash/root/lib/libogg.a build/flash/root/lib/libtheoradec.a build/flash/root/lib/libvorbis.a compileOgvFlash.sh
+build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c src/YCbCr.h src/YCbCr.c build/flash/root/lib/libogg.a build/flash/root/lib/libtheoradec.a build/flash/root/lib/libvorbis.a compileOgvFlash.sh
 	test -d build || mkdir build
 	./compileOgvFlash.sh
 

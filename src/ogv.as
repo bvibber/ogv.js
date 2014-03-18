@@ -591,7 +591,9 @@ package {
 
             // colorspace conversion        	
             start = getTimestamp();
-            YCbCr.convertYCbCr(yCbCrBuffer, pixelBuffer);
+            yCbCrBuffer.bytesARGB.position = 0;
+            pixelBuffer.position = 0;
+            pixelBuffer.writeBytes(yCbCrBuffer.bytesARGB, 0, yCbCrBuffer.width * yCbCrBuffer.height * 4);
             delta = getTimestamp() - start;
             colorTime += delta;
             lastFrameDecodeTime += delta;
