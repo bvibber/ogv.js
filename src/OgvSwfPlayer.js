@@ -45,14 +45,16 @@ function OgvSwfPlayer() {
 	flash.id = 'ogvswf-flashelement-' + idkey;
 	flash.width = 320;
 	flash.height = 240;
+	flash.appendChild(param('allowscriptaccess', 'always'));
+	flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
 	// For IE <= 9:
 	if (typeof flash.classid == 'string') {
 		flash.appendChild(param('movie', swfUrl));
-		flash.setAttribute('classid', 'clsid:D27CDB6E-AE6D-11cf-96B8-444553540000');
+		flash.appendChild(param('wmode', 'opaque'));
+		// Must set all the parameters before setting classid...
+		flash.classid = 'clsid:D27CDB6E-AE6D-11cf-96B8-444553540000';
 	}
 	// And for everybody else:
-	flash.appendChild(param('allowscriptaccess', 'always'));
-	flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
 	flash.type = 'application/x-shockwave-flash';
 	flash.data = swfUrl;
 
