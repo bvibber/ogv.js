@@ -155,8 +155,9 @@ package {
                 bitmapData = new BitmapData(videoInfo.frameWidth, videoInfo.frameHeight, true, 0xff000000);
 
                 bitmap = new Bitmap(bitmapData);
-                bitmap.x = 0;
-                bitmap.y = 0;
+                // Offset the bitmap to 'crop' it conveniently
+                bitmap.x = -videoInfo.picX;
+                bitmap.y = -videoInfo.picY;
                 resizeForStage();
                 addChild(bitmap);
             };
@@ -169,8 +170,10 @@ package {
 
         private function resizeForStage():void {
             if (bitmap) {
-                bitmap.scaleX = stage.stageWidth / videoInfo.frameWidth;
-                bitmap.scaleY = stage.stageHeight / videoInfo.frameHeight;
+                // Note the bitmap size is the frame size; it's offset
+                // to let us crop it within the player area.
+                bitmap.scaleX = stage.stageWidth / videoInfo.picWidth;
+                bitmap.scaleY = stage.stageHeight / videoInfo.picHeight;
             }
             if (posterLoader) {
                 posterLoader.width = stage.stageWidth;
