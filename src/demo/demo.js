@@ -684,6 +684,11 @@
 				player = new OgvSwfPlayer();
 				player.durationHint = durationHint;
 				player.byteLengthHint = byteLengthHint;
+			} else if (playerBackend == 'cortado') {
+				player = new CortadoPlayer();
+				player.durationHint = durationHint;
+				player.videoWidthHint = selected.width;
+				player.videoHeightHint = selected.height;
 			} else if (playerBackend == 'native') {
 				player = document.createElement('video');
 			} else {
@@ -766,6 +771,7 @@
 			};
 
 			player.poster = mediaInfo.thumburl;
+			player.load();
 
 			updateProgress();
 			

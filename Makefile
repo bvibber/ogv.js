@@ -42,7 +42,10 @@ build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.
 	 cpp -E -w -P -CC src/ogvjs.js.in > build/ogvjs.js
 
 # The player demo, with the JS and Flash builds
-build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf build/ogv.swf build/ogvswf.js
+build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
+                        build/ogvjs.js \
+                        src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
+                        src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
 	cpp -E -w -P -CC -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
 	
@@ -55,9 +58,13 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
 	cp build/ogvswf.js build/demo/lib/ogvswf.js
 	cp build/ogv.swf build/demo/lib/ogv.swf
+	cp src/cortado.jar build/demo/lib/cortado.jar
+	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js  build/ogvjs.js src/dynamicaudio.swf
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
+                          build/ogvjs.js src/dynamicaudio.swf \
+                          src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
 	cpp -E -w -P -CC -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
 	
@@ -65,6 +72,8 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/demo/demo.js build/jsdemo/demo.js
 	cp src/demo/motd.js build/jsdemo/motd.js
 	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
+	cp src/cortado.jar build/demo/lib/cortado.jar
+	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
