@@ -164,6 +164,12 @@ package {
                 bitmap.y = -videoInfo.picY;
                 resizeForStage();
                 addChild(bitmap);
+
+                // Don't need this anymore...
+                if (posterLoader) {
+                    removeChild(posterLoader);
+                    posterLoader = null;
+                }
             };
             codec.onloadedmetadata = function():void {
                 jsCallback('onloadedmetadata');
@@ -330,26 +336,28 @@ package {
         }
 
         private function loadPoster():void {
-            if (posterLoader) {
-                removeChild(posterLoader);
-                posterLoader = null;
-            }
-            if (poster == "" || poster == null) {
-                // no poster for you
-            } else {
-                var urlRequest:URLRequest = new URLRequest(poster);
+            if (bitmap == null) {
+                if (posterLoader) {
+                    removeChild(posterLoader);
+                    posterLoader = null;
+                }
+                if (poster == "" || poster == null) {
+                    // no poster for you
+                } else {
+                    var urlRequest:URLRequest = new URLRequest(poster);
 
-                posterLoader = new Loader();
-                posterLoader.x = 0;
-                posterLoader.y = 0;
-                posterLoader.width = stage.stageWidth;
-                posterLoader.height = stage.stageHeight;
-                posterLoader.load(urlRequest);
-                addChild(posterLoader);
+                    posterLoader = new Loader();
+                    posterLoader.x = 0;
+                    posterLoader.y = 0;
+                    posterLoader.width = stage.stageWidth;
+                    posterLoader.height = stage.stageHeight;
+                    posterLoader.load(urlRequest);
+                    addChild(posterLoader);
 
-                posterLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function():void {
-                    resizeForStage();
-                });
+                    posterLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function():void {
+                        resizeForStage();
+                    });
+                }
             }
         }
 
