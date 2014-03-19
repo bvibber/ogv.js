@@ -158,6 +158,7 @@ package {
                 bitmapData = new BitmapData(videoInfo.frameWidth, videoInfo.frameHeight, true, 0xff000000);
 
                 bitmap = new Bitmap(bitmapData);
+                bitmap.smoothing = true;
                 // Offset the bitmap to 'crop' it conveniently
                 bitmap.x = -videoInfo.picX;
                 bitmap.y = -videoInfo.picY;
