@@ -12,14 +12,8 @@ jsdemo : build/jsdemo/index.html
 
 clean:
 	rm -rf build
-	rm -rf demo
-	test -f libogg/Makefile && (cd libogg && make distclean) || true
 	rm -f libogg/configure
-	test -f libvorbis/Makefile && (cd libvorbis && make distclean) || true
 	rm -f libvorbis/configure
-	test -f tremor/Makefile && (cd tremor && make distclean) || true
-	rm -f tremor/configure
-	test -f libtheora/Makefile && (cd libtheora && make distclean) || true
 	rm -f libtheora/configure
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
