@@ -430,6 +430,7 @@ package {
                 paused = true;
                 if (nextProcessingTimer) {
                     clearTimeout(nextProcessingTimer);
+                    nextProcessingTimer = 0;
                 }
                 jsCallback('onpause');
             }
