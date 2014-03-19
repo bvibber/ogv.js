@@ -61,6 +61,7 @@ package {
         private var streamBufferSize:Number = 65536;
         private var streamComplete:Boolean = false;
         private var needInput:Boolean = false;
+        private var bytesRead:int = 0;
 
         // Playback stats, in counts
         private var framesProcessed:Number = 0;
@@ -241,12 +242,20 @@ package {
 
             // Playback state
             ExternalInterface.addCallback('_getBufferedTime', function _getBufferedTime():Number {
-                // @todo: implement
-                return 0;
+                if (stream && byteLengthHint && durationHint) {
+                    return ((bytesRead + stream.bytesAvailable) / byteLengthHint) * durationHint;
+                } else {
+                    return 0;
+                }
             });
             ExternalInterface.addCallback('_getCurrentTime', function _getCurrentTime():Number {
-                // @todo: implement
-                return 0;
+                if (codec && codec.hasAudio) {
+                    return getPlaybackState().playbackPosition;
+                } else if (codec && codec.hasVideo) {
+                    return framesPlayed / fps;
+                } else {
+                    return 0;
+                }
             });
             ExternalInterface.addCallback('_getPaused', function _getPaused():Boolean {
                 return paused;
@@ -267,10 +276,10 @@ package {
 
             // Various metadata!
             ExternalInterface.addCallback('_setDurationHint', function _setDurationHint(_durationHint:Number):void {
-                this.durationHint = _durationHint;
+                durationHint = _durationHint;
             });
             ExternalInterface.addCallback('_setByteLengthHint', function _setByteLengthHint(_byteLengthHint:Number):void {
-                this.byteLengthHint = _byteLengthHint;
+                byteLengthHint = _byteLengthHint;
             });
             ExternalInterface.addCallback('_getDuration', function _getDuration():Number {
                 return durationHint;
@@ -378,11 +387,11 @@ package {
         private function readStreamBytes():void {
             if (stream.bytesAvailable >= streamBufferSize) {
                 // Advance!
-                log("buffering " + streamBufferSize);
+                bytesRead += streamBufferSize;
                 codec.receiveInput(stream, streamBufferSize);
                 pingProcessing(0);
             } else if (streamComplete) {
-                log("buffering " + stream.bytesAvailable);
+                bytesRead += stream.bytesAvailable;
                 codec.receiveInput(stream, stream.bytesAvailable);
                 pingProcessing(0);
 

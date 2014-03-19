@@ -620,7 +620,7 @@ function OgvJsPlayer() {
 			if (codec && codec.hasAudio) {
 				return audioFeeder.getPlaybackState().playbackPosition;
 			} else if (codec && codec.hasVideo) {
-				return framesPlayed * videoInfo.fps;
+				return framesPlayed / fps;
 			} else {
 				return 0;
 			}
