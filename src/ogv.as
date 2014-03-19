@@ -450,8 +450,7 @@ package {
         private function doProcessing():void {
             nextProcessingTimer = 0;
 
-            var audioBufferedDuration:Number = 0,
-                decodedSamples:int = 0;
+            var audioBufferedDuration:Number = 0;
             if (codec.hasAudio) {
                 var audioState:Object = getPlaybackState();
                 audioBufferedDuration = (audioState.samplesQueued / targetRate) * 1000;
@@ -533,10 +532,7 @@ package {
                         start = getTimestamp();
                         if (ok) {
                             var buffer:Vector.<ByteArray> = codec.dequeueAudio();
-                            var bufSamples:int = buffer[0].length / 4;
-                            audioBuffers.push(buffer);
-                            audioBufferedDuration += (bufSamples / audioInfo.rate) * 1000;
-                            decodedSamples += bufSamples;
+                            audioBufferedDuration += queueAudio(buffer);
                         }
                     }
                     if (codec.frameReady && readyForFrame) {
@@ -603,6 +599,52 @@ package {
                     // Ok we're just waiting for more input.
                     log('Still waiting for headers...');
                 }
+            }
+        }
+
+        // Audio output functions...
+        /**
+         * @return length of queued buffer in milliseconds
+         */
+        private function queueAudio(buffer:Vector.<ByteArray>):Number {
+            var bufSamples:int = buffer[0].length / 4;
+            audioBuffers.push(resampleAudio(buffer));
+            return (bufSamples / audioInfo.rate) * 1000;
+        }
+
+        /**
+         * Resample an audio buffer to the target output rate.
+         * Very approximate and may round poorly when uneven.
+         */
+        private function resampleAudio(samples:Vector.<ByteArray>):Vector.<ByteArray> {
+            var rate:int = audioInfo.rate,
+                channels:int = audioInfo.channels;
+            if (rate == targetRate) {
+                return samples;
+            } else {
+                var newSamples:Vector.<ByteArray> = new Vector.<ByteArray>();
+                for (var channel:int = 0; channel < channels; channel++) {
+                    var input:ByteArray = samples[channel],
+                        output:ByteArray = new ByteArray(),
+                        inSampleCount:int = input.length / 4,
+                        outSampleCount:int = Math.round(inSampleCount * targetRate / rate);
+
+                    input.position = 0;
+                    var outIndex:int = 0;
+                    for (var i:int = 0; i < inSampleCount; i++) {
+                        var sample:Number = input.readFloat();
+                        var targetIndex:int = Math.floor(i * outSampleCount / inSampleCount);
+                        while (outIndex <= targetIndex) {
+                            output.writeFloat(sample);
+                            outIndex++;
+                        }
+                    }
+                    if (output.length != (outSampleCount * 4)) {
+                        trace('unexpected; ' + inSampleCount + '; ' + outSampleCount + ';' + output.length);
+                    }
+                    newSamples[channel] = output;
+                }
+                return newSamples;
             }
         }
 
