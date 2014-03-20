@@ -26,6 +26,7 @@ package {
     import flash.media.Sound;
     import flash.media.SoundChannel;
     import flash.net.URLRequest;
+    import flash.net.URLRequestHeader;
     import flash.net.URLStream;
     import flash.utils.ByteArray;
     import flash.utils.Endian;
@@ -394,6 +395,8 @@ package {
             });
 
             req = new URLRequest(src);
+            var header:URLRequestHeader = new URLRequestHeader("Range", "bytes=0-65536");
+            req.requestHeaders.push(header);
             stream.load(req);
         }
 
