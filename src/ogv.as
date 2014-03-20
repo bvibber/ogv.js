@@ -196,6 +196,9 @@ package {
         private function getTimestamp():Number {
             // Is there a higher-resolution timer?
             // This gives only millisecond precision, which ain't great.
+            //
+            // Actually on Windows, it gives ~15ms precision, which is almost useless.
+            // On Mac we get those milliseconds for real at least.
             return flash.utils.getTimer();
         }
 
