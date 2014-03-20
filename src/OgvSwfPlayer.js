@@ -254,22 +254,6 @@ function OgvSwfPlayer() {
 	});
 	
 	/**
-	 * custom byteLengthHint property
-	 */
-	var byteLengthHint = null;
-	Object.defineProperty(self, "byteLengthHint", {
-		get: function getByteLengthHint() {
-			return byteLengthHint;
-		},
-		set: function setByteLengthHint(val) {
-			byteLengthHint = val;
-			waitForFlash(function() {
-				flash._setByteLengthHint(byteLengthHint);
-			});
-		}
-	});
-	
-	/**
 	 * HTMLMediaElement duration property
 	 */
 	Object.defineProperty(self, "duration", {

@@ -40,7 +40,7 @@ package {
         private var src:String = "";
         private var poster:String = "";
         private var durationHint:Number = 0;
-        private var byteLengthHint:int = 0;
+        private var byteLength:int = 0;
 
         // Playback state vars
         private var started:Boolean = false;
@@ -249,8 +249,8 @@ package {
 
             // Playback state
             ExternalInterface.addCallback('_getBufferedTime', function _getBufferedTime():Number {
-                if (stream && byteLengthHint && durationHint) {
-                    return ((bytesRead + stream.bytesAvailable) / byteLengthHint) * durationHint;
+                if (stream && byteLength && durationHint) {
+                    return ((bytesRead + stream.bytesAvailable) / byteLength) * durationHint;
                 } else {
                     return 0;
                 }
@@ -284,9 +284,6 @@ package {
             // Various metadata!
             ExternalInterface.addCallback('_setDurationHint', function _setDurationHint(_durationHint:Number):void {
                 durationHint = _durationHint;
-            });
-            ExternalInterface.addCallback('_setByteLengthHint', function _setByteLengthHint(_byteLengthHint:Number):void {
-                byteLengthHint = _byteLengthHint;
             });
             ExternalInterface.addCallback('_getDuration', function _getDuration():Number {
                 return durationHint;
@@ -375,7 +372,9 @@ package {
                 log("open");
             });
             stream.addEventListener(ProgressEvent.PROGRESS, function _streamOnProgress(event:ProgressEvent):void {
-                // @todo read into the ogg buffer on demand rather than on download
+                if (byteLength == 0) {
+                    byteLength = event.bytesTotal;
+                }
                 if (needInput) {
                     needInput = false;
                     readStreamBytes();

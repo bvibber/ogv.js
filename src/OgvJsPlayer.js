@@ -42,7 +42,7 @@ function OgvJsPlayer() {
 	}
 
 	var codec, audioFeeder;
-	var stream, nextProcessingTimer, paused = true;
+	var stream, byteLength = 0, nextProcessingTimer, paused = true;
 	var muted = false;
 
 	var framesPlayed = 0;
@@ -471,6 +471,8 @@ function OgvJsPlayer() {
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
 				started = true;
+				byteLength = stream.bytesTotal;
+				console.log('byteLength: ' + byteLength);
 				if (onstart) {
 					onstart();
 				}
@@ -603,8 +605,8 @@ function OgvJsPlayer() {
 	Object.defineProperty(self, "buffered", {
 		get: function getBuffered() {
 			var estimatedBufferTime;
-			if (stream && self.byteLengthHint && self.durationHint) {
-				estimatedBufferTime = (stream.bytesBuffered / self.byteLengthHint) * self.durationHint;
+			if (stream && byteLength && self.durationHint) {
+				estimatedBufferTime = (stream.bytesBuffered / byteLength) * self.durationHint;
 			} else {
 				estimatedBufferTime = 0;
 			}
@@ -631,11 +633,6 @@ function OgvJsPlayer() {
 	 * custom durationHint property
 	 */
 	self.durationHint = null;
-	
-	/**
-	 * custom byteLengthHint property
-	 */
-	self.byteLengthHint = null;
 	
 	/**
 	 * HTMLMediaElement duration property

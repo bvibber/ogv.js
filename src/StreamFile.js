@@ -47,7 +47,24 @@ function StreamFile(options) {
 	}
 
 	var waitingForInput = false,
-		doneBuffering = false;
+		doneBuffering = false,
+		bytesTotal = 0;
+
+	function setBytesTotal(xhr) {
+		contentLength = xhr.getResponseHeader('Content-Length');
+		if (contentLength == null || contentLength == '') {
+			// Unknown file length... maybe streaming live?
+			bytesTotal = 0;
+		} else {
+			bytesTotal = parseInt(contentLength, 10);
+		}
+	}
+
+	Object.defineProperty(this, 'bytesTotal', {
+		get: function _getBytesTotal() {
+			return bytesTotal;
+		}
+	});
 
 	if (tryMethod('moz-chunked-arraybuffer')) {
 		console.log("Streaming input using moz-chunked-arraybuffer");
@@ -90,6 +107,7 @@ function StreamFile(options) {
 					onerror();
 					xhr.abort();
 				} else {
+					setBytesTotal(xhr);
 					onstart();
 				}
 			} else if (xhr.readyState == 4) {
@@ -136,6 +154,7 @@ function StreamFile(options) {
 					xhr.abort();
 				}
 			} else if (xhr.readyState == xhr.LOADING) {
+				setBytesTotal(xhr);
 				// Transfer us over to the StreamReader...
 				stream = xhr.response;
 				xhr.onreadystatechange = null;
@@ -224,6 +243,7 @@ function StreamFile(options) {
 					onerror();
 					xhr.abort();
 				} else {
+					setBytesTotal(xhr);
 					onstart();
 				}
 			} else if (xhr.readyState == 3) {

@@ -10,7 +10,7 @@
 	}
 
 	var player;
-	var durationHint, byteLengthHint;
+	var durationHint;
 	var averageDemuxingTime = 0, // ms
 		averageVideoDecodingTime = 0, // ms
 		averageAudioDecodingTime = 0, // ms
@@ -674,16 +674,13 @@
 			// Currently the player can't determine the file duration
 			// as there's no way to seek to the end etc.
 			durationHint = mediaInfo.duration;
-			byteLengthHint = selected.size;
 
 			if (playerBackend == 'js') {
 				player = new OgvJsPlayer();
 				player.durationHint = durationHint;
-				player.byteLengthHint = byteLengthHint;
 			} else if (playerBackend == 'flash') {
 				player = new OgvSwfPlayer();
 				player.durationHint = durationHint;
-				player.byteLengthHint = byteLengthHint;
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();
 				player.durationHint = durationHint;
