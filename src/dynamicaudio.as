@@ -12,10 +12,14 @@ package {
         public var soundChannel:SoundChannel = null;
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
-        public var fudgeFactor:Number = 0;
-        public var dropped:Number = 0;
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
         public var hexValues:Vector.<int> = new Vector.<int>(256);
+
+        private var starvedAudioTime:Number = 0; // seconds; amount of time spent "playing" when starved for audio
+        private var totalBufferedAudio:Number = 0; // seconds; total amount of audio time we've processed
+        private var droppedAudioTime:Number = 0; // seconds; amount of audio time not accounted for, assumed dropped
+        private var dropped:Number = 0;
+        private var targetRate:Number = 44100;
 
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -78,10 +82,10 @@ package {
         }
 
         public function playbackPosition():Number {
-            if (this.soundChannel == null) {
+            if (soundChannel == null) {
                 return 0;
             } else {
-                return this.soundChannel.position / 1000 - this.fudgeFactor;
+                return soundChannel.position / 1000 - starvedAudioTime - droppedAudioTime;
             }
         }
 
@@ -89,24 +93,30 @@ package {
             var i:int;
             flushBuffers();
 
+            droppedAudioTime = (event.position / targetRate) - totalBufferedAudio;
+
             // If we haven't got enough data, write 2048 samples of silence to 
             // both channels, the minimum Flash allows
-            if (buffer.length < bufferSize*2) {
-                for (i = 0; i < bufferSize*2; i++) {
+            if (buffer.length < bufferSize) {
+                for (i = 0; i < bufferSize; i++) {
+                    event.data.writeFloat(0.0);
                     event.data.writeFloat(0.0);
                 }
-                fudgeFactor += (bufferSize / 44100);
+                starvedAudioTime += (bufferSize / targetRate);
+                totalBufferedAudio += bufferSize / targetRate;
                 dropped++;
                 return;
             }
 
-            var count:Number = Math.min(buffer.length, bufferSize * 2);
+            var sampleCount:Number = Math.min(buffer.length / 2, bufferSize);
 
-            for (i = 0; i < count; i++) {
-                event.data.writeFloat(buffer[i]);
+            for (i = 0; i < sampleCount; i++) {
+                event.data.writeFloat(buffer[i * 2]);
+                event.data.writeFloat(buffer[i * 2 + 1]);
             }
+            totalBufferedAudio += sampleCount / targetRate;
 
-            buffer = buffer.slice(count, buffer.length);
+            buffer = buffer.slice(sampleCount * 2, buffer.length);
         }
     }
 }
