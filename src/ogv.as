@@ -96,7 +96,9 @@ package {
         private var sound:Sound = null;
         private var soundChannel:SoundChannel = null;
         private var audioBuffers:Vector.<Vector.<ByteArray>> = new Vector.<Vector.<ByteArray>>();
-        private var fudgeFactor:Number = 0;
+        private var starvedAudioTime:Number = 0; // seconds; amount of time spent "playing" when starved for audio
+        private var totalBufferedAudio:Number = 0; // seconds; total amount of audio time we've processed
+        private var droppedAudioTime:Number = 0; // seconds; amount of audio time not accounted for, assumed dropped
 
         // Log debug stuff to the JS console for convenience
         private function log(str:String):void {
@@ -711,7 +713,7 @@ package {
             if (soundChannel == null) {
                 return 0;
             } else {
-                return soundChannel.position / 1000 - fudgeFactor;
+                return soundChannel.position / 1000 - starvedAudioTime - droppedAudioTime;
             }
         }
 
@@ -720,6 +722,7 @@ package {
             var samplesWritten:int = 0;
             var leftSample:Number, rightSample:Number;
 
+            droppedAudioTime = (event.position / targetRate) - totalBufferedAudio;
             while (samplesWritten < audioBufferSize) {
 
                 if (audioBuffers.length == 0) {
@@ -727,7 +730,7 @@ package {
                     // Out of data? Write some silence to round it out,
                     // and wait for the next set of data...
                     droppedAudio++;
-                    fudgeFactor += (audioBufferSize - samplesWritten) / 44100;
+                    starvedAudioTime += (audioBufferSize - samplesWritten) / 44100;
                     while (samplesWritten < audioBufferSize) {
                         event.data.writeFloat(0.0);
                         event.data.writeFloat(0.0);
@@ -767,6 +770,7 @@ package {
                     }
                 }
             }
+            totalBufferedAudio += samplesWritten / targetRate;
         }
     }
 }
