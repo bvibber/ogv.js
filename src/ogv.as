@@ -395,8 +395,10 @@ package {
                 log("error");
             });
 
-            req = new URLRequest(src.replace(/https/, 'http'));
+            req = new URLRequest(src.replace(/https/, 'http') + '?v2');
             req.method = URLRequestMethod.POST;
+            req.contentType = 'application/octet-stream';
+            req.data = 'stub data'; // stub to force the POST
             var header:URLRequestHeader = new URLRequestHeader("X-Range", "bytes=0-65536");
             req.requestHeaders.push(header);
             stream.load(req);
