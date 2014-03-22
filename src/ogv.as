@@ -561,7 +561,7 @@ package {
                         // NEED MOAR BUFFERS
                     } else {
                         // Check in when the audio buffer runs low again...
-                        nextDelays.push(bufferDuration);
+                        nextDelays.push(bufferDuration / 2);
 
                         if (hasVideo) {
                             // Check in when the next frame is due
