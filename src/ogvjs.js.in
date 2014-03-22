@@ -10,6 +10,9 @@
 // -- YCbCr.js
 #include "YCbCr.js"
 
+// -- YCbCrFrameSink.js
+#include "YCbCrFrameSink.js"
+
 // -- OgvJsPlayer.js
 #include "OgvJsPlayer.js"
 

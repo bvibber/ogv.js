@@ -38,7 +38,7 @@ build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/li
 build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
 	 cpp -E -w -P -CC src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
-build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/OgvJsPlayer.js build/OgvJsCodec.js
+build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/YCbCrFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
 	 cpp -E -w -P -CC src/ogvjs.js.in > build/ogvjs.js
 
 # The player demo, with the JS and Flash builds

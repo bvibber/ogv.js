@@ -70,6 +70,7 @@
 							Player:
 							<select height=1 id="player-backend">
 								<option value="js">JavaScript</option>
+								<option value="webgl">JS + WebGL</option>
 #ifdef WITH_FLASH
 								<option value="flash">Flash</option>
 #endif

@@ -676,7 +676,14 @@
 			durationHint = mediaInfo.duration;
 
 			if (playerBackend == 'js') {
-				player = new OgvJsPlayer();
+				player = new OgvJsPlayer({
+					webGL: false // force 2d canvas
+				});
+				player.durationHint = durationHint;
+			} else if (playerBackend == 'webgl') {
+				player = new OgvJsPlayer({
+					webGL: true
+				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {
 				player = new OgvSwfPlayer();
@@ -858,7 +865,7 @@
 		showStatus(str);
 		console.log(event);
 	}
-	window.addEventListener('error', errorHandler);
+	//window.addEventListener('error', errorHandler);
 
 	controls.querySelector('.play').addEventListener('click', function() {
 		if (player) {

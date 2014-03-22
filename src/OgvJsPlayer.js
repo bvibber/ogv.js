@@ -19,9 +19,13 @@ function OgvJsTimeRanges(ranges) {
 	return this;
 }
 
-function OgvJsPlayer() {
+function OgvJsPlayer(options) {
+	options = options || {};
+	var useWebGL = !!options.webGL;
+	
 	var canvas = document.createElement('canvas');
-	var ctx = canvas.getContext('2d');
+	var ctx;
+	var frameSink;
 	
 	// Return a magical custom element!
 	var self = document.createElement('ogvjs');
@@ -110,23 +114,37 @@ function OgvJsPlayer() {
 
 		var start, delta;
 
-		start = getTimestamp();
+		if (useWebGL) {
+			// Can't distinguish colorTime from drawingTime
+			start = getTimestamp();
+			
+			frameSink.drawFrame(yCbCrBuffer);
+			
+			delta = getTimestamp() - start;
+			lastFrameDecodeTime += delta;
+			drawingTime += delta;
+		} else {
+			start = getTimestamp();
 		
-		convertYCbCr(yCbCrBuffer, imageData.data);
+			convertYCbCr(yCbCrBuffer, imageData.data);
 		
-		delta = getTimestamp() - start;
-		colorTime += delta;
-		lastFrameDecodeTime += delta;
+			delta = getTimestamp() - start;
+			colorTime += delta;
+			lastFrameDecodeTime += delta;
 
-		start = getTimestamp();
-		ctx.putImageData(imageData,
-						 0, 0,
-						 videoInfo.picX, videoInfo.picY,
-						 videoInfo.picWidth, videoInfo.picHeight);
-		delta = getTimestamp() - start;
 
-		lastFrameDecodeTime += delta;
-		drawingTime += delta;
+			start = getTimestamp();
+
+			ctx.putImageData(imageData,
+							 0, 0,
+							 videoInfo.picX, videoInfo.picY,
+							 videoInfo.picWidth, videoInfo.picHeight);
+
+			delta = getTimestamp() - start;
+			lastFrameDecodeTime += delta;
+			drawingTime += delta;
+		}
+
 		framesProcessed++;
 		framesPlayed++;
 
@@ -415,13 +433,19 @@ function OgvJsPlayer() {
 			
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
-			imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
+			console.log('useWebGL is', useWebGL);
+			if (useWebGL) {
+				frameSink = new YCbCrFrameSink(canvas);
+			} else {
+				ctx = canvas.getContext('2d');
+				imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
 
-			// Prefill the alpha to opaque
-			var data = imageData.data,
-				pixelCount = info.frameWidth * info.frameHeight * 4;
-			for (var i = 0; i < pixelCount; i += 4) {
-				data[i + 3] = 255;
+				// Prefill the alpha to opaque
+				var data = imageData.data,
+					pixelCount = info.frameWidth * info.frameHeight * 4;
+				for (var i = 0; i < pixelCount; i += 4) {
+					data[i + 3] = 255;
+				}
 			}
 		};
 		codec.oninitaudio = function(info) {
@@ -467,7 +491,7 @@ function OgvJsPlayer() {
 		started = false;
 		stream = new StreamFile({
 			url: self.src,
-			bufferSize: 65536,
+			bufferSize: 65536 * 4,
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
 				started = true;
@@ -701,9 +725,13 @@ function OgvJsPlayer() {
 				thumbnail.src = poster;
 				thumbnail.addEventListener('load', function() {
 					if (!started) {
-						canvas.width = thumbnail.width;
-						canvas.height = thumbnail.height;
-						ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
+						if (!useWebGL) {
+							// @todo fix poster image for webgl mode
+							ctx = canvas.getContext('2d');
+							canvas.width = thumbnail.width;
+							canvas.height = thumbnail.height;
+							ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
+						}
 					}
 				});
 			}
