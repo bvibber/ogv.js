@@ -12,7 +12,7 @@
 function YCbCrFrameSink(canvas) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
-		convertTextures = false;
+		convertTextures = true;
 	
 	if (gl == null) {
 		throw new Error('WebGL unavailable; falling back to 2d canvas');
@@ -83,27 +83,45 @@ function YCbCrFrameSink(canvas) {
 			'    vTexturePosition = aTexturePosition;\n' +
 			'}'
 		);
-		// inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
-		fragmentShader = compileShader(gl.FRAGMENT_SHADER,
-			'precision mediump float;\n' +
-			'uniform sampler2D uTextureY;\n' +
-			'uniform sampler2D uTextureCb;\n' +
-			'uniform sampler2D uTextureCr;\n' +
-			'varying vec2 vTexturePosition;\n' +
-			'void main() {\n' +
-			'   vec3 YUV = vec3(\n' +
-			'     texture2D(uTextureY,  vTexturePosition).x * 1.1643828125,\n' +
-			'     texture2D(uTextureCb, vTexturePosition).x,\n' +
-			'     texture2D(uTextureCr, vTexturePosition).x\n' +
-			'   );\n' +
-			'   gl_FragColor = vec4(\n' +
-			'     YUV.x + 1.59602734375 * YUV.z - 0.87078515625,\n' +
-			'     YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,\n' +
-			'     YUV.x + 2.017234375   * YUV.y - 1.081390625,\n' +
-			'     1\n' +
-			'   );\n' +
-			'}'
-		);
+		if (convertTextures) {
+			fragmentShader = compileShader(gl.FRAGMENT_SHADER,
+				'precision mediump float;\n' +
+				'uniform sampler2D uTextureYCbCr;\n' +
+				'varying vec2 vTexturePosition;\n' +
+				'void main() {\n' +
+				'   vec3 YUV1 = vec3(texture2D(uTextureYCbCr, vTexturePosition));\n' +
+				'   vec3 YUV = vec3(YUV1.x * 1.1643828125, YUV1.y, YUV1.z);\n' +
+				'   gl_FragColor = vec4(\n' +
+				'     YUV.x + 1.59602734375 * YUV.z - 0.87078515625,\n' +
+				'     YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,\n' +
+				'     YUV.x + 2.017234375   * YUV.y - 1.081390625,\n' +
+				'     1\n' +
+				'   );\n' +
+				'}'
+			);
+		} else {
+			// inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
+			fragmentShader = compileShader(gl.FRAGMENT_SHADER,
+				'precision mediump float;\n' +
+				'uniform sampler2D uTextureY;\n' +
+				'uniform sampler2D uTextureCb;\n' +
+				'uniform sampler2D uTextureCr;\n' +
+				'varying vec2 vTexturePosition;\n' +
+				'void main() {\n' +
+				'   vec3 YUV = vec3(\n' +
+				'     texture2D(uTextureY,  vTexturePosition).x * 1.1643828125,\n' +
+				'     texture2D(uTextureCb, vTexturePosition).x,\n' +
+				'     texture2D(uTextureCr, vTexturePosition).x\n' +
+				'   );\n' +
+				'   gl_FragColor = vec4(\n' +
+				'     YUV.x + 1.59602734375 * YUV.z - 0.87078515625,\n' +
+				'     YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,\n' +
+				'     YUV.x + 2.017234375   * YUV.y - 1.081390625,\n' +
+				'     1\n' +
+				'   );\n' +
+				'}'
+			);
+		}
 	
 		program = gl.createProgram();
 		gl.attachShader(program, vertexShader);
@@ -126,14 +144,37 @@ function YCbCrFrameSink(canvas) {
 
 	// Expand luminance textures to RGBA
 	// Unfortunately this is about as expensive as YCbCr in the first place?
-	var expandedTextures = {};
-	function convertBytes(bytes, key) {
-		var len = bytes.length,
-			out = expandedTextures[key] || new Uint8Array(len * 4),
-			out32 = new Uint32Array(out.buffer);
+	var bytesOut;
+	function convertBytes(buffer) {
+		if (!bytesOut) {
+			bytesOut = new Uint8Array(buffer.width * buffer.height * 3);
+		}
+		
+		var width = buffer.width,
+			height = buffer.height,
+			strideY = buffer.strideY,
+			strideCb = buffer.strideCb,
+			strideCr = buffer.strideCr,
+			bytesY = buffer.bytesY,
+			bytesCb = buffer.bytesCb,
+			bytesCr = buffer.bytesCr,
+			hdec = buffer.hdec,
+			vdec = buffer.vdec,
+			out = bytesOut,
+			outPtr = 0;
+		for (var y = 0; y < height; y++) {
+			var ydec = y >> vdec,
+				YPtr = y * strideY,
+				CbPtr = ydec * strideCb,
+				CrPtr = ydec * strideCr;
+			for (var x = 0; x < width; x++) {
+				var xdec = x >> hdec;
+				out[outPtr++] = bytesY[YPtr + x];
+				out[outPtr++] = bytesCb[CbPtr + xdec];
+				out[outPtr++] = bytesCr[CrPtr + xdec];
+			}
+		}
 
-		out32.set(bytes);
-		expandedTextures[key] = out;
 		return out;
 	}
 	
@@ -192,7 +233,7 @@ function YCbCrFrameSink(canvas) {
 		// Create the textures..
 		
 		// Y plane
-		function attachTexture(name, register, index, width, height, data) {
+		function attachTexture(name, register, index, format, width, height, data) {
 			var texture = gl.createTexture();
 			checkError();
 			gl.activeTexture(register);
@@ -208,39 +249,17 @@ function YCbCrFrameSink(canvas) {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 			checkError();
 			
-			if (!convertTextures) {
-				gl.texImage2D(
-					gl.TEXTURE_2D,
-					0, // mip level
-					gl.LUMINANCE, // internal format
-					width, height,
-					0, // border
-					gl.LUMINANCE, // format
-					gl.UNSIGNED_BYTE, //type
-					data // data!
-				);
-				var err = gl.getError();
-				if (err == gl.INVALID_OPERATION) {
-					console.log('Is this IE 11? Assuming luminance textures not supported, will be slower...');
-					convertTextures = true;
-				} else {
-					checkError();
-				}
-			}
-			if (convertTextures) {
-				// IE 11 doesn't support luminance-only textures
-				gl.texImage2D(
-					gl.TEXTURE_2D,
-					0, // mip level
-					gl.RGBA, // internal format
-					width, height,
-					0, // border
-					gl.RGBA, // format
-					gl.UNSIGNED_BYTE, //type
-					convertBytes(data, name) // data!
-				);
-				checkError();
-			}
+			gl.texImage2D(
+				gl.TEXTURE_2D,
+				0, // mip level
+				format, // internal format
+				width, height,
+				0, // border
+				format, // format
+				gl.UNSIGNED_BYTE, //type
+				data // data!
+			);
+			checkError();
 		
 			gl.uniform1i(gl.getUniformLocation(program, name), index);
 			checkError();
@@ -248,30 +267,47 @@ function YCbCrFrameSink(canvas) {
 			return texture;
 		}
 		
-		var textureY = attachTexture(
-			'uTextureY',
-			gl.TEXTURE0,
-			0,
-			yCbCrBuffer.strideY,
-			yCbCrBuffer.height,
-			yCbCrBuffer.bytesY
-		);
-		var textureCb = attachTexture(
-			'uTextureCb',
-			gl.TEXTURE1,
-			1,
-			yCbCrBuffer.strideCb,
-			yCbCrBuffer.height >> yCbCrBuffer.vdec,
-			yCbCrBuffer.bytesCb
-		);
-		var textureCr = attachTexture(
-			'uTextureCr',
-			gl.TEXTURE2,
-			2,
-			yCbCrBuffer.strideCr,
-			yCbCrBuffer.height >> yCbCrBuffer.vdec,
-			yCbCrBuffer.bytesCr
-		);
+		if (convertTextures) {
+			// IE 11 doesn't support luminance-only textures
+			// Rewrite the three plans into one "RGB" that's really YCbCr
+			var textureYCbCr = attachTexture(
+				'uTextureYCbCr',
+				gl.TEXTURE0,
+				0,
+				gl.RGB,
+				yCbCrBuffer.width,
+				yCbCrBuffer.height,
+				convertBytes(yCbCrBuffer)
+			);
+		} else {
+			var textureY = attachTexture(
+				'uTextureY',
+				gl.TEXTURE0,
+				0,
+				gl.LUMINANCE,
+				yCbCrBuffer.strideY,
+				yCbCrBuffer.height,
+				yCbCrBuffer.bytesY
+			);
+			var textureCb = attachTexture(
+				'uTextureCb',
+				gl.TEXTURE1,
+				1,
+				gl.LUMINANCE,
+				yCbCrBuffer.strideCb,
+				yCbCrBuffer.height >> yCbCrBuffer.vdec,
+				yCbCrBuffer.bytesCb
+			);
+			var textureCr = attachTexture(
+				'uTextureCr',
+				gl.TEXTURE2,
+				2,
+				gl.LUMINANCE,
+				yCbCrBuffer.strideCr,
+				yCbCrBuffer.height >> yCbCrBuffer.vdec,
+				yCbCrBuffer.bytesCr
+			);
+		}
 
 		// Aaaaand draw stuff.
 		gl.drawArrays(gl.TRIANGLES, 0, rectangle.length / 2);
