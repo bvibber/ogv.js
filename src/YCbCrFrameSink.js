@@ -178,6 +178,7 @@ function YCbCrFrameSink(canvas) {
 		return out;
 	}
 	
+	var textures = {};
 	self.drawFrame = function(yCbCrBuffer) {
 		if (!program) {
 			console.log('initializing gl program');
@@ -234,7 +235,13 @@ function YCbCrFrameSink(canvas) {
 		
 		// Y plane
 		function attachTexture(name, register, index, format, width, height, data) {
-			var texture = gl.createTexture();
+			var texture;
+			if (textures[name]) {
+				// Reuse & update the existing texture
+				texture = textures[name];
+			} else {
+				textures[name] = texture = gl.createTexture();
+			}
 			checkError();
 			gl.activeTexture(register);
 			checkError();

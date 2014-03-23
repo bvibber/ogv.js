@@ -16,6 +16,7 @@ See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 * color: yes
 * audio: yes, with a/v sync
 * background threading: no
+* GPU accelerated drawing: experimental (WebGL)
 
 
 ## Goals
@@ -79,12 +80,25 @@ Chrome 32 performs pretty well, but not quite as snappy as Firefox's asm.js mode
 
 It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 
-YCbCr->RGB conversion could be done in WebGL on supporting browsers (IE 11, Chrome, Firefox), if that makes a measurable difference.
+
+*WebGL drawing acceleration*
+
+Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers, and is available as an experimental option with some issues still (bad cropping, no fallback if fails, etc).
+
+Performance in Firefox, Chrome, and desktop Safari with WebGL option enabled is pretty good, and noticeably improves playback performance at HD resolutions. At sub-SD resolutions, it's not always a clear win.
+
+Performance in IE 11 appears much worse so far, but needs more testing outside of slow machines and Parallels VMs.
+
+First, IE does not support luminance-only textures so the Y, Cb, and Cr planes can't be uploaded directly from the decoded byte arrays. Currently they are copied/expanded from 8 to 32-bits and uploaded as RGBA textures where only the red channel is used, which doesn't affect the shader logic.
+
+Second, texture upload seems to just be really slow on IE. Hopefully this can be improved.
 
 
 *Flash decoder fallback*
 
-The Flash version seems to decode video fairly well, but the YCbCr->ARGB conversion is significantly slower than the JavaScript version even on IE. There is likely a better way to do that in Flash anyway though... might also try moving that code into C, in case the compiler does better.
+The Flash version seems to decode video fairly well, but the YCbCr->RGB conversion had to be moved from ActionScript to C code to perform acceptably. This may be due to suboptimal ActionScript compiler settings, or may be due to a much better bytecode emitter for Crossbridge.
+
+GPU-accelerated YCbCr->RGB conversion may be possible using Stage3d (Flash's OpenGL ES 2-like interface), however like IE 11 it doesn't support luminance-only textures so there may be a loss from expanding or interleaving the textures.
 
 
 ## Difficulties
