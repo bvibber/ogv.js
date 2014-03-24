@@ -73,7 +73,50 @@ function YCbCrFrameSink(canvas) {
 		1, 1
 	]);
 
-	function init() {
+	var textures = {};
+	function attachTexture(name, register, index, width, height, data) {
+		var texture;
+		if (textures[name]) {
+			// Reuse & update the existing texture
+			texture = textures[name];
+		} else {
+			textures[name] = texture = gl.createTexture();
+		}
+		checkError();
+		gl.activeTexture(register);
+		checkError();
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		checkError();
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+		checkError();
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		checkError();
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		checkError();
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		checkError();
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		checkError();
+		
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0, // mip level
+			gl.RGBA, // internal format
+			width, height,
+			0, // border
+			gl.RGBA, // format
+			gl.UNSIGNED_BYTE, //type
+			data // data!
+		);
+		checkError();
+	
+		gl.uniform1i(gl.getUniformLocation(program, name), index);
+		checkError();
+		
+		return texture;
+	}
+
+	function init(yCbCrBuffer) {
 		vertexShader = compileShader(gl.VERTEX_SHADER,
 			'attribute vec2 aPosition;\n' +
 			'attribute vec2 aTexturePosition;\n' +
@@ -84,18 +127,36 @@ function YCbCrFrameSink(canvas) {
 			'}'
 		);
 		// inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
+		// extra 'stripe' texture fiddling to work around IE 11's lack of gl.LUMINANCE or gl.ALPHA textures
 		fragmentShader = compileShader(gl.FRAGMENT_SHADER,
 			'precision mediump float;\n' +
+			'uniform sampler2D uStripeLuma;\n' +
+			'uniform sampler2D uStripeChroma;\n' +
 			'uniform sampler2D uTextureY;\n' +
 			'uniform sampler2D uTextureCb;\n' +
 			'uniform sampler2D uTextureCr;\n' +
 			'varying vec2 vTexturePosition;\n' +
 			'void main() {\n' +
+			'   // Y, Cb, and Cr planes are mapped into a pseudo-RGBA texture\n' +
+			'   // so we can upload them without expanding the bytes on IE 11\n' +
+			'   // which doesn\'t allow LUMINANCE or ALPHA textures.\n' +
+			'   // The stripe textures mark which channel to keep for each pixel.\n' +
+			'   vec4 vStripeLuma = texture2D(uStripeLuma, vTexturePosition);\n' +
+			'   vec4 vStripeChroma = texture2D(uStripeChroma, vTexturePosition);\n' +
+			'\n' +
+			'   // Each texture extraction will contain the relevant value in one\n' +
+			'   // channel only.\n' +
+			'   vec4 vY = texture2D(uTextureY, vTexturePosition) * vStripeLuma;\n' +
+			'   vec4 vCb = texture2D(uTextureCb, vTexturePosition) * vStripeChroma;\n' +
+			'   vec4 vCr = texture2D(uTextureCr, vTexturePosition) * vStripeChroma;\n' +
+			'\n' +
+			'   // Now assemble that into a YUV vector, and premultipy the Y...\n' +
 			'   vec3 YUV = vec3(\n' +
-			'     texture2D(uTextureY,  vTexturePosition).x * 1.1643828125,\n' +
-			'     texture2D(uTextureCb, vTexturePosition).x,\n' +
-			'     texture2D(uTextureCr, vTexturePosition).x\n' +
+			'     (vY.x  + vY.y  + vY.z  + vY.w) * 1.1643828125,\n' +
+			'     (vCb.x + vCb.y + vCb.z + vCb.w),\n' +
+			'     (vCr.x + vCr.y + vCr.z + vCr.w)\n' +
 			'   );\n' +
+			'   // And convert that to RGB!\n' +
 			'   gl_FragColor = vec4(\n' +
 			'     YUV.x + 1.59602734375 * YUV.z - 0.87078515625,\n' +
 			'     YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,\n' +
@@ -122,26 +183,40 @@ function YCbCrFrameSink(canvas) {
 		gl.useProgram(program);
 		checkError();
 		
-	}
-
-	// Expand luminance textures to RGBA
-	// Unfortunately this is about as expensive as YCbCr in the first place?
-	var expandedTextures = {};
-	function convertBytes(bytes, key) {
-		var len = bytes.length,
-			out = expandedTextures[key] || new Uint8Array(len * 4),
-			out32 = new Uint32Array(out.buffer);
-
-		out32.set(bytes);
-		expandedTextures[key] = out;
-		return out;
+		function buildStripe(width, height) {
+			var len = width * height,
+				out = new Uint32Array(len);
+			for (var i = 0; i < len; i += 4) {
+				out[i    ] = 0x000000ff;
+				out[i + 1] = 0x0000ff00;
+				out[i + 2] = 0x00ff0000;
+				out[i + 3] = 0xff000000;
+			}
+			return new Uint8Array(out.buffer);
+		}
+		
+		var textureY = attachTexture(
+			'uStripeLuma',
+			gl.TEXTURE0,
+			0,
+			yCbCrBuffer.strideY,
+			yCbCrBuffer.height,
+			buildStripe(yCbCrBuffer.strideY, yCbCrBuffer.height)
+		);
+		var textureY = attachTexture(
+			'uStripeChroma',
+			gl.TEXTURE1,
+			1,
+			yCbCrBuffer.strideCb,
+			yCbCrBuffer.height >> yCbCrBuffer.vdec,
+			buildStripe(yCbCrBuffer.strideCb, yCbCrBuffer.height >> yCbCrBuffer.vdec)
+		);
 	}
 	
-	var textures = {};
 	self.drawFrame = function(yCbCrBuffer) {
 		if (!program) {
 			console.log('initializing gl program');
-			init();
+			init(yCbCrBuffer);
 		}
 
 		// Set up the rectangle and draw it
@@ -190,92 +265,28 @@ function YCbCrFrameSink(canvas) {
 		gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0);
 		checkError();
 		
-		// Create the textures..
-		
-		// Y plane
-		function attachTexture(name, register, index, width, height, data) {
-			var texture;
-			if (textures[name]) {
-				// Reuse & update the existing texture
-				texture = textures[name];
-			} else {
-				textures[name] = texture = gl.createTexture();
-			}
-			checkError();
-			gl.activeTexture(register);
-			checkError();
-			gl.bindTexture(gl.TEXTURE_2D, texture);
-			checkError();
-			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-			checkError();
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			checkError();
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			checkError();
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-			checkError();
-			
-			if (!convertTextures) {
-				gl.texImage2D(
-					gl.TEXTURE_2D,
-					0, // mip level
-					gl.LUMINANCE, // internal format
-					width, height,
-					0, // border
-					gl.LUMINANCE, // format
-					gl.UNSIGNED_BYTE, //type
-					data // data!
-				);
-				var err = gl.getError();
-				if (err == gl.INVALID_OPERATION) {
-					console.log('Is this IE 11? Assuming luminance textures not supported, will be slower...');
-					convertTextures = true;
-				} else {
-					checkError();
-				}
-			}
-			if (convertTextures) {
-				// IE 11 doesn't support luminance-only textures
-				gl.texImage2D(
-					gl.TEXTURE_2D,
-					0, // mip level
-					gl.RGBA, // internal format
-					width, height,
-					0, // border
-					gl.RGBA, // format
-					gl.UNSIGNED_BYTE, //type
-					convertBytes(data, name) // data!
-				);
-				checkError();
-			}
-		
-			gl.uniform1i(gl.getUniformLocation(program, name), index);
-			checkError();
-			
-			return texture;
-		}
-		
+		// Create the textures...
 		var textureY = attachTexture(
 			'uTextureY',
-			gl.TEXTURE0,
-			0,
-			yCbCrBuffer.strideY,
+			gl.TEXTURE2,
+			2,
+			yCbCrBuffer.strideY / 4,
 			yCbCrBuffer.height,
 			yCbCrBuffer.bytesY
 		);
 		var textureCb = attachTexture(
 			'uTextureCb',
-			gl.TEXTURE1,
-			1,
-			yCbCrBuffer.strideCb,
+			gl.TEXTURE3,
+			3,
+			yCbCrBuffer.strideCb / 4,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCb
 		);
 		var textureCr = attachTexture(
 			'uTextureCr',
-			gl.TEXTURE2,
-			2,
-			yCbCrBuffer.strideCr,
+			gl.TEXTURE4,
+			4,
+			yCbCrBuffer.strideCr / 4,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCr
 		);
