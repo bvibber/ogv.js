@@ -72,11 +72,12 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/demo/demo.js build/jsdemo/demo.js
 	cp src/demo/motd.js build/jsdemo/motd.js
 	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
-	cp src/cortado.jar build/demo/lib/cortado.jar
-	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
+	cp src/cortado.jar build/jsdemo/lib/cortado.jar
+	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
+
 
 # There is a Flash shim for audio on Internet Explorer which doesn't
 # have Web Audio API.
