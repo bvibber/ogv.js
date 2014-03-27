@@ -9,7 +9,7 @@
  * @param HTMLCanvasElement canvas
  * @constructor
  */
-function YCbCrFrameSink(canvas) {
+function YCbCrFrameSink(canvas, videoInfo) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
 		debug = false; // swap this to enable more error checks, which can slow down rendering
@@ -64,15 +64,6 @@ function YCbCrFrameSink(canvas) {
 		-1.0, +1.0,
 		+1.0, -1.0,
 		+1.0, +1.0
-	]);
-
-	var textureRectangle = new Float32Array([
-		0, 0,
-		1, 0,
-		0, 1,
-		0, 1,
-		1, 0,
-		1, 1
 	]);
 
 	var textures = {};
@@ -250,6 +241,19 @@ function YCbCrFrameSink(canvas) {
 
 
 		// Set up the texture geometry...
+		// Warning: assumes that the stride for Y, Cb, and Cr is the same size in output pixels
+		var textureX0 = videoInfo.picX / yCbCrBuffer.strideY;
+		var textureX1 = (videoInfo.picX + videoInfo.picWidth) / yCbCrBuffer.strideY;
+		var textureY0 = videoInfo.picY / yCbCrBuffer.height;
+		var textureY1 = (videoInfo.picY + videoInfo.picHeight) / yCbCrBuffer.height;
+		var textureRectangle = new Float32Array([
+			textureX0, textureY0,
+			textureX1, textureY0,
+			textureX0, textureY1,
+			textureX0, textureY1,
+			textureX1, textureY0,
+			textureX1, textureY1
+		]);
 
 		var texturePositionBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, texturePositionBuffer);

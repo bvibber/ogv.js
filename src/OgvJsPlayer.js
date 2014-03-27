@@ -435,7 +435,7 @@ function OgvJsPlayer(options) {
 			canvas.height = info.picHeight;
 			console.log('useWebGL is', useWebGL);
 			if (useWebGL) {
-				frameSink = new YCbCrFrameSink(canvas);
+				frameSink = new YCbCrFrameSink(canvas, videoInfo);
 			} else {
 				ctx = canvas.getContext('2d');
 				imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
