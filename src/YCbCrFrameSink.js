@@ -12,7 +12,7 @@
 function YCbCrFrameSink(canvas) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
-		convertTextures = false;
+		debug = false; // swap this to enable more error checks, which can slow down rendering
 	
 	if (gl == null) {
 		throw new Error('WebGL unavailable; falling back to 2d canvas');
@@ -21,9 +21,11 @@ function YCbCrFrameSink(canvas) {
 
 	// GL!
 	function checkError() {
-		err = gl.getError();
-		if (err != 0) {
-			throw new Error("GL error " + err);
+		if (debug) {
+			err = gl.getError();
+			if (err != 0) {
+				throw new Error("GL error " + err);
+			}
 		}
 	}
 	
