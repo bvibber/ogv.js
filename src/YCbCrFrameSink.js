@@ -112,11 +112,14 @@ function YCbCrFrameSink(canvas, videoInfo) {
 	function init(yCbCrBuffer) {
 		vertexShader = compileShader(gl.VERTEX_SHADER,
 			'attribute vec2 aPosition;\n' +
-			'attribute vec2 aTexturePosition;\n' +
-			'varying vec2 vTexturePosition;\n' +
+			'attribute vec2 aLumaPosition;\n' +
+			'attribute vec2 aChromaPosition;\n' +
+			'varying vec2 vLumaPosition;\n' +
+			'varying vec2 vChromaPosition;\n' +
 			'void main() {\n' +
 			'    gl_Position = vec4(aPosition, 0, 1);\n' +
-			'    vTexturePosition = aTexturePosition;\n' +
+			'    vLumaPosition = aLumaPosition;\n' +
+			'    vChromaPosition = aChromaPosition;\n' +
 			'}'
 		);
 		// inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
@@ -128,20 +131,21 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uniform sampler2D uTextureY;\n' +
 			'uniform sampler2D uTextureCb;\n' +
 			'uniform sampler2D uTextureCr;\n' +
-			'varying vec2 vTexturePosition;\n' +
+			'varying vec2 vLumaPosition;\n' +
+			'varying vec2 vChromaPosition;\n' +
 			'void main() {\n' +
 			'   // Y, Cb, and Cr planes are mapped into a pseudo-RGBA texture\n' +
 			'   // so we can upload them without expanding the bytes on IE 11\n' +
 			'   // which doesn\'t allow LUMINANCE or ALPHA textures.\n' +
 			'   // The stripe textures mark which channel to keep for each pixel.\n' +
-			'   vec4 vStripeLuma = texture2D(uStripeLuma, vTexturePosition);\n' +
-			'   vec4 vStripeChroma = texture2D(uStripeChroma, vTexturePosition);\n' +
+			'   vec4 vStripeLuma = texture2D(uStripeLuma, vLumaPosition);\n' +
+			'   vec4 vStripeChroma = texture2D(uStripeChroma, vChromaPosition);\n' +
 			'\n' +
 			'   // Each texture extraction will contain the relevant value in one\n' +
 			'   // channel only.\n' +
-			'   vec4 vY = texture2D(uTextureY, vTexturePosition) * vStripeLuma;\n' +
-			'   vec4 vCb = texture2D(uTextureCb, vTexturePosition) * vStripeChroma;\n' +
-			'   vec4 vCr = texture2D(uTextureCr, vTexturePosition) * vStripeChroma;\n' +
+			'   vec4 vY = texture2D(uTextureY, vLumaPosition) * vStripeLuma;\n' +
+			'   vec4 vCb = texture2D(uTextureCb, vChromaPosition) * vStripeChroma;\n' +
+			'   vec4 vCr = texture2D(uTextureCr, vChromaPosition) * vStripeChroma;\n' +
 			'\n' +
 			'   // Now assemble that into a YUV vector, and premultipy the Y...\n' +
 			'   vec3 YUV = vec3(\n' +
@@ -241,35 +245,39 @@ function YCbCrFrameSink(canvas, videoInfo) {
 
 
 		// Set up the texture geometry...
-		// Warning: assumes that the stride for Y, Cb, and Cr is the same size in output pixels
-		var textureX0 = videoInfo.picX / yCbCrBuffer.strideY;
-		var textureX1 = (videoInfo.picX + videoInfo.picWidth) / yCbCrBuffer.strideY;
-		var textureY0 = videoInfo.picY / yCbCrBuffer.height;
-		var textureY1 = (videoInfo.picY + videoInfo.picHeight) / yCbCrBuffer.height;
-		var textureRectangle = new Float32Array([
-			textureX0, textureY0,
-			textureX1, textureY0,
-			textureX0, textureY1,
-			textureX0, textureY1,
-			textureX1, textureY0,
-			textureX1, textureY1
-		]);
+		function setupTexturePosition(varname, texWidth, texHeight) {
+			// Warning: assumes that the stride for Y, Cb, and Cr is the same size in output pixels
+			var textureX0 = videoInfo.picX / texWidth;
+			var textureX1 = (videoInfo.picX + videoInfo.picWidth) / texWidth;
+			var textureY0 = videoInfo.picY / yCbCrBuffer.height;
+			var textureY1 = (videoInfo.picY + videoInfo.picHeight) / texHeight;
+			var textureRectangle = new Float32Array([
+				textureX0, textureY0,
+				textureX1, textureY0,
+				textureX0, textureY1,
+				textureX0, textureY1,
+				textureX1, textureY0,
+				textureX1, textureY1
+			]);
 
-		var texturePositionBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, texturePositionBuffer);
-		checkError();
+			var texturePositionBuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, texturePositionBuffer);
+			checkError();
 		
-		gl.bufferData(gl.ARRAY_BUFFER, textureRectangle, gl.STATIC_DRAW);
-		checkError();
+			gl.bufferData(gl.ARRAY_BUFFER, textureRectangle, gl.STATIC_DRAW);
+			checkError();
 		
-		var texturePositionLocation = gl.getAttribLocation(program, 'aTexturePosition');
-		checkError();
+			var texturePositionLocation = gl.getAttribLocation(program, varname);
+			checkError();
 		
-		gl.enableVertexAttribArray(texturePositionLocation);
-		checkError();
+			gl.enableVertexAttribArray(texturePositionLocation);
+			checkError();
 		
-		gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0);
-		checkError();
+			gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0);
+			checkError();
+		}
+		setupTexturePosition('aLumaPosition', yCbCrBuffer.strideY, yCbCrBuffer.height);
+		setupTexturePosition('aChromaPosition', yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
 		
 		// Create the textures...
 		var textureY = attachTexture(
