@@ -36,10 +36,10 @@ build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/li
 	./compileOgvJs.sh
 
 build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
-	 cpp -E -w -P -CC src/OgvJsCodec.js.in > build/OgvJsCodec.js
+	 cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
 build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/YCbCrFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
-	 cpp -E -w -P -CC src/ogvjs.js.in > build/ogvjs.js
+	 cpp -E -w -P -CC -nostdinc src/ogvjs.js.in > build/ogvjs.js
 
 # The player demo, with the JS and Flash builds
 build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
@@ -47,7 +47,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
-	cpp -E -w -P -CC -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
+	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
 	
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
@@ -66,7 +66,7 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
                           build/ogvjs.js src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
-	cpp -E -w -P -CC -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
+	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
 	
 	cp src/demo/demo.css build/jsdemo/demo.css
 	cp src/demo/demo.js build/jsdemo/demo.js
