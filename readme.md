@@ -14,9 +14,10 @@ See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
 * streaming: yes (buffering varies by browser)
 * color: yes
-* audio: yes, with a/v sync
-* background threading: no
-* GPU accelerated drawing: experimental (WebGL)
+* audio: yes, with a/v sync (requires Web Audio or Flash)
+* [background threading: no](https://github.com/brion/ogv.js/wiki/Threading)
+* [GPU accelerated drawing: experimental (WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
+* seeking: no
 
 
 ## Goals
@@ -29,10 +30,11 @@ Long-form goal is to create a drop-in replacement for the HTML5 video and audio 
 Short-ish clips of a few seconds to at most a few minutes at SD resolution or below are the primary target media. This system should really not be used for full-length TV or movies, as it's going to eat battery horribly due to sustained high CPU usage.
 
 
-The primary target browsers are:
-* Safari 6.1+ on Mac OS X
-* Internet Explorer 10+ on Windows
+The primary target browsers are (testing 360p/30fps):
+* Safari 6.1+ on Mac OS X 10.8+
 * Safari on iOS 7+ 64-bit
+* Internet Explorer 10+ on Windows 7+ (JS)
+* Internet Explorer 9 on Windows 7+ (Flash)
 
 And for lower-resolution files (testing 160p/15fps):
 * Safari on iOS 7+ 32-bit
@@ -45,7 +47,7 @@ Testing browsers (these support .ogv natively):
 * Chrome 32
 
 Experimental all-Flash support not yet tested on:
-* Internet Explorer 7/8/9 on Windows XP/Vista/7
+* Internet Explorer 6/7/8 on Windows XP/Vista/7
 
 
 ## Performance
@@ -56,7 +58,9 @@ Early versions have only been spot-checked with a couple of small sample files o
 
 On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
 
-IE 10 and IE 11 on Windows 8 and 8.1 perform pretty well. Older versions of IE are not supported at all.
+IE 10 and IE 11 on Windows 7, 8 and 8.1 perform pretty well. Older versions of IE are not supported at all for the JavaScript target.
+
+IE 9 runs the demo page with the Flash version of the decoder, but IE 6/7/8 don't currently run the demo and so are untested.
 
 
 *Low-res targets*
@@ -83,22 +87,18 @@ It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 
 *WebGL drawing acceleration*
 
-Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers, and is available as an experimental option with some issues still (bad cropping, no fallback if fails, etc).
+Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers, and is available as an experimental option.
 
-Performance in Firefox, Chrome, and desktop Safari with WebGL option enabled is pretty good, and noticeably improves playback performance at HD resolutions. At sub-SD resolutions, it's not always a clear win.
+Performance in Firefox, Chrome, IE 11, and desktop Safari with WebGL option enabled is pretty good, and noticeably improves playback performance at HD resolutions. At sub-SD resolutions, it's not always a clear win.
 
-Performance in IE 11 appears much worse so far, but needs more testing outside of slow machines and Parallels VMs.
-
-First, IE does not support luminance-only textures so the Y, Cb, and Cr planes can't be uploaded directly from the decoded byte arrays. Currently they are copied/expanded from 8 to 32-bits and uploaded as RGBA textures where only the red channel is used, which doesn't affect the shader logic.
-
-Second, texture upload seems to just be really slow on IE. Hopefully this can be improved.
+Initial performance issues in IE 11 were resolved by packing the luma and chroma plane textures as faux RGBA textures, packing four pixels into each texel. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
 
 
 *Flash decoder fallback*
 
 The Flash version seems to decode video fairly well, but the YCbCr->RGB conversion had to be moved from ActionScript to C code to perform acceptably. This may be due to suboptimal ActionScript compiler settings, or may be due to a much better bytecode emitter for Crossbridge.
 
-GPU-accelerated YCbCr->RGB conversion may be possible using Stage3d (Flash's OpenGL ES 2-like interface), however like IE 11 it doesn't support luminance-only textures so there may be a loss from expanding or interleaving the textures.
+GPU-accelerated YCbCr->RGB conversion may be possible using Stage3d (Flash's OpenGL ES 2-like interface).
 
 
 ## Difficulties
@@ -165,8 +165,6 @@ Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscr
 Crossbridge compiles hella slow, especially on the configure scripts.
 
 Have not yet tested using Crossbridge on Linux (only on Mac).
-
-Have not yet attempted link-time optimizations on the Flash build.
 
 
 ## Upstream library notes
