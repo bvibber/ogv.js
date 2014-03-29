@@ -33,11 +33,6 @@ function OgvJsPlayer(options) {
 	self.style.position = 'relative';
 	self.appendChild(canvas);
 
-	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-	if (!requestAnimationFrame) {
-		throw new Error("No requestAnimationFrame available!");
-	}
-
 	var getTimestamp;
 	if (window.performance === undefined || window.performance.now === undefined) {
 		getTimestamp = Date.now;
@@ -83,7 +78,6 @@ function OgvJsPlayer(options) {
 			audioFeeder = null;
 		}
 		if (nextProcessingTimer) {
-			//cancelAnimationFrame(nextProcessingTimer);
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
@@ -391,7 +385,6 @@ function OgvJsPlayer(options) {
 		}
 		//console.log('delaying for ' + delay);
 		nextProcessingTimer = setTimeout(doProcessing, delay);
-		//nextProcessingTimer = requestAnimationFrame(doProcessing);
 	}
 
 	var fps = 60;
@@ -602,7 +595,6 @@ function OgvJsPlayer(options) {
 			self.load();
 		} else if (!paused) {
 			console.log('pausing');
-			//cancelAnimationFrame(nextProcessingTimer);
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			paused = true;
