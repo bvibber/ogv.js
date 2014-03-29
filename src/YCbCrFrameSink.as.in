@@ -109,7 +109,16 @@ package {
 		// the list from the GLSL->AGAL compiler and put them all into a big vector. 
 		private function expandConstants(consts:Object):Vector.<Number> {
 			var out:Vector.<Number> = new Vector.<Number>;
-			for (var register:String in consts) {
+			var keys:Array = [];
+			var register:String;
+
+			for (register in consts) {
+				// Warning: they come in out of order from foreach
+				keys.push(register);
+			}
+			keys.sort();
+
+			for each (register in keys) {
 				for each (var val:Number in consts[register]) {
 					out.push(val);
 				}
