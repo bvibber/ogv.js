@@ -105,6 +105,18 @@ package {
 			context3D.setTextureAt(index, texture);
 		}
 
+		// Constants can't just sit in the shaders in AGAL, so we have to extract
+		// the list from the GLSL->AGAL compiler and put them all into a big vector. 
+		private function expandConstants(consts:Object):Vector.<Number> {
+			var out:Vector.<Number> = new Vector.<Number>;
+			for (var register:String in consts) {
+				for each (var val:Number in consts[register]) {
+					out.push(val);
+				}
+			}
+			return out;
+		}
+
 		private function init(yCbCrBuffer:Object):void {
 			vertexShader = compileShader(Context3DProgramType.VERTEX, vertexShaderSource.agalasm);
 			fragmentShader = compileShader(Context3DProgramType.FRAGMENT, fragmentShaderSource.agalasm);
@@ -113,6 +125,12 @@ package {
 			program.upload(vertexShader, fragmentShader);
 
 			context3D.setProgram(program);
+
+			// We also need to pass some constant values for the shaders!
+			context3D.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0,
+			                                        expandConstants(vertexShaderSource.consts));
+			context3D.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0,
+			                                        expandConstants(fragmentShaderSource.consts));
 		
 			function buildStripe(width:int, height:int):ByteArray {
 				var len:int = width * height,
