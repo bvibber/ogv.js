@@ -143,8 +143,8 @@ package {
 		private function init(yCbCrBuffer:Object):void {
 			vertexShader = compileShader(Context3DProgramType.VERTEX, vertexShaderSource.agalasm);
 			
-			// The GLSL->AGAL compiler assumed we wanted linear sampling, which we don't
-			var fragSource:String = fragmentShaderSource.agalasm.replace(/linear/g, 'nearest');
+			// The GLSL->AGAL compiler assumed we wanted linear sampling and repeat, which we don't
+			var fragSource:String = fragmentShaderSource.agalasm.replace(/linear/g, 'nearest').replace(/repeat/g, 'clamp');
 			fragmentShader = compileShader(Context3DProgramType.FRAGMENT, fragSource);
 	
 			program = context3D.createProgram();
@@ -213,10 +213,10 @@ package {
 			// Set up the texture geometry...
 			function setupTexturePosition(varname:String, index:int, texWidth:int, texHeight:int):void {
 				// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
-				var textureX0:Number = videoInfo.picX / texWidth;
-				var textureX1:Number = (videoInfo.picX + videoInfo.picWidth) / texWidth;
-				var textureY0:Number = videoInfo.picY / yCbCrBuffer.height;
-				var textureY1:Number = (videoInfo.picY + videoInfo.picHeight) / texHeight;
+				var textureX0:Number = videoInfo.picX / nextPowerOfTwo(texWidth);
+				var textureX1:Number = (videoInfo.picX + videoInfo.picWidth) / nextPowerOfTwo(texWidth);
+				var textureY0:Number = videoInfo.picY / nextPowerOfTwo(texHeight);
+				var textureY1:Number = (videoInfo.picY + videoInfo.picHeight) / nextPowerOfTwo(texHeight);
 				var textureRectangle:Vector.<Number> = new <Number>[
 					textureX0, textureY0,
 					textureX1, textureY0,
