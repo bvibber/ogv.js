@@ -154,6 +154,8 @@ package {
 				init(yCbCrBuffer);
 			}
 
+			context3D.clear();
+
 			// Set up the rectangle and draw it
 
 			//
@@ -222,7 +224,7 @@ package {
 			var indices:IndexBuffer3D = context3D.createIndexBuffer(vertexCount);
 			indices.uploadFromVector(indexVector, 0, vertexCount);
 			
-			context3D.drawTriangles(indices, 0, vertexCount);
+			context3D.drawTriangles(indices, 0);
 			context3D.present();
 		};
 	}
