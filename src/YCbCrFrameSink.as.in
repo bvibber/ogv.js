@@ -124,10 +124,28 @@ package {
 			}
 			return out;
 		}
+		
+		private function registerForVar(shaderSource:Object, name:String):int {
+			var vars:Object = shaderSource.varnames;
+			var registerName:String = '';
+			for (var key:String in vars) {
+				if (key === name) {
+					registerName = vars[key];
+				}
+			}
+			if (registerName == '') {
+				throw new Error('Could not find register for variable ' + name);
+			}
+			// We only need the register number; type is inherent.
+			return parseInt(registerName.replace(/^[a-z]+/, ''));
+		}
 
 		private function init(yCbCrBuffer:Object):void {
 			vertexShader = compileShader(Context3DProgramType.VERTEX, vertexShaderSource.agalasm);
-			fragmentShader = compileShader(Context3DProgramType.FRAGMENT, fragmentShaderSource.agalasm);
+			
+			// The GLSL->AGAL compiler assumed we wanted linear sampling, which we don't
+			var fragSource:String = fragmentShaderSource.agalasm.replace(/linear/g, 'nearest');
+			fragmentShader = compileShader(Context3DProgramType.FRAGMENT, fragSource);
 	
 			program = context3D.createProgram();
 			program.upload(vertexShader, fragmentShader);
@@ -154,7 +172,7 @@ package {
 		
 			attachTexture(
 				'uStripeLuma',
-				0,
+				registerForVar(fragmentShaderSource, 'uStripeLuma'),
 				yCbCrBuffer.strideY,
 				yCbCrBuffer.height,
 				buildStripe(yCbCrBuffer.strideY, yCbCrBuffer.height),
@@ -162,7 +180,7 @@ package {
 			);
 			attachTexture(
 				'uStripeChroma',
-				1,
+				registerForVar(fragmentShaderSource, 'uStripeChroma'),
 				yCbCrBuffer.strideCb,
 				yCbCrBuffer.height >> yCbCrBuffer.vdec,
 				buildStripe(yCbCrBuffer.strideCb, yCbCrBuffer.height >> yCbCrBuffer.vdec),
@@ -218,7 +236,7 @@ package {
 			// Create the textures...
 			attachTexture(
 				'uTextureY',
-				2,
+				registerForVar(fragmentShaderSource, 'uTextureY'),
 				yCbCrBuffer.strideY / 4,
 				yCbCrBuffer.height,
 				yCbCrBuffer.bytes,
@@ -226,7 +244,7 @@ package {
 			);
 			attachTexture(
 				'uTextureCb',
-				3,
+				registerForVar(fragmentShaderSource, 'uTextureCb'),
 				yCbCrBuffer.strideCb / 4,
 				yCbCrBuffer.height >> yCbCrBuffer.vdec,
 				yCbCrBuffer.bytes,
@@ -234,7 +252,7 @@ package {
 			);
 			attachTexture(
 				'uTextureCr',
-				4,
+				registerForVar(fragmentShaderSource, 'uTextureCr'),
 				yCbCrBuffer.strideCr / 4,
 				yCbCrBuffer.height >> yCbCrBuffer.vdec,
 				yCbCrBuffer.bytes,
