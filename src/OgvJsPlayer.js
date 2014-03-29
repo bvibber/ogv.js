@@ -31,6 +31,12 @@ function OgvJsPlayer(options) {
 	var self = document.createElement('ogvjs');
 	self.style.display = 'inline-block';
 	self.style.position = 'relative';
+
+	canvas.style.position = 'absolute';
+	canvas.style.top = '0';
+	canvas.style.left = '0';
+	canvas.style.width = '100%';
+	canvas.style.height = '100%';
 	self.appendChild(canvas);
 
 	var getTimestamp;
@@ -103,6 +109,11 @@ function OgvJsPlayer(options) {
 	var lastFrameTimestamp = 0.0;
 
 	function drawFrame() {
+		if (thumbnail) {
+			self.removeChild(thumbnail);
+			thumbnail = null;
+		}
+
 		yCbCrBuffer = codec.dequeueFrame();
 		frameEndTimestamp = yCbCrBuffer.timestamp;
 
@@ -705,7 +716,7 @@ function OgvJsPlayer(options) {
 		}
 	});
 	
-	var poster;
+	var poster, thumbnail;
 	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
@@ -713,19 +724,18 @@ function OgvJsPlayer(options) {
 		set: function setPoster(val) {
 			poster = val;
 			if (!started) {
-				var thumbnail = new Image();
+				if (thumbnail) {
+					self.removeChild(thumbnail);
+				}
+				thumbnail = new Image();
 				thumbnail.src = poster;
-				thumbnail.addEventListener('load', function() {
-					if (!started) {
-						if (!useWebGL) {
-							// @todo fix poster image for webgl mode
-							ctx = canvas.getContext('2d');
-							canvas.width = thumbnail.width;
-							canvas.height = thumbnail.height;
-							ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
-						}
-					}
-				});
+				thumbnail.className = 'ogvjs-poster';
+				thumbnail.style.position = 'absolute';
+				thumbnail.style.top = '0';
+				thumbnail.style.left = '0';
+				thumbnail.style.width = '100%';
+				thumbnail.style.height = '100%';
+				self.appendChild(thumbnail);
 			}
 		}
 	});
@@ -787,7 +797,7 @@ function OgvJsPlayer(options) {
 		},
 		set: function setWidth(val) {
 			width = parseInt(val, 10);
-			canvas.style.width = width + 'px';
+			self.style.width = width + 'px';
 		}
 	});
 	
@@ -797,7 +807,7 @@ function OgvJsPlayer(options) {
 		},
 		set: function setHeight(val) {
 			height = parseInt(val, 10);
-			canvas.style.height = height + 'px';
+			self.style.height = height + 'px';
 		}
 	});
 
