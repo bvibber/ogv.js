@@ -1,11 +1,6 @@
 /**
  * Warning: canvas must not have been used for 2d drawing prior!
  *
- * @todo allow for cropping the picture area
- * @todo allow for stride not being actual width
- *
- * @todo make it not horribly slow on IE 11
- *
  * @param HTMLCanvasElement canvas
  * @constructor
  */
@@ -15,7 +10,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		debug = false; // swap this to enable more error checks, which can slow down rendering
 	
 	if (gl == null) {
-		throw new Error('WebGL unavailable; falling back to 2d canvas');
+		throw new Error('WebGL unavailable');
 	}
 	console.log('Using WebGL canvas for video drawing');
 
