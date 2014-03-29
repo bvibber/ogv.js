@@ -16,7 +16,10 @@ function OgvSwfTimeRanges(ranges) {
 	return this;
 }
 
-function OgvSwfPlayer() {
+function OgvSwfPlayer(options) {
+	var options = options || {};
+	var useGPU = !!options.useGPU;
+	
 	// Return a magical custom element!
 	var self = document.createElement('ogvswf');
 	self.style.display = 'inline-block';
@@ -65,11 +68,16 @@ function OgvSwfPlayer() {
 	flash.width = 320;
 	flash.height = 240;
 	flash.appendChild(param('allowscriptaccess', 'always'));
-	flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
+	if (useGPU) {
+		flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName + '&useGPU=1'));
+		flash.appendChild(param('wmode', 'direct'));
+	} else {
+		flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
+		flash.appendChild(param('wmode', 'opaque'));
+	}
 	// For IE <= 9:
 	if (typeof flash.classid == 'string') {
 		flash.appendChild(param('movie', swfUrl));
-		flash.appendChild(param('wmode', 'opaque'));
 		// Must set all the parameters before setting classid...
 		flash.classid = 'clsid:D27CDB6E-AE6D-11cf-96B8-444553540000';
 	} else {

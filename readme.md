@@ -16,7 +16,7 @@ See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * [background threading: no](https://github.com/brion/ogv.js/wiki/Threading)
-* [GPU accelerated drawing: experimental (WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
+* [GPU accelerated drawing: experimental (WebGL and Flash Stage3D)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
 * seeking: no
 
 
@@ -98,7 +98,9 @@ Initial performance issues in IE 11 were resolved by packing the luma and chroma
 
 The Flash version seems to decode video fairly well, but the YCbCr->RGB conversion had to be moved from ActionScript to C code to perform acceptably. This may be due to suboptimal ActionScript compiler settings, or may be due to a much better bytecode emitter for Crossbridge.
 
-GPU-accelerated YCbCr->RGB conversion may be possible using Stage3d (Flash's OpenGL ES 2-like interface).
+GPU-accelerated YCbCr->RGB conversion and drawing is optionally done using Stage3d (Flash's OpenGL ES 2-like interface). The GLSL shaders are converted to AGAL with [an open source tool from Adobe](https://github.com/adobe/glsl2agal), included via git submodule. Performance seems variable, depending on the machine. Needs more testing.
+
+Currently the Stage3D acceleration uses nearest neighbor scaling on the output, and can sometimes fail to clamp the last line properly.
 
 
 ## Difficulties

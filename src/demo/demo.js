@@ -688,6 +688,11 @@
 			} else if (playerBackend == 'flash') {
 				player = new OgvSwfPlayer();
 				player.durationHint = durationHint;
+			} else if (playerBackend == 'flash-gpu') {
+				player = new OgvSwfPlayer({
+					useGPU: true
+				});
+				player.durationHint = durationHint;
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();
 				player.durationHint = durationHint;

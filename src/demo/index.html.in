@@ -73,6 +73,7 @@
 								<option value="webgl">JS + WebGL</option>
 #ifdef WITH_FLASH
 								<option value="flash">Flash</option>
+								<option value="flash-gpu">Flash + GPU</option>
 #endif
 								<option value="native">native</option>
 								<option value="cortado">Cortado (Java)</option>

@@ -285,6 +285,7 @@ package {
         {
             // And queue up the output buffer!
             _queuedFrame = {
+                bytes: CModule.ram, // yeah, exposing the entire heap is nasty
                 bufferY: bufferY,
                 bufferCb: bufferCb,
                 bufferCr: bufferCr,
