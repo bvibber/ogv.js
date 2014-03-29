@@ -162,10 +162,10 @@ package {
 				var len:int = width * height,
 					out:ByteArray = new ByteArray();
 				for (var i:int = 0; i < len; i += 4) {
-					out.writeInt(0x000000ff);
-					out.writeInt(0x0000ff00);
-					out.writeInt(0x00ff0000);
 					out.writeInt(0xff000000);
+					out.writeInt(0x00ff0000);
+					out.writeInt(0x0000ff00);
+					out.writeInt(0x000000ff);
 				}
 				return out;
 			}
@@ -207,7 +207,7 @@ package {
 			//
 			buffer = context3D.createVertexBuffer(rectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
 			buffer.uploadFromVector(rectangle, 0, rectangle.length / 2);
-			context3D.setVertexBufferAt(0, buffer, 0, Context3DVertexBufferFormat.FLOAT_2);
+			context3D.setVertexBufferAt(registerForVar(vertexShaderSource, 'aPosition'), buffer, 0, Context3DVertexBufferFormat.FLOAT_2);
 
 
 			// Set up the texture geometry...
@@ -230,8 +230,8 @@ package {
 				texturePositionBuffer.uploadFromVector(textureRectangle, 0, textureRectangle.length / 2);
 				context3D.setVertexBufferAt(index, buffer, 0, Context3DVertexBufferFormat.FLOAT_2);
 			}
-			setupTexturePosition('aLumaPosition', 1, yCbCrBuffer.strideY, yCbCrBuffer.height);
-			setupTexturePosition('aChromaPosition', 2, yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
+			setupTexturePosition('aLumaPosition', registerForVar(vertexShaderSource, 'aLumaPosition'), yCbCrBuffer.strideY, yCbCrBuffer.height);
+			setupTexturePosition('aChromaPosition', registerForVar(vertexShaderSource, 'aChromaPosition'), yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
 		
 			// Create the textures...
 			attachTexture(
