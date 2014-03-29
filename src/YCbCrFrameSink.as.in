@@ -82,7 +82,6 @@ package {
 			// We'll have to convert to power-of-2 size. Sighhh
 			var texWidth:int = nextPowerOfTwo(width);
 			var texHeight:int = nextPowerOfTwo(height);
-			texWidth = texHeight = Math.max(texWidth, texHeight); // and force to square. is this needed?
 			var texBytes:ByteArray = new ByteArray();
 			var texStride:int = texWidth * 4;
 			var stride:int = width * 4;
