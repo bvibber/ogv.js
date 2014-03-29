@@ -42,12 +42,11 @@ build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.
 	 cpp -E -w -P -CC -nostdinc src/ogvjs.js.in > build/ogvjs.js
 
 build/ogvjs.js.gz : build/ogvjs.js
-	 gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
+	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
 build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
-                        build/ogvjs.js \
-			build/ogvjs.js.gz \
+                        build/ogvjs.js build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
