@@ -17,15 +17,9 @@ package {
 	import com.adobe.utils.AGALMiniAssembler;
 
 
-	/**
-	 * Warning: canvas must not have been used for 2d drawing prior!
-	 *
-	 * @param HTMLCanvasElement canvas
-	 * @constructor
-	 */
 	public class YCbCrFrameSink {
 		private var stage:Stage = null;
-		private var debug:Boolean = false; // swap this to enable more error checks, which can slow down rendering
+		private var debug:Boolean = true; // swap this to enable more error checks, which can slow down rendering
 		
 		private var context3D:Context3D = null;
 		private var vertexShader:ByteArray = null;
@@ -45,6 +39,7 @@ package {
 			if (stage.stage3Ds.length > 0) {
 				stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE, function(e:Event):void {
 					context3D = stage.stage3Ds[0].context3D;
+					context3D.enableErrorChecking = debug;
 					context3D.configureBackBuffer(videoInfo.picWidth, videoInfo.picHeight, 0, false);
 				});
 				stage.stage3Ds[0].requestContext3D();
