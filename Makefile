@@ -38,8 +38,15 @@ build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/li
 build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
 	 cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
-build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/YCbCrFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
-	 cpp -E -w -P -CC -nostdinc src/ogvjs.js.in > build/ogvjs.js
+build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
+	node file2def.js src/YCbCr-vertex.glsl YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
+	node file2def.js src/YCbCr-fragment.glsl YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
+
+build/YCbCrFrameSink.js : src/YCbCrFrameSink.js.in build/YCbCr-shaders.h
+	 cpp -E -w -P -CC -nostdinc -Ibuild src/YCbCrFrameSink.js.in > build/YCbCrFrameSink.js
+
+build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/YCbCrFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
+	 cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
 
 # The player demo, with the JS and Flash builds
 build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \

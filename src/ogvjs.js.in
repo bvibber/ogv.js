@@ -1,5 +1,5 @@
 // -- OgvJsCodec.js
-#include "../build/OgvJsCodec.js"
+#include "OgvJsCodec.js"
 
 // -- StreamFile.js
 #include "StreamFile.js"

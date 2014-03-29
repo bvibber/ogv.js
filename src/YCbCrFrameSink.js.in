@@ -1,3 +1,5 @@
+#include "YCbCr-shaders.h"
+
 /**
  * Warning: canvas must not have been used for 2d drawing prior!
  *
@@ -105,58 +107,8 @@ function YCbCrFrameSink(canvas, videoInfo) {
 	}
 
 	function init(yCbCrBuffer) {
-		vertexShader = compileShader(gl.VERTEX_SHADER,
-			'attribute vec2 aPosition;\n' +
-			'attribute vec2 aLumaPosition;\n' +
-			'attribute vec2 aChromaPosition;\n' +
-			'varying vec2 vLumaPosition;\n' +
-			'varying vec2 vChromaPosition;\n' +
-			'void main() {\n' +
-			'    gl_Position = vec4(aPosition, 0, 1);\n' +
-			'    vLumaPosition = aLumaPosition;\n' +
-			'    vChromaPosition = aChromaPosition;\n' +
-			'}'
-		);
-		// inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
-		// extra 'stripe' texture fiddling to work around IE 11's lack of gl.LUMINANCE or gl.ALPHA textures
-		fragmentShader = compileShader(gl.FRAGMENT_SHADER,
-			'precision mediump float;\n' +
-			'uniform sampler2D uStripeLuma;\n' +
-			'uniform sampler2D uStripeChroma;\n' +
-			'uniform sampler2D uTextureY;\n' +
-			'uniform sampler2D uTextureCb;\n' +
-			'uniform sampler2D uTextureCr;\n' +
-			'varying vec2 vLumaPosition;\n' +
-			'varying vec2 vChromaPosition;\n' +
-			'void main() {\n' +
-			'   // Y, Cb, and Cr planes are mapped into a pseudo-RGBA texture\n' +
-			'   // so we can upload them without expanding the bytes on IE 11\n' +
-			'   // which doesn\'t allow LUMINANCE or ALPHA textures.\n' +
-			'   // The stripe textures mark which channel to keep for each pixel.\n' +
-			'   vec4 vStripeLuma = texture2D(uStripeLuma, vLumaPosition);\n' +
-			'   vec4 vStripeChroma = texture2D(uStripeChroma, vChromaPosition);\n' +
-			'\n' +
-			'   // Each texture extraction will contain the relevant value in one\n' +
-			'   // channel only.\n' +
-			'   vec4 vY = texture2D(uTextureY, vLumaPosition) * vStripeLuma;\n' +
-			'   vec4 vCb = texture2D(uTextureCb, vChromaPosition) * vStripeChroma;\n' +
-			'   vec4 vCr = texture2D(uTextureCr, vChromaPosition) * vStripeChroma;\n' +
-			'\n' +
-			'   // Now assemble that into a YUV vector, and premultipy the Y...\n' +
-			'   vec3 YUV = vec3(\n' +
-			'     (vY.x  + vY.y  + vY.z  + vY.w) * 1.1643828125,\n' +
-			'     (vCb.x + vCb.y + vCb.z + vCb.w),\n' +
-			'     (vCr.x + vCr.y + vCr.z + vCr.w)\n' +
-			'   );\n' +
-			'   // And convert that to RGB!\n' +
-			'   gl_FragColor = vec4(\n' +
-			'     YUV.x + 1.59602734375 * YUV.z - 0.87078515625,\n' +
-			'     YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,\n' +
-			'     YUV.x + 2.017234375   * YUV.y - 1.081390625,\n' +
-			'     1\n' +
-			'   );\n' +
-			'}'
-		);
+		vertexShader = compileShader(gl.VERTEX_SHADER, YCBCR_VERTEX_SHADER);
+		fragmentShader = compileShader(gl.FRAGMENT_SHADER, YCBCR_FRAGMENT_SHADER);
 	
 		program = gl.createProgram();
 		gl.attachShader(program, vertexShader);
