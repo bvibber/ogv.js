@@ -41,9 +41,13 @@ build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
 build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js src/YCbCrFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
 	 cpp -E -w -P -CC -nostdinc src/ogvjs.js.in > build/ogvjs.js
 
+build/ogvjs.js.gz : build/ogvjs.js
+	 gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
+
 # The player demo, with the JS and Flash builds
 build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
                         build/ogvjs.js \
+			build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
@@ -56,6 +60,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
+	cp build/ogvjs.js.gz build/demo/lib/ogvjs.js.gz
 	cp build/ogvswf.js build/demo/lib/ogvswf.js
 	cp build/ogv.swf build/demo/lib/ogv.swf
 	cp src/cortado.jar build/demo/lib/cortado.jar
@@ -63,7 +68,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 
 # The player demo, JS only without the Flash build
 build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
-                          build/ogvjs.js src/dynamicaudio.swf \
+                          build/ogvjs.js build/ogvjs.js.gz src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
 	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
@@ -75,6 +80,7 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
+	cp build/ogvjs.js.gz build/jsdemo/lib/ogvjs.js.gz
 	cp src/cortado.jar build/jsdemo/lib/cortado.jar
 	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
 
