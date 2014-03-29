@@ -1,0 +1,235 @@
+#include "YCbCr-shaders-agal.h"
+
+package {
+	import flash.display.Stage;
+	import flash.display3D.Context3D;
+	import flash.display3D.Context3DBufferUsage;
+	import flash.display3D.Context3DProgramType;
+	import flash.display3D.Context3DTextureFormat;
+	import flash.display3D.Context3DVertexBufferFormat;
+	import flash.display3D.IndexBuffer3D;
+	import flash.display3D.Program3D;
+	import flash.display3D.VertexBuffer3D;
+	import flash.display3D.textures.Texture;
+	import flash.events.Event;
+	import flash.utils.ByteArray;
+
+	import com.adobe.utils.AGALMiniAssembler;
+
+
+	/**
+	 * Warning: canvas must not have been used for 2d drawing prior!
+	 *
+	 * @param HTMLCanvasElement canvas
+	 * @constructor
+	 */
+	public class YCbCrFrameSink {
+		private var stage:Stage = null;
+		private var debug:Boolean = false; // swap this to enable more error checks, which can slow down rendering
+		
+		private var context3D:Context3D = null;
+		private var vertexShader:ByteArray = null;
+		private var fragmentShader:ByteArray = null;
+		private var program:Program3D = null;
+		private var buffer:VertexBuffer3D;
+		private var textures:Object = {};
+		private var videoInfo:Object = null;
+		
+		private var vertexShaderSource:Object = JSON.parse(YCBCR_VERTEX_SHADER);
+		private var fragmentShaderSource:Object = JSON.parse(YCBCR_FRAGMENT_SHADER);
+		
+		public function YCbCrFrameSink(_stage:Stage, _videoInfo:Object) {
+			stage = _stage;
+			videoInfo = _videoInfo;
+
+			if (stage.stage3Ds.length > 0) {
+				stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE, function(e:Event):void {
+					context3D = stage.stage3Ds[0].context3D;
+					context3D.configureBackBuffer(videoInfo.picWidth, videoInfo.picHeight, 0, false);
+				});
+				stage.stage3Ds[0].requestContext3D();
+			} else {
+				throw new Error('Stage3D unavailable');
+			}
+			trace('Using Stage3D canvas for video drawing');
+		}
+
+		private function compileShader(type:String, source:String):ByteArray {
+			var assembler:AGALMiniAssembler = new AGALMiniAssembler();
+			assembler.assemble(type, source);
+			return assembler.agalcode;
+		}
+	
+		// In the world of GL there are no rectangles.
+		// There are only triangles.
+		// THERE IS NO SPOON.
+		private var rectangle:Vector.<Number> = new <Number>[
+			// First triangle (top left, clockwise)
+			-1.0, -1.0,
+			+1.0, -1.0,
+			-1.0, +1.0,
+
+			// Second triangle (bottom right, clockwise)
+			-1.0, +1.0,
+			+1.0, -1.0,
+			+1.0, +1.0
+		];
+
+		private function nextPowerOfTwo(val:int):int {
+			var n:int = 1;
+			while (n < val) {
+				n *= 2;
+			}
+			return n;
+		}
+
+		private function attachTexture(name:String, index:int, width:int, height:int, data:ByteArray, offset:int):void {
+			// We'll have to convert to power-of-2 size. Sighhh
+			var texWidth:int = nextPowerOfTwo(width);
+			var texHeight:int = nextPowerOfTwo(height);
+			texWidth = texHeight = Math.max(texWidth, texHeight); // and force to square. is this needed?
+			var texBytes:ByteArray = new ByteArray();
+			var texStride:int = texWidth * 4;
+			var stride:int = width * 4;
+			texBytes.length = texStride * texHeight;
+			for (var y:int = 0; y < height; y++) {
+				texBytes.position = y * texStride;
+				texBytes.writeBytes(data, offset + y * stride, stride);
+			}
+			
+			var texture:Texture;
+			if (textures[name]) {
+				// Reuse & update the existing texture
+				texture = textures[name];
+			} else {
+				textures[name] = texture = context3D.createTexture(texWidth, texHeight, Context3DTextureFormat.BGRA, false, 0);
+			}
+			
+			texture.uploadFromByteArray(texBytes, 0, 0);
+		
+			context3D.setTextureAt(index, texture);
+		}
+
+		private function init(yCbCrBuffer:Object):void {
+			vertexShader = compileShader(Context3DProgramType.VERTEX, vertexShaderSource.agalasm);
+			fragmentShader = compileShader(Context3DProgramType.FRAGMENT, fragmentShaderSource.agalasm);
+	
+			program = context3D.createProgram();
+			program.upload(vertexShader, fragmentShader);
+
+			context3D.setProgram(program);
+		
+			function buildStripe(width:int, height:int):ByteArray {
+				var len:int = width * height,
+					out:ByteArray = new ByteArray();
+				for (var i:int = 0; i < len; i += 4) {
+					out.writeInt(0x000000ff);
+					out.writeInt(0x0000ff00);
+					out.writeInt(0x00ff0000);
+					out.writeInt(0xff000000);
+				}
+				return out;
+			}
+		
+			attachTexture(
+				'uStripeLuma',
+				0,
+				yCbCrBuffer.strideY,
+				yCbCrBuffer.height,
+				buildStripe(yCbCrBuffer.strideY, yCbCrBuffer.height),
+				0
+			);
+			attachTexture(
+				'uStripeChroma',
+				1,
+				yCbCrBuffer.strideCb,
+				yCbCrBuffer.height >> yCbCrBuffer.vdec,
+				buildStripe(yCbCrBuffer.strideCb, yCbCrBuffer.height >> yCbCrBuffer.vdec),
+				0
+			);
+		}
+	
+		public function drawFrame(yCbCrBuffer:Object):void {
+			if (!context3D) {
+				trace('context not yet initialized');
+				return;
+			}
+			if (!program) {
+				trace('initializing gl program');
+				init(yCbCrBuffer);
+			}
+
+			// Set up the rectangle and draw it
+
+			//
+			// Set up geometry
+			//
+			buffer = context3D.createVertexBuffer(rectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
+			buffer.uploadFromVector(rectangle, 0, rectangle.length / 2);
+			context3D.setVertexBufferAt(0, buffer, 0, Context3DVertexBufferFormat.FLOAT_2);
+
+
+			// Set up the texture geometry...
+			function setupTexturePosition(varname:String, index:int, texWidth:int, texHeight:int):void {
+				// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
+				var textureX0:Number = videoInfo.picX / texWidth;
+				var textureX1:Number = (videoInfo.picX + videoInfo.picWidth) / texWidth;
+				var textureY0:Number = videoInfo.picY / yCbCrBuffer.height;
+				var textureY1:Number = (videoInfo.picY + videoInfo.picHeight) / texHeight;
+				var textureRectangle:Vector.<Number> = new <Number>[
+					textureX0, textureY0,
+					textureX1, textureY0,
+					textureX0, textureY1,
+					textureX0, textureY1,
+					textureX1, textureY0,
+					textureX1, textureY1
+				];
+
+				var texturePositionBuffer:VertexBuffer3D = context3D.createVertexBuffer(textureRectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
+				texturePositionBuffer.uploadFromVector(textureRectangle, 0, textureRectangle.length / 2);
+				context3D.setVertexBufferAt(index, buffer, 0, Context3DVertexBufferFormat.FLOAT_2);
+			}
+			setupTexturePosition('aLumaPosition', 1, yCbCrBuffer.strideY, yCbCrBuffer.height);
+			setupTexturePosition('aChromaPosition', 2, yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
+		
+			// Create the textures...
+			attachTexture(
+				'uTextureY',
+				2,
+				yCbCrBuffer.strideY / 4,
+				yCbCrBuffer.height,
+				yCbCrBuffer.bytes,
+				yCbCrBuffer.bufferY
+			);
+			attachTexture(
+				'uTextureCb',
+				3,
+				yCbCrBuffer.strideCb / 4,
+				yCbCrBuffer.height >> yCbCrBuffer.vdec,
+				yCbCrBuffer.bytes,
+				yCbCrBuffer.bufferCb
+			);
+			attachTexture(
+				'uTextureCr',
+				4,
+				yCbCrBuffer.strideCr / 4,
+				yCbCrBuffer.height >> yCbCrBuffer.vdec,
+				yCbCrBuffer.bytes,
+				yCbCrBuffer.bufferCr
+			);
+
+			// Aaaaand draw stuff.
+			var vertexCount:int = rectangle.length / 2;
+			var indexVector:Vector.<uint> = new Vector.<uint>();
+			for (var i:int = 0; i < vertexCount; i++) {
+				indexVector.push(i);
+			}
+			var indices:IndexBuffer3D = context3D.createIndexBuffer(vertexCount);
+			indices.uploadFromVector(indexVector, 0, vertexCount);
+			
+			context3D.drawTriangles(indices, 0, vertexCount);
+			context3D.present();
+		};
+	}
+
+}

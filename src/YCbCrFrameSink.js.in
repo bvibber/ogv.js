@@ -193,7 +193,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 
 		// Set up the texture geometry...
 		function setupTexturePosition(varname, texWidth, texHeight) {
-			// Warning: assumes that the stride for Y, Cb, and Cr is the same size in output pixels
+			// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
 			var textureX0 = videoInfo.picX / texWidth;
 			var textureX1 = (videoInfo.picX + videoInfo.picWidth) / texWidth;
 			var textureY0 = videoInfo.picY / yCbCrBuffer.height;
