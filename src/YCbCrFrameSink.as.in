@@ -92,7 +92,7 @@ package {
 			var stride:int = width * 4;
 			texBytes.length = texStride * texHeight;
 			for (var y:int = 0; y < height; y++) {
-				texBytes.position = (height - y) * texStride;
+				texBytes.position = (height - 1 - y) * texStride;
 				texBytes.writeBytes(data, offset + y * stride, stride);
 			}
 			
