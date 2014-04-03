@@ -39,6 +39,7 @@ build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
 	 cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
 build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
+	test -d build || mkdir build
 	node file2def.js src/YCbCr-vertex.glsl YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
 	node file2def.js src/YCbCr-fragment.glsl YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
@@ -142,6 +143,7 @@ build/YCbCr-fragment.glsl.out : src/YCbCr-fragment.glsl
 	mv src/YCbCr-fragment.glsl.out build/YCbCr-fragment.glsl.out
 
 build/YCbCr-shaders-agal.h : file2def.js build/YCbCr-fragment.glsl.out build/YCbCr-vertex.glsl.out
+	test -d build || mkdir build
 	node file2def.js build/YCbCr-vertex.glsl.out YCBCR_VERTEX_SHADER > build/YCbCr-shaders-agal.h
 	node file2def.js build/YCbCr-fragment.glsl.out YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders-agal.h
 
