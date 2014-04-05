@@ -1,0 +1,59 @@
+<html>
+<head>
+<title>Minimal Ogv.js example</title>
+
+<style>
+/* FIXME: override default style so things float normally */
+ogvjs { position: static !important;}
+
+/* FIXME: video fills screen due to default CSS styling
+</style>
+
+<script src="lib/ogvjs.js"></script>
+
+<script language="JavaScript">
+
+var player = null;
+var paused = false;
+
+function play(src) {
+	if(player) {
+		player.stop();
+		player.parentNode.removeChild(player);
+	}
+	player = new OgvJsPlayer();
+	player.src = src;
+	// FIXME: ogvjs has no default onframecallback, so define one
+	player.onframecallback = function() {};
+	document.getElementById("videoarea").appendChild(player);
+	player.play();
+	
+}
+
+function pause() {
+	if(player) {
+		if(!paused) {
+			player.pause();
+			paused = true;
+		} else {
+			player.play();
+			paused = false;
+		}
+	}
+}
+
+
+</script>
+
+
+</head>
+<body>
+
+<div id="videoarea"></div>
+
+<div>
+<button onclick="play('test.ogv');">Play</button><button onclick="pause();">Pause/Unpause</button>
+</div>
+
+
+</body></html>
