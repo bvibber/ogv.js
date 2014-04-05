@@ -369,7 +369,7 @@ function OgvJsPlayer(options) {
 					if (ok) {
 						drawFrame();
 						targetFrameTime += 1000.0 / fps;
-						pingProcessing();
+						pingProcessing(0);
 					} else {
 						console.log('Bad video packet or something');
 						pingProcessing(targetFrameTime - getTimestamp());
@@ -388,14 +388,18 @@ function OgvJsPlayer(options) {
 
 	function pingProcessing(delay) {
 		if (delay === undefined) {
-			delay = 0;
+			delay = -1;
 		}
 		if (nextProcessingTimer) {
 			// already scheduled
 			return;
 		}
 		//console.log('delaying for ' + delay);
-		nextProcessingTimer = setTimeout(doProcessing, delay);
+		if (delay >= 0) {
+			nextProcessingTimer = setTimeout(doProcessing, delay);
+		} else {
+			doProcessing(); // warning: tail recursion is possible
+		}
 	}
 
 	var fps = 60;

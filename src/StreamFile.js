@@ -124,9 +124,8 @@ function StreamFile(options) {
 		self.readBytes = function() {
 			if (buffers.length > 0) {
 				var buffer = popBuffer();
-				setTimeout(function() {
-					onread(buffer);
-				}, 0);
+				// beware of tail recursion gone wrong
+				onread(buffer);
 			} else if (doneBuffering) {
 				// We're out of data!
 				setTimeout(function() {
