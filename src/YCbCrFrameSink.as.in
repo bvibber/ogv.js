@@ -25,7 +25,10 @@ package {
 		private var vertexShader:ByteArray = null;
 		private var fragmentShader:ByteArray = null;
 		private var program:Program3D = null;
-		private var buffer:VertexBuffer3D;
+		private var vertexBuffer:VertexBuffer3D;
+		private var lumaPositionBuffer:VertexBuffer3D;
+		private var chromaPositionBuffer:VertexBuffer3D;
+		private var indices:IndexBuffer3D;
 		private var textures:Object = {};
 		private var videoInfo:Object = null;
 		
@@ -190,6 +193,40 @@ package {
 				buildStripe(yCbCrBuffer.strideCb),
 				0
 			);
+
+			vertexBuffer = context3D.createVertexBuffer(rectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
+			vertexBuffer.uploadFromVector(rectangle, 0, rectangle.length / 2);
+
+			var vertexCount:int = rectangle.length / 2;
+			var indexVector:Vector.<uint> = new Vector.<uint>();
+			for (var i:int = 0; i < vertexCount; i++) {
+				indexVector.push(i);
+			}
+			indices = context3D.createIndexBuffer(vertexCount);
+			indices.uploadFromVector(indexVector, 0, vertexCount);
+
+			// Set up the texture geometry...
+			function setupTexturePosition(varname:String, index:int, texWidth:int, texHeight:int):VertexBuffer3D {
+				// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
+				var textureX0:Number = videoInfo.picX / nextPowerOfTwo(texWidth);
+				var textureX1:Number = (videoInfo.picX + videoInfo.picWidth) / nextPowerOfTwo(texWidth);
+				var textureY0:Number = videoInfo.picY / nextPowerOfTwo(texHeight);
+				var textureY1:Number = (videoInfo.picY + videoInfo.picHeight) / nextPowerOfTwo(texHeight);
+				var textureRectangle:Vector.<Number> = new <Number>[
+					textureX0, textureY0,
+					textureX1, textureY0,
+					textureX0, textureY1,
+					textureX0, textureY1,
+					textureX1, textureY0,
+					textureX1, textureY1
+				];
+
+				var texturePositionBuffer:VertexBuffer3D = context3D.createVertexBuffer(textureRectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
+				texturePositionBuffer.uploadFromVector(textureRectangle, 0, textureRectangle.length / 2);
+				return texturePositionBuffer;
+			}
+			lumaPositionBuffer = setupTexturePosition('aLumaPosition', registerForVar(vertexShaderSource, 'aLumaPosition'), yCbCrBuffer.strideY, yCbCrBuffer.height);
+			chromaPositionBuffer = setupTexturePosition('aChromaPosition', registerForVar(vertexShaderSource, 'aChromaPosition'), yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
 		}
 	
 		public function drawFrame(yCbCrBuffer:Object):void {
@@ -209,33 +246,9 @@ package {
 			//
 			// Set up geometry
 			//
-			buffer = context3D.createVertexBuffer(rectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
-			buffer.uploadFromVector(rectangle, 0, rectangle.length / 2);
-			context3D.setVertexBufferAt(registerForVar(vertexShaderSource, 'aPosition'), buffer, 0, Context3DVertexBufferFormat.FLOAT_2);
-
-
-			// Set up the texture geometry...
-			function setupTexturePosition(varname:String, index:int, texWidth:int, texHeight:int):void {
-				// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
-				var textureX0:Number = videoInfo.picX / nextPowerOfTwo(texWidth);
-				var textureX1:Number = (videoInfo.picX + videoInfo.picWidth) / nextPowerOfTwo(texWidth);
-				var textureY0:Number = videoInfo.picY / nextPowerOfTwo(texHeight);
-				var textureY1:Number = (videoInfo.picY + videoInfo.picHeight) / nextPowerOfTwo(texHeight);
-				var textureRectangle:Vector.<Number> = new <Number>[
-					textureX0, textureY0,
-					textureX1, textureY0,
-					textureX0, textureY1,
-					textureX0, textureY1,
-					textureX1, textureY0,
-					textureX1, textureY1
-				];
-
-				var texturePositionBuffer:VertexBuffer3D = context3D.createVertexBuffer(textureRectangle.length / 2, 2, Context3DBufferUsage.STATIC_DRAW);
-				texturePositionBuffer.uploadFromVector(textureRectangle, 0, textureRectangle.length / 2);
-				context3D.setVertexBufferAt(index, texturePositionBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
-			}
-			setupTexturePosition('aLumaPosition', registerForVar(vertexShaderSource, 'aLumaPosition'), yCbCrBuffer.strideY, yCbCrBuffer.height);
-			setupTexturePosition('aChromaPosition', registerForVar(vertexShaderSource, 'aChromaPosition'), yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
+			context3D.setVertexBufferAt(registerForVar(vertexShaderSource, 'aPosition'), vertexBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
+			context3D.setVertexBufferAt(registerForVar(vertexShaderSource, 'aLumaPosition'), chromaPositionBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
+			context3D.setVertexBufferAt(registerForVar(vertexShaderSource, 'aChromaPosition'), lumaPositionBuffer, 0, Context3DVertexBufferFormat.FLOAT_2);
 		
 			// Create the textures...
 			attachTexture(
@@ -264,14 +277,6 @@ package {
 			);
 
 			// Aaaaand draw stuff.
-			var vertexCount:int = rectangle.length / 2;
-			var indexVector:Vector.<uint> = new Vector.<uint>();
-			for (var i:int = 0; i < vertexCount; i++) {
-				indexVector.push(i);
-			}
-			var indices:IndexBuffer3D = context3D.createIndexBuffer(vertexCount);
-			indices.uploadFromVector(indexVector, 0, vertexCount);
-			
 			context3D.drawTriangles(indices, 0);
 			context3D.present();
 		};
