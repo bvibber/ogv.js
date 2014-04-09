@@ -163,10 +163,9 @@ package {
 			context3D.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0,
 			                                        expandConstants(fragmentShaderSource.consts));
 		
-			function buildStripe(width:int, height:int):ByteArray {
-				var len:int = width * height,
-					out:ByteArray = new ByteArray();
-				for (var i:int = 0; i < len; i += 4) {
+			function buildStripe(width:int):ByteArray {
+				var out:ByteArray = new ByteArray();
+				for (var i:int = 0; i < width; i += 4) {
 					out.writeInt(0xff000000);
 					out.writeInt(0x00ff0000);
 					out.writeInt(0x0000ff00);
@@ -179,16 +178,16 @@ package {
 				'uStripeLuma',
 				registerForVar(fragmentShaderSource, 'uStripeLuma'),
 				yCbCrBuffer.strideY,
-				yCbCrBuffer.height,
-				buildStripe(yCbCrBuffer.strideY, yCbCrBuffer.height),
+				1,
+				buildStripe(yCbCrBuffer.strideY),
 				0
 			);
 			attachTexture(
 				'uStripeChroma',
 				registerForVar(fragmentShaderSource, 'uStripeChroma'),
 				yCbCrBuffer.strideCb,
-				yCbCrBuffer.height >> yCbCrBuffer.vdec,
-				buildStripe(yCbCrBuffer.strideCb, yCbCrBuffer.height >> yCbCrBuffer.vdec),
+				1,
+				buildStripe(yCbCrBuffer.strideCb),
 				0
 			);
 		}
