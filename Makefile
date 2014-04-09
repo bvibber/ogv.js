@@ -74,7 +74,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
                           build/ogvjs.js build/ogvjs.js.gz src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
@@ -84,6 +84,7 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/demo/demo.js build/jsdemo/demo.js
 	cp src/demo/motd.js build/jsdemo/motd.js
 	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
+	cp src/demo/minimal.html build/jsdemo/minimal.html
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
