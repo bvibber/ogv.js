@@ -162,10 +162,12 @@ function OgvJsPlayer(options) {
 			jitter = Math.abs(wallClockTime - 1000 / fps);
 		totalJitter += jitter;
 
-		self.onframecallback({
-			cpuTime: lastFrameDecodeTime,
-			clockTime: wallClockTime
-		});
+		if (self.onframecallback) {
+			self.onframecallback({
+				cpuTime: lastFrameDecodeTime,
+				clockTime: wallClockTime
+			});
+		}
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
 	}

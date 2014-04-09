@@ -15,6 +15,7 @@ ogvjs { position: static !important;}
 
 var player = null;
 var paused = false;
+var sampleFile = 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Jarry_-_M%C3%A9tro_de_Montr%C3%A9al_%28640%C3%97360%29.ogv';
 
 function play(src) {
 	if(player) {
@@ -23,8 +24,6 @@ function play(src) {
 	}
 	player = new OgvJsPlayer();
 	player.src = src;
-	// FIXME: ogvjs has no default onframecallback, so define one
-	player.onframecallback = function() {};
 	document.getElementById("videoarea").appendChild(player);
 	player.play();
 	
@@ -52,7 +51,7 @@ function pause() {
 <div id="videoarea"></div>
 
 <div>
-<button onclick="play('test.ogv');">Play</button><button onclick="pause();">Pause/Unpause</button>
+<button onclick="play(sampleFile);">Play</button><button onclick="pause();">Pause/Unpause</button>
 </div>
 
 

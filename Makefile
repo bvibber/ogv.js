@@ -53,7 +53,7 @@ build/ogvjs.js.gz : build/ogvjs.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
-build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js \
+build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
                         build/ogvjs.js build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
@@ -64,6 +64,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
 	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
+	cp src/demo/minimal.html build/demo/minimal.html
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
