@@ -3,13 +3,10 @@
 <title>Minimal Ogv.js example</title>
 
 <style>
-/* FIXME: override default style so things float normally */
-ogvjs { position: static !important;}
-
-/* FIXME: video fills screen due to default CSS styling
 </style>
 
 <script src="lib/ogvjs.js"></script>
+<script src="lib/ogvswf.js"></script>
 
 <script language="JavaScript">
 
@@ -23,6 +20,8 @@ function play(src) {
 		player.parentNode.removeChild(player);
 	}
 	player = new OgvJsPlayer();
+	//player = new OgvSwfPlayer();
+	//player = document.createElement('video');
 	player.src = src;
 	document.getElementById("videoarea").appendChild(player);
 	player.play();

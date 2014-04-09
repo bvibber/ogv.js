@@ -31,6 +31,8 @@ function OgvJsPlayer(options) {
 	var self = document.createElement('ogvjs');
 	self.style.display = 'inline-block';
 	self.style.position = 'relative';
+	self.style.width = '0px'; // size will be expanded later
+	self.style.height = '0px';
 
 	canvas.style.position = 'absolute';
 	canvas.style.top = '0';
@@ -441,6 +443,13 @@ function OgvJsPlayer(options) {
 			fps = info.fps;
 			targetPerFrameTime = 1000 / fps;
 			
+			if (width == 0) {
+				self.style.width = info.picWidth + 'px';
+			}
+			if (height == 0) {
+				self.style.height = info.picHeight + 'px';
+			}
+			
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
 			console.log('useWebGL is', useWebGL);
@@ -741,6 +750,14 @@ function OgvJsPlayer(options) {
 				thumbnail.style.left = '0';
 				thumbnail.style.width = '100%';
 				thumbnail.style.height = '100%';
+				thumbnail.onload = function() {
+					if (width == 0) {
+						self.style.width = thumbnail.naturalWidth + 'px';
+					}
+					if (height == 0) {
+						self.style.height = thumbnail.naturalHeight + 'px';
+					}
+				}
 				self.appendChild(thumbnail);
 			}
 		}
