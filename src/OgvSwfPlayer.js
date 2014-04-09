@@ -49,6 +49,14 @@ function OgvSwfPlayer(options) {
 				break;
 			}
 		}
+		if (eventName === 'onloadedmetadata') {
+			if (width == 0) {
+				flash.width = self.videoWidth;
+			}
+			if (height == 0) {
+				flash.height = self.videoHeight;
+			}
+		}
 		if (legit && self[eventName]) {
 			self[eventName](args);
 		}
