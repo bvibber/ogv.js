@@ -127,10 +127,9 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		gl.useProgram(program);
 		checkError();
 		
-		function buildStripe(width, height) {
-			var len = width * height,
-				out = new Uint32Array(len);
-			for (var i = 0; i < len; i += 4) {
+		function buildStripe(width) {
+			var out = new Uint32Array(width);
+			for (var i = 0; i < width; i += 4) {
 				out[i    ] = 0x000000ff;
 				out[i + 1] = 0x0000ff00;
 				out[i + 2] = 0x00ff0000;
@@ -144,16 +143,16 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			gl.TEXTURE0,
 			0,
 			yCbCrBuffer.strideY,
-			yCbCrBuffer.height,
-			buildStripe(yCbCrBuffer.strideY, yCbCrBuffer.height)
+			1,
+			buildStripe(yCbCrBuffer.strideY)
 		);
 		var textureY = attachTexture(
 			'uStripeChroma',
 			gl.TEXTURE1,
 			1,
 			yCbCrBuffer.strideCb,
-			yCbCrBuffer.height >> yCbCrBuffer.vdec,
-			buildStripe(yCbCrBuffer.strideCb, yCbCrBuffer.height >> yCbCrBuffer.vdec)
+			1,
+			buildStripe(yCbCrBuffer.strideCb)
 		);
 	}
 	
