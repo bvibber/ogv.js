@@ -9,7 +9,8 @@
 function YCbCrFrameSink(canvas, videoInfo) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
-		debug = false; // swap this to enable more error checks, which can slow down rendering
+		debug = true, // swap this to enable more error checks, which can slow down rendering
+		useStripe = false;
 	
 	if (gl == null) {
 		throw new Error('WebGL unavailable');
@@ -91,10 +92,10 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		gl.texImage2D(
 			gl.TEXTURE_2D,
 			0, // mip level
-			gl.RGBA, // internal format
+			(useStripe) ? gl.RGBA : gl.LUMINANCE, // internal format
 			width, height,
 			0, // border
-			gl.RGBA, // format
+			(useStripe) ? gl.RGBA : gl.LUMINANCE, // format
 			gl.UNSIGNED_BYTE, //type
 			data // data!
 		);
@@ -127,33 +128,35 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		gl.useProgram(program);
 		checkError();
 		
-		function buildStripe(width) {
-			var out = new Uint32Array(width);
-			for (var i = 0; i < width; i += 4) {
-				out[i    ] = 0x000000ff;
-				out[i + 1] = 0x0000ff00;
-				out[i + 2] = 0x00ff0000;
-				out[i + 3] = 0xff000000;
+		if (useStripe) {
+			function buildStripe(width) {
+				var out = new Uint32Array(width);
+				for (var i = 0; i < width; i += 4) {
+					out[i    ] = 0x000000ff;
+					out[i + 1] = 0x0000ff00;
+					out[i + 2] = 0x00ff0000;
+					out[i + 3] = 0xff000000;
+				}
+				return new Uint8Array(out.buffer);
 			}
-			return new Uint8Array(out.buffer);
-		}
 		
-		var textureY = attachTexture(
-			'uStripeLuma',
-			gl.TEXTURE0,
-			0,
-			yCbCrBuffer.strideY,
-			1,
-			buildStripe(yCbCrBuffer.strideY)
-		);
-		var textureY = attachTexture(
-			'uStripeChroma',
-			gl.TEXTURE1,
-			1,
-			yCbCrBuffer.strideCb,
-			1,
-			buildStripe(yCbCrBuffer.strideCb)
-		);
+			var textureY = attachTexture(
+				'uStripeLuma',
+				gl.TEXTURE0,
+				0,
+				yCbCrBuffer.strideY,
+				1,
+				buildStripe(yCbCrBuffer.strideY)
+			);
+			var textureY = attachTexture(
+				'uStripeChroma',
+				gl.TEXTURE1,
+				1,
+				yCbCrBuffer.strideCb,
+				1,
+				buildStripe(yCbCrBuffer.strideCb)
+			);
+		}
 	}
 	
 	self.drawFrame = function(yCbCrBuffer) {
@@ -230,7 +233,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uTextureY',
 			gl.TEXTURE2,
 			2,
-			yCbCrBuffer.strideY / 4,
+			(useStripe) ? (yCbCrBuffer.strideY / 4) : yCbCrBuffer.strideY,
 			yCbCrBuffer.height,
 			yCbCrBuffer.bytesY
 		);
@@ -238,7 +241,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uTextureCb',
 			gl.TEXTURE3,
 			3,
-			yCbCrBuffer.strideCb / 4,
+			(useStripe) ? (yCbCrBuffer.strideCb / 4) : yCbCrBuffer.strideCb,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCb
 		);
@@ -246,7 +249,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uTextureCr',
 			gl.TEXTURE4,
 			4,
-			yCbCrBuffer.strideCr / 4,
+			(useStripe) ? (yCbCrBuffer.strideCr / 4) : yCbCrBuffer.strideCr,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCr
 		);
