@@ -687,7 +687,7 @@
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'webgl') {
 				player = new OgvJsPlayer({
-					webGL: true
+					forceWebGL: true
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {

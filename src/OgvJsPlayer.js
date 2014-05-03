@@ -21,7 +21,14 @@ function OgvJsTimeRanges(ranges) {
 
 function OgvJsPlayer(options) {
 	options = options || {};
-	var useWebGL = !!options.webGL && detectWebGL();
+	var webGLdetected = detectWebGL();
+	var useWebGL = !!options.webGL && webGLdetected;
+	if(!!options.forceWebGL) {
+		useWebGL = true;
+		if(!webGLdetected) {
+			console.log("No support for WebGL detected, but WebGL forced on!");
+		}
+	}
 	
 	var canvas = document.createElement('canvas');
 	var ctx;
