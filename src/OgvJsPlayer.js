@@ -21,7 +21,14 @@ function OgvJsTimeRanges(ranges) {
 
 function OgvJsPlayer(options) {
 	options = options || {};
-	var useWebGL = !!options.webGL;
+	var webGLdetected = detectWebGL();
+	var useWebGL = !!options.webGL && webGLdetected;
+	if(!!options.forceWebGL) {
+		useWebGL = true;
+		if(!webGLdetected) {
+			console.log("No support for WebGL detected, but WebGL forced on!");
+		}
+	}
 	
 	var canvas = document.createElement('canvas');
 	var ctx;
@@ -65,6 +72,16 @@ function OgvJsPlayer(options) {
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0; // number of times we were starved for audio
+
+        function detectWebGL() { 
+                try {
+                        var canvas = document.createElement("canvas");
+                        if(!!window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))) {
+                                return true;
+                        }
+                } catch(e) {} 
+                return false;
+        };
 	
 	function stopVideo() {
 		// kill the previous video if any
