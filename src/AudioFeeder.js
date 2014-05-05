@@ -281,18 +281,17 @@ function AudioFeeder() {
 	};
 	
 	this.waitUntilReady = function(callback) {
-		if (this.flashaudio) {
-			var self = this,
-				times = 0,
+		if (self.flashaudio) {
+			var times = 0,
 				maxTimes = 100;
 			function pingFlashPlugin() {
 				setTimeout(function doPingFlashPlugin() {
 					times++;
-					if (self.flashaudio.flashElement.write) {
+					if (self.flashaudio && self.flashaudio.flashElement.write) {
 						callback(this);
 					} else if (times > maxTimes) {
 						console.log("Failed to initialize Flash audio shim");
-						this.close();
+						self.close();
 						callback(null);
 					} else {
 						pingFlashPlugin();
