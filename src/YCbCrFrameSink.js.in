@@ -9,7 +9,7 @@
 function YCbCrFrameSink(canvas, videoInfo) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
-		debug = true, // swap this to enable more error checks, which can slow down rendering
+		debug = false, // swap this to enable more error checks, which can slow down rendering
 		useStripe = false;
 	
 	if (gl == null) {
