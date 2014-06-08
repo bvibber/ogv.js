@@ -12,6 +12,9 @@
 
 #include <theora/theoradec.h>
 
+#include <opus/opus_multistream.h>
+#include "opus_header.h"
+#include "opus_helper.h"
 
 
 /* never forget that globals are a one-way ticket to Hell */
@@ -47,6 +50,19 @@ vorbis_info      vi;
 vorbis_dsp_state vd;
 vorbis_block     vb;
 vorbis_comment   vc;
+
+int              opus_p = 0;
+int              opus_processing_headers;
+ogg_stream_state opusStreamState;
+OpusMSDecoder   *opusDecoder = NULL;
+int              opusMappingFamily;
+int              opusChannels;
+int              opusPreskip;
+float            opusGain;
+int              opusStreams;
+/* 120ms at 48000 */
+#define OPUS_MAX_FRAME_SIZE (960*6)
+
 int          crop=0;
 
 int got_sigint=0;
@@ -113,6 +129,7 @@ static int dump_comments(th_comment *_tc){
 static int queue_page(ogg_page *page){
   if (theora_p) ogg_stream_pagein(&theoraStreamState,page);
   if (vorbis_p) ogg_stream_pagein(&vo, page);
+  if (opus_p) ogg_stream_pagein(&opusStreamState, page);
   return 0;
 }
 
@@ -191,8 +208,15 @@ static void processBegin() {
 			
 			// ditch the processed packet...
 			ogg_stream_packetout(&vo, NULL);
+		} else if (process_audio && !opus_p && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
+			printf("found Opus stream! (first of two headers)\n");
+			memcpy(&opusStreamState, &test, sizeof(test));
+			opus_p = 1;
+
+			// ditch the processed packet...
+			ogg_stream_packetout(&opusStreamState, NULL);
 		} else {
-			printf("already have stream, or not theora or vorbis packet\n");
+			printf("already have stream, or not theora or vorbis or opus packet\n");
 			/* whatever it is, we don't care about it */
 			ogg_stream_clear(&test);
 		}
@@ -205,7 +229,7 @@ static void processBegin() {
 }
 
 static void processHeaders() {
-	if ((theora_p && theora_processing_headers) || (vorbis_p && vorbis_p < 3)) {
+	if ((theora_p && theora_processing_headers) || (vorbis_p && vorbis_p < 3) || (opus_p && opus_p < 2)) {
 		printf("processHeaders pass... %d %d %d\n", theora_p, theora_processing_headers, vorbis_p);
 		int ret;
 
@@ -256,10 +280,25 @@ static void processHeaders() {
 			if (ret == 0) {
 				printf("No vorbis header packet...\n");
 			}
-		}		
+		}
+
+		if(opus_p && (opus_p < 2)) {
+			printf("checking for opus headers...\n");
+			ret = ogg_stream_packetpeek(&opusStreamState, &oggPacket);
+			if (ret < 0) {
+				printf("Error reading Opus headers: %d.\n", ret);
+				exit(1);
+			}
+			// FIXME: perhaps actually *check* if this is a comment packet ;-)
+			opus_p++;
+			printf("discarding Opus comments...\n");
+			ogg_stream_packetout(&opusStreamState, NULL);
+		}
+
+		
     } else {
 	  /* and now we have it all.  initialize decoders */
-	  printf("theora_p is %d; vorbis_p is %d\n", theora_p, vorbis_p);
+	  printf("theora_p is %d; vorbis_p is %d, opus_p is %d\n", theora_p, vorbis_p, opus_p);
 	  if(theora_p){
 	  printf("SETTING UP THEORA DECODER CONTEXT\n");
 		dump_comments(&theoraComment);
@@ -288,6 +327,13 @@ static void processHeaders() {
 			OgvJsInitAudio(vi.channels, vi.rate);
 		}
 
+		if (opus_p) {
+			// opusDecoder should already be initialized
+			// Opus has a fixed internal sampling rate of 48000
+			OgvJsInitAudio(opusChannels, 48000);
+		}
+
+
 		  appState = STATE_DECODING;
 		  printf("Done with headers step\n");
 		  OgvJsLoadedMetadata();
@@ -310,6 +356,15 @@ static void processDecoding() {
 	
 	if (vorbis_p && !audiobuf_ready) {
 		if (ogg_stream_packetpeek(&vo, &audioPacket) > 0) {
+			audiobuf_ready = 1;
+			OgvJsOutputAudioReady();
+		} else {
+			needData = 1;
+		}
+	}
+
+	if (opus_p && !audiobuf_ready) {
+		if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
 			audiobuf_ready = 1;
 			OgvJsOutputAudioReady();
 		} else {
@@ -366,6 +421,28 @@ int OgvJsDecodeAudio() {
 		} else {
 			printf("Vorbis decoder failed mysteriously? %d", ret);
 		}
+	}
+
+	if (ogg_stream_packetout(&opusStreamState, &audioPacket) > 0) {
+		float *output=malloc(sizeof(float)*OPUS_MAX_FRAME_SIZE*opusChannels);
+		int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*)audioPacket.packet, audioPacket.bytes, output, OPUS_MAX_FRAME_SIZE, 0);
+		if(sampleCount < 0) {
+			printf("Opus decoding error, code %d\n", sampleCount);
+		} else {
+			foundSome = 1;
+			printf("======== Decoded %d Opus samples!!!!! =========\n", sampleCount);
+
+			// reorder Opus' interleaved samples into two-dimensional [channel][sample] form
+			float **pcm = malloc(sizeof(float)*OPUS_MAX_FRAME_SIZE*opusChannels);
+			for(int c = 0; c < opusChannels; ++c) {
+				for(int s = 0; s < sampleCount; ++s) {
+					pcm[c][s] = output[s * opusChannels + c];
+				}
+			}
+			OgvJsOutputAudio(pcm, opusChannels, sampleCount);
+			free(pcm);
+		}
+		free(output);
 	}
 	
 	return foundSome;

@@ -14,7 +14,10 @@ EMCC_FAST_COMPILER=1 emcc \
   -logg \
   build/js/libogg/src/bitwise.o \
   -lvorbis \
+  -lopus \
   -ltheoradec \
   --js-library src/ogv-libs-mixin.js \
+  src/opus_header.c \
+  src/opus_helper.c \
   src/ogv-libs.c \
   -o build/js/ogv-libs.js

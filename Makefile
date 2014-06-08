@@ -37,7 +37,7 @@ build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh
 	./configureTheora.sh
 	./compileTheoraJs.sh
 
-build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a build/js/root/lib/libopus.a compileOgvJs.sh
+build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/opus_header.c src/opus_header.h src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a build/js/root/lib/libopus.a compileOgvJs.sh
 	test -d build || mkdir build
 	./compileOgvJs.sh
 
