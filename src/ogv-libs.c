@@ -450,7 +450,7 @@ int OgvJsDecodeAudio() {
 							pcmp[c][s - skip] = output[s * opusChannels + c];
 						}
 					}
-					OgvJsOutputAudio(pcmp, opusChannels, sampleCount);
+					OgvJsOutputAudio(pcmp, opusChannels, sampleCount - skip);
 					free(pcmp);
 					free(pcm);
 				}
