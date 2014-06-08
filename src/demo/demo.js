@@ -350,7 +350,12 @@
 			day = 28; // where we left off in motd.js
 		
 		var input = '';
-		while (!(year >= today.getUTCFullYear() && month >= (today.getUTCMonth()+1) && day > today.getUTCDate())) {
+		while (true) {
+			if ((year > today.getUTCFullYear()) ||
+			    (year == today.getUTCFullYear() && month > (today.getUTCMonth() + 1)) ||
+			    (year == today.getUTCFullYear() && month == (today.getUTCMonth() + 1) && day > today.getUTCDate())) {
+				break;
+			}
 			var ymd = year +
 					'-' +
 					pad00(month) +
@@ -682,11 +687,16 @@
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'webgl') {
 				player = new OgvJsPlayer({
-					webGL: true
+					forceWebGL: true
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {
 				player = new OgvSwfPlayer();
+				player.durationHint = durationHint;
+			} else if (playerBackend == 'flash-gpu') {
+				player = new OgvSwfPlayer({
+					useGPU: true
+				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();

@@ -1,0 +1,57 @@
+<html>
+<head>
+<title>Minimal Ogv.js example</title>
+
+<style>
+</style>
+
+<script src="lib/ogvjs.js"></script>
+<script src="lib/ogvswf.js"></script>
+
+<script language="JavaScript">
+
+var player = null;
+var paused = false;
+var sampleFile = 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Jarry_-_M%C3%A9tro_de_Montr%C3%A9al_%28640%C3%97360%29.ogv';
+
+function play(src) {
+	if(player) {
+		player.stop();
+		player.parentNode.removeChild(player);
+	}
+	player = new OgvJsPlayer();
+	//player = new OgvSwfPlayer();
+	//player = document.createElement('video');
+	player.src = src;
+	document.getElementById("videoarea").appendChild(player);
+	player.play();
+	
+}
+
+function pause() {
+	if(player) {
+		if(!paused) {
+			player.pause();
+			paused = true;
+		} else {
+			player.play();
+			paused = false;
+		}
+	}
+}
+
+
+</script>
+
+
+</head>
+<body>
+
+<div id="videoarea"></div>
+
+<div>
+<button onclick="play(sampleFile);">Play</button><button onclick="pause();">Pause/Unpause</button>
+</div>
+
+
+</body></html>

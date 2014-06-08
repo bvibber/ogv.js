@@ -34,6 +34,7 @@ package {
     import flash.utils.clearTimeout;
 
     import OgvCodec;
+    import YCbCrFrameSink;
 
     public class ogv extends Sprite {
         // Property backing vars
@@ -50,6 +51,7 @@ package {
 
         // Metadata and internals...
         private var jsCallbackName:String = null;
+        private var useGPU:Boolean = false;
         private var codec:OgvCodec = null;
         private var videoInfo:Object = null;
         private var audioInfo:Object = null;
@@ -86,9 +88,14 @@ package {
         private var lastFrameTimestamp:Number = 0;
         private var frameEndTimestamp:Number = 0;
         private var targetFrameTime:Number = 0;
+        
+        // Software drawing internals
         private var pixelBuffer:ByteArray = null;
         private var bitmapData:BitmapData = null;
         private var bitmap:Bitmap = null;
+        
+        // GPU drawing internals
+        private var frameSink:YCbCrFrameSink = null;
 
         // Audio internals
         private var audioBufferSize:Number = 4096; // In samples
@@ -126,6 +133,9 @@ package {
             // Who you gonna call?
             jsCallbackName = loaderInfo.parameters.jsCallbackName;
             log('jsCallbackName: ' + jsCallbackName);
+            
+            // Should we use GPU rendering?
+            useGPU = !!parseInt(loaderInfo.parameters.useGPU);
 
             // Aaaand, setup the codec.        
             codec = new OgvCodec({
@@ -148,24 +158,28 @@ package {
                 fps = videoInfo.fps;
                 targetPerFrameTime = 1000 / fps;
 
-                // Create our target bitmap!
-                var nbytes:int = videoInfo.frameWidth * videoInfo.frameHeight * 4;
-                pixelBuffer = new ByteArray();
-                pixelBuffer.length = nbytes;
-                for (var i:int = 0; i < nbytes; i++) {
-                    // Prefill solid alpha (ARGB)
-                    pixelBuffer.writeInt(0xff000000);
-                }
-                // @todo crop to the picture size
-                bitmapData = new BitmapData(videoInfo.frameWidth, videoInfo.frameHeight, true, 0xff000000);
+                if (useGPU) {
+                    frameSink = new YCbCrFrameSink(stage, videoInfo);
+                } else {
+                    // Create our target bitmap!
+                    var nbytes:int = videoInfo.frameWidth * videoInfo.frameHeight * 4;
+                    pixelBuffer = new ByteArray();
+                    pixelBuffer.length = nbytes;
+                    for (var i:int = 0; i < nbytes; i++) {
+                        // Prefill solid alpha (ARGB)
+                        pixelBuffer.writeInt(0xff000000);
+                    }
+                    // @todo crop to the picture size
+                    bitmapData = new BitmapData(videoInfo.frameWidth, videoInfo.frameHeight, true, 0xff000000);
 
-                bitmap = new Bitmap(bitmapData);
-                bitmap.smoothing = true;
-                // Offset the bitmap to 'crop' it conveniently
-                bitmap.x = -videoInfo.picX;
-                bitmap.y = -videoInfo.picY;
-                resizeForStage();
-                addChild(bitmap);
+                    bitmap = new Bitmap(bitmapData);
+                    bitmap.smoothing = true;
+                    // Offset the bitmap to 'crop' it conveniently
+                    bitmap.x = -videoInfo.picX;
+                    bitmap.y = -videoInfo.picY;
+                    resizeForStage();
+                    addChild(bitmap);
+                }
 
                 // Don't need this anymore...
                 if (posterLoader) {
@@ -190,6 +204,9 @@ package {
             if (posterLoader) {
                 posterLoader.width = stage.stageWidth;
                 posterLoader.height = stage.stageHeight;
+            }
+            if (frameSink) {
+                frameSink.onResize();
             }
         }
 
@@ -659,19 +676,25 @@ package {
 
             var start:Number, delta:Number;
 
-            // colorspace conversion        	
-            start = getTimestamp();
-            var bytesARGB:ByteArray = codec.convertYCbCr(yCbCrBuffer);
-            delta = getTimestamp() - start;
-            colorTime += delta;
-            lastFrameDecodeTime += delta;
+            if (useGPU) {
+                start = getTimestamp();
+                frameSink.drawFrame(yCbCrBuffer);
+                delta = getTimestamp() - start;
+            } else {
+                // colorspace conversion        	
+                start = getTimestamp();
+                var bytesARGB:ByteArray = codec.convertYCbCr(yCbCrBuffer);
+                delta = getTimestamp() - start;
+                colorTime += delta;
+                lastFrameDecodeTime += delta;
 
-            // drawing
-            start = getTimestamp();
-            var rect:Rectangle = new Rectangle(0, 0, videoInfo.frameWidth, videoInfo.frameHeight);
-            bytesARGB.position = 0;
-            bitmapData.setPixels(rect, bytesARGB);
-            delta = getTimestamp() - start;
+                // drawing
+                start = getTimestamp();
+                var rect:Rectangle = new Rectangle(0, 0, videoInfo.frameWidth, videoInfo.frameHeight);
+                bytesARGB.position = 0;
+                bitmapData.setPixels(rect, bytesARGB);
+                delta = getTimestamp() - start;
+            }
 
             lastFrameDecodeTime += delta;
             drawingTime += delta;

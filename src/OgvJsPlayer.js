@@ -21,7 +21,14 @@ function OgvJsTimeRanges(ranges) {
 
 function OgvJsPlayer(options) {
 	options = options || {};
-	var useWebGL = !!options.webGL;
+	var webGLdetected = detectWebGL();
+	var useWebGL = !!options.webGL && webGLdetected;
+	if(!!options.forceWebGL) {
+		useWebGL = true;
+		if(!webGLdetected) {
+			console.log("No support for WebGL detected, but WebGL forced on!");
+		}
+	}
 	
 	var canvas = document.createElement('canvas');
 	var ctx;
@@ -31,12 +38,15 @@ function OgvJsPlayer(options) {
 	var self = document.createElement('ogvjs');
 	self.style.display = 'inline-block';
 	self.style.position = 'relative';
-	self.appendChild(canvas);
+	self.style.width = '0px'; // size will be expanded later
+	self.style.height = '0px';
 
-	var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-	if (!requestAnimationFrame) {
-		throw new Error("No requestAnimationFrame available!");
-	}
+	canvas.style.position = 'absolute';
+	canvas.style.top = '0';
+	canvas.style.left = '0';
+	canvas.style.width = '100%';
+	canvas.style.height = '100%';
+	self.appendChild(canvas);
 
 	var getTimestamp;
 	if (window.performance === undefined || window.performance.now === undefined) {
@@ -62,6 +72,16 @@ function OgvJsPlayer(options) {
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0; // number of times we were starved for audio
+
+        function detectWebGL() { 
+                try {
+                        var canvas = document.createElement("canvas");
+                        if(!!window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))) {
+                                return true;
+                        }
+                } catch(e) {} 
+                return false;
+        };
 	
 	function stopVideo() {
 		// kill the previous video if any
@@ -83,7 +103,6 @@ function OgvJsPlayer(options) {
 			audioFeeder = null;
 		}
 		if (nextProcessingTimer) {
-			//cancelAnimationFrame(nextProcessingTimer);
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
@@ -109,6 +128,11 @@ function OgvJsPlayer(options) {
 	var lastFrameTimestamp = 0.0;
 
 	function drawFrame() {
+		if (thumbnail) {
+			self.removeChild(thumbnail);
+			thumbnail = null;
+		}
+
 		yCbCrBuffer = codec.dequeueFrame();
 		frameEndTimestamp = yCbCrBuffer.timestamp;
 
@@ -157,10 +181,12 @@ function OgvJsPlayer(options) {
 			jitter = Math.abs(wallClockTime - 1000 / fps);
 		totalJitter += jitter;
 
-		self.onframecallback({
-			cpuTime: lastFrameDecodeTime,
-			clockTime: wallClockTime
-		});
+		if (self.onframecallback) {
+			self.onframecallback({
+				cpuTime: lastFrameDecodeTime,
+				clockTime: wallClockTime
+			});
+		}
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
 	}
@@ -364,7 +390,7 @@ function OgvJsPlayer(options) {
 					if (ok) {
 						drawFrame();
 						targetFrameTime += 1000.0 / fps;
-						pingProcessing();
+						pingProcessing(0);
 					} else {
 						console.log('Bad video packet or something');
 						pingProcessing(targetFrameTime - getTimestamp());
@@ -383,15 +409,18 @@ function OgvJsPlayer(options) {
 
 	function pingProcessing(delay) {
 		if (delay === undefined) {
-			delay = 0;
+			delay = -1;
 		}
 		if (nextProcessingTimer) {
 			// already scheduled
 			return;
 		}
 		//console.log('delaying for ' + delay);
-		nextProcessingTimer = setTimeout(doProcessing, delay);
-		//nextProcessingTimer = requestAnimationFrame(doProcessing);
+		if (delay >= 0) {
+			nextProcessingTimer = setTimeout(doProcessing, delay);
+		} else {
+			doProcessing(); // warning: tail recursion is possible
+		}
 	}
 
 	var fps = 60;
@@ -430,6 +459,13 @@ function OgvJsPlayer(options) {
 			videoInfo = info;
 			fps = info.fps;
 			targetPerFrameTime = 1000 / fps;
+			
+			if (width == 0) {
+				self.style.width = info.picWidth + 'px';
+			}
+			if (height == 0) {
+				self.style.height = info.picHeight + 'px';
+			}
 			
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
@@ -602,7 +638,6 @@ function OgvJsPlayer(options) {
 			self.load();
 		} else if (!paused) {
 			console.log('pausing');
-			//cancelAnimationFrame(nextProcessingTimer);
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			paused = true;
@@ -713,7 +748,7 @@ function OgvJsPlayer(options) {
 		}
 	});
 	
-	var poster;
+	var poster, thumbnail;
 	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
@@ -721,19 +756,26 @@ function OgvJsPlayer(options) {
 		set: function setPoster(val) {
 			poster = val;
 			if (!started) {
-				var thumbnail = new Image();
+				if (thumbnail) {
+					self.removeChild(thumbnail);
+				}
+				thumbnail = new Image();
 				thumbnail.src = poster;
-				thumbnail.addEventListener('load', function() {
-					if (!started) {
-						if (!useWebGL) {
-							// @todo fix poster image for webgl mode
-							ctx = canvas.getContext('2d');
-							canvas.width = thumbnail.width;
-							canvas.height = thumbnail.height;
-							ctx.drawImage(thumbnail, 0, 0, canvas.width, canvas.height);
-						}
+				thumbnail.className = 'ogvjs-poster';
+				thumbnail.style.position = 'absolute';
+				thumbnail.style.top = '0';
+				thumbnail.style.left = '0';
+				thumbnail.style.width = '100%';
+				thumbnail.style.height = '100%';
+				thumbnail.onload = function() {
+					if (width == 0) {
+						self.style.width = thumbnail.naturalWidth + 'px';
 					}
-				});
+					if (height == 0) {
+						self.style.height = thumbnail.naturalHeight + 'px';
+					}
+				}
+				self.appendChild(thumbnail);
 			}
 		}
 	});
@@ -795,7 +837,7 @@ function OgvJsPlayer(options) {
 		},
 		set: function setWidth(val) {
 			width = parseInt(val, 10);
-			canvas.style.width = width + 'px';
+			self.style.width = width + 'px';
 		}
 	});
 	
@@ -805,7 +847,7 @@ function OgvJsPlayer(options) {
 		},
 		set: function setHeight(val) {
 			height = parseInt(val, 10);
-			canvas.style.height = height + 'px';
+			self.style.height = height + 'px';
 		}
 	});
 
