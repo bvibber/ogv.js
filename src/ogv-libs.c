@@ -58,6 +58,7 @@ OpusMSDecoder   *opusDecoder = NULL;
 int              opusMappingFamily;
 int              opusChannels;
 int              opusPreskip;
+ogg_int64_t      opusPrevPacketGranpos;
 float            opusGain;
 int              opusStreams;
 /* 120ms at 48000 */
@@ -211,6 +212,10 @@ static void processBegin() {
 		} else if (process_audio && !opus_p && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
 			printf("found Opus stream! (first of two headers)\n");
 			memcpy(&opusStreamState, &test, sizeof(test));
+			if (opusGain) {
+				opus_multistream_decoder_ctl(opusDecoder, OPUS_SET_GAIN(opusGain));
+			}
+			opusPrevPacketGranpos = 0;
 			opus_p = 1;
 
 			// ditch the processed packet...
@@ -318,19 +323,20 @@ static void processHeaders() {
 			               theoraInfo.pic_x, theoraInfo.pic_y);
 	  }
 
-		if (vorbis_p) {
+        // If we have both Vorbis and Opus, prefer Opus
+		if (opus_p) {
+			// opusDecoder should already be initialized
+			// Opus has a fixed internal sampling rate of 48000
+			OgvJsInitAudio(opusChannels, 48000);
+		}
+
+		else if (vorbis_p) {
 			vorbis_synthesis_init(&vd,&vi);
 			vorbis_block_init(&vd,&vb);
 			printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
 			   vo.serialno,vi.channels,vi.rate);
 			
 			OgvJsInitAudio(vi.channels, vi.rate);
-		}
-
-		if (opus_p) {
-			// opusDecoder should already be initialized
-			// Opus has a fixed internal sampling rate of 48000
-			OgvJsInitAudio(opusChannels, 48000);
 		}
 
 
@@ -353,24 +359,26 @@ static void processDecoding() {
 		  	needData = 1;
 		}
 	}
-	
-	if (vorbis_p && !audiobuf_ready) {
-		if (ogg_stream_packetpeek(&vo, &audioPacket) > 0) {
-			audiobuf_ready = 1;
-			OgvJsOutputAudioReady();
-		} else {
-			needData = 1;
+
+	if (!audiobuf_ready) {
+		if (opus_p) {
+			if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
+				audiobuf_ready = 1;
+				OgvJsOutputAudioReady();
+			} else {
+				needData = 1;
+			}
+		}
+		else if (vorbis_p) {
+			if (ogg_stream_packetpeek(&vo, &audioPacket) > 0) {
+				audiobuf_ready = 1;
+				OgvJsOutputAudioReady();
+			} else {
+				needData = 1;
+			}
 		}
 	}
 
-	if (opus_p && !audiobuf_ready) {
-		if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
-			audiobuf_ready = 1;
-			OgvJsOutputAudioReady();
-		} else {
-			needData = 1;
-		}
-	}
 }
 
 int OgvJsDecodeFrame() {
@@ -407,44 +415,69 @@ int OgvJsDecodeAudio() {
 	int packetRet = 0;
 	audiobuf_ready = 0;
 	int foundSome = 0;
-	if (ogg_stream_packetout(&vo, &audioPacket) > 0) {
-		int ret = vorbis_synthesis(&vb, &audioPacket);
-		if (ret == 0) {
-			foundSome = 1;
-			vorbis_synthesis_blockin(&vd,&vb);
 
-			float **pcm;
-			int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
-			OgvJsOutputAudio(pcm, vi.channels, sampleCount);
-
-			vorbis_synthesis_read(&vd, sampleCount);
-		} else {
-			printf("Vorbis decoder failed mysteriously? %d", ret);
-		}
-	}
-
-	if (ogg_stream_packetout(&opusStreamState, &audioPacket) > 0) {
-		float *output=malloc(sizeof(float)*OPUS_MAX_FRAME_SIZE*opusChannels);
-		int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*)audioPacket.packet, audioPacket.bytes, output, OPUS_MAX_FRAME_SIZE, 0);
-		if(sampleCount < 0) {
-			printf("Opus decoding error, code %d\n", sampleCount);
-		} else {
-			foundSome = 1;
-			printf("======== Decoded %d Opus samples!!!!! =========\n", sampleCount);
-
-			// reorder Opus' interleaved samples into two-dimensional [channel][sample] form
-			float **pcm = malloc(sizeof(float)*OPUS_MAX_FRAME_SIZE*opusChannels);
-			for(int c = 0; c < opusChannels; ++c) {
-				for(int s = 0; s < sampleCount; ++s) {
-					pcm[c][s] = output[s * opusChannels + c];
+	if (opus_p) {
+		if (ogg_stream_packetout(&opusStreamState, &audioPacket) > 0) {
+			float *output=malloc(sizeof(float)*OPUS_MAX_FRAME_SIZE*opusChannels);
+			int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*)audioPacket.packet, audioPacket.bytes, output, OPUS_MAX_FRAME_SIZE, 0);
+			if(sampleCount < 0) {
+				printf("Opus decoding error, code %d\n", sampleCount);
+			} else {
+				int skip = opusPreskip;
+				if (audioPacket.granulepos != -1) {
+					if (audioPacket.granulepos <= opusPrevPacketGranpos) {
+						sampleCount = 0;
+					} else {
+						ogg_int64_t endSample = opusPrevPacketGranpos + sampleCount;
+						if (audioPacket.granulepos < endSample) {
+							sampleCount = (int)(endSample - audioPacket.granulepos);
+						}
+					}
+					opusPrevPacketGranpos = audioPacket.granulepos;
+				} else {
+					opusPrevPacketGranpos += sampleCount;
 				}
+				if (skip >= sampleCount) {
+					skip = sampleCount;
+				} else {
+					foundSome = 1;
+					// reorder Opus' interleaved samples into two-dimensional [channel][sample] form
+					float *pcm = malloc(sizeof(*pcm)*(sampleCount - skip)*opusChannels);
+					float **pcmp = malloc(sizeof(*pcmp)*opusChannels);
+					for(int c = 0; c < opusChannels; ++c) {
+						pcmp[c] = pcm + c*(sampleCount - skip);
+						for(int s = skip; s < sampleCount; ++s) {
+							pcmp[c][s - skip] = output[s * opusChannels + c];
+						}
+					}
+					OgvJsOutputAudio(pcmp, opusChannels, sampleCount);
+					free(pcmp);
+					free(pcm);
+				}
+				opusPreskip -= skip;
 			}
-			OgvJsOutputAudio(pcm, opusChannels, sampleCount);
-			free(pcm);
+			free(output);
 		}
-		free(output);
 	}
-	
+
+	else if (vorbis_p) {
+		if (ogg_stream_packetout(&vo, &audioPacket) > 0) {
+			int ret = vorbis_synthesis(&vb, &audioPacket);
+			if (ret == 0) {
+				foundSome = 1;
+				vorbis_synthesis_blockin(&vd,&vb);
+
+				float **pcm;
+				int sampleCount = vorbis_synthesis_pcmout(&vd, &pcm);
+				OgvJsOutputAudio(pcm, vi.channels, sampleCount);
+
+				vorbis_synthesis_read(&vd, sampleCount);
+			} else {
+				printf("Vorbis decoder failed mysteriously? %d", ret);
+			}
+		}
+	}
+
 	return foundSome;
 }
 
