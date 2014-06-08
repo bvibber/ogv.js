@@ -26,12 +26,18 @@ build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a configureVorbis.sh co
 	./configureVorbis.sh
 	./compileVorbisJs.sh
 
+build/js/root/lib/libopus.a : build/js/root/lib/libogg.a configureOpus.sh compileOpusJs.sh
+	test -d build || mkdir build
+	./configureOpus.sh
+	./compileOpusJs.sh
+
+
 build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh compileTheoraJs.sh
 	test -d build || mkdir build
 	./configureTheora.sh
 	./compileTheoraJs.sh
 
-build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a compileOgvJs.sh
+build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a build/js/root/lib/libopus.a compileOgvJs.sh
 	test -d build || mkdir build
 	./compileOgvJs.sh
 
