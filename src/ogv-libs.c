@@ -515,6 +515,11 @@ void OgvJsDestroy() {
     th_comment_clear(&theoraComment);
     th_info_clear(&theoraInfo);
   }
+
+  if(opus_p){
+    opus_multistream_decoder_destroy(opusDecoder);
+  }
+
   ogg_sync_clear(&oggSyncState);
 }
 
