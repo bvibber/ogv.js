@@ -52,7 +52,6 @@ vorbis_block     vb;
 vorbis_comment   vc;
 
 int              opus_p = 0;
-int              opus_processing_headers;
 ogg_stream_state opusStreamState;
 OpusMSDecoder   *opusDecoder = NULL;
 int              opusMappingFamily;
