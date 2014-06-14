@@ -17,6 +17,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -lopus \
   -ltheoradec \
   --js-library src/ogv-libs-mixin.js \
+  -D OPUS \
   src/opus_header.c \
   src/opus_helper.c \
   src/ogv-libs.c \
