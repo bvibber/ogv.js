@@ -536,6 +536,14 @@ void OgvJsDestroy() {
     th_info_clear(&theoraInfo);
   }
 
+  if(vorbis_p){
+    ogg_stream_clear(&vo);
+    vorbis_info_clear(&vi);
+    vorbis_dsp_clear(&vd);
+    vorbis_block_clear(&vb);
+    vorbis_comment_clear(&vc);
+  }
+
 #ifdef OPUS
   if(opus_p){
     opus_multistream_decoder_destroy(opusDecoder);
