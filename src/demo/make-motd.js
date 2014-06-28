@@ -48,9 +48,9 @@ function fetchMediaList(callback) {
 	}
 	
 	var today = new Date(),
-		year = 2013,
-		month = 10,
-		day = 28; // where we left off in motd.js
+		year = 2009,
+		month = 6,
+		day = 1;
 
 	var input = '';
 	while (true) {
