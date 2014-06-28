@@ -88,7 +88,7 @@ function fetchMediaList(callback) {
 			var bits = line.split('|'),
 				date = bits[0],
 				filename = bits[1];
-			if (filename && !filename.match(/\.gif$/i)) {
+			if (filename && !filename.match(/\.gif$/i) && !filename.match(/Template:Motd/i)) {
 				//console.log(filename);
 				motd[date] = filename;
 			} else {
