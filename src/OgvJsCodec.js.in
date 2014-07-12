@@ -27,10 +27,10 @@ OgvJs = (function(options) {
     
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
-    var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['*', 'number']);
-    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'int', []);
-    var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'int', []);
-    var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'int', []);
+    var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['number', 'number']);
+    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'number', []);
+    var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'number', []);
+    var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'number', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
