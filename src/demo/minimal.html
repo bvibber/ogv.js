@@ -40,6 +40,15 @@ function pause() {
 	}
 }
 
+function switchmedia(src) {
+	sampleFile = src.value;
+	if (player) {
+		player.stop();
+		player = null;
+		paused = false;
+		document.getElementById("videoarea").innerHTML = '';
+	}
+}
 
 </script>
 
@@ -49,9 +58,12 @@ function pause() {
 
 <div id="videoarea"></div>
 
+<select onchange="switchmedia(this)">
+	<option value="https://upload.wikimedia.org/wikipedia/commons/3/3f/Jarry_-_M%C3%A9tro_de_Montr%C3%A9al_%28640%C3%97360%29.ogv">Jarry metro station (Vorbis, Theora)</option>
+	<option value="media/ehren-paper_lights-96.opus">Ehren - Paper Lights (Opus)</option>
+</select>
 <div>
 <button onclick="play(sampleFile);">Play</button><button onclick="pause();">Pause/Unpause</button>
 </div>
-
 
 </body></html>

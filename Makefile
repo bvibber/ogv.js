@@ -59,11 +59,12 @@ build/ogvjs.js.gz : build/ogvjs.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
-build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
+build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
                         build/ogvjs.js build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
+	test -d build/demo/media || mkdir build/demo/media
 	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
 	
 	cp src/demo/demo.css build/demo/demo.css
@@ -71,6 +72,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/demo/motd.js build/demo/motd.js
 	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
 	cp src/demo/minimal.html build/demo/minimal.html
+	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
@@ -81,10 +83,11 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
                           build/ogvjs.js build/ogvjs.js.gz src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
+	test -d build/jsdemo/media || mkdir build/jsdemo/media
 	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
 	
 	cp src/demo/demo.css build/jsdemo/demo.css
@@ -92,6 +95,7 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/demo/motd.js build/jsdemo/motd.js
 	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
 	cp src/demo/minimal.html build/jsdemo/minimal.html
+	cp src/demo/media/ehren-paper_lights-96.opus build/jsdemo/media/ehren-paper_lights-96.opus
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
