@@ -4,7 +4,7 @@
  *
  * Pass an array of two-element arrays, each containing a start and end time.
  */
-function OgvSwfTimeRanges(ranges) {
+OgvSwfTimeRanges = window.OgvSwfTimeRanges = function(ranges) {
 	// note: can't use Object.defineProperty on non-DOM objects in IE 8
 	this.length = ranges.length;
 	this.start = function(i) {
@@ -16,7 +16,7 @@ function OgvSwfTimeRanges(ranges) {
 	return this;
 }
 
-function OgvSwfPlayer(options) {
+OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 	var options = options || {};
 	var useGPU = !!options.useGPU;
 	

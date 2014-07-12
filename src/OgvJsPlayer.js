@@ -4,7 +4,7 @@
  *
  * Pass an array of two-element arrays, each containing a start and end time.
  */
-function OgvJsTimeRanges(ranges) {
+OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
 	Object.defineProperty(this, 'length', {
 		get: function getLength() {
 			return ranges.length;
@@ -19,7 +19,7 @@ function OgvJsTimeRanges(ranges) {
 	return this;
 }
 
-function OgvJsPlayer(options) {
+OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	options = options || {};
 	var webGLdetected = detectWebGL();
 	var useWebGL = !!options.webGL && webGLdetected;
