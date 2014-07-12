@@ -14,7 +14,7 @@ mkdir libvorbis
 cd libvorbis
   
 # finally, run configuration script
-emconfigure ../../../libvorbis/configure --disable-shared --disable-oggtest --prefix="$dir/build/js/root"
+emconfigure ../../../libvorbis/configure --disable-oggtest --prefix="$dir/build/js/root"
 
 # compile libvorbis
 emmake make
