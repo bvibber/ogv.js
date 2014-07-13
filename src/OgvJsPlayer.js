@@ -19,6 +19,15 @@ OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
 	return this;
 }
 
+/**
+ * Player class -- instantiate one of these to get an 'ogvjs' HTML element
+ * which has a similar interface to the HTML audio/video elements.
+ *
+ * @param options: optional dictionary of options:
+ *                 'base': string; base URL for additional resources, such as Flash audio shim
+ *                 'webGL': bool; pass true to use WebGL acceleration if available
+ *                 'forceWebGL': bool; pass true to require WebGL even if not detected
+ */
 OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	options = options || {};
 	var webGLdetected = detectWebGL();
@@ -28,6 +37,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		if(!webGLdetected) {
 			console.log("No support for WebGL detected, but WebGL forced on!");
 		}
+	}
+	
+	var audioOptions = {};
+	if (typeof options.base === 'string') {
+		// Pass the resource dir down to AudioFeeder,
+		// so it can load the dynamicaudio.swf
+		audioOptions.base = options.base;
 	}
 	
 	var canvas = document.createElement('canvas');
@@ -496,7 +512,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 		continueVideo = pingProcessing;
 
-		audioFeeder = new AudioFeeder(2, 44100);
+		audioFeeder = new AudioFeeder( audioOptions );
 		if (muted) {
 			audioFeeder.mute();
 		}

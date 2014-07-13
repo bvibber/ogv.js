@@ -4,17 +4,24 @@
  * Because changing the number of channels on the fly is hard, hardcoding
  * to 2 output channels. That's also all we can do on IE with Flash output.
  *
- * @todo better timing!
+ * @param options: dictionary of config settings:
+ *                 'base' - Base URL to find additional resources in,
+ *                          such as the Flash audio output shim
  */
-function AudioFeeder() {
-	// assume W3C Audio API
+function AudioFeeder(options) {
 	var self = this;
+	options = options || {};
 	
+	// Look for W3C Audio API
 	var AudioContext = window.AudioContext || window.webkitAudioContext;
 	if (!AudioContext) {
 		// use Flash fallback
 		console.log("No W3C Web Audio API available");
-		this.flashaudio = new DynamicAudio();
+		var flashOptions = {};
+		if (typeof options.base === 'string') {
+			flashOptions.swf = options.base + '/dynamicaudio.swf';
+		}
+		this.flashaudio = new DynamicAudio( flashOptions );
 	}
 	
 
