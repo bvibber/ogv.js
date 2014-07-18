@@ -334,8 +334,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
 					frameDelay = (frameEndTimestamp - audioState.playbackPosition) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
+				//console.log('audioReady', codec.audioReady);
+				//console.log('frameReady', codec.frameReady);
+				//console.log('frameDelay', frameDelay);
+				console.log(codec.audioReady, codec.frameReady, audioState.samplesQueued, audioState.playbackPosition, frameEndTimestamp );
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
+					console.log('processing audio');
 					var start = getTimestamp();
 					var ok = codec.decodeAudio();
 					var delta = (getTimestamp() - start);
@@ -352,6 +357,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					}
 				}
 				if (codec.frameReady && readyForFrame) {
+					console.log('processing frame');
 					var start = getTimestamp();
 					var ok = codec.decodeFrame();
 					var delta = (getTimestamp() - start);

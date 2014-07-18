@@ -70,13 +70,13 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
-	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
 	cp src/demo/minimal.html build/demo/minimal.html
 	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
 	cp build/ogvjs.js.gz build/demo/lib/ogvjs.js.gz
+	cp src/dynamicaudio.swf build/demo/lib/dynamicaudio.swf
 	cp build/ogvswf.js build/demo/lib/ogvswf.js
 	cp build/ogv.swf build/demo/lib/ogv.swf
 	cp src/cortado.jar build/demo/lib/cortado.jar
@@ -93,13 +93,13 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/demo/demo.css build/jsdemo/demo.css
 	cp src/demo/demo.js build/jsdemo/demo.js
 	cp src/demo/motd.js build/jsdemo/motd.js
-	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
 	cp src/demo/minimal.html build/jsdemo/minimal.html
 	cp src/demo/media/ehren-paper_lights-96.opus build/jsdemo/media/ehren-paper_lights-96.opus
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
 	cp build/ogvjs.js.gz build/jsdemo/lib/ogvjs.js.gz
+	cp src/dynamicaudio.swf build/jsdemo/lib/dynamicaudio.swf
 	cp src/cortado.jar build/jsdemo/lib/cortado.jar
 	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
 

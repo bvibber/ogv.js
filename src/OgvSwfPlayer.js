@@ -69,7 +69,11 @@ OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 		return el;
 	}
 	
-	var swfUrl = 'lib/ogv.swf?buildDate=' + encodeURIComponent(OgvSwfPlayer.buildDate);
+	var base = '';
+	if (typeof options.base === 'string') {
+		base = options.base + '/';
+	}
+	var swfUrl = base + 'ogv.swf?buildDate=' + encodeURIComponent(OgvSwfPlayer.buildDate);
 
 	var flash = document.createElement('object');
 	flash.id = 'ogvswf-flashelement-' + idkey;

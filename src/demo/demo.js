@@ -682,20 +682,25 @@
 
 			if (playerBackend == 'js') {
 				player = new OgvJsPlayer({
-					webGL: false // force 2d canvas
+					webGL: false, // force 2d canvas
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'webgl') {
 				player = new OgvJsPlayer({
-					forceWebGL: true
+					forceWebGL: true,
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {
-				player = new OgvSwfPlayer();
+				player = new OgvSwfPlayer({
+					base: 'lib'
+				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash-gpu') {
 				player = new OgvSwfPlayer({
-					useGPU: true
+					useGPU: true,
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'cortado') {
