@@ -61,7 +61,7 @@ function AudioFeeder(options) {
 		} else {
 			context = new AudioContext;
 		}
-		console.log('context', context);
+
 		if (context.createScriptProcessor) {
 			node = context.createScriptProcessor(bufferSize, 0, outputChannels)
 		} else if (context.createJavaScriptNode) {
