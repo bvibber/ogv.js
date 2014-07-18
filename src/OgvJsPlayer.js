@@ -45,6 +45,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		// so it can load the dynamicaudio.swf
 		audioOptions.base = options.base;
 	}
+	if (typeof options.audioContext !== 'undefined') {
+		// Try passing a pre-created audioContext in?
+		audioOptions.audioContext = options.audioContext;
+	}
 	
 	var canvas = document.createElement('canvas');
 	var ctx;

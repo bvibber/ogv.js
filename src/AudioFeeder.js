@@ -54,7 +54,14 @@ function AudioFeeder(options) {
 		dropped = 0;
 
 	if(AudioContext) {
-		context = new AudioContext;
+		if (typeof options.audioContext !== 'undefined') {
+			// We were passed a pre-existing AudioContext object,
+			// in the hopes this gets around iOS's weird activation rules.
+			context = options.audioContext;
+		} else {
+			context = new AudioContext;
+		}
+		console.log('context', context);
 		if (context.createScriptProcessor) {
 			node = context.createScriptProcessor(bufferSize, 0, outputChannels)
 		} else if (context.createJavaScriptNode) {
