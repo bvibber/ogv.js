@@ -4,7 +4,7 @@ package {
     import flash.external.ExternalInterface;
     import flash.media.Sound;
     import flash.media.SoundChannel;
-    import flash.utils.setInterval;
+    import flash.utils.setTimeout;
 
     public class dynamicaudio extends Sprite {
         public var bufferSize:Number = 8192; // In samples
@@ -40,7 +40,7 @@ package {
         public function write(s:String):void {
             // Decode the hex string asynchronously.
             stringBuffer.push(s);
-            setInterval(flushBuffers, 0);
+            setTimeout(flushBuffers, 0);
         }
 
         public function flushBuffers():void {
