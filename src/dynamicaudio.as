@@ -95,8 +95,8 @@ package {
 
             droppedAudioTime = (event.position / targetRate) - totalBufferedAudio;
 
-            // If we haven't got enough data, write 2048 samples of silence to 
-            // both channels, the minimum Flash allows
+            // If we haven't got enough data, write a buffer of of silence to
+            // both channels (must be at least 2048 samples to keep audio running)
             if (buffer.length < bufferSize) {
                 for (i = 0; i < bufferSize; i++) {
                     event.data.writeFloat(0.0);
