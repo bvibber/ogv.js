@@ -43,6 +43,10 @@ OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 	window[callbackName] = function ogvSwfFlashCallback(eventName, args) {
 		// Array.indexOf doesn't exist in IE until 9!
 		var legit = false;
+		if (eventName === 'init') {
+			initPlayer();
+			return;
+		}
 		for (var i = 0; i < validCallbacks.length; i++) {
 			if (eventName === validCallbacks[i]) {
 				legit = true;
@@ -102,34 +106,24 @@ OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 	
 	
 	var waitingCallbacks = [],
-		waitingTimer = null,
-		times = 0,
-		maxTimes = 100;
-	function pingFlashPlugin() {
-		waitingTimer = setTimeout(function doPingFlashPlugin() {
-			waitingTimer = null;
-			times++;
-			if (flash._isReady) {
-				for (var i = 0; i < waitingCallbacks.length; i++) {
-					waitingCallbacks[i]();
-				}
-				waitingCallbacks = [];
-			} else if (times > maxTimes) {
-				console.log("Failed to initialize Flash Ogv video player");
-			} else {
-				console.log('try again...');
-				pingFlashPlugin();
-			}
-		}, 20);
-	}
+		playerInitialized = false;
+
+	function initPlayer() {
+		if (playerInitialized) {
+			throw new Error("Double initialization of Flash ogv player");
+		}
+		playerInitialized = true;
+		for (var i = 0; i < waitingCallbacks.length; i++) {
+			waitingCallbacks[i]();
+		}
+		waitingCallbacks = [];
+	};
 	function waitForFlash(callback) {
-		if (flash._isReady) {
+		if (playerInitialized) {
 			callback();
-		} else if (waitingTimer == null) {
-			waitingCallbacks.push(callback);
-			pingFlashPlugin();
 		} else {
-			// already waiting
+			// still waiting for a ping from the inside
+			// to confirm we're initialized
 			waitingCallbacks.push(callback);
 		}
 	}

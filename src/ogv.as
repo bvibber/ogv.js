@@ -192,6 +192,9 @@ package {
             };
 
             setupCallbacks();
+
+            // Let the outside caller know we're active
+            jsCallback('init');
         }
 
         private function resizeForStage():void {
