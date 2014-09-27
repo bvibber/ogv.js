@@ -311,9 +311,9 @@ static void processHeaders() {
     } else {
         /* and now we have it all.  initialize decoders */
 #ifdef OPUS
-        printf("theora_p is %d; vorbis_p is %d, opus_p is %d\n", theoraHeaders, vorbisHeaders, opusHeaders);
+        printf("theoraHeaders is %d; vorbisHeaders is %d, opusHeaders is %d\n", theoraHeaders, vorbisHeaders, opusHeaders);
 #else
-        printf("theora_p is %d; vorbis_p is %d\n", theoraHeaders, vorbisHeaders);
+        printf("theoraHeaders is %d; vorbisHeaders is %d\n", theoraHeaders, vorbisHeaders);
 #endif
         if (theoraHeaders) {
             printf("SETTING UP THEORA DECODER CONTEXT\n");
