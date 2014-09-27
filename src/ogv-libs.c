@@ -30,18 +30,18 @@ th_comment        theoraComment;
 th_setup_info    *theoraSetupInfo;
 th_dec_ctx       *theoraDecoderContext;
 
-int               theora_p=0;
+int               theora_p = 0;
 int               theora_processing_headers;
 
 /* single frame video buffering */
-int               videobuf_ready=0;
-ogg_int64_t       videobuf_granulepos=-1;
-double            videobuf_time=0;
+int               videobuf_ready = 0;
+ogg_int64_t       videobuf_granulepos = -1;
+double            videobuf_time = 0;
 
-int               audiobuf_ready=0;
-ogg_int64_t       audiobuf_granulepos=0; /* time position of last sample */
+int               audiobuf_ready = 0;
+ogg_int64_t       audiobuf_granulepos = 0; /* time position of last sample */
 
-int               raw=0;
+int               raw = 0;
 
 /* Audio decode state */
 int               vorbis_p = 0;
