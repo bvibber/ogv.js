@@ -33,22 +33,22 @@ th_comment        theoraComment;
 th_setup_info    *theoraSetupInfo;
 th_dec_ctx       *theoraDecoderContext;
 
-int               theora_p = 0;
-int               theora_processing_headers;
+int               theoraHeaders = 0;
+int               theoraProcessingHeaders;
 int               frames = 0;
 
 /* single frame video buffering */
-int               videobuf_ready = 0;
-ogg_int64_t       videobuf_granulepos = -1;
-double            videobuf_time = 0;
+int               videobufReady = 0;
+ogg_int64_t       videobufGranulepos = -1;
+double            videobufTime = 0;
 
-int               audiobuf_ready = 0;
-ogg_int64_t       audiobuf_granulepos = 0; /* time position of last sample */
+int               audiobufReady = 0;
+ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
 
 
 /* Audio decode state */
-int               vorbis_p = 0;
-int               vorbis_processing_headers;
+int               vorbisHeaders = 0;
+int               vorbisProcessingHeaders;
 ogg_stream_state  vorbisStreamState;
 vorbis_info       vorbisInfo;
 vorbis_dsp_state  vorbisDspState;
@@ -56,7 +56,7 @@ vorbis_block      vorbisBlock;
 vorbis_comment    vorbisComment;
 
 #ifdef OPUS
-int               opus_p = 0;
+int               opusHeaders = 0;
 ogg_stream_state  opusStreamState;
 OpusMSDecoder    *opusDecoder = NULL;
 int               opusMappingFamily;
@@ -69,14 +69,14 @@ int               opusStreams;
 #define OPUS_MAX_FRAME_SIZE (960*6)
 #endif
 
-int               process_audio;
-int               process_video;
+int               processAudio;
+int               processVideo;
 
 int               crop = 0;
-int               got_sigint = 0;
+int               gotSigint = 0;
 
 static void sigint_handler(int signal) {
-    got_sigint = 1;
+    gotSigint = 1;
 }
 
 enum AppState {
@@ -119,7 +119,7 @@ static void video_write(void) {
             ycbcr[2].data, ycbcr[2].stride,
             theoraInfo.frame_width, theoraInfo.frame_height,
             hdec, vdec,
-            videobuf_time);
+            videobufTime);
 }
 
 /* dump the theora comment header */
@@ -143,10 +143,10 @@ static int dump_comments(th_comment *_tc) {
 /* this can be done blindly; a stream won't accept a page
                 that doesn't belong to it */
 static int queue_page(ogg_page *page) {
-    if (theora_p) ogg_stream_pagein(&theoraStreamState, page);
-    if (vorbis_p) ogg_stream_pagein(&vorbisStreamState, page);
+    if (theoraHeaders) ogg_stream_pagein(&theoraStreamState, page);
+    if (vorbisHeaders) ogg_stream_pagein(&vorbisStreamState, page);
 #ifdef OPUS
-    if (opus_p) ogg_stream_pagein(&opusStreamState, page);
+    if (opusHeaders) ogg_stream_pagein(&opusStreamState, page);
 #endif
     return 0;
 }
@@ -154,8 +154,8 @@ static int queue_page(ogg_page *page) {
 void OgvJsInit(int process_audio_flag, int process_video_flag) {
     // Allow the caller to specify whether we want audio, video, or both.
     // Or neither, but that won't be very useful.
-    process_audio = process_audio_flag;
-    process_video = process_video_flag;
+    processAudio = process_audio_flag;
+    processVideo = process_video_flag;
 
     appState = STATE_BEGIN;
 
@@ -191,34 +191,34 @@ static void processBegin() {
         }
 
         /* identify the codec: try theora */
-        if (process_video && !theora_p && (theora_processing_headers = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket)) >= 0) {
+        if (processVideo && !theoraHeaders && (theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket)) >= 0) {
             /* it is theora -- save this stream state */
             printf("found theora stream!\n");
             memcpy(&theoraStreamState, &test, sizeof (test));
-            theora_p = 1;
+            theoraHeaders = 1;
 
-            if (theora_processing_headers == 0) {
+            if (theoraProcessingHeaders == 0) {
                 printf("Saving first video packet for later!\n");
             } else {
                 ogg_stream_packetout(&theoraStreamState, NULL);
             }
-        } else if (process_audio && !vorbis_p && (vorbis_processing_headers = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket)) == 0) {
+        } else if (processAudio && !vorbisHeaders && (vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket)) == 0) {
             // it's vorbis! save this as our audio stream...
-            printf("found vorbis stream! %d\n", vorbis_processing_headers);
+            printf("found vorbis stream! %d\n", vorbisProcessingHeaders);
             memcpy(&vorbisStreamState, &test, sizeof (test));
-            vorbis_p = 1;
+            vorbisHeaders = 1;
 
             // ditch the processed packet...
             ogg_stream_packetout(&vorbisStreamState, NULL);
 #ifdef OPUS
-        } else if (process_audio && !opus_p && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
+        } else if (processAudio && !opusHeaders && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
             printf("found Opus stream! (first of two headers)\n");
             memcpy(&opusStreamState, &test, sizeof (test));
             if (opusGain) {
                 opus_multistream_decoder_ctl(opusDecoder, OPUS_SET_GAIN(opusGain));
             }
             opusPrevPacketGranpos = 0;
-            opus_p = 1;
+            opusHeaders = 1;
 
             // ditch the processed packet...
             ogg_stream_packetout(&opusStreamState, NULL);
@@ -238,15 +238,15 @@ static void processBegin() {
 
 static void processHeaders() {
 #ifdef OPUS
-    if ((theora_p && theora_processing_headers) || (vorbis_p && vorbis_p < 3) || (opus_p && opus_p < 2)) {
+    if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3) || (opusHeaders && opusHeaders < 2)) {
 #else
-    if ((theora_p && theora_processing_headers) || (vorbis_p && vorbis_p < 3)) {
+    if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3)) {
 #endif
-        printf("processHeaders pass... %d %d %d\n", theora_p, theora_processing_headers, vorbis_p);
+        printf("processHeaders pass... %d %d %d\n", theoraHeaders, theoraProcessingHeaders, vorbisHeaders);
         int ret;
 
         /* look for further theora headers */
-        if (theora_p && theora_processing_headers) {
+        if (theoraHeaders && theoraProcessingHeaders) {
             printf("checking theora headers...\n");
             ret = ogg_stream_packetpeek(&theoraStreamState, &oggPacket);
             if (ret < 0) {
@@ -255,11 +255,11 @@ static void processHeaders() {
             }
             if (ret > 0) {
                 printf("Checking another theora header packet...\n");
-                theora_processing_headers = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket);
-                if (theora_processing_headers == 0) {
+                theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket);
+                if (theoraProcessingHeaders == 0) {
                     // We've completed the theora header
                     printf("Completed theora header.\n");
-                    theora_p = 3;
+                    theoraHeaders = 3;
                 } else {
                     printf("Still parsing theora headers...\n");
                     ogg_stream_packetout(&theoraStreamState, NULL);
@@ -270,7 +270,7 @@ static void processHeaders() {
             }
         }
 
-        if (vorbis_p && (vorbis_p < 3)) {
+        if (vorbisHeaders && (vorbisHeaders < 3)) {
             printf("checking vorbis headers...\n");
             ret = ogg_stream_packetpeek(&vorbisStreamState, &oggPacket);
             if (ret < 0) {
@@ -279,10 +279,10 @@ static void processHeaders() {
             }
             if (ret > 0) {
                 printf("Checking another vorbis header packet...\n");
-                vorbis_processing_headers = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket);
-                if (vorbis_processing_headers == 0) {
+                vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket);
+                if (vorbisProcessingHeaders == 0) {
                     printf("Completed another vorbis header (of 3 total)...\n");
-                    vorbis_p++;
+                    vorbisHeaders++;
                 } else {
                     printf("Invalid vorbis header?\n");
                     exit(1);
@@ -294,7 +294,7 @@ static void processHeaders() {
             }
         }
 #ifdef OPUS
-        if (opus_p && (opus_p < 2)) {
+        if (opusHeaders && (opusHeaders < 2)) {
             printf("checking for opus headers...\n");
             ret = ogg_stream_packetpeek(&opusStreamState, &oggPacket);
             if (ret < 0) {
@@ -302,7 +302,7 @@ static void processHeaders() {
                 exit(1);
             }
             // FIXME: perhaps actually *check* if this is a comment packet ;-)
-            opus_p++;
+            opusHeaders++;
             printf("discarding Opus comments...\n");
             ogg_stream_packetout(&opusStreamState, NULL);
         }
@@ -311,11 +311,11 @@ static void processHeaders() {
     } else {
         /* and now we have it all.  initialize decoders */
 #ifdef OPUS
-        printf("theora_p is %d; vorbis_p is %d, opus_p is %d\n", theora_p, vorbis_p, opus_p);
+        printf("theora_p is %d; vorbis_p is %d, opus_p is %d\n", theoraHeaders, vorbisHeaders, opusHeaders);
 #else
-        printf("theora_p is %d; vorbis_p is %d\n", theora_p, vorbis_p);
+        printf("theora_p is %d; vorbis_p is %d\n", theoraHeaders, vorbisHeaders);
 #endif
-        if (theora_p) {
+        if (theoraHeaders) {
             printf("SETTING UP THEORA DECODER CONTEXT\n");
             dump_comments(&theoraComment);
             theoraDecoderContext = th_decode_alloc(&theoraInfo, theoraSetupInfo);
@@ -336,13 +336,13 @@ static void processHeaders() {
 
 #ifdef OPUS
         // If we have both Vorbis and Opus, prefer Opus
-        if (opus_p) {
+        if (opusHeaders) {
             // opusDecoder should already be initialized
             // Opus has a fixed internal sampling rate of 48000 Hz
             OgvJsInitAudio(opusChannels, 48000);
         } else
 #endif
-        if (vorbis_p) {
+        if (vorbisHeaders) {
             vorbis_synthesis_init(&vorbisDspState, &vorbisInfo);
             vorbis_block_init(&vorbisDspState, &vorbisBlock);
             printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
@@ -361,30 +361,30 @@ static int needData = 1;
 
 static void processDecoding() {
     needData = 0;
-    if (theora_p && !videobuf_ready) {
+    if (theoraHeaders && !videobufReady) {
         /* theora is one in, one out... */
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
-            videobuf_ready = 1;
+            videobufReady = 1;
             OgvJsOutputFrameReady();
         } else {
             needData = 1;
         }
     }
 
-    if (!audiobuf_ready) {
+    if (!audiobufReady) {
 #ifdef OPUS
-        if (opus_p) {
+        if (opusHeaders) {
             if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
-                audiobuf_ready = 1;
+                audiobufReady = 1;
                 OgvJsOutputAudioReady();
             } else {
                 needData = 1;
             }
         } else
 #endif
-        if (vorbis_p) {
+        if (vorbisHeaders) {
             if (ogg_stream_packetpeek(&vorbisStreamState, &audioPacket) > 0) {
-                audiobuf_ready = 1;
+                audiobufReady = 1;
                 OgvJsOutputAudioReady();
             } else {
                 needData = 1;
@@ -398,22 +398,22 @@ int OgvJsDecodeFrame() {
         printf("Theora packet didn't come out of stream\n");
         return 0;
     }
-    videobuf_ready = 0;
-    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, &videobuf_granulepos);
+    videobufReady = 0;
+    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, &videobufGranulepos);
     if (ret == 0) {
-        double t = th_granule_time(theoraDecoderContext, videobuf_granulepos);
+        double t = th_granule_time(theoraDecoderContext, videobufGranulepos);
         if (t > 0) {
-            videobuf_time = t;
+            videobufTime = t;
         } else {
             // For some reason sometimes we get a bunch of 0s out of th_granule_time
-            videobuf_time += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+            videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         }
         frames++;
         video_write();
         return 1;
     } else if (ret == TH_DUPFRAME) {
         // Duplicated frame, advance time
-        videobuf_time += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+        videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         frames++;
         video_write();
         return 1;
@@ -425,11 +425,11 @@ int OgvJsDecodeFrame() {
 
 int OgvJsDecodeAudio() {
     int packetRet = 0;
-    audiobuf_ready = 0;
+    audiobufReady = 0;
     int foundSome = 0;
 
 #ifdef OPUS
-    if (opus_p) {
+    if (opusHeaders) {
         if (ogg_stream_packetout(&opusStreamState, &audioPacket) > 0) {
             float *output = malloc(sizeof (float)*OPUS_MAX_FRAME_SIZE * opusChannels);
             int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*) audioPacket.packet, audioPacket.bytes, output, OPUS_MAX_FRAME_SIZE, 0);
@@ -473,7 +473,7 @@ int OgvJsDecodeAudio() {
         }
     } else
 #endif
-    if (vorbis_p) {
+    if (vorbisHeaders) {
         if (ogg_stream_packetout(&vorbisStreamState, &audioPacket) > 0) {
             int ret = vorbis_synthesis(&vorbisBlock, &audioPacket);
             if (ret == 0) {
@@ -522,14 +522,14 @@ int OgvJsProcess() {
 }
 
 void OgvJsDestroy() {
-    if (theora_p) {
+    if (theoraHeaders) {
         ogg_stream_clear(&theoraStreamState);
         th_decode_free(theoraDecoderContext);
         th_comment_clear(&theoraComment);
         th_info_clear(&theoraInfo);
     }
 
-    if (vorbis_p) {
+    if (vorbisHeaders) {
         ogg_stream_clear(&vorbisStreamState);
         vorbis_info_clear(&vorbisInfo);
         vorbis_dsp_clear(&vorbisDspState);
@@ -538,7 +538,7 @@ void OgvJsDestroy() {
     }
 
 #ifdef OPUS
-    if (opus_p) {
+    if (opusHeaders) {
         opus_multistream_decoder_destroy(opusDecoder);
     }
 #endif
