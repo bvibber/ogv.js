@@ -45,7 +45,6 @@ double            videobuf_time = 0;
 int               audiobuf_ready = 0;
 ogg_int64_t       audiobuf_granulepos = 0; /* time position of last sample */
 
-int               raw = 0;
 
 /* Audio decode state */
 int               vorbis_p = 0;
