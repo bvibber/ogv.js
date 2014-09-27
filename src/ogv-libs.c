@@ -154,23 +154,23 @@ enum AppState {
 int process_audio, process_video;
 
 void OgvJsInit(int process_audio_flag, int process_video_flag) {
-	// Allow the caller to specify whether we want audio, video, or both.
-	// Or neither, but that won't be very useful.
-	process_audio = process_audio_flag;
-	process_video = process_video_flag;
+    // Allow the caller to specify whether we want audio, video, or both.
+    // Or neither, but that won't be very useful.
+    process_audio = process_audio_flag;
+    process_video = process_video_flag;
 
-	appState = STATE_BEGIN;
-	
-  /* start up Ogg stream synchronization layer */
-  ogg_sync_init(&oggSyncState);
+    appState = STATE_BEGIN;
 
-  /* init supporting Vorbis structures needed in header parsing */
-  vorbis_info_init(&vorbisInfo);
-  vorbis_comment_init(&vorbisComment);
+    /* start up Ogg stream synchronization layer */
+    ogg_sync_init(&oggSyncState);
 
-  /* init supporting Theora structures needed in header parsing */
-  th_comment_init(&theoraComment);
-  th_info_init(&theoraInfo);
+    /* init supporting Vorbis structures needed in header parsing */
+    vorbis_info_init(&vorbisInfo);
+    vorbis_comment_init(&vorbisComment);
+
+    /* init supporting Theora structures needed in header parsing */
+    th_comment_init(&theoraComment);
+    th_info_init(&theoraInfo);
 }
 
 static void processHeaders();
