@@ -22,6 +22,9 @@
 /* Ogg and codec state for demux/decode */
 ogg_sync_state    oggSyncState;
 ogg_page          oggPage;
+ogg_packet        oggPacket;
+ogg_packet        audioPacket;
+ogg_packet        videoPacket;
 
 /* Video decode state */
 ogg_stream_state  theoraStreamState;
@@ -32,6 +35,7 @@ th_dec_ctx       *theoraDecoderContext;
 
 int               theora_p = 0;
 int               theora_processing_headers;
+int               frames = 0;
 
 /* single frame video buffering */
 int               videobuf_ready = 0;
@@ -66,12 +70,22 @@ int               opusStreams;
 #define OPUS_MAX_FRAME_SIZE (960*6)
 #endif
 
+int               process_audio;
+int               process_video;
+
 int               crop = 0;
 int               got_sigint = 0;
 
 static void sigint_handler(int signal) {
     got_sigint = 1;
 }
+
+enum AppState {
+    STATE_BEGIN,
+    STATE_HEADERS,
+    STATE_DECODING
+} appState;
+
 
 // Callbacks
 extern void OgvJsLoadedMetadata();
@@ -138,21 +152,6 @@ static int queue_page(ogg_page *page) {
     return 0;
 }
 
-
-ogg_packet oggPacket;
-ogg_packet audioPacket;
-ogg_packet videoPacket;
-
-int frames = 0;
-
-enum AppState {
-    STATE_BEGIN,
-    STATE_HEADERS,
-    STATE_DECODING
-} appState;
-
-int process_audio, process_video;
-
 void OgvJsInit(int process_audio_flag, int process_video_flag) {
     // Allow the caller to specify whether we want audio, video, or both.
     // Or neither, but that won't be very useful.
@@ -194,7 +193,6 @@ static void processBegin() {
 
         /* identify the codec: try theora */
         if (process_video && !theora_p && (theora_processing_headers = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket)) >= 0) {
-
             /* it is theora -- save this stream state */
             printf("found theora stream!\n");
             memcpy(&theoraStreamState, &test, sizeof (test));
@@ -206,8 +204,7 @@ static void processBegin() {
                 ogg_stream_packetout(&theoraStreamState, NULL);
             }
         } else if (process_audio && !vorbis_p && (vorbis_processing_headers = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket)) == 0) {
-            // it's vorbis!
-            // save this as our audio stream...
+            // it's vorbis! save this as our audio stream...
             printf("found vorbis stream! %d\n", vorbis_processing_headers);
             memcpy(&vorbisStreamState, &test, sizeof (test));
             vorbis_p = 1;
