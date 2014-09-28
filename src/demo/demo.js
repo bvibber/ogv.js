@@ -703,12 +703,6 @@
 					base: 'lib'
 				});
 				player.durationHint = durationHint;
-			} else if (playerBackend == 'flash-gpu') {
-				player = new OgvSwfPlayer({
-					useGPU: true,
-					base: 'lib'
-				});
-				player.durationHint = durationHint;
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();
 				player.durationHint = durationHint;
