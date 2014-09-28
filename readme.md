@@ -16,7 +16,7 @@ See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * [background threading: no](https://github.com/brion/ogv.js/wiki/Threading)
-* [GPU accelerated drawing: experimental (WebGL and Flash Stage3D)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
+* [GPU accelerated drawing: yes (requires WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
 * seeking: no
 
 
@@ -43,8 +43,8 @@ And for lower-resolution files (testing 160p/15fps):
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS or Windows RT.)
 
 Testing browsers (these support .ogv natively):
-* Firefox 27
-* Chrome 32
+* Firefox 32
+* Chrome 37
 
 Experimental all-Flash support not yet tested on:
 * Internet Explorer 6/7/8 on Windows XP/Vista/7
@@ -56,9 +56,9 @@ Early versions have only been spot-checked with a couple of small sample files o
 
 *Target browsers*
 
-On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging.
+On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging. WebGL acceleration works on OS X with developer options enabled and on iOS 8.
 
-IE 10 and IE 11 on Windows 7, 8 and 8.1 perform pretty well. Older versions of IE are not supported at all for the JavaScript target.
+IE 10 and IE 11 on Windows 7, 8 and 8.1 perform pretty well. Older versions of IE are not supported at all for the JavaScript target. WebGL acceleration currently works with IE 11 update 1 and later.
 
 IE 9 runs the demo page with the Flash version of the decoder, but IE 6/7/8 don't currently run the demo and so are untested.
 
@@ -67,7 +67,7 @@ IE 9 runs the demo page with the Flash version of the decoder, but IE 6/7/8 don'
 
 See [device notes](https://github.com/brion/ogv.js/wiki/Device-notes) for testing status.
 
-On iOS 7, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. As of March 2014, I've gotten barely acceptable performance for 160p/15fps files on iPod Touch 5th-gen and iPad 3. Files at 360p play acceptably only on the latest 64-bit iPhone 5s.
+On iOS 7, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. As of March 2014, I've gotten barely acceptable performance for 160p/15fps files on iPod Touch 5th-gen and iPad 3. Files at 360p and up play acceptably only on the latest 64-bit iPhones and iPads.
 
 IE 11 on Windows RT 8.1 on an original Surface RT tablet performs barely acceptably with 160p/15fps files, but sound sync is poor (due to Flash overhead?). Larger files play unacceptably slowly.
 
@@ -76,31 +76,27 @@ In both cases, a native application looms as a possibly better alternative. If i
 
 *Test browsers*
 
-Firefox 27 performs best using asm.js optimizations -- unfortunately due to limitations in the JS engine this currently only works on the first video playthrough. Reload the page to force a video to re-run at high speed. (This has been fixed as of Firefox 30 nightly builds.)
+Firefox 32 performs best using asm.js optimizations.
 
-Firefox on Windows occasionally halts playback and doesn't continue; this seems to be a problem with the audio.
-
-Chrome 32 performs pretty well, but not quite as snappy as Firefox's asm.js mode.
+Chrome 37 performs pretty well, but not quite as snappy as Firefox's asm.js mode.
 
 It would also be good to compare performance of Theora vs VP8/VP9 decoders.
 
 
 *WebGL drawing acceleration*
 
-Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers, and is available as an experimental option.
+Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers, and is enabled by default if available.
 
-Performance in Firefox, Chrome, IE 11, and desktop Safari with WebGL option enabled is pretty good, and noticeably improves playback performance at HD resolutions. At sub-SD resolutions, it's not always a clear win.
+Performance in Firefox, Chrome, IE 11 update 1, iOS 8 Safari, and desktop Safari with WebGL option enabled is pretty good, and noticeably improves playback performance at HD and SD resolutions.
 
-Initial performance issues in IE 11 were resolved by packing the luma and chroma plane textures as faux RGBA textures, packing four pixels into each texel. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
+IE 10 and early versions of IE 11 do not support luminance textures; there used to be some code to work around by packing RGBA textures that but it's been removed to simplify things. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
 
 
 *Flash decoder fallback*
 
 The Flash version seems to decode video fairly well, but the YCbCr->RGB conversion had to be moved from ActionScript to C code to perform acceptably. This may be due to suboptimal ActionScript compiler settings, or may be due to a much better bytecode emitter for Crossbridge.
 
-GPU-accelerated YCbCr->RGB conversion and drawing is optionally done using Stage3d (Flash's OpenGL ES 2-like interface). The GLSL shaders are converted to AGAL with [an open source tool from Adobe](https://github.com/adobe/glsl2agal), included via git submodule. Performance seems variable, depending on the machine. Needs more testing.
-
-Currently the Stage3D acceleration uses nearest neighbor scaling on the output, and can sometimes fail to clamp the last line properly.
+GPU-accelerated YCbCr->RGB conversion and drawing using Stage3d was tried, but performance was mediocre and scaling was poor, so it has been removed.
 
 
 ## Difficulties
@@ -109,9 +105,9 @@ Currently the Stage3D acceleration uses nearest neighbor scaling on the output, 
 
 Currently the video and audio codecs run on the UI thread.
 
-WebWorkers may be used to background the decoder as a subprocess, sending video frames and audio data back to the parent web page for output. This should be supported by all target and test browsers.
+In principle WebWorkers could be used to background the decoder as a subprocess, sending video frames and audio data back to the parent web page for output. This should be supported by all target and test browsers.
 
-However there will be communication overhead that may make this not worth it; in particular on Internet Explorer 10/11 transferring ownership of ArrayBuffers across threads is not possible, so this will require extra data copies (extraction from heap, copy across boundary, insertion to heap).
+However there would be communication overhead that may make this not worth it; in particular on Internet Explorer 10/11 transferring ownership of ArrayBuffers across threads is not possible, so this will require extra data copies (extraction from heap, copy across boundary, insertion to heap).
 
 See [Threading notes on the wiki](https://github.com/brion/ogv.js/wiki/Threading) for thoughts on how work could be broken over a couple of threads.
 
@@ -141,11 +137,7 @@ Jumping to a new position in the file that hasn't yet been buffered could be acc
 
 *Audio output*
 
-Safari and Chrome support the W3C Web Audio API (with 'webkit' prefix).
-
-Audio is blacklisted on Safari 6.0 due to a possible bug in the JavaScript VM or JIT compiler -- Vorbis audio *decoding* hangs the CPU unless the debug console is open (which makes things run rreeaallyy ssllooww). This may or may not be fixed in the latest builds, but I no longer have Safari 6.0 handy to test.
-
-Firefox supports Web Audio API in recent versions.
+Firefox, Safari and Chrome support the W3C Web Audio API.
 
 IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
 
@@ -153,13 +145,6 @@ The all-Flash decoder fallback also supports audio.
 
 A/V synchronization is performed on files with both audio and video, and seems to
 actually work. Yay!
-
-
-## Emscripten issues
-
-Something in the combination of the relooper and the code generation in the current release versions of emscripten causes a hang on arm64 iOS devices such as the iPhone 5s somewhere in Vorbis audio decoding. Disabling the relooper gets it working but slashes performance horribly.
-
-Building with the new [LLVM backend 'fastcomp'](https://github.com/kripken/emscripten/wiki/LLVM-Backend) seems to avoid hitting the iOS JIT bug while retaining full relooper performance.
 
 
 ## Crossbridge issues
