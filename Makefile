@@ -146,23 +146,7 @@ build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c src/YCbCr.h
 	test -d build || mkdir build
 	./compileOgvFlash.sh
 
-build/YCbCr-vertex.glsl.out : src/YCbCr-vertex.glsl
-	./glsl2agal/bin/glsl2agalopt -optimize -v -e src/YCbCr-vertex.glsl
-	mv src/YCbCr-vertex.glsl.out build/YCbCr-vertex.glsl.out
-
-build/YCbCr-fragment.glsl.out : src/YCbCr-fragment.glsl
-	./glsl2agal/bin/glsl2agalopt -optimize -f -e src/YCbCr-fragment.glsl
-	mv src/YCbCr-fragment.glsl.out build/YCbCr-fragment.glsl.out
-
-build/YCbCr-shaders-agal.h : file2def.js build/YCbCr-fragment.glsl.out build/YCbCr-vertex.glsl.out
-	test -d build || mkdir build
-	node file2def.js build/YCbCr-vertex.glsl.out YCBCR_VERTEX_SHADER > build/YCbCr-shaders-agal.h
-	node file2def.js build/YCbCr-fragment.glsl.out YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders-agal.h
-
-build/YCbCrFrameSink.as : src/YCbCrFrameSink.as.in build/YCbCr-shaders-agal.h
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/YCbCrFrameSink.as.in > build/YCbCrFrameSink.as
-
-build/ogv.swf : src/ogv.as src/OgvCodec.as build/YCbCrFrameSink.as build/flash/ogv-libs.swc
+build/ogv.swf : src/ogv.as src/OgvCodec.as build/flash/ogv-libs.swc
 	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc -source-path+=build src/ogv.as
 
 build/ogvswf-version.js : build/ogv.swf

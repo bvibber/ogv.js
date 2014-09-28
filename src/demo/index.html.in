@@ -69,11 +69,11 @@
 							
 							Player:
 							<select height=1 id="player-backend">
-								<option value="js">JavaScript</option>
-								<option value="webgl">JS + WebGL</option>
+								<option value="js">JavaScript (auto)</option>
+								<option value="js-cpu">JS no WebGL</option>
+								<option value="webgl">JS force WebGL</option>
 #ifdef WITH_FLASH
 								<option value="flash">Flash</option>
-								<option value="flash-gpu">Flash + GPU</option>
 #endif
 								<option value="native">native</option>
 								<option value="cortado">Cortado (Java)</option>

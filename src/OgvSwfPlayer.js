@@ -18,7 +18,6 @@ OgvSwfTimeRanges = window.OgvSwfTimeRanges = function(ranges) {
 
 OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 	var options = options || {};
-	var useGPU = !!options.useGPU;
 	
 	// Return a magical custom element!
 	var self = document.createElement('ogvswf');
@@ -84,13 +83,9 @@ OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 	flash.width = 320;
 	flash.height = 240;
 	flash.appendChild(param('allowscriptaccess', 'always'));
-	if (useGPU) {
-		flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName + '&useGPU=1'));
-		flash.appendChild(param('wmode', 'direct'));
-	} else {
-		flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
-		flash.appendChild(param('wmode', 'opaque'));
-	}
+	flash.appendChild(param('flashVars', 'jsCallbackName=' + callbackName));
+	flash.appendChild(param('wmode', 'opaque'));
+
 	// For IE <= 9:
 	if (typeof flash.classid == 'string') {
 		flash.appendChild(param('movie', swfUrl));

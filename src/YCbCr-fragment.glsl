@@ -2,32 +2,22 @@
 // extra 'stripe' texture fiddling to work around IE 11's lack of gl.LUMINANCE or gl.ALPHA textures
 
 precision mediump float;
-uniform sampler2D uStripeLuma;
-uniform sampler2D uStripeChroma;
 uniform sampler2D uTextureY;
 uniform sampler2D uTextureCb;
 uniform sampler2D uTextureCr;
 varying vec2 vLumaPosition;
 varying vec2 vChromaPosition;
 void main() {
-   // Y, Cb, and Cr planes are mapped into a pseudo-RGBA texture
-   // so we can upload them without expanding the bytes on IE 11
-   // which doesn\'t allow LUMINANCE or ALPHA textures.
-   // The stripe textures mark which channel to keep for each pixel.
-   vec4 vStripeLuma = texture2D(uStripeLuma, vLumaPosition);
-   vec4 vStripeChroma = texture2D(uStripeChroma, vChromaPosition);
-
-   // Each texture extraction will contain the relevant value in one
-   // channel only.
-   vec4 vY = texture2D(uTextureY, vLumaPosition) * vStripeLuma;
-   vec4 vCb = texture2D(uTextureCb, vChromaPosition) * vStripeChroma;
-   vec4 vCr = texture2D(uTextureCr, vChromaPosition) * vStripeChroma;
+   // Y, Cb, and Cr planes are uploaded as LUMINANCE textures.
+   vec4 vY = texture2D(uTextureY, vLumaPosition);
+   vec4 vCb = texture2D(uTextureCb, vChromaPosition);
+   vec4 vCr = texture2D(uTextureCr, vChromaPosition);
 
    // Now assemble that into a YUV vector, and premultipy the Y...
    vec3 YUV = vec3(
-     (vY.x  + vY.y  + vY.z  + vY.w) * 1.1643828125,
-     (vCb.x + vCb.y + vCb.z + vCb.w),
-     (vCr.x + vCr.y + vCr.z + vCr.w)
+     vY.x * 1.1643828125,
+     vCb.x,
+     vCr.x
    );
    // And convert that to RGB!
    gl_FragColor = vec4(
