@@ -14,7 +14,7 @@ mkdir libtheora
 cd libtheora
 
 # finally, run configuration script
-emconfigure ../../../libtheora/configure --disable-oggtest --prefix="$dir/build/js/root" --with-ogg="$dir/build/js/root" --disable-asm --disable-examples --disable-encode --disable-shared
+emconfigure ../../../libtheora/configure --disable-oggtest --prefix="$dir/build/js/root" --with-ogg="$dir/build/js/root" --disable-asm --disable-examples --disable-encode
 
 # compile libtheora
 emmake make

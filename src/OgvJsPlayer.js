@@ -4,7 +4,7 @@
  *
  * Pass an array of two-element arrays, each containing a start and end time.
  */
-function OgvJsTimeRanges(ranges) {
+OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
 	Object.defineProperty(this, 'length', {
 		get: function getLength() {
 			return ranges.length;
@@ -19,9 +19,36 @@ function OgvJsTimeRanges(ranges) {
 	return this;
 }
 
-function OgvJsPlayer(options) {
+/**
+ * Player class -- instantiate one of these to get an 'ogvjs' HTML element
+ * which has a similar interface to the HTML audio/video elements.
+ *
+ * @param options: optional dictionary of options:
+ *                 'base': string; base URL for additional resources, such as Flash audio shim
+ *                 'webGL': bool; pass true to use WebGL acceleration if available
+ *                 'forceWebGL': bool; pass true to require WebGL even if not detected
+ */
+OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	options = options || {};
-	var useWebGL = !!options.webGL;
+	var webGLdetected = detectWebGL();
+	var useWebGL = !!options.webGL && webGLdetected;
+	if(!!options.forceWebGL) {
+		useWebGL = true;
+		if(!webGLdetected) {
+			console.log("No support for WebGL detected, but WebGL forced on!");
+		}
+	}
+	
+	var audioOptions = {};
+	if (typeof options.base === 'string') {
+		// Pass the resource dir down to AudioFeeder,
+		// so it can load the dynamicaudio.swf
+		audioOptions.base = options.base;
+	}
+	if (typeof options.audioContext !== 'undefined') {
+		// Try passing a pre-created audioContext in?
+		audioOptions.audioContext = options.audioContext;
+	}
 	
 	var canvas = document.createElement('canvas');
 	var ctx;
@@ -48,7 +75,7 @@ function OgvJsPlayer(options) {
 		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
-	var codec, audioFeeder;
+	var placeboCodec, codec, audioFeeder;
 	var stream, byteLength = 0, nextProcessingTimer, paused = true;
 	var muted = false;
 
@@ -65,6 +92,16 @@ function OgvJsPlayer(options) {
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0; // number of times we were starved for audio
+
+        function detectWebGL() { 
+                try {
+                        var canvas = document.createElement("canvas");
+                        if(!!window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))) {
+                                return true;
+                        }
+                } catch(e) {} 
+                return false;
+        };
 	
 	function stopVideo() {
 		// kill the previous video if any
@@ -76,6 +113,10 @@ function OgvJsPlayer(options) {
 		if (stream) {
 			stream.abort();
 			stream = null;
+		}
+		if (placeboCodec) {
+			placeboCodec.destroy();
+			placeboCodec = null;
 		}
 		if (codec) {
 			codec.destroy();
@@ -246,6 +287,9 @@ function OgvJsPlayer(options) {
 	
 			var hasAudio = codec.hasAudio,
 				hasVideo = codec.hasVideo;
+			if (placeboCodec) {
+				placeboCodec.process();
+			}
 			var more = codec.process();
 			if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
 				// we just fell over from headers into content; reinit
@@ -292,7 +336,7 @@ function OgvJsPlayer(options) {
 				// Have to process some more pages to find data. Continue the loop.
 				continue;
 			}
-		
+
 			if (hasAudio) {
 				// Drive on the audio clock!
 				var fudgeDelta = 0.1,
@@ -308,7 +352,7 @@ function OgvJsPlayer(options) {
 					var delta = (getTimestamp() - start);
 					lastFrameDecodeTime += delta;
 					audioDecodingTime += delta;
-				
+
 					var start = getTimestamp();
 					if (ok) {
 						var buffer = codec.dequeueAudio();
@@ -353,6 +397,13 @@ function OgvJsPlayer(options) {
 				//console.log(n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']');
 				var nextDelay = Math.min.apply(Math, nextDelays);
 				if (nextDelays.length > 0) {
+					if (placeboCodec) {
+						// We've primed the JIT compiler... or something... by now;
+						// throw away the placebo copy.
+						placeboCodec.destroy();
+						placeboCodec = null;
+					}
+
 					// Keep track of how much time we spend queueing audio as well
 					// This is slow when using the Flash shim on IE 10/11
 					var start = getTimestamp();
@@ -364,6 +415,13 @@ function OgvJsPlayer(options) {
 			} else if (hasVideo) {
 				// Video-only: drive on the video clock
 				if (codec.frameReady && getTimestamp() >= targetFrameTime) {
+					if (placeboCodec) {
+						// We've primed the JIT compiler... or something... by now;
+						// throw away the placebo copy.
+						placeboCodec.destroy();
+						placeboCodec = null;
+					}
+
 					// it's time to draw
 					var start = getTimestamp();
 					var ok = codec.decodeFrame();
@@ -437,6 +495,18 @@ function OgvJsPlayer(options) {
 		bufferTime = 0;
 		drawingTime = 0;
 
+		// There's some kind of problem with the JIT in iOS 7 Safari
+		// that sometimes trips up on optimized Vorbis builds, at least
+		// on my iPad 3 (A5X SoC).
+		//
+		// Exercising some of the ogg & vorbis library code paths with
+		// a second decoder for the first few packets of data seems to
+		// be enough to work around this.
+		//
+		// Non-deterministic debugging ROCKS!
+		//
+		placeboCodec = new OgvJs(options);
+
 		codec = new OgvJs(options);
 		codec.oninitvideo = function(info) {
 			videoInfo = info;
@@ -479,7 +549,7 @@ function OgvJsPlayer(options) {
 
 		continueVideo = pingProcessing;
 
-		audioFeeder = new AudioFeeder(2, 44100);
+		audioFeeder = new AudioFeeder( audioOptions );
 		if (muted) {
 			audioFeeder.mute();
 		}
@@ -523,6 +593,9 @@ function OgvJsPlayer(options) {
 			onread: function(data) {
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
+				if (placeboCodec) {
+					placeboCodec.receiveInput(data);
+				}
 
 				// Continue the read/decode/draw loop...
 				pingProcessing();

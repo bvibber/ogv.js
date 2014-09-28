@@ -7,6 +7,9 @@
 [submodule "libtheora"]
 	path = libtheora
 	url = https://github.com/brion/theora.git
+[submodule "libopus"]
+	path = libopus
+	url = git://git.xiph.org/opus.git
 [submodule "glsl2agal"]
 	path = glsl2agal
 	url = https://github.com/adobe/glsl2agal.git

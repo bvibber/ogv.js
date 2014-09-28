@@ -10,13 +10,13 @@ mkdir js
 cd js
 
 mkdir root
-mkdir libvorbis
-cd libvorbis
+mkdir libopus
+cd libopus
   
 # finally, run configuration script
-emconfigure ../../../libvorbis/configure --disable-oggtest --prefix="$dir/build/js/root"
+emconfigure ../../../libopus/configure --disable-asm --disable-oggtest --disable-doc --disable-extra-programs --prefix="$dir/build/js/root"
 
-# compile libvorbis
+# compile libopus
 emmake make
 emmake make install
 

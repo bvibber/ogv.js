@@ -345,9 +345,9 @@
 		}
 		
 		var today = new Date(),
-			year = 2013,
-			month = 10,
-			day = 28; // where we left off in motd.js
+			year = 2014,
+			month = 06,
+			day = 29; // where we left off in motd.js
 		
 		var input = '';
 		while (true) {
@@ -682,20 +682,25 @@
 
 			if (playerBackend == 'js') {
 				player = new OgvJsPlayer({
-					webGL: false // force 2d canvas
+					webGL: false, // force 2d canvas
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'webgl') {
 				player = new OgvJsPlayer({
-					webGL: true
+					forceWebGL: true,
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {
-				player = new OgvSwfPlayer();
+				player = new OgvSwfPlayer({
+					base: 'lib'
+				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash-gpu') {
 				player = new OgvSwfPlayer({
-					useGPU: true
+					useGPU: true,
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'cortado') {

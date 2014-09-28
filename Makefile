@@ -26,12 +26,18 @@ build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a configureVorbis.sh co
 	./configureVorbis.sh
 	./compileVorbisJs.sh
 
+build/js/root/lib/libopus.a : build/js/root/lib/libogg.a configureOpus.sh compileOpusJs.sh
+	test -d build || mkdir build
+	./configureOpus.sh
+	./compileOpusJs.sh
+
+
 build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh compileTheoraJs.sh
 	test -d build || mkdir build
 	./configureTheora.sh
 	./compileTheoraJs.sh
 
-build/js/ogv-libs.js : src/ogv-libs.c src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a compileOgvJs.sh
+build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/opus_header.c src/opus_header.h src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a build/js/root/lib/libopus.a compileOgvJs.sh
 	test -d build || mkdir build
 	./compileOgvJs.sh
 
@@ -53,43 +59,47 @@ build/ogvjs.js.gz : build/ogvjs.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
-build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
+build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
                         build/ogvjs.js build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
+	test -d build/demo/media || mkdir build/demo/media
 	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
 	
 	cp src/demo/demo.css build/demo/demo.css
 	cp src/demo/demo.js build/demo/demo.js
 	cp src/demo/motd.js build/demo/motd.js
-	cp src/dynamicaudio.swf build/demo/dynamicaudio.swf
 	cp src/demo/minimal.html build/demo/minimal.html
+	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
 	cp build/ogvjs.js.gz build/demo/lib/ogvjs.js.gz
+	cp src/dynamicaudio.swf build/demo/lib/dynamicaudio.swf
 	cp build/ogvswf.js build/demo/lib/ogvswf.js
 	cp build/ogv.swf build/demo/lib/ogv.swf
 	cp src/cortado.jar build/demo/lib/cortado.jar
 	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
                           build/ogvjs.js build/ogvjs.js.gz src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
+	test -d build/jsdemo/media || mkdir build/jsdemo/media
 	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
 	
 	cp src/demo/demo.css build/jsdemo/demo.css
 	cp src/demo/demo.js build/jsdemo/demo.js
 	cp src/demo/motd.js build/jsdemo/motd.js
-	cp src/dynamicaudio.swf build/jsdemo/dynamicaudio.swf
 	cp src/demo/minimal.html build/jsdemo/minimal.html
+	cp src/demo/media/ehren-paper_lights-96.opus build/jsdemo/media/ehren-paper_lights-96.opus
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
 	cp build/ogvjs.js.gz build/jsdemo/lib/ogvjs.js.gz
+	cp src/dynamicaudio.swf build/jsdemo/lib/dynamicaudio.swf
 	cp src/cortado.jar build/jsdemo/lib/cortado.jar
 	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
 

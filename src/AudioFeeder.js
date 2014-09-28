@@ -4,17 +4,24 @@
  * Because changing the number of channels on the fly is hard, hardcoding
  * to 2 output channels. That's also all we can do on IE with Flash output.
  *
- * @todo better timing!
+ * @param options: dictionary of config settings:
+ *                 'base' - Base URL to find additional resources in,
+ *                          such as the Flash audio output shim
  */
-function AudioFeeder() {
-	// assume W3C Audio API
+function AudioFeeder(options) {
 	var self = this;
+	options = options || {};
 	
+	// Look for W3C Audio API
 	var AudioContext = window.AudioContext || window.webkitAudioContext;
 	if (!AudioContext) {
 		// use Flash fallback
 		console.log("No W3C Web Audio API available");
-		this.flashaudio = new DynamicAudio();
+		var flashOptions = {};
+		if (typeof options.base === 'string') {
+			flashOptions.swf = options.base + '/dynamicaudio.swf';
+		}
+		this.flashaudio = new DynamicAudio( flashOptions );
 	}
 	
 
@@ -47,7 +54,14 @@ function AudioFeeder() {
 		dropped = 0;
 
 	if(AudioContext) {
-		context = new AudioContext;
+		if (typeof options.audioContext !== 'undefined') {
+			// We were passed a pre-existing AudioContext object,
+			// in the hopes this gets around iOS's weird activation rules.
+			context = options.audioContext;
+		} else {
+			context = new AudioContext;
+		}
+
 		if (context.createScriptProcessor) {
 			node = context.createScriptProcessor(bufferSize, 0, outputChannels)
 		} else if (context.createJavaScriptNode) {
@@ -281,18 +295,17 @@ function AudioFeeder() {
 	};
 	
 	this.waitUntilReady = function(callback) {
-		if (this.flashaudio) {
-			var self = this,
-				times = 0,
+		if (self.flashaudio) {
+			var times = 0,
 				maxTimes = 100;
 			function pingFlashPlugin() {
 				setTimeout(function doPingFlashPlugin() {
 					times++;
-					if (self.flashaudio.flashElement.write) {
+					if (self.flashaudio && self.flashaudio.flashElement.write) {
 						callback(this);
 					} else if (times > maxTimes) {
 						console.log("Failed to initialize Flash audio shim");
-						this.close();
+						self.close();
 						callback(null);
 					} else {
 						pingFlashPlugin();

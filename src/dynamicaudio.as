@@ -4,7 +4,7 @@ package {
     import flash.external.ExternalInterface;
     import flash.media.Sound;
     import flash.media.SoundChannel;
-    import flash.utils.setInterval;
+    import flash.utils.setTimeout;
 
     public class dynamicaudio extends Sprite {
         public var bufferSize:Number = 8192; // In samples
@@ -40,7 +40,7 @@ package {
         public function write(s:String):void {
             // Decode the hex string asynchronously.
             stringBuffer.push(s);
-            setInterval(flushBuffers, 0);
+            setTimeout(flushBuffers, 0);
         }
 
         public function flushBuffers():void {
@@ -95,8 +95,8 @@ package {
 
             droppedAudioTime = (event.position / targetRate) - totalBufferedAudio;
 
-            // If we haven't got enough data, write 2048 samples of silence to 
-            // both channels, the minimum Flash allows
+            // If we haven't got enough data, write a buffer of of silence to
+            // both channels (must be at least 2048 samples to keep audio running)
             if (buffer.length < bufferSize) {
                 for (i = 0; i < bufferSize; i++) {
                     event.data.writeFloat(0.0);
