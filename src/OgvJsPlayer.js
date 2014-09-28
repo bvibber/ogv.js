@@ -30,7 +30,7 @@ OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
  */
 OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	options = options || {};
-	var webGLdetected = detectWebGL();
+	var webGLdetected = YCbCrFrameSink.isAvailable();
 	var useWebGL = !!options.webGL && webGLdetected;
 	if(!!options.forceWebGL) {
 		useWebGL = true;
@@ -93,16 +93,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0; // number of times we were starved for audio
 
-        function detectWebGL() { 
-                try {
-                        var canvas = document.createElement("canvas");
-                        if(!!window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))) {
-                                return true;
-                        }
-                } catch(e) {} 
-                return false;
-        };
-	
 	function stopVideo() {
 		// kill the previous video if any
 		paused = true; // ?

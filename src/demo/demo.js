@@ -682,6 +682,12 @@
 
 			if (playerBackend == 'js') {
 				player = new OgvJsPlayer({
+					webGL: true, // auto
+					base: 'lib'
+				});
+				player.durationHint = durationHint;
+			} else if (playerBackend == 'js-cpu') {
+				player = new OgvJsPlayer({
 					webGL: false, // force 2d canvas
 					base: 'lib'
 				});

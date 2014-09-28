@@ -10,7 +10,8 @@ function YCbCrFrameSink(canvas, videoInfo) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
 		debug = false, // swap this to enable more error checks, which can slow down rendering
-		useStripe = false;
+		checkedStripe = false, // do we need to check for lack of luminance textures?
+		useStripe = false; // do we need to compensate for lack of luminance textures?
 	
 	if (gl == null) {
 		throw new Error('WebGL unavailable');
@@ -92,10 +93,10 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		gl.texImage2D(
 			gl.TEXTURE_2D,
 			0, // mip level
-			(useStripe) ? gl.RGBA : gl.LUMINANCE, // internal format
+			gl.LUMINANCE, // internal format
 			width, height,
 			0, // border
-			(useStripe) ? gl.RGBA : gl.LUMINANCE, // format
+			gl.LUMINANCE, // format
 			gl.UNSIGNED_BYTE, //type
 			data // data!
 		);
@@ -127,36 +128,6 @@ function YCbCrFrameSink(canvas, videoInfo) {
 
 		gl.useProgram(program);
 		checkError();
-		
-		if (useStripe) {
-			function buildStripe(width) {
-				var out = new Uint32Array(width);
-				for (var i = 0; i < width; i += 4) {
-					out[i    ] = 0x000000ff;
-					out[i + 1] = 0x0000ff00;
-					out[i + 2] = 0x00ff0000;
-					out[i + 3] = 0xff000000;
-				}
-				return new Uint8Array(out.buffer);
-			}
-		
-			var textureY = attachTexture(
-				'uStripeLuma',
-				gl.TEXTURE0,
-				0,
-				yCbCrBuffer.strideY,
-				1,
-				buildStripe(yCbCrBuffer.strideY)
-			);
-			var textureY = attachTexture(
-				'uStripeChroma',
-				gl.TEXTURE1,
-				1,
-				yCbCrBuffer.strideCb,
-				1,
-				buildStripe(yCbCrBuffer.strideCb)
-			);
-		}
 	}
 	
 	self.drawFrame = function(yCbCrBuffer) {
@@ -233,7 +204,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uTextureY',
 			gl.TEXTURE2,
 			2,
-			(useStripe) ? (yCbCrBuffer.strideY / 4) : yCbCrBuffer.strideY,
+			yCbCrBuffer.strideY,
 			yCbCrBuffer.height,
 			yCbCrBuffer.bytesY
 		);
@@ -241,7 +212,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uTextureCb',
 			gl.TEXTURE3,
 			3,
-			(useStripe) ? (yCbCrBuffer.strideCb / 4) : yCbCrBuffer.strideCb,
+			yCbCrBuffer.strideCb,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCb
 		);
@@ -249,7 +220,7 @@ function YCbCrFrameSink(canvas, videoInfo) {
 			'uTextureCr',
 			gl.TEXTURE4,
 			4,
-			(useStripe) ? (yCbCrBuffer.strideCr / 4) : yCbCrBuffer.strideCr,
+			yCbCrBuffer.strideCr,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCr
 		);
@@ -262,3 +233,54 @@ function YCbCrFrameSink(canvas, videoInfo) {
 	return self;
 }
 
+/**
+ * Static function to check if WebGL will be available with appropriate features.
+ *
+ * @return boolean
+ */
+YCbCrFrameSink.isAvailable = function() {
+	var canvas = document.createElement('canvas');
+	canvas.width = 1;
+	canvas.height = 1;
+	try {
+		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+	} catch (e) {
+		return false;
+	}
+	if (gl) {
+		var register = gl.TEXTURE0,
+			width = 4,
+			height = 4,
+			texture = gl.createTexture(),
+			data = new Uint8Array(width * height);
+
+		gl.activeTexture(register);
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0, // mip level
+			gl.LUMINANCE, // internal format
+			width, height,
+			0, // border
+			gl.LUMINANCE, // format
+			gl.UNSIGNED_BYTE, //type
+			data // data!
+		);
+
+		var err = gl.getError();
+		if (err) {
+			alert(err);
+			// Doesn't support luminance textures?
+			return false;
+		} else {
+			return true;
+		}
+	} else {
+		return false;
+	}
+};
