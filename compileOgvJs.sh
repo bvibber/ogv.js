@@ -14,6 +14,8 @@ EMCC_FAST_COMPILER=1 emcc \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
+  -s NO_FILESYSTEM=1 \
+  -s NO_BROWSER=1 \
   -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess', '_OgvJsDecodeFrame', '_OgvJsDecodeAudio']" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
