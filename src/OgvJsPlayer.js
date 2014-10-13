@@ -548,7 +548,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 		};
 
-		continueVideo = pingProcessing;
+		continueVideo = function() {
+			if (audioFeeder) {
+				audioFeeder.onstarved = function() {
+					pingProcessing();
+				};
+			}
+			pingProcessing();
+		}
 
 		audioFeeder = new AudioFeeder( audioOptions );
 		if (muted) {
@@ -702,6 +709,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			console.log('pausing');
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
+			if (audioFeeder) {
+				audioFeeder.onstarved = null;
+			}
 			paused = true;
 			if (self.onpause) {
 				self.onpause();
