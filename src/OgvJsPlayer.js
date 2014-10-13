@@ -190,7 +190,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	function doFrameComplete() {
-		if (!document.contains(self)) {
+		if (!document.body.contains(self)) {
 			// We've been de-parented since we last ran
 			// Stop playback at next opportunity!
 			setTimeout(function() {
@@ -450,14 +450,17 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		if (delay === undefined) {
 			delay = -1;
 		}
-		if (nextProcessingTimer) {
-			// already scheduled
-			return;
-		}
-		//console.log('delaying for ' + delay);
 		if (delay >= 0) {
+			if (nextProcessingTimer) {
+				// already scheduled
+				return;
+			}
+			//console.log('delaying for ' + delay);
 			nextProcessingTimer = setTimeout(doProcessing, delay);
 		} else {
+			if (nextProcessingTimer) {
+				clearTimeout(nextProcessingTimer);
+			}
 			doProcessing(); // warning: tail recursion is possible
 		}
 	}
@@ -551,6 +554,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		if (muted) {
 			audioFeeder.mute();
 		}
+		audioFeeder.onstarved = function() {
+			// If we're in a background tab, timers may be throttled.
+			// When audio buffers run out, go decode some more stuff.
+			pingProcessing();
+		};
 		audioFeeder.waitUntilReady(function(feeder) {
 			// Start reading!
 			if (started) {

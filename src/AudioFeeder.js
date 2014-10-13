@@ -93,6 +93,14 @@ function AudioFeeder(options) {
 				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
 			}
 			var inputBuffer = popNextBuffer(bufferSize);
+			if (!inputBuffer) {
+				// We might be in a throttled background tab; go ping the decoder
+				// and let it know we need more data now!
+				if (self.onstarved) {
+					self.onstarved();
+					inputBuffer = popNextBuffer(bufferSize);
+				}
+			}
 			if (!muted && inputBuffer) {
 				bufferHead += (bufferSize / context.sampleRate);
 				playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
@@ -317,6 +325,11 @@ function AudioFeeder(options) {
 			setTimeout(callback, 0);
 		}
 	};
+
+	/**
+	 * A callback when we find we're out of buffered data.
+	 */
+	this.onstarved = null;
 }
 
 
