@@ -190,6 +190,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	function doFrameComplete() {
+		if (!document.contains(self)) {
+			// We've been de-parented since we last ran
+			// Stop playback at next opportunity!
+			setTimeout(function() {
+				self.stop();
+			}, 0);
+		}
+
 		var newFrameTimestamp = getTimestamp(),
 			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
 			jitter = Math.abs(wallClockTime - 1000 / fps);

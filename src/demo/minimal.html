@@ -43,7 +43,6 @@ function pause() {
 function switchmedia(src) {
 	sampleFile = src.value;
 	if (player) {
-		player.stop();
 		player = null;
 		paused = false;
 		document.getElementById("videoarea").innerHTML = '';

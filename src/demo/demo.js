@@ -834,11 +834,6 @@
 
 	function stopVideo() {
 		if (player) {
-			player.pause();
-			if (player.stop) {
-				// CUSTOM
-				player.stop();
-			}
 			player.parentElement.removeChild(player);
 			player = null;
 		}
