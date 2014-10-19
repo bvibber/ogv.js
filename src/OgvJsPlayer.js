@@ -381,7 +381,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					var start = getTimestamp();
 					queueAudio();
 					var delta = getTimestamp() - start;
-					pingProcessing(nextDelay - delta);
+					pingProcessing(Math.max(0, nextDelay - delta));
 					return;
 				}
 			} else if (hasVideo) {
@@ -406,11 +406,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						pingProcessing(0);
 					} else {
 						console.log('Bad video packet or something');
-						pingProcessing(targetFrameTime - getTimestamp());
+						pingProcessing(Math.max(0, targetFrameTime - getTimestamp()));
 					}
 				} else {
 					// check in again soon!
-					pingProcessing(targetFrameTime - getTimestamp());
+					pingProcessing(Math.max(0, targetFrameTime - getTimestamp()));
 				}
 				return;
 			} else {
