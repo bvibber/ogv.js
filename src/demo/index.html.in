@@ -109,7 +109,6 @@
 								<td class="bench-video">vid</td>
 								<td class="bench-audio">aud</td>
 								<td class="bench-buffer">buf</td>
-								<td class="bench-yuv">yuv</td>
 								<td class="bench-draw">draw</td>
 							</tr>
 							<tr>
@@ -119,7 +118,6 @@
 								<td id="bench-video" class="bench-video"></td>
 								<td id="bench-audio" class="bench-audio"></td>
 								<td id="bench-buffer" class="bench-buffer"></td>
-								<td id="bench-yuv" class="bench-yuv"></td>
 								<td id="bench-draw" class="bench-draw"></td>
 							</tr>
 						</table>

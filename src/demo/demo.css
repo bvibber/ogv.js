@@ -280,11 +280,8 @@ body {
 .bench-buffer {
 	color: orange;
 }
-.bench-yuv {
-	color: purple;
-}
 .bench-draw {
-	color: darkcyan;
+	color: purple;
 }
 
 

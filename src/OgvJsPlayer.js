@@ -86,7 +86,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		videoDecodingTime = 0, // ms
 		audioDecodingTime = 0, // ms
 		bufferTime = 0, // ms
-		colorTime = 0, // ms
 		drawingTime = 0, // ms
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
@@ -646,7 +645,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			videoDecodingTime: videoDecodingTime,
 			audioDecodingTime: audioDecodingTime,
 			bufferTime: bufferTime,
-			colorTime: colorTime,
 			drawingTime: drawingTime,
 			droppedAudio: droppedAudio,
 			jitter: totalJitter / framesProcessed
@@ -658,7 +656,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		videoDecodingTime = 0;
 		audioDecodingTime = 0;
 		bufferTime = 0;
-		colorTime = 0;
 		drawingTime = 0;
 		totalJitter = 0;
 	};
