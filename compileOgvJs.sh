@@ -6,8 +6,6 @@ if [ `uname -s` == "Darwin" ]; then
 fi
 
 # compile wrapper around libogg + libvorbis + libtheora
-# Warning: -O2 enables the emscripten relooper which, on current release version hangs
-# on arm64 iOS devices in Vorbis decoding. Use with emscripten-fastcomp for iOS arm64!
 EMCC_FAST_COMPILER=1 emcc \
   -O2 \
   --memory-init-file 0 \
