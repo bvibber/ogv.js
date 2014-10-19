@@ -73,7 +73,6 @@ package {
         private var videoDecodingTime:Number = 0;
         private var audioDecodingTime:Number = 0;
         private var bufferTime:Number = 0;
-        private var colorTime:Number = 0;
         private var drawingTime:Number = 0;
         private var totalJitter:Number = 0;
         private var lastFrameDecodeTime:Number = 0;
@@ -232,7 +231,6 @@ package {
                     videoDecodingTime: videoDecodingTime,
                     audioDecodingTime: audioDecodingTime,
                     bufferTime: bufferTime,
-                    colorTime: colorTime,
                     drawingTime: drawingTime,
                     droppedAudio: droppedAudio,
                     jitter: totalJitter / framesProcessed
@@ -245,7 +243,6 @@ package {
                 videoDecodingTime = 0;
                 audioDecodingTime = 0;
                 bufferTime = 0;
-                colorTime = 0;
                 drawingTime = 0;
                 totalJitter = 0;
             });
@@ -663,21 +660,17 @@ package {
             frameEndTimestamp = yCbCrBuffer.timestamp;
 
             var start:Number, delta:Number;
+            start = getTimestamp();
 
             // colorspace conversion
-            start = getTimestamp();
             var bytesARGB:ByteArray = codec.convertYCbCr(yCbCrBuffer);
-            delta = getTimestamp() - start;
-            colorTime += delta;
-            lastFrameDecodeTime += delta;
 
             // drawing
-            start = getTimestamp();
             var rect:Rectangle = new Rectangle(0, 0, videoInfo.frameWidth, videoInfo.frameHeight);
             bytesARGB.position = 0;
             bitmapData.setPixels(rect, bytesARGB);
-            delta = getTimestamp() - start;
 
+            delta = getTimestamp() - start;
             lastFrameDecodeTime += delta;
             drawingTime += delta;
             framesProcessed++;
