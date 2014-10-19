@@ -501,11 +501,7 @@ package {
                         // Ran out of stream!
                         var finalDelay:Number = 0;
                         if (hasAudio) {
-                            if (durationHint) {
-                                finalDelay = durationHint * 1000 - audioState.playbackPosition;
-                            } else {
-                                finalDelay = audioBufferedDuration;
-                            }
+                            finalDelay = audioBufferedDuration;
                         }
                         log('End of stream reached in ' + finalDelay + ' ms.');
                         setTimeout(function():void {

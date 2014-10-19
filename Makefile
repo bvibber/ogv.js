@@ -55,15 +55,18 @@ build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
-build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
+build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js build/ogvjs-version.js
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
+
+build/ogvjs-version.js : build/ogvjs.js
+	echo 'window.OgvJsVersion = "'`date -u`'";' > build/ogvjs-version.js
 
 build/ogvjs.js.gz : build/ogvjs.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
 build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
-                        build/ogvjs.js build/ogvjs.js.gz \
+                        build/ogvjs.js build/ogvjs-version.js build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
 	test -d build/demo || mkdir build/demo
@@ -87,7 +90,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 
 # The player demo, JS only without the Flash build
 build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
-                          build/ogvjs.js build/ogvjs.js.gz src/dynamicaudio.swf \
+                          build/ogvjs.js build/ogvjs-version.js build/ogvjs.js.gz src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
 	test -d build/jsdemo/media || mkdir build/jsdemo/media
