@@ -9,9 +9,7 @@
 function YCbCrFrameSink(canvas, videoInfo) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
-		debug = false, // swap this to enable more error checks, which can slow down rendering
-		checkedStripe = false, // do we need to check for lack of luminance textures?
-		useStripe = false; // do we need to compensate for lack of luminance textures?
+		debug = false; // swap this to enable more error checks, which can slow down rendering
 	
 	if (gl == null) {
 		throw new Error('WebGL unavailable');
@@ -30,7 +28,6 @@ function YCbCrFrameSink(canvas, videoInfo) {
 	
 	function compileShader(type, source) {
 		var shader = gl.createShader(type);
-		console.log(shader);
 		gl.shaderSource(shader, source);
 		gl.compileShader(shader);
 
@@ -132,7 +129,6 @@ function YCbCrFrameSink(canvas, videoInfo) {
 	
 	self.drawFrame = function(yCbCrBuffer) {
 		if (!program) {
-			console.log('initializing gl program');
 			init(yCbCrBuffer);
 		}
 
@@ -161,15 +157,12 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		checkError();
 
 
-
-
-
 		// Set up the texture geometry...
 		function setupTexturePosition(varname, texWidth, texHeight) {
 			// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
 			var textureX0 = videoInfo.picX / texWidth;
 			var textureX1 = (videoInfo.picX + videoInfo.picWidth) / texWidth;
-			var textureY0 = videoInfo.picY / yCbCrBuffer.height;
+			var textureY0 = videoInfo.picY / texHeight;
 			var textureY1 = (videoInfo.picY + videoInfo.picHeight) / texHeight;
 			var textureRectangle = new Float32Array([
 				textureX0, textureY0,
@@ -202,24 +195,24 @@ function YCbCrFrameSink(canvas, videoInfo) {
 		// Create the textures...
 		var textureY = attachTexture(
 			'uTextureY',
-			gl.TEXTURE2,
-			2,
+			gl.TEXTURE0,
+			0,
 			yCbCrBuffer.strideY,
 			yCbCrBuffer.height,
 			yCbCrBuffer.bytesY
 		);
 		var textureCb = attachTexture(
 			'uTextureCb',
-			gl.TEXTURE3,
-			3,
+			gl.TEXTURE1,
+			1,
 			yCbCrBuffer.strideCb,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCb
 		);
 		var textureCr = attachTexture(
 			'uTextureCr',
-			gl.TEXTURE4,
-			4,
+			gl.TEXTURE2,
+			2,
 			yCbCrBuffer.strideCr,
 			yCbCrBuffer.height >> yCbCrBuffer.vdec,
 			yCbCrBuffer.bytesCr

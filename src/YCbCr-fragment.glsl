@@ -9,21 +9,18 @@ varying vec2 vLumaPosition;
 varying vec2 vChromaPosition;
 void main() {
    // Y, Cb, and Cr planes are uploaded as LUMINANCE textures.
-   vec4 vY = texture2D(uTextureY, vLumaPosition);
-   vec4 vCb = texture2D(uTextureCb, vChromaPosition);
-   vec4 vCr = texture2D(uTextureCr, vChromaPosition);
+   float fY = texture2D(uTextureY, vLumaPosition).x;
+   float fCb = texture2D(uTextureCb, vChromaPosition).x;
+   float fCr = texture2D(uTextureCr, vChromaPosition).x;
 
-   // Now assemble that into a YUV vector, and premultipy the Y...
-   vec3 YUV = vec3(
-     vY.x * 1.1643828125,
-     vCb.x,
-     vCr.x
-   );
+   // Premultipy the Y...
+   float fYmul = fY * 1.1643828125;
+
    // And convert that to RGB!
    gl_FragColor = vec4(
-     YUV.x + 1.59602734375 * YUV.z - 0.87078515625,
-     YUV.x - 0.39176171875 * YUV.y - 0.81296875 * YUV.z + 0.52959375,
-     YUV.x + 2.017234375   * YUV.y - 1.081390625,
+     fYmul + 1.59602734375 * fCr - 0.87078515625,
+     fYmul - 0.39176171875 * fCb - 0.81296875 * fCr + 0.52959375,
+     fYmul + 2.017234375   * fCb - 1.081390625,
      1
    );
 }
