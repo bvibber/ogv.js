@@ -7,12 +7,11 @@
 // -- AudioFeeder.js
 #include "AudioFeeder.js"
 
-// -- YCbCr.js
-#include "YCbCr.js"
+// -- FrameSink.js
+#include "FrameSink.js"
 
-// -- YCbCrFrameSink.js
-#include "YCbCrFrameSink.js"
+// -- WebGLFrameSink.js
+#include "WebGLFrameSink.js"
 
 // -- OgvJsPlayer.js
 #include "OgvJsPlayer.js"
-

@@ -49,10 +49,13 @@ build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.j
 	node file2def.js src/YCbCr-vertex.glsl YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
 	node file2def.js src/YCbCr-fragment.glsl YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
-build/YCbCrFrameSink.js : src/YCbCrFrameSink.js.in build/YCbCr-shaders.h
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/YCbCrFrameSink.js.in > build/YCbCrFrameSink.js
+build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
+	 cpp -E -w -P -CC -nostdinc -Ibuild src/FrameSink.js.in > build/FrameSink.js
 
-build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js src/YCbCr.js build/YCbCrFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
+build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
+	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
+
+build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
 
 build/ogvjs.js.gz : build/ogvjs.js

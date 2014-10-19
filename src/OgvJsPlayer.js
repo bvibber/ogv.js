@@ -30,7 +30,7 @@ OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
  */
 OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	options = options || {};
-	var webGLdetected = YCbCrFrameSink.isAvailable();
+	var webGLdetected = WebGLFrameSink.isAvailable();
 	var useWebGL = !!options.webGL && webGLdetected;
 	if(!!options.forceWebGL) {
 		useWebGL = true;
@@ -51,7 +51,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 	
 	var canvas = document.createElement('canvas');
-	var ctx;
 	var frameSink;
 	
 	// Return a magical custom element!
@@ -135,7 +134,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var lastFrameTime = getTimestamp(),
 		frameEndTimestamp = 0.0,
 		frameScheduled = false,
-		imageData = null,
 		yCbCrBuffer = null;
 	var lastFrameDecodeTime = 0.0;		
 	var targetFrameTime;
@@ -152,36 +150,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 		var start, delta;
 
-		if (useWebGL) {
-			// Can't distinguish colorTime from drawingTime
-			start = getTimestamp();
-			
-			frameSink.drawFrame(yCbCrBuffer);
-			
-			delta = getTimestamp() - start;
-			lastFrameDecodeTime += delta;
-			drawingTime += delta;
-		} else {
-			start = getTimestamp();
-		
-			convertYCbCr(yCbCrBuffer, imageData.data);
-		
-			delta = getTimestamp() - start;
-			colorTime += delta;
-			lastFrameDecodeTime += delta;
+		start = getTimestamp();
 
+		frameSink.drawFrame(yCbCrBuffer);
 
-			start = getTimestamp();
-
-			ctx.putImageData(imageData,
-							 0, 0,
-							 videoInfo.picX, videoInfo.picY,
-							 videoInfo.picWidth, videoInfo.picHeight);
-
-			delta = getTimestamp() - start;
-			lastFrameDecodeTime += delta;
-			drawingTime += delta;
-		}
+		delta = getTimestamp() - start;
+		lastFrameDecodeTime += delta;
+		drawingTime += delta;
 
 		framesProcessed++;
 		framesPlayed++;
@@ -468,8 +443,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var fps = 60;
 
 	var videoInfo,
-		audioInfo,
-		imageData;
+		audioInfo;
 
 	function playVideo() {
 		paused = false;
@@ -525,17 +499,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			canvas.height = info.picHeight;
 			console.log('useWebGL is', useWebGL);
 			if (useWebGL) {
-				frameSink = new YCbCrFrameSink(canvas, videoInfo);
+				frameSink = new WebGLFrameSink(canvas, videoInfo);
 			} else {
-				ctx = canvas.getContext('2d');
-				imageData = ctx.createImageData(info.frameWidth, info.frameHeight);
-
-				// Prefill the alpha to opaque
-				var data = imageData.data,
-					pixelCount = info.frameWidth * info.frameHeight * 4;
-				for (var i = 0; i < pixelCount; i += 4) {
-					data[i + 3] = 255;
-				}
+				frameSink = new FrameSink(canvas, videoInfo);
 			}
 		};
 		codec.oninitaudio = function(info) {
