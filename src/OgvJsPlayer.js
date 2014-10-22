@@ -333,6 +333,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					}
 				}
 				if (codec.frameReady && readyForFrame) {
+					if (yCbCrBuffer) {
+						// Overwriting previous frame early!
+						// Finish up some bookkeeping.
+						doFrameComplete();
+					}
 					var start = getTimestamp();
 					var ok = codec.decodeFrame();
 					var delta = (getTimestamp() - start);
