@@ -75,7 +75,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	var placeboCodec, codec, audioFeeder;
-	var stream, byteLength = 0, nextProcessingTimer, paused = true;
+	var stream, byteLength = 0, nextProcessingTimer, animationTimer, paused = true;
 	var muted = false;
 
 	var framesPlayed = 0;
@@ -118,6 +118,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
+		if (animationTimer) {
+			cancelAnimationFrame(animationTimer);
+			animationTimer = null;
+		}
 	}
 	
 	function togglePauseVideo() {
@@ -144,14 +148,12 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			thumbnail = null;
 		}
 
-		yCbCrBuffer = codec.dequeueFrame();
-		frameEndTimestamp = yCbCrBuffer.timestamp;
-
 		var start, delta;
 
 		start = getTimestamp();
 
 		frameSink.drawFrame(yCbCrBuffer);
+		yCbCrBuffer = null;
 
 		delta = getTimestamp() - start;
 		lastFrameDecodeTime += delta;
@@ -337,7 +339,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					lastFrameDecodeTime += delta;
 					videoDecodingTime += delta;
 					if (ok) {
-						drawFrame();
+						//drawFrame();
+						yCbCrBuffer = codec.dequeueFrame();
+						frameEndTimestamp = yCbCrBuffer.timestamp;
 					} else {
 						// Bad packet or something.
 						console.log('Bad video packet or something');
@@ -509,14 +513,25 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 		};
 
+		function setupAnimationTimer() {
+			animationTimer = requestAnimationFrame(function() {
+				if (yCbCrBuffer) {
+					drawFrame();
+				}
+				setupAnimationTimer();
+			});
+		}
+
 		continueVideo = function() {
 			if (audioFeeder) {
 				audioFeeder.onstarved = function() {
-					pingProcessing();
+					doProcessing();
 				};
 			}
 			pingProcessing();
+			setupAnimationTimer();
 		}
+		setupAnimationTimer();
 
 		audioFeeder = new AudioFeeder( audioOptions );
 		if (muted) {
@@ -666,8 +681,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			self.load();
 		} else if (!paused) {
 			console.log('pausing');
-			clearTimeout(nextProcessingTimer);
-			nextProcessingTimer = null;
+			if (nextProcessingTimer) {
+				clearTimeout(nextProcessingTimer);
+				nextProcessingTimer = null;
+			}
+			if (animationTimer) {
+				cancelAnimationFrame(animationTimer);
+				animationTimer = null;
+			}
 			if (audioFeeder) {
 				audioFeeder.onstarved = null;
 			}
