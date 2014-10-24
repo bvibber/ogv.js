@@ -215,10 +215,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 	function continueBisect(direction) {
 		if (direction === Bisect.LEFT) {
-			console.log('continue to the left');
 			bisectEnd = bisectPosition;
 		} else if (direction === Bisect.RIGHT) {
-			console.log('continue to the right');
 			bisectStart = bisectPosition;
 		} else {
 			throw new Error('invalid direction to continueBisect');
@@ -316,13 +314,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (codec.hasVideo) {
 					// seek according to frames, look for the last keyframe
 					if (codec.frameReady) {
-						var fudgeFactor = (0.5 / videoInfo.fps);
-						console.log('frame found: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
+						//var fudgeFactor = (0.5 / videoInfo.fps);
+						var fudgeFactor = 0.25; // quarter-second resolution is close enough
 						if (codec.frameTimestamp < 0) {
 							// Invalid granule pos? um.
 							// move on past it
 							codec.discardFrame();
 						} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
+							console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 							codec.flush();
 							if (continueBisect(Bisect.LEFT)) {
 								// wait for new data to come in
@@ -330,7 +329,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 								console.log('gave up on bisect left');
 								state = State.PLAYING;
 							}
-						} else if (frameEndTimestamp < seekTargetTime - fudgeFactor) {
+						} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
+							console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 							codec.flush();
 							if (continueBisect(Bisect.RIGHT)) {
 								// wait for new data to come in
@@ -340,15 +340,16 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 							}
 						} else {
 							// We found it!
-							if (codec.keyframeTimestamp < frameEndTimestamp) {
+							console.log('frame FOUND: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
+							if (codec.keyframeTimestamp < codec.frameTimestamp) {
 								console.log('keyframe is ' + codec.keyframeTimestamp);
 								// @todo seek again, to the keyframe
 								state = State.PLAYING;
+								frameEndTimestamp = codec.frameTimestamp;
 							}
 						}
 					} else {
 						// Keep reading for more data.
-						console.log('need moar frames');
 					}
 				} else if (codec.hasAudio) {
 					throw new Error('seeking not yet supported on audio-only');

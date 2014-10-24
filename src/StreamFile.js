@@ -194,7 +194,6 @@ function StreamFile(options) {
 			internal.xhr.onreadystatechange = null;
 			internal.xhr.onprogress = null;
 			internal.xhr.abort();
-			console.log('ABORTING', internal.xhr);
 			internal.xhr = null;
 			internal.clearBuffers();
 		}
