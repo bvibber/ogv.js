@@ -596,3 +596,28 @@ void OgvJsFlushBuffers() {
 	videobufReady = 0;
 	audiobufReady = 0;
 }
+
+void OgvJsDiscardFrame()
+{
+	if (videobufReady) {
+		if (theoraHeaders) {
+			ogg_stream_packetout(&theoraStreamState, &videoPacket);
+		}
+		videobufReady = 0;
+	}
+}
+
+void OgvJsDiscardAudio()
+{
+	if (audiobufReady) {
+		if (vorbisHeaders) {
+			ogg_stream_packetout(&vorbisStreamState, &audioPacket);
+		}
+#ifdef OPUS
+		if (opusHeaders) {
+			ogg_stream_packetout(&opusStreamState, &audioPacket);
+		}
+#endif
+		audiobufReady = 0;
+	}
+}

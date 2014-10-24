@@ -124,7 +124,7 @@ function StreamFile(options) {
 		onXHRHeadersReceived: function(xhr) {
 			if (xhr.status >= 400) {
 				// errrorrrrrrr
-				callback(null, "HTTP " + xhr.status + ": " +xhr.statusText);
+				console.log("HTTP " + xhr.status + ": " +xhr.statusText);
 				onerror();
 				xhr.abort();
 			} else {
@@ -154,6 +154,7 @@ function StreamFile(options) {
 			bytesRead = 0;
 			bytesBuffered = 0;
 			doneBuffering = false;
+			waitingForInput = true;
 		},
 
 		// Read the next binary buffer out of the buffered data
@@ -196,7 +197,6 @@ function StreamFile(options) {
 			console.log('ABORTING', internal.xhr);
 			internal.xhr = null;
 			internal.clearBuffers();
-			waitingForInput = false;
 		}
 	};
 	
@@ -205,6 +205,7 @@ function StreamFile(options) {
 		self.abort();
 		seekPosition = bytePosition;
 		internal.openXHR();
+		self.readBytes();
 	};
 
 	// -- public properties

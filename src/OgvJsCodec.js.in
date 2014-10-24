@@ -32,6 +32,8 @@ OgvJs = (function(options) {
     var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'number', []);
     var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'number', []);
     var OgvJsFlushBuffers = Module.cwrap('OgvJsFlushBuffers', 'void', []);
+    var OgvJsDiscardFrame = Module.cwrap('OgvJsDiscardFrame', 'void', []);
+    var OgvJsDiscardAudio = Module.cwrap('OgvJsDiscardAudio', 'void', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -218,10 +220,24 @@ OgvJs = (function(options) {
 		} else {
 			throw new Error("called dequeueAudio when no audio ready");
 		}
-	}
+	};
+	
+	self.discardFrame = function() {
+		OgvJsDiscardFrame();
+		self.frameReady = false;
+		queuedFrame = false;
+	};
+	
+	self.discardAudio = function() {
+		OgvJsDiscardAudio();
+		self.audioReady = false;
+		audioBuffers.splice(0, audioBuffers.length);
+	};
 	
 	self.flush = function() {
 		OgvJsFlushBuffers();
+		self.discardFrame();
+		self.discardAudio();
 	};
 
 	/**

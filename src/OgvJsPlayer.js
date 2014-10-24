@@ -240,11 +240,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	function drainBuffers() {
 		// Drain the existing buffers before we start processing seek bisection
 		codec.flush();
-		/*
-		while (codec.process()) {
-			// no-op
-		}
-		*/
 	}
 	
 	/**
@@ -318,50 +313,44 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					stream.readBytes();
 					return;
 				}
-				if (hasVideo) {
+				if (codec.hasVideo) {
 					// seek according to frames, look for the last keyframe
 					if (codec.frameReady) {
 						var fudgeFactor = (0.5 / videoInfo.fps);
-						console.log(codec.frameTimestamp, seekTargetTime, fudgeFactor);
+						console.log('frame found: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 						if (codec.frameTimestamp < 0) {
 							// Invalid granule pos? um.
 							// move on past it
-							if (codec.decodeFrame()) {
-								codec.dequeueFrame();
-							}
-							return;
-						}
-						if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
+							codec.discardFrame();
+						} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
+							codec.flush();
 							if (continueBisect(Bisect.LEFT)) {
 								// wait for new data to come in
-								return;
 							} else {
 								console.log('gave up on bisect left');
 								state = State.PLAYING;
 							}
 						} else if (frameEndTimestamp < seekTargetTime - fudgeFactor) {
+							codec.flush();
 							if (continueBisect(Bisect.RIGHT)) {
 								// wait for new data to come in
-								return;
 							} else {
 								console.log('gave up on bisect right');
 								state = State.PLAYING;
 							}
-							return;
 						} else {
 							// We found it!
 							if (codec.keyframeTimestamp < frameEndTimestamp) {
 								console.log('keyframe is ' + codec.keyframeTimestamp);
 								// @todo seek again, to the keyframe
 								state = State.PLAYING;
-								drawFrame();
 							}
 						}
 					} else {
 						// Keep reading for more data.
-						return;
+						console.log('need moar frames');
 					}
-				} else if (hasAudio) {
+				} else if (codec.hasAudio) {
 					throw new Error('seeking not yet supported on audio-only');
 				}
 				return;
