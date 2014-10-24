@@ -716,6 +716,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			} else {
 				return 0;
 			}
+		},
+		set: function setCurrentTime(val) {
+			if (stream && byteLength && self.durationHint) {
+				// haaaaaack!
+				var estimatedBufferBytes = Math.floor((val / self.durationHint) * byteLength);
+				stream.seek(estimatedBufferBytes);
+			}
 		}
 	});
 	

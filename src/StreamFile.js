@@ -24,7 +24,6 @@ function StreamFile(options) {
 		seekPosition = 0,
 		//chunkSize = 1024 * 1024, // read/buffer up to a megabyte at a time
 		chunkSize = 0,
-		xhr = new XMLHttpRequest(),
 		waitingForInput = false,
 		doneBuffering = false,
 		bytesTotal = 0,
@@ -34,6 +33,10 @@ function StreamFile(options) {
 	
 	// -- internal private methods
 	var internal = {
+		/**
+		 * @var {XMLHttpRequest}
+		 */
+		xhr: null,
 
 		/**
 		 * Test if a given responseType value is valid on an XHR
@@ -65,8 +68,23 @@ function StreamFile(options) {
 			}
 		},
 
+		getMetadata: function() {
+			var xhr = new XMLHttpRequest();
+			xhr.open("HEAD", url);
+			xhr.onreadystatechange = function(event) {
+				if (xhr.readyState == 2) {
+					internal.onXHRHeadersReceived(xhr);
+				} else if (xhr.readyState == 4) {
+					xhr.onreadystatechange = null;
+					xhr = null;
+					internal.openXHR();
+				}
+			};
+			xhr.send();
+		},
+		
 		openXHR: function() {
-			xhr = new XMLHttpRequest();
+			var xhr = internal.xhr = new XMLHttpRequest();
 			xhr.open("GET", url);
 
 			internal.setXHROptions(xhr);
@@ -87,7 +105,7 @@ function StreamFile(options) {
 
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState == 2) {
-					internal.onXHRHeadersReceived(xhr);
+					//internal.onXHRHeadersReceived(xhr);
 				} else if (xhr.readyState == 3) {
 					internal.onXHRLoading(xhr);
 				} else if (xhr.readyState == 4) {
@@ -130,6 +148,11 @@ function StreamFile(options) {
 		popBuffer: function() {
 			throw new Error('abstract function');
 		},
+		
+		clearBuffers: function() {
+			bytesRead = 0;
+			bytesBuffered = 0;
+		},
 
 		// Read the next binary buffer out of the buffered data
 		readNextChunk: function() {
@@ -164,7 +187,21 @@ function StreamFile(options) {
 	};
 
 	self.abort = function() {
-		xhr.abort();
+		if (internal.xhr) {
+			console.log('ABORTING');
+			internal.xhr.onreadystatechange = null;
+			internal.xhr.onprogress = null;
+			internal.xhr.abort();
+			internal.xhr = null;
+			internal.clearBuffers();
+		}
+	};
+	
+	self.seek = function(bytePosition) {
+		console.log('seeking to: ' + bytePosition);
+		self.abort();
+		seekPosition = bytePosition;
+		internal.openXHR();
 	};
 
 	// -- public properties
@@ -176,15 +213,19 @@ function StreamFile(options) {
 	
 	Object.defineProperty(self, 'bytesBuffered', {
 		get: function() {
-			return bytesBuffered;
+			return seekPosition + bytesBuffered;
 		}
 	});
 
 	Object.defineProperty(self, 'bytesRead', {
 		get: function() {
-			return bytesRead;
+			return seekPosition + bytesRead;
 		}
 	});
+
+	var orig = {
+		clearBuffers: internal.clearBuffers
+	};
 
 	// -- Backend selection and method overrides
 	if (internal.tryMethod('moz-chunked-arraybuffer')) {
@@ -228,6 +269,11 @@ function StreamFile(options) {
 			}
 		};
 		
+		internal.clearBuffers = function() {
+			orig.clearBuffers();
+			buffers.splice(0, buffers.length);
+		};
+		
 		internal.onXHRLoading = function(xhr) {
 			// we have to get from the 'progress' event
 		};
@@ -251,7 +297,7 @@ function StreamFile(options) {
 			xhr.onreadystatechange = null;
 			onstart();
 		};
-		
+
 		self.readBytes = function() {
 			if (stream) {
 				streamReader = new MSStreamReader();
@@ -276,7 +322,7 @@ function StreamFile(options) {
 			}
 		};
 
-	} else if (xhr.overrideMimeType !== undefined) {
+	} else if ((new XMLHttpRequest()).overrideMimeType !== undefined) {
 
 		// Use old binary string method since we can read reponseText
 		// progressively and extract ArrayBuffers from that.
@@ -291,7 +337,7 @@ function StreamFile(options) {
 		
 		// Is there data available to read?
 		internal.dataToRead = function() {
-			return lastPosition < xhr.responseText.length;
+			return lastPosition < internal.xhr.responseText.length;
 		};
 
 		// Is there a better way to do this conversion? :(
@@ -307,15 +353,20 @@ function StreamFile(options) {
 
 		// Return a buffer with up to bufferSize from the next data
 		internal.popBuffer = function() {
-			var chunk = xhr.responseText.slice(lastPosition, lastPosition + bufferSize);
+			var chunk = internal.xhr.responseText.slice(lastPosition, lastPosition + bufferSize);
 			lastPosition += chunk.length;
 			bytesRead += chunk.length;
 			return stringToArrayBuffer(chunk);
 		}
 		
+		internal.clearBuffers = function() {
+			orig.clearBuffers();
+			lastPosition = 0;
+		};
+		
 		internal.onXHRLoading = function(xhr) {
 			// xhr.responseText is a binary string of entire file so far
-			bytesBuffered = xhr.responseText.length;
+			bytesBuffered = internal.xhr.responseText.length;
 			onbuffer();
 			internal.readNextChunk();
 		};
@@ -324,5 +375,5 @@ function StreamFile(options) {
 		throw new Error("No streaming HTTP input method found.");
 	}
 	
-	internal.openXHR();
+	internal.getMetadata();
 }
