@@ -138,6 +138,7 @@ function StreamFile(options) {
 		},
 		
 		onXHRDone: function(xhr) {
+			console.log("DONE BUFFERING", xhr);
 			doneBuffering = true;
 		},
 		
@@ -152,6 +153,7 @@ function StreamFile(options) {
 		clearBuffers: function() {
 			bytesRead = 0;
 			bytesBuffered = 0;
+			doneBuffering = false;
 		},
 
 		// Read the next binary buffer out of the buffered data
@@ -188,12 +190,13 @@ function StreamFile(options) {
 
 	self.abort = function() {
 		if (internal.xhr) {
-			console.log('ABORTING');
 			internal.xhr.onreadystatechange = null;
 			internal.xhr.onprogress = null;
 			internal.xhr.abort();
+			console.log('ABORTING', internal.xhr);
 			internal.xhr = null;
 			internal.clearBuffers();
+			waitingForInput = false;
 		}
 	};
 	

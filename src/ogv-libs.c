@@ -41,6 +41,8 @@ int               frames = 0;
 int               videobufReady = 0;
 ogg_int64_t       videobufGranulepos = -1;
 double            videobufTime = 0;
+ogg_int64_t       keyframeGranulepos = -1;
+double            keyframeTime = 0;
 
 int               audiobufReady = 0;
 ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
@@ -94,13 +96,14 @@ extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            double fps,
                            int picWidth, int picHeight,
                            int picX, int picY);
-extern void OgvJsOutputFrameReady();
+extern void OgvJsOutputFrameReady(double timestamp, double keyframeTimestamp);
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
                              int width, int height,
                              int hdec, int vdec,
-                             double timestamp);
+                             double timestamp,
+                             double keyframeTimestamp);
 
 extern void OgvJsInitAudio(int channels, int rate);
 extern void OgvJsOutputAudioReady();
@@ -119,7 +122,7 @@ static void video_write(void) {
             ycbcr[2].data, ycbcr[2].stride,
             theoraInfo.frame_width, theoraInfo.frame_height,
             hdec, vdec,
-            videobufTime);
+            videobufTime, keyframeTime);
 }
 
 /* dump the theora comment header */
@@ -365,7 +368,13 @@ static void processDecoding() {
         /* theora is one in, one out... */
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
-            OgvJsOutputFrameReady();
+
+            videobufGranulepos = videoPacket.granulepos;
+	        videobufTime = th_granule_time(theoraDecoderContext, videobufGranulepos);
+			keyframeGranulepos = (keyframeGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+			keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
+
+            OgvJsOutputFrameReady(videobufTime, keyframeTime);
         } else {
             needData = 1;
         }
@@ -399,8 +408,10 @@ int OgvJsDecodeFrame() {
         return 0;
     }
     videobufReady = 0;
-    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, &videobufGranulepos);
+    //videobufGranulepos = videoPacket.granulepos;
+    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, NULL);
     if (ret == 0) {
+    	/*
         double t = th_granule_time(theoraDecoderContext, videobufGranulepos);
         if (t > 0) {
             videobufTime = t;
@@ -408,12 +419,18 @@ int OgvJsDecodeFrame() {
             // For some reason sometimes we get a bunch of 0s out of th_granule_time
             videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         }
+        
+        // Also record the previous keyframe time, which is useful when seeking
+        keyframeGranulepos = (keyframeGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+        keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
+        */
+        
         frames++;
         video_write();
         return 1;
     } else if (ret == TH_DUPFRAME) {
         // Duplicated frame, advance time
-        videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+        //videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         frames++;
         video_write();
         return 1;
@@ -546,3 +563,36 @@ void OgvJsDestroy() {
     ogg_sync_clear(&oggSyncState);
 }
 
+void OgvJsFlushBuffers() {
+	// First, read out anything left in our input buffer
+	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
+	}
+	
+	// Then, dump all packets from the streams
+	if (theoraHeaders) {
+		while (ogg_stream_packetout(&theoraStreamState, &videoPacket)) {
+			// flush!
+		}
+	}
+
+	if (vorbisHeaders) {
+		while (ogg_stream_packetout(&vorbisStreamState, &audioPacket)) {
+			// flush!
+		}
+	}
+
+#ifdef OPUS
+	if (opusHeaders) {
+		while (ogg_stream_packetout(&opusStreamState, &audioPacket)) {
+			// flush!
+		}
+	}
+#endif
+
+	// And reset sync state for good measure.
+	ogg_sync_reset(&oggSyncState);
+	needData = 0;
+	videobufReady = 0;
+	audiobufReady = 0;
+}

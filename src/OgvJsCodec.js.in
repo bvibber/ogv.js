@@ -31,6 +31,7 @@ OgvJs = (function(options) {
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'number', []);
     var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'number', []);
     var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'number', []);
+    var OgvJsFlushBuffers = Module.cwrap('OgvJsFlushBuffers', 'void', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -60,8 +61,10 @@ OgvJs = (function(options) {
 		}
 	}
 	
-	function OgvJsOutputFrameReadyCallback() {
+	function OgvJsOutputFrameReadyCallback(frameTimestamp, keyframeTimestamp) {
 		self.frameReady = true;
+		self.frameTimestamp = frameTimestamp;
+		self.keyframeTimestamp = keyframeTimestamp;
 	}
 
 	var queuedFrame = null;
@@ -216,6 +219,10 @@ OgvJs = (function(options) {
 			throw new Error("called dequeueAudio when no audio ready");
 		}
 	}
+	
+	self.flush = function() {
+		OgvJsFlushBuffers();
+	};
 
 	/**
 	 * Is there processed data to handle?
