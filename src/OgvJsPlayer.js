@@ -204,16 +204,25 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var bisectStart = 0,
 		bisectEnd = 0,
 		bisectPosition = 0,
-		seekTargetTime = 0.0;
+		seekTargetTime = 0.0,
+		lastFrameSkipped = false;
+	function seek(toTime) {
+		state = State.SEEKING;
+		seekTargetTime = toTime;
+		drainBuffers();
+		startBisect();
+	}
 	function startBisect() {
 		if (stream.bytesTotal == 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
+		lastFrameSkipped = false;
 		bisectStart = 0;
 		bisectEnd = stream.bytesTotal - 1;
 		iterateBisect();
 	}
 	function continueBisect(direction) {
+		lastFrameSkipped = false;
 		if (direction === Bisect.LEFT) {
 			bisectEnd = bisectPosition;
 		} else if (direction === Bisect.RIGHT) {
@@ -222,6 +231,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			throw new Error('invalid direction to continueBisect');
 		}
 		return iterateBisect();
+	}
+	function adjustBisect() {
+		bisectStart = stream.bytesRead;
 	}
 	function iterateBisect() {
 		var newBisectPosition = Math.floor((bisectStart + bisectEnd) / 2);
@@ -320,23 +332,39 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 							// Invalid granule pos? um.
 							// move on past it
 							codec.discardFrame();
+							//lastFrameSkipped = true;
 						} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
 							console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-							codec.flush();
-							if (continueBisect(Bisect.LEFT)) {
-								// wait for new data to come in
-							} else {
-								console.log('gave up on bisect left');
+							if (lastFrameSkipped) {
+								console.log('gave up on bisect, we skipped over the target position');
 								state = State.PLAYING;
+							} else {
+								codec.flush();
+								if (continueBisect(Bisect.LEFT)) {
+									// wait for new data to come in
+									return;
+								} else {
+									console.log('gave up on bisect left');
+									state = State.PLAYING;
+								}
 							}
 						} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
 							console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-							codec.flush();
-							if (continueBisect(Bisect.RIGHT)) {
-								// wait for new data to come in
+							if (seekTargetTime - codec.frameTimestamp < 10.0) {
+								// If it's close, just keep looking for packets
+								console.log('skipping frame');
+								codec.discardFrame();
+								lastFrameSkipped = true;
+								//adjustBisect();
 							} else {
-								console.log('gave up on bisect right');
-								state = State.PLAYING;
+								codec.flush();
+								if (continueBisect(Bisect.RIGHT)) {
+									// wait for new data to come in
+									return;
+								} else {
+									console.log('gave up on bisect right');
+									state = State.PLAYING;
+								}
 							}
 						} else {
 							// We found it!
@@ -344,6 +372,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 							if (codec.keyframeTimestamp < codec.frameTimestamp) {
 								console.log('keyframe is ' + codec.keyframeTimestamp);
 								// @todo seek again, to the keyframe
+								//seek(codec.keyframeTimestamp);
+								//return
 							}
 							state = State.PLAYING;
 							frameEndTimestamp = codec.frameTimestamp;
@@ -836,13 +866,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		},
 		set: function setCurrentTime(val) {
 			if (stream && byteLength && self.durationHint) {
-				state = State.SEEKING;
-				// haaaaaack!
-				//var estimatedBufferBytes = Math.floor((val / self.durationHint) * byteLength);
-				//stream.seek(estimatedBufferBytes);
-				seekTargetTime = val;
-				drainBuffers();
-				startBisect();
+				seek(val);
 			}
 		}
 	});

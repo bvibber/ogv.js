@@ -392,6 +392,9 @@ function StreamFile(options) {
 			} else {
 				lastPosition = bufferedPos;
 				bytesRead = lastPosition;
+				setTimeout(function() {
+					onbuffer()
+				}, 0);
 				return true;
 			}
 		};
