@@ -369,7 +369,7 @@ static void processDecoding() {
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
 
-			if (videoPacket.granulepos == 0xffffffffffffffffL && videobufGranulepos != 0xffffffffffffffffL) {
+			if (videoPacket.granulepos == 0xffffffffffffffffLL && videobufGranulepos != 0xffffffffffffffffLL) {
 				// Packets in the middle of the stream don't get interpolated granule positions for us.
 				// This is kind of annoying.
 	            videobufGranulepos = videobufGranulepos + 1;
@@ -602,7 +602,7 @@ void OgvJsFlushBuffers() {
 	needData = 0;
 	videobufReady = 0;
 	audiobufReady = 0;
-	videobufGranulepos = 0xffffffffffffffffL;
+	videobufGranulepos = 0xffffffffffffffffLL;
 	videobufTime = 0.0;
 }
 
