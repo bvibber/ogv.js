@@ -369,10 +369,17 @@ static void processDecoding() {
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
 
-            videobufGranulepos = videoPacket.granulepos;
+			if (videoPacket.granulepos == 0xffffffffffffffffL && videobufGranulepos != 0xffffffffffffffffL) {
+				// Packets in the middle of the stream don't get interpolated granule positions for us.
+				// This is kind of annoying.
+	            videobufGranulepos = videobufGranulepos + 1;
+			} else {
+	            videobufGranulepos = videoPacket.granulepos;
+	        }
 	        videobufTime = th_granule_time(theoraDecoderContext, videobufGranulepos);
 			keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
 			keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
+			//printf("granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videobufGranulepos, (double)videobufTime, (int)theoraInfo.keyframe_granule_shift);
 
             OgvJsOutputFrameReady(videobufTime, keyframeTime);
         } else {
@@ -595,6 +602,8 @@ void OgvJsFlushBuffers() {
 	needData = 0;
 	videobufReady = 0;
 	audiobufReady = 0;
+	videobufGranulepos = 0xffffffffffffffffL;
+	videobufTime = 0.0;
 }
 
 void OgvJsDiscardFrame()

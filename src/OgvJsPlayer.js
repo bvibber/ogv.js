@@ -331,6 +331,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						if (codec.frameTimestamp < 0) {
 							// Invalid granule pos? um.
 							// move on past it
+							console.log('invalid granule pos?');
 							codec.discardFrame();
 							//lastFrameSkipped = true;
 						} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
@@ -373,7 +374,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 								console.log('keyframe is ' + codec.keyframeTimestamp);
 								// @todo seek again, to the keyframe
 								//seek(codec.keyframeTimestamp);
-								//return
+								//return;
 							}
 							state = State.PLAYING;
 							frameEndTimestamp = codec.frameTimestamp;
