@@ -229,6 +229,67 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 		}).start();
 	}
+	
+	/**
+	 * @return {boolean} true to continue processing, false to wait for input data
+	 */
+	function doProcessSeekingVideo() {
+		if (codec.frameReady) {
+			var fudgeFactor = (1 / videoInfo.fps);
+			//var fudgeFactor = 0.25; // quarter-second resolution is close enough
+			if (codec.frameTimestamp < 0) {
+				// Invalid granule pos? um.
+				// move on past it
+				console.log('invalid granule pos?');
+				codec.discardFrame();
+				//lastFrameSkipped = true;
+			} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
+				console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
+				if (lastFrameSkipped) {
+					console.log('gave up on bisect, we skipped over the target position');
+					state = State.PLAYING;
+				} else {
+					if (seekBisector.left()) {
+						// wait for new data to come in
+						return false;
+					} else {
+						console.log('gave up on bisect left');
+						state = State.PLAYING;
+					}
+				}
+			} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
+				console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
+				if (seekTargetTime - codec.frameTimestamp < 1.0) {
+					// If it's close, just keep looking for packets
+					console.log('skipping frame');
+					codec.discardFrame();
+					lastFrameSkipped = true;
+				} else {
+					if (seekBisector.right()) {
+						// wait for new data to come in
+						return false;
+					} else {
+						console.log('gave up on bisect right');
+						state = State.PLAYING;
+					}
+				}
+			} else {
+				// We found it!
+				console.log('frame FOUND: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
+				if (codec.keyframeTimestamp < codec.frameTimestamp) {
+					console.log('keyframe is ' + codec.keyframeTimestamp);
+					// @todo seek again, to the keyframe
+					//seek(codec.keyframeTimestamp);
+					//return;
+				}
+				state = State.PLAYING;
+				frameEndTimestamp = codec.frameTimestamp;
+			}
+		} else {
+			// Keep reading for more data.
+		}
+		return true;
+	}
 
 	/**
 	 * In IE, pushing data to the Flash shim is expensive.
@@ -303,59 +364,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				}
 				if (codec.hasVideo) {
 					// seek according to frames, look for the last keyframe
-					if (codec.frameReady) {
-						var fudgeFactor = (1 / videoInfo.fps);
-						//var fudgeFactor = 0.25; // quarter-second resolution is close enough
-						if (codec.frameTimestamp < 0) {
-							// Invalid granule pos? um.
-							// move on past it
-							console.log('invalid granule pos?');
-							codec.discardFrame();
-							//lastFrameSkipped = true;
-						} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
-							console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-							if (lastFrameSkipped) {
-								console.log('gave up on bisect, we skipped over the target position');
-								state = State.PLAYING;
-							} else {
-								if (seekBisector.left()) {
-									// wait for new data to come in
-									return;
-								} else {
-									console.log('gave up on bisect left');
-									state = State.PLAYING;
-								}
-							}
-						} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
-							console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-							if (seekTargetTime - codec.frameTimestamp < 1.0) {
-								// If it's close, just keep looking for packets
-								console.log('skipping frame');
-								codec.discardFrame();
-								lastFrameSkipped = true;
-							} else {
-								if (seekBisector.right()) {
-									// wait for new data to come in
-									return;
-								} else {
-									console.log('gave up on bisect right');
-									state = State.PLAYING;
-								}
-							}
-						} else {
-							// We found it!
-							console.log('frame FOUND: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-							if (codec.keyframeTimestamp < codec.frameTimestamp) {
-								console.log('keyframe is ' + codec.keyframeTimestamp);
-								// @todo seek again, to the keyframe
-								//seek(codec.keyframeTimestamp);
-								//return;
-							}
-							state = State.PLAYING;
-							frameEndTimestamp = codec.frameTimestamp;
-						}
-					} else {
-						// Keep reading for more data.
+					if (!doProcessSeekingVideo()) {
+						return;
 					}
 				} else if (codec.hasAudio) {
 					throw new Error('seeking not yet supported on audio-only');
