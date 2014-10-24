@@ -371,7 +371,7 @@ static void processDecoding() {
 
             videobufGranulepos = videoPacket.granulepos;
 	        videobufTime = th_granule_time(theoraDecoderContext, videobufGranulepos);
-			keyframeGranulepos = (keyframeGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+			keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
 			keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
 
             OgvJsOutputFrameReady(videobufTime, keyframeTime);
