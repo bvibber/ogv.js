@@ -168,6 +168,11 @@ function StreamFile(options) {
 				}
 			}
 		},
+		
+		// See if we can seek within already-buffered data
+		quickSeek: function(pos) {
+			return false;
+		}
 
 	};
 
@@ -201,10 +206,13 @@ function StreamFile(options) {
 	
 	self.seek = function(bytePosition) {
 		console.log('seeking to: ' + bytePosition);
-		self.abort();
-		seekPosition = bytePosition;
-		internal.openXHR();
-		self.readBytes();
+		if (internal.quickSeek(bytePosition)) {
+			console.log('quick seek successful');
+		} else {
+			self.abort();
+			seekPosition = bytePosition;
+			internal.openXHR();
+		}
 	};
 
 	// -- public properties
@@ -356,6 +364,7 @@ function StreamFile(options) {
 
 		// Return a buffer with up to bufferSize from the next data
 		internal.popBuffer = function() {
+			console.log('popBuffer', lastPosition, lastPosition + bufferSize, bufferSize);
 			var chunk = internal.xhr.responseText.slice(lastPosition, lastPosition + bufferSize);
 			lastPosition += chunk.length;
 			bytesRead += chunk.length;
@@ -374,6 +383,18 @@ function StreamFile(options) {
 			internal.readNextChunk();
 		};
 		
+		internal.quickSeek = function(pos) {
+			var bufferedPos = pos - seekPosition;
+			if (bufferedPos < 0) {
+				return false;
+			} else if (bufferedPos >= internal.xhr.responseText.length) {
+				return false;
+			} else {
+				lastPosition = bufferedPos;
+				bytesRead = lastPosition;
+				return true;
+			}
+		};
 	} else {
 		throw new Error("No streaming HTTP input method found.");
 	}

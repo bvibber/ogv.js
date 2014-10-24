@@ -314,8 +314,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (codec.hasVideo) {
 					// seek according to frames, look for the last keyframe
 					if (codec.frameReady) {
-						//var fudgeFactor = (0.5 / videoInfo.fps);
-						var fudgeFactor = 0.25; // quarter-second resolution is close enough
+						var fudgeFactor = (1 / videoInfo.fps);
+						//var fudgeFactor = 0.25; // quarter-second resolution is close enough
 						if (codec.frameTimestamp < 0) {
 							// Invalid granule pos? um.
 							// move on past it
@@ -344,9 +344,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 							if (codec.keyframeTimestamp < codec.frameTimestamp) {
 								console.log('keyframe is ' + codec.keyframeTimestamp);
 								// @todo seek again, to the keyframe
-								state = State.PLAYING;
-								frameEndTimestamp = codec.frameTimestamp;
 							}
+							state = State.PLAYING;
+							frameEndTimestamp = codec.frameTimestamp;
 						}
 					} else {
 						// Keep reading for more data.
@@ -354,7 +354,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				} else if (codec.hasAudio) {
 					throw new Error('seeking not yet supported on audio-only');
 				}
-				return;
+				// Back to the loop to process more data
+				continue;
 			}
 
 			// Process until we run out of data or
@@ -396,7 +397,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					}
 					console.log('End of stream reached in ' + finalDelay + ' ms.');
 					setTimeout(function() {
-						//stopVideo();
+						stopVideo();
 						ended = true;
 						if (self.onended) {
 							self.onended();
@@ -685,12 +686,17 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				pingProcessing();
 			},
 			ondone: function() {
-				console.log("reading^H^H^^H^H buffering? done.");
-				//throw new Error('wtf is this');
-				//stream = null;
+				if (state == State.SEEKING) {
+					console.log("bumped into end during seeking?");
+					pingProcessing();
+				} else {
+					console.log("reading^H^H^^H^H buffering? done.");
+					//throw new Error('wtf is this');
+					stream = null;
 				
-				// Let the read/decode/draw loop know we're out!
-				pingProcessing();
+					// Let the read/decode/draw loop know we're out!
+					pingProcessing();
+				}
 			},
 			onerror: function(err) {
 				console.log("reading error: " + err);
