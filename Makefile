@@ -55,7 +55,7 @@ build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
-build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/OgvJsPlayer.js build/OgvJsCodec.js build/ogvjs-version.js
+build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OgvJsPlayer.js build/OgvJsCodec.js build/ogvjs-version.js
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
 
 build/ogvjs-version.js : build/ogvjs.js

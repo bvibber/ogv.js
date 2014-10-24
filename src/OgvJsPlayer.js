@@ -196,62 +196,40 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
 	}
-	
-	var Bisect = {
-		LEFT: 'LEFT',
-		RIGHT: 'RIGHT'
-	};
-	var bisectStart = 0,
-		bisectEnd = 0,
-		bisectPosition = 0,
-		seekTargetTime = 0.0,
-		lastFrameSkipped = false;
+
+
+	// -- seek functions
+	var seekTargetTime,
+		lastSeekPosition,
+		lastFrameSkipped,
+		seekBisector;
 	function seek(toTime) {
-		state = State.SEEKING;
-		seekTargetTime = toTime;
-		drainBuffers();
-		startBisect();
-	}
-	function startBisect() {
 		if (stream.bytesTotal == 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
+		state = State.SEEKING;
+		seekTargetTime = toTime;
 		lastFrameSkipped = false;
-		bisectStart = 0;
-		bisectEnd = stream.bytesTotal - 1;
-		iterateBisect();
-	}
-	function continueBisect(direction) {
-		lastFrameSkipped = false;
-		if (direction === Bisect.LEFT) {
-			bisectEnd = bisectPosition;
-		} else if (direction === Bisect.RIGHT) {
-			bisectStart = bisectPosition;
-		} else {
-			throw new Error('invalid direction to continueBisect');
-		}
-		return iterateBisect();
-	}
-	function adjustBisect() {
-		bisectStart = stream.bytesRead;
-	}
-	function iterateBisect() {
-		var newBisectPosition = Math.floor((bisectStart + bisectEnd) / 2);
-		if (newBisectPosition == bisectPosition) {
-			// this is as good as we're gonna get
-			return false;
-		} else {
-			bisectPosition = newBisectPosition;
-			console.log('iterateBisect', bisectStart, bisectPosition, bisectEnd);
-			stream.seek(bisectPosition);
-			return true;
-		}
-	}
-	function drainBuffers() {
-		// Drain the existing buffers before we start processing seek bisection
+		lastSeekPosition = -1;
 		codec.flush();
+
+		seekBisector = new Bisector({
+			start: 0,
+			end: stream.bytesTotal - 1,
+			process: function(start, end, position) {
+				if (position == lastSeekPosition) {
+					return false;
+				} else {
+					lastSeekPosition = position;
+					lastFrameSkipped = false;
+					codec.flush();
+					stream.seek(position);
+					return true;
+				}
+			}
+		}).start();
 	}
-	
+
 	/**
 	 * In IE, pushing data to the Flash shim is expensive.
 	 * Combine multiple small Vorbis packet outputs into
@@ -340,8 +318,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 								console.log('gave up on bisect, we skipped over the target position');
 								state = State.PLAYING;
 							} else {
-								codec.flush();
-								if (continueBisect(Bisect.LEFT)) {
+								if (seekBisector.left()) {
 									// wait for new data to come in
 									return;
 								} else {
@@ -351,15 +328,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 							}
 						} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
 							console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-							if (seekTargetTime - codec.frameTimestamp < 10.0) {
+							if (seekTargetTime - codec.frameTimestamp < 1.0) {
 								// If it's close, just keep looking for packets
 								console.log('skipping frame');
 								codec.discardFrame();
 								lastFrameSkipped = true;
-								//adjustBisect();
 							} else {
-								codec.flush();
-								if (continueBisect(Bisect.RIGHT)) {
+								if (seekBisector.right()) {
 									// wait for new data to come in
 									return;
 								} else {
