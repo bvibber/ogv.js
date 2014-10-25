@@ -202,8 +202,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var seekTargetTime = 0.0,
 		lastSeekPosition,
 		lastFrameSkipped,
-		seekBisector;
-	function seek(toTime) {
+		seekBisector,
+		seekMode;
+	function seek(toTime, shouldSeekToKeyframe) {
+		seekMode = shouldSeekToKeyframe;
 		if (stream.bytesTotal == 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
@@ -234,6 +236,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 		}).start();
 	}
+	seek.SEEK_TO_KEYFRAME = 'toKeyframe';
+	seek.SEEK_ONCE = 'once';
 	
 	function continueSeekedPlayback() {
 		state = State.PLAYING;
@@ -305,9 +309,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				console.log('frame FOUND: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 				if (codec.keyframeTimestamp < codec.frameTimestamp) {
 					console.log('keyframe is ' + codec.keyframeTimestamp);
-					// @todo seek again, to the keyframe
-					//seek(codec.keyframeTimestamp);
-					//return;
+					if (seekMode == seek.SEEK_TO_KEYFRAME) {
+						seek(codec.keyframeTimestamp, seek.SEEK_ONCE);
+						return;
+					}
 				}
 				continueSeekedPlayback();
 				return false;
@@ -883,7 +888,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		},
 		set: function setCurrentTime(val) {
 			if (stream && byteLength && self.durationHint) {
-				seek(val);
+				seek(val, seek.SEEK_TO_KEYFRAME);
 			}
 		}
 	});
