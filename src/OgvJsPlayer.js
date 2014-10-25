@@ -84,8 +84,22 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	var placeboCodec, codec, audioFeeder;
-	var stream, byteLength = 0, nextProcessingTimer, paused = true;
 	var muted = false;
+	function initAudioFeeder() {
+		audioFeeder = new AudioFeeder( audioOptions );
+		if (muted) {
+			audioFeeder.mute();
+		}
+		audioFeeder.onstarved = function() {
+			// If we're in a background tab, timers may be throttled.
+			// When audio buffers run out, go decode some more stuff.
+			pingProcessing();
+		};
+		audioFeeder.init(audioInfo.channels, audioInfo.rate);
+	}
+
+
+	var stream, byteLength = 0, nextProcessingTimer, paused = true;
 
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
@@ -245,9 +259,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		state = State.PLAYING;
 		frameEndTimestamp = codec.frameTimestamp;
 		if (codec.hasAudio) {
-			audioFeeder = new AudioFeeder(audioOptions);
-			audioFeeder.init(audioInfo.channels, audioInfo.rate);
 			seekTargetTime = codec.audioTimestamp;
+			initAudioFeeder();
 		} else {
 			seekTargetTime = codec.frameTimestamp;
 		}
@@ -661,7 +674,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		};
 		codec.oninitaudio = function(info) {
 			audioInfo = info;
-			audioFeeder.init(audioInfo.channels, audioInfo.rate);
+			initAudioFeeder();
 		};
 		codec.onloadedmetadata = function() {
 			state = State.PLAYING;
@@ -679,25 +692,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			pingProcessing();
 		}
 
-		audioFeeder = new AudioFeeder( audioOptions );
-		if (muted) {
-			audioFeeder.mute();
-		}
-		audioFeeder.onstarved = function() {
-			// If we're in a background tab, timers may be throttled.
-			// When audio buffers run out, go decode some more stuff.
-			pingProcessing();
-		};
-		audioFeeder.waitUntilReady(function(feeder) {
-			// Start reading!
-			if (started) {
-				stream.readBytes();
-			} else {
-				onstart = function() {
-					stream.readBytes();
-				};
-			}
-		});
+		stream.readBytes();
 	}
 	
 	var started = false;
