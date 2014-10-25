@@ -247,6 +247,7 @@ static int processBegin() {
 
 static int processHeaders() {
 	int needData = 0;
+	// queue ALL the pages!
 	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 		queue_page(&oggPage);
 	}
@@ -381,10 +382,11 @@ static int processHeaders() {
 }
 
 static int processDecoding() {
-	int needData = 0;
+	// queue ALL the pages!
 	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 		queue_page(&oggPage);
 	}
+	int needData = 0;
     if (theoraHeaders && !videobufReady) {
         /* theora is one in, one out... */
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
@@ -548,16 +550,19 @@ static int buffersReceived = 0;
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {
     if (bufsize > 0) {
-		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
-		memcpy(dest, buffer, bufsize);
-		if (ogg_sync_wrote(&oggSyncState, bufsize) < 0) {
-			printf("Horrible error in ogg_sync_wrote\n");
-		}
 		if (appState == STATE_BEGIN) {
 			// we'll need to read pages one at a time to find bitstreams
 			buffersReceived = 1;
 		} else {
 			// queue ALL the pages!
+			while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+				queue_page(&oggPage);
+			}
+		}
+		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
+		memcpy(dest, buffer, bufsize);
+		if (ogg_sync_wrote(&oggSyncState, bufsize) < 0) {
+			printf("Horrible error in ogg_sync_wrote\n");
 		}
     }
 }

@@ -173,13 +173,11 @@ function StreamFile(options) {
 		
 		popBuffer: function() {
 			var buffer = buffers.shift();
-			console.log(buffer.byteLength, bufferSize);
+			console.log('input packet: ' + buffer.byteLength);
 			if (!bufferSize || bufferSize >= buffer.byteLength) {
-				console.log('returning whole buffer');
 				bytesRead += buffer.byteLength;
 				return buffer;
 			} else {
-				console.log('returning split buffer');
 				// Split the buffer and requeue the rest
 				var thisBuffer = buffer.slice(0, bufferSize),
 					nextBuffer = buffer.slice(bufferSize);
