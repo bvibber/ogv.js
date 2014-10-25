@@ -852,6 +852,7 @@
 		status.className = 'status-invisible';
 		status.textContent = '';
 
+		OgvJsPlayer.initSharedAudioContext();
 		player.load();
 		player.play();
 	}

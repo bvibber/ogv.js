@@ -437,7 +437,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				// we just fell over from headers into content; reinit
 				lastFrameTimestamp = getTimestamp();
 				targetFrameTime = lastFrameTimestamp + 1000.0 / fps
-				pingProcessing();
+				pingProcessing(0);
 				return;
 			}
 
@@ -775,6 +775,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	 * HTMLMediaElement play method
 	 */
 	self.play = function() {
+		if (!audioOptions.audioContext) {
+			OgvJsPlayer.initSharedAudioContext();
+		}
+		
 		if (!stream) {
 			self.load();
 		}
@@ -1092,3 +1096,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	
 	return self;
 }
+
+OgvJsPlayer.initSharedAudioContext = function() {
+	AudioFeeder.initSharedAudioContext();
+};
