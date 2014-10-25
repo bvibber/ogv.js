@@ -635,7 +635,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		//
 		// Non-deterministic debugging ROCKS!
 		//
-		placeboCodec = new OgvJs(options);
+		//placeboCodec = new OgvJs(options);
 
 		codec = new OgvJs(options);
 		codec.oninitvideo = function(info) {

@@ -173,7 +173,7 @@ function StreamFile(options) {
 		
 		popBuffer: function() {
 			var buffer = buffers.shift();
-			console.log('input packet: ' + buffer.byteLength);
+			//console.log('input packet: ' + buffer.byteLength);
 			if (!bufferSize || bufferSize >= buffer.byteLength) {
 				bytesRead += buffer.byteLength;
 				return buffer;

@@ -247,9 +247,8 @@ static int processBegin() {
 
 static int processHeaders() {
 	int needData = 0;
-	// queue ALL the pages!
-	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-		queue_page(&oggPage);
+	if (ogg_sync_pageout(&oggSyncState, &oggPage) < 0) {
+		return 0;
 	}
 
 #ifdef OPUS
@@ -263,6 +262,8 @@ static int processHeaders() {
         /* look for further theora headers */
         if (theoraHeaders && theoraProcessingHeaders) {
             printf("checking theora headers...\n");
+            ogg_stream_pagein(&theoraStreamState, &oggPage);
+
             ret = ogg_stream_packetpeek(&theoraStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading theora headers: %d.\n", ret);
@@ -273,11 +274,11 @@ static int processHeaders() {
                 theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket);
                 if (theoraProcessingHeaders == 0) {
                     // We've completed the theora header
-                    printf("Completed theora header.\n");
+                    printf("Completed theora header. Saving video packet for later...\n");
                     theoraHeaders = 3;
                 } else {
                     printf("Still parsing theora headers...\n");
-                    ogg_stream_packetout(&theoraStreamState, NULL);
+					ogg_stream_packetout(&theoraStreamState, NULL);
                 }
             }
             if (ret == 0) {
@@ -288,6 +289,8 @@ static int processHeaders() {
 
         if (vorbisHeaders && (vorbisHeaders < 3)) {
             printf("checking vorbis headers...\n");
+            ogg_stream_pagein(&vorbisStreamState, &oggPage);
+
             ret = ogg_stream_packetpeek(&vorbisStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading vorbis headers: %d.\n", ret);
@@ -312,6 +315,8 @@ static int processHeaders() {
         }
 #ifdef OPUS
         if (opusHeaders && (opusHeaders < 2)) {
+            ogg_stream_pagein(&opusStreamState, &oggPage);
+
             printf("checking for opus headers...\n");
             ret = ogg_stream_packetpeek(&opusStreamState, &oggPacket);
             if (ret < 0) {
@@ -550,10 +555,8 @@ static int buffersReceived = 0;
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {
     if (bufsize > 0) {
-		if (appState == STATE_BEGIN) {
-			// we'll need to read pages one at a time to find bitstreams
-			buffersReceived = 1;
-		} else {
+		buffersReceived = 1;
+		if (appState == STATE_DECODING) {
 			// queue ALL the pages!
 			while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 				queue_page(&oggPage);
