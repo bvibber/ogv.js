@@ -15,6 +15,7 @@
 function StreamFile(options) {
 	var self = this,
 		url = options.url,
+		started = false,
 		onstart = options.onstart || function(){},
 		onbuffer = options.onbuffer || function(){},
 		onread = options.onread || function(){},
@@ -22,8 +23,8 @@ function StreamFile(options) {
 		onerror = options.onerror || function(){},
 		bufferSize = options.bufferSize || 4096,
 		seekPosition = 0,
-		//chunkSize = 1024 * 1024, // read/buffer up to a megabyte at a time
-		chunkSize = 0,
+		chunkSize = 1024 * 1024, // read/buffer up to a megabyte at a time
+		//chunkSize = 0,
 		waitingForInput = false,
 		doneBuffering = false,
 		bytesTotal = 0,
@@ -90,7 +91,7 @@ function StreamFile(options) {
 			internal.setXHROptions(xhr);
 
 			var range = null;
-			if (seekPosition) {
+			if (seekPosition || chunkSize) {
 				range = 'bytes=' + seekPosition + '-';
 			}
 			if (chunkSize) {
@@ -106,6 +107,7 @@ function StreamFile(options) {
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState == 2) {
 					//internal.onXHRHeadersReceived(xhr);
+					// @todo check that partial content was supported if relevant
 				} else if (xhr.readyState == 3) {
 					internal.onXHRLoading(xhr);
 				} else if (xhr.readyState == 4) {
@@ -129,6 +131,7 @@ function StreamFile(options) {
 				xhr.abort();
 			} else {
 				internal.setBytesTotal(xhr);
+				started = true;
 				onstart();
 			}
 		},
@@ -138,7 +141,7 @@ function StreamFile(options) {
 		},
 		
 		onXHRDone: function(xhr) {
-			console.log("DONE BUFFERING", xhr);
+			console.log("DONE BUFFERING");
 			doneBuffering = true;
 		},
 		
@@ -163,9 +166,22 @@ function StreamFile(options) {
 				waitingForInput = false;
 				onread(internal.popBuffer());
 				if (doneBuffering && !internal.dataToRead()) {
-					// We're out of data!
-					ondone();
+					internal.onReadDone();
 				}
+			}
+		},
+		
+		onReadDone: function() {
+			if (self.bytesTotal && self.bytesRead < self.bytesTotal) {
+				// Move on to the next chunk
+				self.abort();
+				seekPosition = self.bytesRead;
+				internal.openXHR();
+			} else {
+				// We're out of data!
+				setTimeout(function() {
+					ondone();
+				}, 0);
 			}
 		},
 		
@@ -185,9 +201,7 @@ function StreamFile(options) {
 			}, 0);
 		} else if (doneBuffering) {
 			// We're out of data!
-			setTimeout(function() {
-				ondone();
-			}, 0);
+			internal.onReadDone();
 		} else {
 			// Nothing queued...
 			waitingForInput = true;
