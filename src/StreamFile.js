@@ -21,10 +21,10 @@ function StreamFile(options) {
 		onread = options.onread || function(){},
 		ondone = options.ondone || function(){},
 		onerror = options.onerror || function(){},
-		bufferSize = options.bufferSize || 4096,
-		seekPosition = 0,
-		chunkSize = 1024 * 1024, // read/buffer up to a megabyte at a time
-		//chunkSize = 0,
+		bufferSize = options.bufferSize || 8192,
+		minBufferSize = options.minBufferSize || 65536,
+		seekPosition = options.seekPosition || 0,
+		chunkSize = options.chunkSize || 1024 * 1024, // read/buffer up to a megabyte at a time
 		waitingForInput = false,
 		doneBuffering = false,
 		bytesTotal = 0,
@@ -168,23 +168,43 @@ function StreamFile(options) {
 		},
 		
 		dataToRead: function() {
-			return (buffers.length > 0);
+			return internal.bytesBuffered() >= minBufferSize;
 		},
 		
 		popBuffer: function() {
-			var buffer = buffers.shift();
-			//console.log('input packet: ' + buffer.byteLength);
-			if (!bufferSize || bufferSize >= buffer.byteLength) {
-				bytesRead += buffer.byteLength;
-				return buffer;
-			} else {
-				// Split the buffer and requeue the rest
-				var thisBuffer = buffer.slice(0, bufferSize),
-					nextBuffer = buffer.slice(bufferSize);
-				buffers.unshift(nextBuffer);
-				bytesRead += thisBuffer.byteLength;
-				return thisBuffer;
+			var bufferOut = new ArrayBuffer(bufferSize),
+				bytesOut = new Uint8Array(bufferOut),
+				byteLength = 0;
+			
+			function stuff(bufferIn) {
+				var bytesIn = new Uint8Array(bufferIn);
+				bytesOut.set(bytesIn, byteLength);
+				byteLength += bufferIn.byteLength;
 			}
+			
+			while (byteLength < minBufferSize) {
+				var needBytes = minBufferSize - byteLength,
+					nextBuffer = buffers.shift();
+				if (!nextBuffer) {
+					break;
+				}
+
+				if (needBytes >= nextBuffer.byteLength) {
+					// if it fits, it sits
+					stuff(nextBuffer);
+				} else {
+					// Split the buffer and requeue the rest
+					var croppedBuffer = nextBuffer.slice(0, needBytes),
+						remainderBuffer = nextBuffer.slice(needBytes);
+					buffers.unshift(remainderBuffer);
+					stuff(croppedBuffer);
+					break;
+				}
+			}
+			
+			console.log('got', bufferOut, byteLength);
+			bytesRead += byteLength;
+			return bufferOut.slice(0, byteLength);
 		},
 		
 		clearReadState: function() {
