@@ -59,7 +59,14 @@ function AudioFeeder(options) {
 			// in the hopes this gets around iOS's weird activation rules.
 			context = options.audioContext;
 		} else {
-			context = new AudioContext;
+			if (typeof AudioFeeder.sharedAudioContext === 'undefined') {
+				// We're only allowed 4 contexts on many browsers
+				// and there's no way to discard them (!)...
+				// If we weren't given a pre-managed one, save
+				// the one we create for later.
+				AudioFeeder.sharedAudioContext = new AudioContext();
+			}
+			context = AudioFeeder.sharedAudioContext;
 		}
 
 		if (context.createScriptProcessor) {

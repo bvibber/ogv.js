@@ -9,8 +9,7 @@
 		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
-	var player,
-		audioContext = new (AudioContext || webkitAudioContext)();
+	var player;
 	var durationHint;
 	var averageDemuxingTime = 0, // ms
 		averageVideoDecodingTime = 0, // ms
@@ -681,22 +680,19 @@
 			if (playerBackend == 'js') {
 				player = new OgvJsPlayer({
 					webGL: true, // auto
-					base: 'lib',
-					audioContext: audioContext
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'js-cpu') {
 				player = new OgvJsPlayer({
 					webGL: false, // force 2d canvas
-					base: 'lib',
-					audioContext: audioContext
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'webgl') {
 				player = new OgvJsPlayer({
 					forceWebGL: true,
-					base: 'lib',
-					audioContext: audioContext
+					base: 'lib'
 				});
 				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {
