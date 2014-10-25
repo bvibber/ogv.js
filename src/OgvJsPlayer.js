@@ -231,10 +231,12 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					lastFrameSkipped = false;
 					codec.flush();
 					stream.seek(position);
+					stream.readBytes();
 					return true;
 				}
 			}
-		}).start();
+		});
+		seekBisector.start();
 	}
 	seek.SEEK_TO_KEYFRAME = 'toKeyframe';
 	seek.SEEK_ONCE = 'once';
@@ -260,15 +262,15 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (codec.frameTimestamp < 0) {
 				// Invalid granule pos? um.
 				// move on past it
-				console.log('invalid granule pos?');
+				//console.log('invalid granule pos?');
 				codec.discardFrame();
 				//lastFrameSkipped = true;
 				return true; // keep looking for frames with timestamps
 			}
 			if (codec.audioReady) {
-				console.log(codec.audioTimestamp, codec.frameTimestamp);
+				//console.log(codec.audioTimestamp, codec.frameTimestamp);
 				if (codec.audioTimestamp < codec.frameTimestamp) {
-					console.log('discarding audio to catch up');
+					//console.log('discarding audio to catch up');
 					codec.discardAudio();
 					return true;
 				}

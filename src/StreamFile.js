@@ -145,6 +145,11 @@ function StreamFile(options) {
 			doneBuffering = true;
 		},
 		
+		abortXHR: function(xhr) {
+			xhr.onreadystatechange = null;
+			xhr.abort();
+		},
+		
 		dataToRead: function() {
 			throw new Error('abstract function');
 		},
@@ -174,8 +179,8 @@ function StreamFile(options) {
 		onReadDone: function() {
 			if (self.bytesTotal && self.bytesRead < self.bytesTotal) {
 				// Move on to the next chunk
-				self.abort();
 				seekPosition = self.bytesRead;
+				self.abort();
 				internal.openXHR();
 			} else {
 				// We're out of data!
@@ -210,9 +215,7 @@ function StreamFile(options) {
 
 	self.abort = function() {
 		if (internal.xhr) {
-			internal.xhr.onreadystatechange = null;
-			internal.xhr.onprogress = null;
-			internal.xhr.abort();
+			internal.abortXHR(internal.xhr);
 			internal.xhr = null;
 			internal.clearBuffers();
 		}
@@ -248,9 +251,11 @@ function StreamFile(options) {
 		}
 	});
 
-	var orig = {
-		clearBuffers: internal.clearBuffers
-	};
+	// Handy way to call super functions
+	var orig = {};
+	for (var prop in internal) {
+		orig[prop] = internal[prop];
+	}
 
 	// -- Backend selection and method overrides
 	if (internal.tryMethod('moz-chunked-arraybuffer')) {
@@ -271,6 +276,11 @@ function StreamFile(options) {
 					internal.readNextChunk();
 				}
 			};
+		};
+		
+		internal.abortXHR = function(xhr) {
+			xhr.onprogress = null;
+			orig.abortXHR(xhr);
 		};
 
 		var buffers = [];
@@ -311,16 +321,36 @@ function StreamFile(options) {
 		chunkSize = 0;
 		
 		var stream, streamReader;
+		var restarted = false;
 		
 		internal.setXHROptions = function(xhr) {
+			console.log('setting up new xhr');
 			xhr.responseType = 'ms-stream';
+		};
+
+		internal.abortXHR = function(xhr) {
+			console.log('aborting XHR and StreamReader');
+			restarted = true;
+			if (streamReader) {
+				streamReader.abort();
+				streamReader = null;
+			}
+			if (stream) {
+				stream.msClose();
+				stream = null;
+			}
+			orig.abortXHR(xhr);
 		};
 		
 		internal.onXHRLoading = function(xhr) {
+			console.log('transferring to StreamReader');
 			// Transfer us over to the StreamReader...
 			stream = xhr.response;
 			xhr.onreadystatechange = null;
-			onstart();
+			if (waitingForInput) {
+				waitingForInput = false;
+				self.readBytes();
+			}
 		};
 
 		self.readBytes = function() {
