@@ -241,6 +241,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		if (codec.hasAudio) {
 			audioFeeder = new AudioFeeder(audioOptions);
 			audioFeeder.init(audioInfo.channels, audioInfo.rate);
+			seekTargetTime = codec.audioTimestamp;
+		} else {
+			seekTargetTime = codec.frameTimestamp;
 		}
 	}
 	
@@ -264,10 +267,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					console.log('discarding audio to catch up');
 					codec.discardAudio();
 					return true;
-				} else if (codec.audioTimestamp > 0 && codec.frameTimestamp > 0 && codec.frameTimestamp < codec.audioTimestamp) {
-					// @todo start the audio later!
-					console.log('discarding video to catch up audio');
-					codec.discardFrame();
 				}
 			}
 			
