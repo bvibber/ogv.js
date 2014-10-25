@@ -46,7 +46,8 @@ double            keyframeTime = 0;
 
 int               audiobufReady = 0;
 ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
-
+double            audiobufTime = 0;
+double            audioSampleRate = 0;
 
 /* Audio decode state */
 int               vorbisHeaders = 0;
@@ -106,7 +107,7 @@ extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              double keyframeTimestamp);
 
 extern void OgvJsInitAudio(int channels, int rate);
-extern void OgvJsOutputAudioReady();
+extern void OgvJsOutputAudioReady(double audioTimestamp);
 extern void OgvJsOutputAudio(float **buffers, int channels, int sampleCount);
 
 /*Write out the planar YUV frame, uncropped.*/
@@ -342,7 +343,8 @@ static void processHeaders() {
         if (opusHeaders) {
             // opusDecoder should already be initialized
             // Opus has a fixed internal sampling rate of 48000 Hz
-            OgvJsInitAudio(opusChannels, 48000);
+            audioSampleRate = 48000;
+            OgvJsInitAudio(opusChannels, audioSampleRate);
         } else
 #endif
         if (vorbisHeaders) {
@@ -351,7 +353,8 @@ static void processHeaders() {
             printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
                     vorbisStreamState.serialno, vorbisInfo.channels, vorbisInfo.rate);
 
-            OgvJsInitAudio(vorbisInfo.channels, vorbisInfo.rate);
+			audioSampleRate = vorbisInfo.rate;
+            OgvJsInitAudio(vorbisInfo.channels, audioSampleRate);
         }
 
         appState = STATE_DECODING;
@@ -392,7 +395,9 @@ static void processDecoding() {
         if (opusHeaders) {
             if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
                 audiobufReady = 1;
-                OgvJsOutputAudioReady();
+                audiobufGranulepos = audioPacket.granulepos;
+                audiobufTime += (double)audiobufGranulepos / audioSampleRate;
+                OgvJsOutputAudioReady(audiobufTime);
             } else {
                 needData = 1;
             }
@@ -401,7 +406,9 @@ static void processDecoding() {
         if (vorbisHeaders) {
             if (ogg_stream_packetpeek(&vorbisStreamState, &audioPacket) > 0) {
                 audiobufReady = 1;
-                OgvJsOutputAudioReady();
+                audiobufGranulepos = audioPacket.granulepos;
+                audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
+                OgvJsOutputAudioReady(audiobufTime);
             } else {
                 needData = 1;
             }

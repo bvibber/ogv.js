@@ -250,17 +250,28 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	function doProcessSeekingVideo() {
 		if (codec.frameReady) {
 			var fudgeFactor = (1 / videoInfo.fps);
-			//var fudgeFactor = 0.25; // quarter-second resolution is close enough
 			if (codec.frameTimestamp < 0) {
 				// Invalid granule pos? um.
 				// move on past it
 				console.log('invalid granule pos?');
 				codec.discardFrame();
-				if (codec.audioReady) {
-					codec.discardAudio();
-				}
 				//lastFrameSkipped = true;
-			} else if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
+				return true; // keep looking for frames with timestamps
+			}
+			if (codec.audioReady) {
+				console.log(codec.audioTimestamp, codec.frameTimestamp);
+				if (codec.audioTimestamp < codec.frameTimestamp) {
+					console.log('discarding audio to catch up');
+					codec.discardAudio();
+					return true;
+				} else if (codec.audioTimestamp > 0 && codec.frameTimestamp > 0 && codec.frameTimestamp < codec.audioTimestamp) {
+					// @todo start the audio later!
+					console.log('discarding video to catch up audio');
+					codec.discardFrame();
+				}
+			}
+			
+			if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
 				console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 				if (lastFrameSkipped) {
 					console.log('gave up on bisect, we skipped over the target position');
@@ -280,9 +291,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					// If it's close, just keep looking for packets
 					console.log('skipping frame');
 					codec.discardFrame();
-					if (codec.audioReady) {
-						codec.discardAudio();
-					}
 					lastFrameSkipped = true;
 				} else {
 					if (seekBisector.right()) {

@@ -71,8 +71,8 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 	
-	OgvJsOutputAudioReady: function() {
-		OgvJsOutputAudioReadyCallback();
+	OgvJsOutputAudioReady: function(audioTimestamp) {
+		OgvJsOutputAudioReadyCallback(audioTimestamp);
 	},
 	
 	OgvJsOutputAudio: function(buffers, channels, sampleCount) {
