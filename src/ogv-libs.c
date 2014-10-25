@@ -175,9 +175,12 @@ void OgvJsInit(int process_audio_flag, int process_video_flag) {
     th_info_init(&theoraInfo);
 }
 
-static void processHeaders();
+static int processHeaders();
 
-static void processBegin() {
+static int processBegin() {
+	if (ogg_sync_pageout(&oggSyncState, &oggPage) < 0) {
+		return 0;
+	}
     if (ogg_page_bos(&oggPage)) {
         printf("Packet is at start of a bitstream\n");
         int got_packet;
@@ -191,7 +194,7 @@ static void processBegin() {
         // eat the first Theora video packet...
         got_packet = ogg_stream_packetpeek(&test, &oggPacket);
         if (!got_packet) {
-            return;
+            return 0;
         }
 
         /* identify the codec: try theora */
@@ -237,10 +240,17 @@ static void processBegin() {
         // Not a bitstream start -- move on to header decoding...
         appState = STATE_HEADERS;
         //processHeaders();
+        return 1;
     }
+    return 1;
 }
 
-static void processHeaders() {
+static int processHeaders() {
+	int needData = 0;
+	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
+	}
+
 #ifdef OPUS
     if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3) || (opusHeaders && opusHeaders < 2)) {
 #else
@@ -271,6 +281,7 @@ static void processHeaders() {
             }
             if (ret == 0) {
                 printf("No theora header packet...\n");
+            	needData = 1;
             }
         }
 
@@ -295,6 +306,7 @@ static void processHeaders() {
             }
             if (ret == 0) {
                 printf("No vorbis header packet...\n");
+            	needData = 1;
             }
         }
 #ifdef OPUS
@@ -304,6 +316,9 @@ static void processHeaders() {
             if (ret < 0) {
                 printf("Error reading Opus headers: %d.\n", ret);
                 exit(1);
+            }
+            if (ret == 0) {
+            	needData = 1;
             }
             // FIXME: perhaps actually *check* if this is a comment packet ;-)
             opusHeaders++;
@@ -361,12 +376,15 @@ static void processHeaders() {
         printf("Done with headers step\n");
         OgvJsLoadedMetadata();
     }
+
+    return !needData;
 }
 
-static int needData = 1;
-
-static void processDecoding() {
-    needData = 0;
+static int processDecoding() {
+	int needData = 0;
+	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
+	}
     if (theoraHeaders && !videobufReady) {
         /* theora is one in, one out... */
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
@@ -414,6 +432,7 @@ static void processDecoding() {
             }
         }
     }
+    return !needData;
 }
 
 int OgvJsDecodeFrame() {
@@ -525,38 +544,39 @@ int OgvJsDecodeAudio() {
     return foundSome;
 }
 
+static int buffersReceived = 0;
+
 void OgvJsReceiveInput(char *buffer, int bufsize) {
     if (bufsize > 0) {
-		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-			queue_page(&oggPage);
-			printf("Page already in here when receiving data, wtf?\n");
+		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
+		memcpy(dest, buffer, bufsize);
+		if (ogg_sync_wrote(&oggSyncState, bufsize) < 0) {
+			printf("Horrible error in ogg_sync_wrote\n");
+		}
+		if (appState == STATE_BEGIN) {
+			// we'll need to read pages one at a time to find bitstreams
+			buffersReceived = 1;
 		} else {
-			char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
-			memcpy(dest, buffer, bufsize);
-			if (ogg_sync_wrote(&oggSyncState, bufsize) < 0) {
-				printf("Horrible error in ogg_sync_wrote\n");
-			}
+			// queue ALL the pages!
 		}
     }
 }
 
 int OgvJsProcess() {
-    if (needData) {
-        if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-            queue_page(&oggPage);
-        } else {
-            // out of data!
-            return 0;
-        }
-    }
+	if (!buffersReceived) {
+		return 0;
+	}
     if (appState == STATE_BEGIN) {
-        processBegin();
+        return processBegin();
     } else if (appState == STATE_HEADERS) {
-        processHeaders();
+        return processHeaders();
     } else if (appState == STATE_DECODING) {
-        processDecoding();
-    }
-    return 1;
+        return processDecoding();
+    } else {
+    	// uhhh...
+    	printf("Invalid appState in OgvJsProcess\n");
+    	exit(1);
+	}
 }
 
 void OgvJsDestroy() {
@@ -613,7 +633,6 @@ void OgvJsFlushBuffers() {
 
 	// And reset sync state for good measure.
 	ogg_sync_reset(&oggSyncState);
-	needData = 0;
 	videobufReady = 0;
 	audiobufReady = 0;
 	videobufGranulepos = 0xffffffffffffffffLL;
