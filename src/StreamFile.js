@@ -230,7 +230,7 @@ function StreamFile(options) {
 		},
 		
 		onReadDone: function() {
-			if (doneBuffering && self.bytesRead < self.bytesTotal && internal.bytesBuffered() < chunkSize) {
+			if (self.bytesBuffered < self.bytesTotal && internal.bytesBuffered() < chunkSize) {
 				seekPosition += chunkSize;
 				console.log('2 seek to: ' + seekPosition);
 				internal.clearReadState();
