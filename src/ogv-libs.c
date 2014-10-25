@@ -527,9 +527,16 @@ int OgvJsDecodeAudio() {
 
 void OgvJsReceiveInput(char *buffer, int bufsize) {
     if (bufsize > 0) {
-        char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
-        memcpy(dest, buffer, bufsize);
-        ogg_sync_wrote(&oggSyncState, bufsize);
+		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+			queue_page(&oggPage);
+			printf("Page already in here when receiving data, wtf?\n");
+		} else {
+			char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
+			memcpy(dest, buffer, bufsize);
+			if (ogg_sync_wrote(&oggSyncState, bufsize) < 0) {
+				printf("Horrible error in ogg_sync_wrote\n");
+			}
+		}
     }
 }
 

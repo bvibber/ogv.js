@@ -28,8 +28,9 @@ function StreamFile(options) {
 		waitingForInput = false,
 		doneBuffering = false,
 		bytesTotal = 0,
-		bytesBuffered = 0,
-		bytesRead = 0;
+		bytesRead = 0,
+		buffers = [];
+		
 
 	
 	// -- internal private methods
@@ -101,7 +102,6 @@ function StreamFile(options) {
 				xhr.setRequestHeader('Range', range);
 			}
 		
-			bytesBuffered = 0;
 			bytesRead = 0;
 
 			xhr.onreadystatechange = function(event) {
@@ -150,19 +150,54 @@ function StreamFile(options) {
 			xhr.abort();
 		},
 		
+		bufferData: function(buffer) {
+			if (buffer) {
+				buffers.push(buffer);
+				onbuffer();
+			
+				internal.readNextChunk();
+			}
+		},
+		
+		bytesBuffered: function() {
+			var bytes = 0;
+			buffers.forEach(function(buffer) {
+				bytes += buffer.byteLength;
+			});
+			return bytes;
+		},
+		
 		dataToRead: function() {
-			throw new Error('abstract function');
+			return (buffers.length > 0);
 		},
 		
 		popBuffer: function() {
-			throw new Error('abstract function');
+			var buffer = buffers.shift();
+			console.log(buffer.byteLength, bufferSize);
+			if (!bufferSize || bufferSize >= buffer.byteLength) {
+				console.log('returning whole buffer');
+				bytesRead += buffer.byteLength;
+				return buffer;
+			} else {
+				console.log('returning split buffer');
+				// Split the buffer and requeue the rest
+				var thisBuffer = buffer.slice(0, bufferSize),
+					nextBuffer = buffer.slice(bufferSize);
+				buffers.unshift(nextBuffer);
+				bytesRead += thisBuffer.byteLength;
+				return thisBuffer;
+			}
+		},
+		
+		clearReadState: function() {
+			bytesRead = 0;
+			doneBuffering = false;
+			waitingForInput = true;
 		},
 		
 		clearBuffers: function() {
-			bytesRead = 0;
-			bytesBuffered = 0;
-			doneBuffering = false;
-			waitingForInput = true;
+			internal.clearReadState();
+			buffers.splice(0, buffers.length);
 		},
 
 		// Read the next binary buffer out of the buffered data
@@ -180,7 +215,8 @@ function StreamFile(options) {
 			if (self.bytesTotal && self.bytesRead < self.bytesTotal) {
 				// Move on to the next chunk
 				seekPosition = self.bytesRead;
-				self.abort();
+				internal.xhr.abort();
+				internal.clearReadState();
 				internal.openXHR();
 			} else {
 				// We're out of data!
@@ -241,7 +277,7 @@ function StreamFile(options) {
 	
 	Object.defineProperty(self, 'bytesBuffered', {
 		get: function() {
-			return seekPosition + bytesBuffered;
+			return self.bytesRead + internal.bytesBuffered();
 		}
 	});
 
@@ -266,47 +302,13 @@ function StreamFile(options) {
 
 			xhr.onprogress = function() {
 				// xhr.response is a per-chunk ArrayBuffer
-				var buffer = xhr.response;
-
-				if (buffer) {
-					bytesBuffered += buffer.byteLength;
-					onbuffer();
-					buffers.push(buffer);
-				
-					internal.readNextChunk();
-				}
+				internal.bufferData(xhr.response);
 			};
 		};
 		
 		internal.abortXHR = function(xhr) {
 			xhr.onprogress = null;
 			orig.abortXHR(xhr);
-		};
-
-		var buffers = [];
-		
-		internal.dataToRead = function() {
-			return (buffers.length > 0);
-		};
-
-		internal.popBuffer = function() {
-			var buffer = buffers.shift();
-			if (!bufferSize || bufferSize >= buffer.byteLength) {
-				bytesRead += buffer.byteLength;
-				return buffer;
-			} else {
-				// Split the buffer and requeue the rest
-				var thisBuffer = buffer.slice(0, bufferSize),
-					nextBuffer = buffer.slice(bufferSize);
-				buffers.unshift(nextBuffer);
-				bytesRead += thisBuffer.byteLength;
-				return thisBuffer;
-			}
-		};
-		
-		internal.clearBuffers = function() {
-			orig.clearBuffers();
-			buffers.splice(0, buffers.length);
 		};
 		
 		internal.onXHRLoading = function(xhr) {
@@ -352,6 +354,14 @@ function StreamFile(options) {
 				self.readBytes();
 			}
 		};
+		
+		internal.bytesBuffered = function() {
+			if (stream) {
+				return stream.bytesBuffered - bytesRead;
+			} else {
+				return 0;
+			}
+		};
 
 		self.readBytes = function() {
 			if (stream) {
@@ -360,7 +370,6 @@ function StreamFile(options) {
 					var buffer = event.target.result,
 						len = buffer.byteLength;
 					if (len > 0) {
-						bytesBuffered += len;
 						bytesRead += len;
 						onread(buffer);
 					} else {
@@ -390,11 +399,6 @@ function StreamFile(options) {
 	
 		var lastPosition = 0;
 		
-		// Is there data available to read?
-		internal.dataToRead = function() {
-			return lastPosition < internal.xhr.responseText.length;
-		};
-
 		// Is there a better way to do this conversion? :(
 		function stringToArrayBuffer(chunk) {
 			var len = chunk.length,
@@ -405,28 +409,24 @@ function StreamFile(options) {
 			}
 			return buffer;
 		}
-
-		// Return a buffer with up to bufferSize from the next data
-		internal.popBuffer = function() {
-			console.log('popBuffer', lastPosition, lastPosition + bufferSize, bufferSize);
-			var chunk = internal.xhr.responseText.slice(lastPosition, lastPosition + bufferSize);
-			lastPosition += chunk.length;
-			bytesRead += chunk.length;
-			return stringToArrayBuffer(chunk);
-		}
 		
-		internal.clearBuffers = function() {
-			orig.clearBuffers();
+		internal.clearReadState = function() {
+			orig.clearReadState();
 			lastPosition = 0;
 		};
 		
 		internal.onXHRLoading = function(xhr) {
 			// xhr.responseText is a binary string of entire file so far
-			bytesBuffered = internal.xhr.responseText.length;
-			onbuffer();
-			internal.readNextChunk();
+			var str = xhr.responseText;
+			if (lastPosition < str.length) {
+				var chunk = str.slice(lastPosition),
+					buffer = stringToArrayBuffer(chunk);
+				lastPosition = str.length;
+				internal.bufferData(buffer);
+			}
 		};
 		
+		/*
 		internal.quickSeek = function(pos) {
 			var bufferedPos = pos - seekPosition;
 			if (bufferedPos < 0) {
@@ -442,6 +442,7 @@ function StreamFile(options) {
 				return true;
 			}
 		};
+		*/
 	} else {
 		throw new Error("No streaming HTTP input method found.");
 	}
