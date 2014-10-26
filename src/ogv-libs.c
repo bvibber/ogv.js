@@ -175,9 +175,9 @@ void OgvJsInit(int process_audio_flag, int process_video_flag) {
     th_info_init(&theoraInfo);
 }
 
-static int processHeaders();
+static int needData = 1;
 
-static int processBegin() {
+static void processBegin() {
     if (ogg_page_bos(&oggPage)) {
         printf("Packet is at start of a bitstream\n");
         int got_packet;
@@ -191,7 +191,7 @@ static int processBegin() {
         // eat the first Theora video packet...
         got_packet = ogg_stream_packetpeek(&test, &oggPacket);
         if (!got_packet) {
-            return 0;
+            return;
         }
 
         /* identify the codec: try theora */
@@ -237,13 +237,10 @@ static int processBegin() {
         // Not a bitstream start -- move on to header decoding...
         appState = STATE_HEADERS;
         //processHeaders();
-        return 1;
     }
-    return 1;
 }
 
-static int processHeaders() {
-	int needData = 0;
+static void processHeaders() {
 
 #ifdef OPUS
     if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3) || (opusHeaders && opusHeaders < 2)) {
@@ -278,7 +275,6 @@ static int processHeaders() {
             }
             if (ret == 0) {
                 printf("No theora header packet...\n");
-            	needData = 1;
             }
         }
 
@@ -304,7 +300,6 @@ static int processHeaders() {
             }
             if (ret == 0) {
                 printf("No vorbis header packet...\n");
-            	needData = 1;
             }
         }
 #ifdef OPUS
@@ -315,9 +310,6 @@ static int processHeaders() {
             if (ret < 0) {
                 printf("Error reading Opus headers: %d.\n", ret);
                 exit(1);
-            }
-            if (ret == 0) {
-            	needData = 1;
             }
             // FIXME: perhaps actually *check* if this is a comment packet ;-)
             opusHeaders++;
@@ -375,12 +367,10 @@ static int processHeaders() {
         printf("Done with headers step\n");
         OgvJsLoadedMetadata();
     }
-
-    return !needData;
 }
 
-static int processDecoding() {
-	int needData = 0;
+static void processDecoding() {
+	needData = 0;
     if (theoraHeaders && !videobufReady) {
         /* theora is one in, one out... */
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
@@ -436,7 +426,6 @@ static int processDecoding() {
             }
         }
     }
-    return !needData;
 }
 
 int OgvJsDecodeFrame() {
@@ -554,9 +543,9 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 		buffersReceived = 1;
 		if (appState == STATE_DECODING) {
 			// queue ALL the pages!
-			//while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-			//	queue_page(&oggPage);
-			//}
+			while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+				queue_page(&oggPage);
+			}
 		}
 		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
 		memcpy(dest, buffer, bufsize);
@@ -570,22 +559,24 @@ int OgvJsProcess() {
 	if (!buffersReceived) {
 		return 0;
 	}
-	if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-		queue_page(&oggPage);
-	} else {
-		return 0;
+	if (needData) {
+		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+			queue_page(&oggPage);
+		} else {
+			return 0;
+		}
 	}
     if (appState == STATE_BEGIN) {
-        return processBegin();
+        processBegin();
     } else if (appState == STATE_HEADERS) {
-        return processHeaders();
+        processHeaders();
     } else if (appState == STATE_DECODING) {
-        return processDecoding();
+        processDecoding();
     } else {
     	// uhhh...
     	printf("Invalid appState in OgvJsProcess\n");
-    	return 0;
 	}
+	return 1;
 }
 
 void OgvJsDestroy() {
