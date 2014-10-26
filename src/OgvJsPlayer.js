@@ -448,11 +448,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			
 			// Process until we run out of data or
 			// completely decode a video frame...
-			if (codec.hasAudio && audioFeeder && !audioState) {
-				audioState = audioFeeder.getPlaybackState();
-				audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
-				droppedAudio = audioState.dropped;
-			}
 			var currentTime = getTimestamp();
 			var start = getTimestamp();
 	
@@ -492,12 +487,15 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				continue;
 			}
 
-						
-			if (codec.hasAudio) {
+			if (codec.hasAudio && audioFeeder) {
+				if (!audioState) {
+					audioState = audioFeeder.getPlaybackState();
+					audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
+					droppedAudio = audioState.dropped;
+				}
+
 				// Drive on the audio clock!
 				var fudgeDelta = 0.1,
-					//readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
-					//readyForFrame = (audioState.playbackPosition >= frameEndTimestamp);
 					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
 					frameDelay = (frameEndTimestamp - (audioState.playbackPosition + seekTargetTime)) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
@@ -897,7 +895,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (state == State.SEEKING) {
 				return seekTargetTime;
 			} else {
-				if (codec && codec.hasAudio) {
+				if (codec && codec.hasAudio && audioFeeder) {
 					return audioFeeder.getPlaybackState().playbackPosition + seekTargetTime;
 				} else if (codec && codec.hasVideo) {
 					return frameEndTimestamp;

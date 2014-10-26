@@ -276,7 +276,9 @@ static int processHeaders() {
                     // We've completed the theora header
                     printf("Completed theora header. Saving video packet for later...\n");
                     theoraHeaders = 3;
-                } else {
+                } else if (theoraProcessingHeaders < 0) {
+                	printf("Error parsing theora headers: %d.\n", theoraProcessingHeaders);
+            	} else {
                     printf("Still parsing theora headers...\n");
 					ogg_stream_packetout(&theoraStreamState, NULL);
                 }
