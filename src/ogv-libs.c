@@ -247,8 +247,9 @@ static int processBegin() {
 
 static int processHeaders() {
 	int needData = 0;
-	if (ogg_sync_pageout(&oggSyncState, &oggPage) < 0) {
-		return 0;
+	// queue ALL the pages!
+	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
 	}
 
 #ifdef OPUS
@@ -262,7 +263,6 @@ static int processHeaders() {
         /* look for further theora headers */
         if (theoraHeaders && theoraProcessingHeaders) {
             printf("checking theora headers...\n");
-            ogg_stream_pagein(&theoraStreamState, &oggPage);
 
             ret = ogg_stream_packetpeek(&theoraStreamState, &oggPacket);
             if (ret < 0) {
@@ -289,7 +289,6 @@ static int processHeaders() {
 
         if (vorbisHeaders && (vorbisHeaders < 3)) {
             printf("checking vorbis headers...\n");
-            ogg_stream_pagein(&vorbisStreamState, &oggPage);
 
             ret = ogg_stream_packetpeek(&vorbisStreamState, &oggPacket);
             if (ret < 0) {
@@ -315,9 +314,8 @@ static int processHeaders() {
         }
 #ifdef OPUS
         if (opusHeaders && (opusHeaders < 2)) {
-            ogg_stream_pagein(&opusStreamState, &oggPage);
-
             printf("checking for opus headers...\n");
+
             ret = ogg_stream_packetpeek(&opusStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading Opus headers: %d.\n", ret);
