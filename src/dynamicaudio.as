@@ -7,9 +7,11 @@ package {
     import flash.utils.setTimeout;
 
     public class dynamicaudio extends Sprite {
-        public var bufferSize:Number = 8192; // In samples
+        public var bufferSize:Number = 4096; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
+        public var xsound:Sound = null;
+        public var xsoundChannel:SoundChannel = null;
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
@@ -20,6 +22,7 @@ package {
         private var droppedAudioTime:Number = 0; // seconds; amount of audio time not accounted for, assumed dropped
         private var dropped:Number = 0;
         private var targetRate:Number = 44100;
+        private var startTime:Number = 0;
 
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -33,6 +36,13 @@ package {
             for (var i:int = 0; i < hexDigits.length; i++) {
                 this.hexValues[hexDigits[i].charCodeAt(0)] = i;
             }
+            
+            xsound = new Sound();
+            xsound.addEventListener(
+                SampleDataEvent.SAMPLE_DATA,
+                silence
+            );
+            xsoundChannel = xsound.play();
         }
 
         // Called from JavaScript to add samples to the buffer
@@ -43,21 +53,31 @@ package {
             // Decode the hex string asynchronously.
             stringBuffer.push(s);
             setTimeout(flushBuffers, 0);
+            //flushBuffers();
         }
 
         public function startPlayback():void {
-            this.sound = new Sound();
-            this.sound.addEventListener(
+            startTime = flash.utils.getTimer() / 1000;
+            sound = new Sound();
+            sound.addEventListener(
                 SampleDataEvent.SAMPLE_DATA,
                 soundGenerator
             );
-            this.soundChannel = this.sound.play();
+            soundChannel = this.sound.play();
         }
         
         public function stopPlayback():void {
-            this.soundChannel.stop();
-            this.soundChannel = null;
-            this.sound = null;
+            if (soundChannel) {
+                soundChannel.stop();
+            }
+            soundChannel = null;
+            sound = null;
+            droppedAudioTime = 0;
+            starvedAudioTime = 0;
+            totalBufferedAudio = 0;
+
+            stringBuffer.splice(0, stringBuffer.length);
+            buffer.splice(0, buffer.length);
         }
         
         public function flushBuffers():void {
@@ -85,15 +105,22 @@ package {
         }
 
         public function samplesQueued():Number {
-            flushBuffers();
-            return buffer.length / 2;
+            //flushBuffers();
+            var stringsLength:int = 0;
+            for (var i:int = 0; i < stringBuffer.length; i++) {
+                stringsLength += stringBuffer[i].length / 2;
+            }
+            return stringsLength + buffer.length / 2;
         }
 
         public function playbackPosition():Number {
             if (soundChannel == null) {
                 return 0;
             } else {
-                return soundChannel.position / 1000 - starvedAudioTime - droppedAudioTime;
+                return Math.max(0,
+                    soundChannel.position / 1000 + startTime - starvedAudioTime
+                    //(totalBufferedAudio - starvedAudioTime) + startTime
+                );
             }
         }
 
@@ -125,6 +152,13 @@ package {
             totalBufferedAudio += sampleCount / targetRate;
 
             buffer = buffer.slice(sampleCount * 2, buffer.length);
+        }
+        
+        public function silence(event:SampleDataEvent):void {
+            for (var i:int = 0; i < bufferSize; i++) {
+                event.data.writeFloat(0.0);
+                event.data.writeFloat(0.0);
+            }
         }
     }
 }

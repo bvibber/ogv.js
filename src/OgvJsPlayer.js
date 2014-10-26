@@ -102,10 +102,12 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	
 	function startAudio(offset) {
 		audioFeeder.start();
-		initialAudioPosition = audioFeeder.getPlaybackState().playbackPosition;
+		var state = audioFeeder.getPlaybackState();
+		initialAudioPosition = state.playbackPosition;
 		if (offset !== undefined) {
 			initialAudioOffset = offset;
 		}
+		console.log('START AUDIO AT', initialAudioPosition, initialAudioOffset);
 	}
 	
 	function stopAudio() {
@@ -531,10 +533,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					frameDelay = (frameEndTimestamp - audioPlaybackPosition) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
 				//console.log('frame', readyForFrame, codec.frameReady, frameEndTimestamp, audioPlaybackPosition, frameDelay);
-				//console.log('audio', readyForAudio, codec.audioReady, audioState.samplesQueued, (audioFeeder.bufferSize * 2));
+				//console.log('audio', readyForAudio, codec.audioReady, audioPlaybackPosition, audioBufferedDuration);
 
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
+					//console.log('audio', readyForAudio, codec.audioReady, audioPlaybackPosition, audioBufferedDuration);
 					var start = getTimestamp();
 					var ok = codec.decodeAudio();
 					var delta = (getTimestamp() - start);

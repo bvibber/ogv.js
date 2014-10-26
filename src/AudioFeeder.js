@@ -280,6 +280,7 @@
 				if (flashElement.write) {
 					return flashElement.getPlaybackState();
 				} else {
+					console.log('getPlaybackState USED TOO EARLY');
 					return {
 						playbackPosition: 0,
 						samplesQueued: 0,
