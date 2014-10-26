@@ -10,8 +10,6 @@ package {
         public var bufferSize:Number = 4096; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
-        public var xsound:Sound = null;
-        public var xsoundChannel:SoundChannel = null;
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
@@ -36,13 +34,6 @@ package {
             for (var i:int = 0; i < hexDigits.length; i++) {
                 this.hexValues[hexDigits[i].charCodeAt(0)] = i;
             }
-            
-            xsound = new Sound();
-            xsound.addEventListener(
-                SampleDataEvent.SAMPLE_DATA,
-                silence
-            );
-            xsoundChannel = xsound.play();
         }
 
         // Called from JavaScript to add samples to the buffer
@@ -152,13 +143,6 @@ package {
             totalBufferedAudio += sampleCount / targetRate;
 
             buffer = buffer.slice(sampleCount * 2, buffer.length);
-        }
-        
-        public function silence(event:SampleDataEvent):void {
-            for (var i:int = 0; i < bufferSize; i++) {
-                event.data.writeFloat(0.0);
-                event.data.writeFloat(0.0);
-            }
         }
     }
 }
