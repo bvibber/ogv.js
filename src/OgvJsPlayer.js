@@ -85,6 +85,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var placeboCodec, codec, audioFeeder;
 	var muted = false;
 	function initAudioFeeder() {
+		console.log('init audio feeder');
 		audioFeeder = new AudioFeeder( audioOptions );
 		if (muted) {
 			audioFeeder.mute();
@@ -292,7 +293,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 				if (lastFrameSkipped) {
 					console.log('gave up on bisect, we skipped over the target position');
-					state = State.PLAYING;
+					continueSeekedPlayback();
 				} else {
 					if (seekBisector.left()) {
 						// wait for new data to come in

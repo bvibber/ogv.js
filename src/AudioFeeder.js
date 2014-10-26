@@ -234,15 +234,23 @@
 			if(this.flashaudio) {
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 				var flashElement = this.flashaudio.flashElement;
-				if(resamples.length > 0 && flashElement.write) {
+				if(resamples.length > 0) {
 					var str = hexString(resamples.buffer)
 					//console.log(str.length + ' bytes sent to Flash');
-					flashElement.write(str);
+					if (flashElement.write) {
+						flashElement.write(str);
+					} else {
+						console.log('NOT YET READY');
+						self.waitUntilReady(function() {
+							flashElement.write(str);
+						});
+					}
 				}
 			} else if (buffers) {
 				samples = resample(samplesPerChannel);
 				pushSamples(samples);
 			} else {
+				console.log('no valid whatsit');
 				self.close();
 			}
 		};
@@ -293,6 +301,7 @@
 		}
 		
 		this.close = function() {
+			console.log('CLOSE AUDIO FEEDER');
 			if(this.flashaudio) {
 				var wrapper = this.flashaudio.flashWrapper;
 				wrapper.parentNode.removeChild(wrapper);
