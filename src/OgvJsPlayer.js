@@ -41,7 +41,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	
 	var State = {
 		INITIAL: 'INITIAL',
-		HEADERS: 'HEADERS',
 		PLAYING: 'PLAYING',
 		PAUSED: 'PAUSED',
 		SEEKING: 'SEEKING',
@@ -161,8 +160,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var lastFrameTimestamp = 0.0;
 
 	function processFrame() {
+		if (codec.frameTimestamp >= 0) {
+			frameEndTimestamp = codec.frameTimestamp;
+		}
 		yCbCrBuffer = codec.dequeueFrame();
-		frameEndTimestamp = yCbCrBuffer.timestamp;
 	}
 
 	function drawFrame() {
@@ -401,6 +402,34 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				return;
 			}
 
+			if (state == State.INITIAL) {
+				var hasAudio = codec.hasAudio,
+					hasVideo = codec.hasVideo;
+
+				if (placeboCodec) {
+					placeboCodec.process();
+				}
+				var more = codec.process();
+
+				if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
+					// we just fell over from headers into content; reinit
+					state = State.PLAYING;
+					lastFrameTimestamp = getTimestamp();
+					targetFrameTime = lastFrameTimestamp + 1000.0 / fps
+					pingProcessing(0);
+					return;
+				}
+
+				if (!more) {
+					// Read more data!
+					stream.readBytes();
+					return;
+				} else {
+					// Keep processing headers
+					continue;
+				}
+			}
+			
 			if (state == State.SEEKING) {
 				if (!codec.process()) {
 					stream.readBytes();
@@ -415,7 +444,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				// Back to the loop to process more data
 				continue;
 			}
-
+			
 			// Process until we run out of data or
 			// completely decode a video frame...
 			if (codec.hasAudio && audioFeeder && !audioState) {
@@ -426,21 +455,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			var currentTime = getTimestamp();
 			var start = getTimestamp();
 	
-			var hasAudio = codec.hasAudio,
-				hasVideo = codec.hasVideo;
-			if (placeboCodec) {
-				placeboCodec.process();
-			}
 			var more = codec.process();
 			
-			if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
-				// we just fell over from headers into content; reinit
-				lastFrameTimestamp = getTimestamp();
-				targetFrameTime = lastFrameTimestamp + 1000.0 / fps
-				pingProcessing(0);
-				return;
-			}
-
 			var delta = (getTimestamp() - start);
 			lastFrameDecodeTime += delta;
 			demuxingTime += delta;
@@ -453,7 +469,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				} else {
 					// Ran out of stream!
 					var finalDelay = 0;
-					if (hasAudio) {
+					if (codec.hasAudio) {
 						// This doesn't seem to be enough with Flash audio shim.
 						// Not quite sure why.
 						finalDelay = audioBufferedDuration;
@@ -470,13 +486,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				return;
 			}
 			
-			if ((hasAudio || hasVideo) && !(codec.audioReady || codec.frameReady)) {
+			if ((codec.hasAudio || codec.hasVideo) && !(codec.audioReady || codec.frameReady)) {
 				// Have to process some more pages to find data. Continue the loop.
 				continue;
 			}
 
 						
-			if (hasAudio) {
+			if (codec.hasAudio) {
 				// Drive on the audio clock!
 				var fudgeDelta = 0.1,
 					//readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
@@ -484,6 +500,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
 					frameDelay = (frameEndTimestamp - (audioState.playbackPosition + seekTargetTime)) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
+				console.log('frame', readyForFrame, codec.frameReady, frameEndTimestamp, (audioState.playbackPosition + seekTargetTime), frameDelay);
+				console.log('audio', readyForAudio, codec.audioReady, audioState.samplesQueued, (audioFeeder.bufferSize * 2));
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
 					var start = getTimestamp();
@@ -526,7 +544,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					// Check in when the audio buffer runs low again...
 					nextDelays.push(bufferDuration / 2);
 					
-					if (hasVideo) {
+					if (codec.hasVideo) {
 						// Check in when the next frame is due
 						// Subtract time we already spent decoding
 						var deltaTimeSpent = getTimestamp() - startTimeSpent;
@@ -552,7 +570,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					pingProcessing(Math.max(0, nextDelay - delta));
 					return;
 				}
-			} else if (hasVideo) {
+			} else if (codec.hasVideo) {
 				// Video-only: drive on the video clock
 				if (codec.frameReady && getTimestamp() >= targetFrameTime) {
 					if (placeboCodec) {
