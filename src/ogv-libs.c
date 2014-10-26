@@ -178,9 +178,6 @@ void OgvJsInit(int process_audio_flag, int process_video_flag) {
 static int processHeaders();
 
 static int processBegin() {
-	if (ogg_sync_pageout(&oggSyncState, &oggPage) < 0) {
-		return 0;
-	}
     if (ogg_page_bos(&oggPage)) {
         printf("Packet is at start of a bitstream\n");
         int got_packet;
@@ -247,10 +244,6 @@ static int processBegin() {
 
 static int processHeaders() {
 	int needData = 0;
-	// queue ALL the pages!
-	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-		queue_page(&oggPage);
-	}
 
 #ifdef OPUS
     if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3) || (opusHeaders && opusHeaders < 2)) {
@@ -387,10 +380,6 @@ static int processHeaders() {
 }
 
 static int processDecoding() {
-	// queue ALL the pages!
-	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-		queue_page(&oggPage);
-	}
 	int needData = 0;
     if (theoraHeaders && !videobufReady) {
         /* theora is one in, one out... */
@@ -565,9 +554,9 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
 		buffersReceived = 1;
 		if (appState == STATE_DECODING) {
 			// queue ALL the pages!
-			while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-				queue_page(&oggPage);
-			}
+			//while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+			//	queue_page(&oggPage);
+			//}
 		}
 		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
 		memcpy(dest, buffer, bufsize);
@@ -581,6 +570,11 @@ int OgvJsProcess() {
 	if (!buffersReceived) {
 		return 0;
 	}
+	if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
+	} else {
+		return 0;
+	}
     if (appState == STATE_BEGIN) {
         return processBegin();
     } else if (appState == STATE_HEADERS) {
@@ -590,7 +584,7 @@ int OgvJsProcess() {
     } else {
     	// uhhh...
     	printf("Invalid appState in OgvJsProcess\n");
-    	exit(1);
+    	return 0;
 	}
 }
 
