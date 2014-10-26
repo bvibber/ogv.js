@@ -39,10 +39,10 @@ int               frames = 0;
 
 /* single frame video buffering */
 int               videobufReady = 0;
-ogg_int64_t       videobufGranulepos = -1;
-double            videobufTime = 0;
-ogg_int64_t       keyframeGranulepos = -1;
-double            keyframeTime = 0;
+ogg_int64_t       videobufGranulepos = -1;  // @todo reset with TH_CTL_whatver on seek
+double            videobufTime = 0;         // time seen on actual decoded frame
+ogg_int64_t       keyframeGranulepos = -1;  //
+double            keyframeTime = -1;        // last-keyframe time seen on actual decoded frame
 
 int               audiobufReady = 0;
 ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
@@ -397,19 +397,27 @@ static int processDecoding() {
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
 
-			if (videoPacket.granulepos == 0xffffffffffffffffLL && videobufGranulepos != 0xffffffffffffffffLL) {
-				// Packets in the middle of the stream don't get interpolated granule positions for us.
-				// This is kind of annoying.
-	            videobufGranulepos = videobufGranulepos + 1;
+			double videoPacketTime = -1;
+			double packetKeyframeTime = -1;
+			if (videoPacket.granulepos == 0xffffffffffffffffLL) {
+				// granulepos is actually listed per-page, not per-packet,
+				// so not every packet lists a granulepos.
+				// Scary, huh?
 			} else {
-	            videobufGranulepos = videoPacket.granulepos;
-	        }
-	        videobufTime = th_granule_time(theoraDecoderContext, videobufGranulepos);
-			keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
-			keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
-			//printf("granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videobufGranulepos, (double)videobufTime, (int)theoraInfo.keyframe_granule_shift);
+				// Extract the previous-keyframe info from the granule pos. It might be handy.
+				ogg_int64_t packetGranulepos = videoPacket.granulepos;
+				ogg_int64_t packetKeyframeGranulepos = (packetGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
 
-            OgvJsOutputFrameReady(videobufTime, keyframeTime);
+				// Convert to precious, precious seconds. Yay linear units!
+				videoPacketTime = th_granule_time(theoraDecoderContext, packetGranulepos);
+				packetKeyframeTime = th_granule_time(theoraDecoderContext, packetKeyframeGranulepos);
+				
+				// Also, if we've just resynced a stream we need to feed this down to the decoder
+				th_decode_ctl(theoraDecoderContext, TH_DECCTL_SET_GRANPOS, &packetGranulepos, sizeof(packetGranulepos));
+	        }
+			//printf("packet granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videoPacket.granulepos, (double)videoPacketTime, (int)theoraInfo.keyframe_granule_shift);
+
+            OgvJsOutputFrameReady(videoPacketTime, packetKeyframeTime);
         } else {
             needData = 1;
         }
@@ -448,10 +456,8 @@ int OgvJsDecodeFrame() {
         return 0;
     }
     videobufReady = 0;
-    //videobufGranulepos = videoPacket.granulepos;
-    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, NULL);
+    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, &videobufGranulepos);
     if (ret == 0) {
-    	/*
         double t = th_granule_time(theoraDecoderContext, videobufGranulepos);
         if (t > 0) {
             videobufTime = t;
@@ -461,16 +467,17 @@ int OgvJsDecodeFrame() {
         }
         
         // Also record the previous keyframe time, which is useful when seeking
-        keyframeGranulepos = (keyframeGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+		keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
         keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
-        */
-        
+        //printf("granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videobufGranulepos, (double)videobufTime, (int)theoraInfo.keyframe_granule_shift);
+
         frames++;
         video_write();
         return 1;
     } else if (ret == TH_DUPFRAME) {
         // Duplicated frame, advance time
-        //videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+        videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+        //printf("dupe videobuf time %lf\n", (double)videobufTime);
         frames++;
         video_write();
         return 1;

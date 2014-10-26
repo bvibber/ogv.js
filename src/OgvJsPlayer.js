@@ -160,10 +160,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var lastFrameTimestamp = 0.0;
 
 	function processFrame() {
-		if (codec.frameTimestamp >= 0) {
-			frameEndTimestamp = codec.frameTimestamp;
-		}
 		yCbCrBuffer = codec.dequeueFrame();
+		frameEndTimestamp = yCbCrBuffer.timestamp;
 	}
 
 	function drawFrame() {
@@ -414,6 +412,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
 					// we just fell over from headers into content; reinit
 					state = State.PLAYING;
+					if (codec.hasAudio) {
+						initAudioFeeder();
+					}
 					lastFrameTimestamp = getTimestamp();
 					targetFrameTime = lastFrameTimestamp + 1000.0 / fps
 					pingProcessing(0);
@@ -500,8 +501,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
 					frameDelay = (frameEndTimestamp - (audioState.playbackPosition + seekTargetTime)) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
-				console.log('frame', readyForFrame, codec.frameReady, frameEndTimestamp, (audioState.playbackPosition + seekTargetTime), frameDelay);
-				console.log('audio', readyForAudio, codec.audioReady, audioState.samplesQueued, (audioFeeder.bufferSize * 2));
+				//console.log('frame', readyForFrame, codec.frameReady, frameEndTimestamp, (audioState.playbackPosition + seekTargetTime), frameDelay);
+				//console.log('audio', readyForAudio, codec.audioReady, audioState.samplesQueued, (audioFeeder.bufferSize * 2));
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
 					var start = getTimestamp();
@@ -692,10 +693,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		};
 		codec.oninitaudio = function(info) {
 			audioInfo = info;
-			initAudioFeeder();
+			//initAudioFeeder();
 		};
 		codec.onloadedmetadata = function() {
-			state = State.PLAYING;
+			//state = State.PLAYING;
 			if (self.onloadedmetadata) {
 				self.onloadedmetadata();
 			}
