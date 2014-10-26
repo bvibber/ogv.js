@@ -83,7 +83,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	var placeboCodec, codec, audioFeeder;
-	var muted = false;
+	var muted = false,
+		initialAudioPosition = 0.0,
+		initialAudioOffset = 0.0;
 	function initAudioFeeder() {
 		console.log('init audio feeder');
 		audioFeeder = new AudioFeeder( audioOptions );
@@ -97,7 +99,30 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		};
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
 	}
-
+	
+	function startAudio(offset) {
+		audioFeeder.start();
+		initialAudioPosition = audioFeeder.getPlaybackState().playbackPosition;
+		if (offset !== undefined) {
+			initialAudioOffset = offset;
+		}
+	}
+	
+	function stopAudio() {
+		initialAudioOffset = getAudioTime();
+		audioFeeder.stop();
+	}
+	
+	/**
+	 * Get audio playback time position in file's units
+	 *
+	 * @return {number} seconds since file start
+	 */
+	function getAudioTime(state) {
+		state = state || audioFeeder.getPlaybackState();
+		//console.log(state.playbackPosition, initialAudioPosition, initialAudioOffset);
+		return (state.playbackPosition - initialAudioPosition) + initialAudioOffset;
+	}
 
 	var stream, byteLength = 0, nextProcessingTimer, paused = true;
 
@@ -230,8 +255,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		codec.flush();
 		
 		if (codec.hasAudio && audioFeeder) {
-			audioFeeder.close();
-			audioFeeder = null;
+			stopAudio();
 		}
 
 		seekBisector = new Bisector({
@@ -260,7 +284,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		frameEndTimestamp = codec.frameTimestamp;
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
-			initAudioFeeder();
+			startAudio(seekTargetTime);
 		} else {
 			seekTargetTime = codec.frameTimestamp;
 		}
@@ -413,12 +437,17 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
 					// we just fell over from headers into content; reinit
 					state = State.PLAYING;
-					if (codec.hasAudio) {
-						initAudioFeeder();
-					}
 					lastFrameTimestamp = getTimestamp();
 					targetFrameTime = lastFrameTimestamp + 1000.0 / fps
-					pingProcessing(0);
+					if (codec.hasAudio) {
+						initAudioFeeder();
+						audioFeeder.waitUntilReady(function() {
+							startAudio(0.0);
+							pingProcessing(0);
+						});
+					} else {
+						pingProcessing(0);
+					}
 					return;
 				}
 
@@ -491,6 +520,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (codec.hasAudio && audioFeeder) {
 				if (!audioState) {
 					audioState = audioFeeder.getPlaybackState();
+					audioPlaybackPosition = getAudioTime(audioState);
 					audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
 					droppedAudio = audioState.dropped;
 				}
@@ -498,10 +528,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				// Drive on the audio clock!
 				var fudgeDelta = 0.1,
 					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
-					frameDelay = (frameEndTimestamp - (audioState.playbackPosition + seekTargetTime)) * 1000,
+					frameDelay = (frameEndTimestamp - audioPlaybackPosition) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
-				//console.log('frame', readyForFrame, codec.frameReady, frameEndTimestamp, (audioState.playbackPosition + seekTargetTime), frameDelay);
+				//console.log('frame', readyForFrame, codec.frameReady, frameEndTimestamp, audioPlaybackPosition, frameDelay);
 				//console.log('audio', readyForAudio, codec.audioReady, audioState.samplesQueued, (audioFeeder.bufferSize * 2));
+
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
 					var start = getTimestamp();
@@ -552,7 +583,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					}
 				}
 				
-				//console.log(n, audioState.playbackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']');
+				//console.log(n, audioPlaybackPosition, frameEndTimestamp, audioBufferedDuration, bufferDuration, frameDelay, '[' + nextDelays.join("/") + ']');
 				var nextDelay = Math.min.apply(Math, nextDelays);
 				if (nextDelays.length > 0) {
 					if (placeboCodec) {
@@ -703,11 +734,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 		continueVideo = function() {
 			if (audioFeeder) {
-				audioFeeder.onstarved = function() {
-					pingProcessing();
-				};
+				startAudio();
 			}
-			pingProcessing();
+			pingProcessing(0);
 		}
 
 		stream.readBytes();
@@ -853,7 +882,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			if (audioFeeder) {
-				audioFeeder.onstarved = null;
+				stopAudio();
 			}
 			paused = true;
 			if (self.onpause) {
@@ -897,7 +926,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				return seekTargetTime;
 			} else {
 				if (codec && codec.hasAudio && audioFeeder) {
-					return audioFeeder.getPlaybackState().playbackPosition + seekTargetTime;
+					return getAudioTime();
 				} else if (codec && codec.hasVideo) {
 					return frameEndTimestamp;
 				} else {

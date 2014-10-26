@@ -26,7 +26,6 @@
 			}
 			this.flashaudio = new DynamicAudio( flashOptions );
 		}
-	
 
 		var bufferSize = this.bufferSize = 4096,
 			channels = 0, // call init()!
@@ -87,51 +86,48 @@
 			}
 		}
 
-		if(node) {
-			node.onaudioprocess = function(event) {
-				if (typeof event.playbackTime === "number") {
-					playbackTimeAtBufferHead = event.playbackTime;
-				} else if (typeof event.timeStamp === "number") {
-					playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
-				} else {
-					console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
+		function audioProcess(event) {
+			if (typeof event.playbackTime === "number") {
+				playbackTimeAtBufferHead = event.playbackTime;
+			} else if (typeof event.timeStamp === "number") {
+				playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
+			} else {
+				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
+			}
+			var inputBuffer = popNextBuffer(bufferSize);
+			if (!inputBuffer) {
+				// We might be in a throttled background tab; go ping the decoder
+				// and let it know we need more data now!
+				if (self.onstarved) {
+					self.onstarved();
+					inputBuffer = popNextBuffer(bufferSize);
 				}
-				var inputBuffer = popNextBuffer(bufferSize);
-				if (!inputBuffer) {
-					// We might be in a throttled background tab; go ping the decoder
-					// and let it know we need more data now!
-					if (self.onstarved) {
-						self.onstarved();
-						inputBuffer = popNextBuffer(bufferSize);
+			}
+			if (!muted && inputBuffer) {
+				bufferHead += (bufferSize / context.sampleRate);
+				playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
+				for (var channel = 0; channel < outputChannels; channel++) {
+					var input = inputBuffer[channel],
+						output = event.outputBuffer.getChannelData(channel);
+					for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
+						output[i] = input[i];
 					}
 				}
-				if (!muted && inputBuffer) {
+			} else {
+				if (inputBuffer) {
+					// Pretend we played this audio
 					bufferHead += (bufferSize / context.sampleRate);
 					playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
-					for (var channel = 0; channel < outputChannels; channel++) {
-						var input = inputBuffer[channel],
-							output = event.outputBuffer.getChannelData(channel);
-						for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
-							output[i] = input[i];
-						}
-					}
 				} else {
-					if (inputBuffer) {
-						// Pretend we played this audio
-						bufferHead += (bufferSize / context.sampleRate);
-						playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
-					} else {
-						dropped++;
-					}
-					for (var channel = 0; channel < outputChannels; channel++) {
-						var output = event.outputBuffer.getChannelData(channel);
-						for (var i = 0; i < bufferSize; i++) {
-							output[i] = 0;
-						}
+					dropped++;
+				}
+				for (var channel = 0; channel < outputChannels; channel++) {
+					var output = event.outputBuffer.getChannelData(channel);
+					for (var i = 0; i < bufferSize; i++) {
+						output[i] = 0;
 					}
 				}
-			};
-			node.connect(context.destination);
+			}
 		}
 	
 		/**
@@ -271,6 +267,13 @@
 			}
 		};
 	
+		/**
+		 * @return {
+		 *   playbackPosition: {number} seconds, with a system-provided base time
+		 *   samplesQueued: {int}
+		 *   dropped: {int}
+		 * }
+		 */
 		this.getPlaybackState = function() {
 			if (this.flashaudio) {
 				var flashElement = this.flashaudio.flashElement;
@@ -285,7 +288,7 @@
 				}
 			} else {
 				return {
-					playbackPosition: bufferHead - (playbackTimeAtBufferHead - context.currentTime),
+					playbackPosition: context.currentTime,
 					samplesQueued: samplesQueued(),
 					dropped: dropped
 				}
@@ -302,15 +305,14 @@
 		
 		this.close = function() {
 			console.log('CLOSE AUDIO FEEDER');
+			this.stop();
+
 			if(this.flashaudio) {
 				var wrapper = this.flashaudio.flashWrapper;
 				wrapper.parentNode.removeChild(wrapper);
 				this.flashaudio = null;
-			} else if (node) {
-				node.onaudioprocess = null;
-				node.disconnect();
 			}
-			node = null;
+
 			context = null;
 			buffers = null;
 		};
@@ -336,6 +338,26 @@
 				pingFlashPlugin();
 			} else {
 				setTimeout(callback, 0);
+			}
+		};
+		
+		this.start = function() {
+			if (this.flashaudio) {
+				this.flashaudio.flashElement.start();
+			} else {
+				node.onaudioprocess = audioProcess;
+				node.connect(context.destination);
+			}
+		};
+		
+		this.stop = function() {
+			if (this.flashaudio) {
+				this.flashaudio.flashElement.stop();
+			} else {
+				if (node) {
+					node.onaudioprocess = null;
+					node.disconnect();
+				}
 			}
 		};
 

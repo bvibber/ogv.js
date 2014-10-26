@@ -24,6 +24,8 @@ package {
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
+            ExternalInterface.addCallback('start', startPlayback);
+            ExternalInterface.addCallback('stop', stopPlayback);
 
             // Create a hex digit lookup table
             var hexDigits:Array = ['0', '1', '2', '3', '4', '5', '6', '7',
@@ -43,16 +45,22 @@ package {
             setTimeout(flushBuffers, 0);
         }
 
+        public function startPlayback():void {
+            this.sound = new Sound();
+            this.sound.addEventListener(
+                SampleDataEvent.SAMPLE_DATA,
+                soundGenerator
+            );
+            this.soundChannel = this.sound.play();
+        }
+        
+        public function stopPlayback():void {
+            this.soundChannel.stop();
+            this.soundChannel = null;
+            this.sound = null;
+        }
+        
         public function flushBuffers():void {
-            if (!this.sound) {
-                this.sound = new Sound();
-                this.sound.addEventListener(
-                    SampleDataEvent.SAMPLE_DATA,
-                    soundGenerator
-                );
-                this.soundChannel = this.sound.play();
-            }
-
             while (stringBuffer.length > 0) {
                 var s:String = stringBuffer.shift();
                 var hexValues:Vector.<int> = this.hexValues;
