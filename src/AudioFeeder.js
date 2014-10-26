@@ -289,7 +289,7 @@
 				}
 			} else {
 				return {
-					playbackPosition: context.currentTime,
+					playbackPosition: context.currentTime - (dropped * bufferSize / context.sampleRate),
 					samplesQueued: samplesQueued(),
 					dropped: dropped
 				}
