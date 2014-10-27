@@ -365,6 +365,61 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	/**
+	 * @return {boolean} true to continue processing, false to wait for input data
+	 */
+	function doProcessSeekingAudio() {
+		if (codec.audioReady) {
+			var fudgeFactor = (1 / 10);
+			if (codec.audioTimestamp < 0) {
+				// Invalid granule pos? um.
+				// move on past it
+				codec.discardAudio();
+				return true; // keep looking for packets with timestamps
+			}
+			
+			if (codec.audioTimestamp > seekTargetTime + fudgeFactor) {
+				console.log('audio too high: ', codec.audioTimestamp, seekTargetTime, fudgeFactor);
+				if (lastFrameSkipped) {
+					console.log('gave up on bisect, we skipped over the target position');
+					continueSeekedPlayback();
+				} else {
+					if (seekBisector.left()) {
+						// wait for new data to come in
+					} else {
+						console.log('gave up on bisect left');
+						continueSeekedPlayback();
+					}
+					return false;
+				}
+			} else if (codec.audioTimestamp < seekTargetTime - fudgeFactor) {
+				console.log('audio too low: ', codec.audioTimestamp, seekTargetTime, fudgeFactor);
+				if (seekTargetTime - codec.audioTimestamp < 1.0) {
+					// If it's close, just keep looking for packets
+					console.log('skipping over packet');
+					codec.discardAudio();
+					lastFrameSkipped = true;
+				} else {
+					if (seekBisector.right()) {
+						// wait for new data to come in
+					} else {
+						console.log('gave up on bisect right');
+						continueSeekedPlayback();
+					}
+					return false;
+				}
+			} else {
+				// We found it!
+				console.log('audio FOUND: ', codec.audioTimestamp, seekTargetTime, fudgeFactor);
+				continueSeekedPlayback();
+				return false;
+			}
+		} else {
+			// Keep reading for more data.
+		}
+		return true;
+	}
+
+	/**
 	 * In IE, pushing data to the Flash shim is expensive.
 	 * Combine multiple small Vorbis packet outputs into
 	 * larger buffers so we don't have to make as many calls.
@@ -472,7 +527,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					// seek according to frames, look for the last keyframe
 					doProcessSeekingVideo();
 				} else if (codec.hasAudio) {
-					throw new Error('seeking not yet supported on audio-only');
+					// no worry about keyframes, at least
+					doProcessSeekingAudio();
+				} else {
+					throw new Error('seeking in invalid state (no audio or video)');
 				}
 				// Back to the loop to process more data
 				continue;
