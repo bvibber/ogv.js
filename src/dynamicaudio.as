@@ -7,7 +7,7 @@ package {
     import flash.utils.setTimeout;
 
     public class dynamicaudio extends Sprite {
-        public var bufferSize:Number = 8192; // In samples
+        public var bufferSize:Number = 4096; // In samples
         public var sound:Sound = null;
         public var soundChannel:SoundChannel = null;
         public var stringBuffer:Vector.<String> = new Vector.<String>();
@@ -20,10 +20,13 @@ package {
         private var droppedAudioTime:Number = 0; // seconds; amount of audio time not accounted for, assumed dropped
         private var dropped:Number = 0;
         private var targetRate:Number = 44100;
+        private var startTime:Number = 0;
 
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
+            ExternalInterface.addCallback('start', startPlayback);
+            ExternalInterface.addCallback('stop', stopPlayback);
 
             // Create a hex digit lookup table
             var hexDigits:Array = ['0', '1', '2', '3', '4', '5', '6', '7',
@@ -41,18 +44,34 @@ package {
             // Decode the hex string asynchronously.
             stringBuffer.push(s);
             setTimeout(flushBuffers, 0);
+            //flushBuffers();
         }
 
-        public function flushBuffers():void {
-            if (!this.sound) {
-                this.sound = new Sound();
-                this.sound.addEventListener(
-                    SampleDataEvent.SAMPLE_DATA,
-                    soundGenerator
-                );
-                this.soundChannel = this.sound.play();
+        public function startPlayback():void {
+            startTime = flash.utils.getTimer() / 1000;
+            sound = new Sound();
+            sound.addEventListener(
+                SampleDataEvent.SAMPLE_DATA,
+                soundGenerator
+            );
+            soundChannel = this.sound.play();
+        }
+        
+        public function stopPlayback():void {
+            if (soundChannel) {
+                soundChannel.stop();
             }
+            soundChannel = null;
+            sound = null;
+            droppedAudioTime = 0;
+            starvedAudioTime = 0;
+            totalBufferedAudio = 0;
 
+            stringBuffer.splice(0, stringBuffer.length);
+            buffer.splice(0, buffer.length);
+        }
+        
+        public function flushBuffers():void {
             while (stringBuffer.length > 0) {
                 var s:String = stringBuffer.shift();
                 var hexValues:Vector.<int> = this.hexValues;
@@ -77,15 +96,22 @@ package {
         }
 
         public function samplesQueued():Number {
-            flushBuffers();
-            return buffer.length / 2;
+            //flushBuffers();
+            var stringsLength:int = 0;
+            for (var i:int = 0; i < stringBuffer.length; i++) {
+                stringsLength += stringBuffer[i].length / 2;
+            }
+            return stringsLength + buffer.length / 2;
         }
 
         public function playbackPosition():Number {
             if (soundChannel == null) {
                 return 0;
             } else {
-                return soundChannel.position / 1000 - starvedAudioTime - droppedAudioTime;
+                return Math.max(0,
+                    soundChannel.position / 1000 + startTime - starvedAudioTime
+                    //(totalBufferedAudio - starvedAudioTime) + startTime
+                );
             }
         }
 

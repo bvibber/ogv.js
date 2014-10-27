@@ -13,5 +13,8 @@
 // -- WebGLFrameSink.js
 #include "WebGLFrameSink.js"
 
+// -- Bisector.js
+#include "Bisector.js"
+
 // -- OgvJsPlayer.js
 #include "OgvJsPlayer.js"

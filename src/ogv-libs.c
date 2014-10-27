@@ -39,12 +39,15 @@ int               frames = 0;
 
 /* single frame video buffering */
 int               videobufReady = 0;
-ogg_int64_t       videobufGranulepos = -1;
-double            videobufTime = 0;
+ogg_int64_t       videobufGranulepos = -1;  // @todo reset with TH_CTL_whatver on seek
+double            videobufTime = 0;         // time seen on actual decoded frame
+ogg_int64_t       keyframeGranulepos = -1;  //
+double            keyframeTime = -1;        // last-keyframe time seen on actual decoded frame
 
 int               audiobufReady = 0;
 ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
-
+double            audiobufTime = 0;
+double            audioSampleRate = 0;
 
 /* Audio decode state */
 int               vorbisHeaders = 0;
@@ -94,16 +97,17 @@ extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            double fps,
                            int picWidth, int picHeight,
                            int picX, int picY);
-extern void OgvJsOutputFrameReady();
+extern void OgvJsOutputFrameReady(double timestamp, double keyframeTimestamp);
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
                              unsigned char *bufferCr, int strideCr,
                              int width, int height,
                              int hdec, int vdec,
-                             double timestamp);
+                             double timestamp,
+                             double keyframeTimestamp);
 
 extern void OgvJsInitAudio(int channels, int rate);
-extern void OgvJsOutputAudioReady();
+extern void OgvJsOutputAudioReady(double audioTimestamp);
 extern void OgvJsOutputAudio(float **buffers, int channels, int sampleCount);
 
 /*Write out the planar YUV frame, uncropped.*/
@@ -119,7 +123,7 @@ static void video_write(void) {
             ycbcr[2].data, ycbcr[2].stride,
             theoraInfo.frame_width, theoraInfo.frame_height,
             hdec, vdec,
-            videobufTime);
+            videobufTime, keyframeTime);
 }
 
 /* dump the theora comment header */
@@ -171,7 +175,7 @@ void OgvJsInit(int process_audio_flag, int process_video_flag) {
     th_info_init(&theoraInfo);
 }
 
-static void processHeaders();
+static int needData = 1;
 
 static void processBegin() {
     if (ogg_page_bos(&oggPage)) {
@@ -237,6 +241,7 @@ static void processBegin() {
 }
 
 static void processHeaders() {
+
 #ifdef OPUS
     if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3) || (opusHeaders && opusHeaders < 2)) {
 #else
@@ -248,6 +253,7 @@ static void processHeaders() {
         /* look for further theora headers */
         if (theoraHeaders && theoraProcessingHeaders) {
             printf("checking theora headers...\n");
+
             ret = ogg_stream_packetpeek(&theoraStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading theora headers: %d.\n", ret);
@@ -258,11 +264,13 @@ static void processHeaders() {
                 theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket);
                 if (theoraProcessingHeaders == 0) {
                     // We've completed the theora header
-                    printf("Completed theora header.\n");
+                    printf("Completed theora header. Saving video packet for later...\n");
                     theoraHeaders = 3;
-                } else {
+                } else if (theoraProcessingHeaders < 0) {
+                	printf("Error parsing theora headers: %d.\n", theoraProcessingHeaders);
+            	} else {
                     printf("Still parsing theora headers...\n");
-                    ogg_stream_packetout(&theoraStreamState, NULL);
+					ogg_stream_packetout(&theoraStreamState, NULL);
                 }
             }
             if (ret == 0) {
@@ -272,6 +280,7 @@ static void processHeaders() {
 
         if (vorbisHeaders && (vorbisHeaders < 3)) {
             printf("checking vorbis headers...\n");
+
             ret = ogg_stream_packetpeek(&vorbisStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading vorbis headers: %d.\n", ret);
@@ -296,6 +305,7 @@ static void processHeaders() {
 #ifdef OPUS
         if (opusHeaders && (opusHeaders < 2)) {
             printf("checking for opus headers...\n");
+
             ret = ogg_stream_packetpeek(&opusStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading Opus headers: %d.\n", ret);
@@ -339,7 +349,8 @@ static void processHeaders() {
         if (opusHeaders) {
             // opusDecoder should already be initialized
             // Opus has a fixed internal sampling rate of 48000 Hz
-            OgvJsInitAudio(opusChannels, 48000);
+            audioSampleRate = 48000;
+            OgvJsInitAudio(opusChannels, audioSampleRate);
         } else
 #endif
         if (vorbisHeaders) {
@@ -348,7 +359,8 @@ static void processHeaders() {
             printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
                     vorbisStreamState.serialno, vorbisInfo.channels, vorbisInfo.rate);
 
-            OgvJsInitAudio(vorbisInfo.channels, vorbisInfo.rate);
+			audioSampleRate = vorbisInfo.rate;
+            OgvJsInitAudio(vorbisInfo.channels, audioSampleRate);
         }
 
         appState = STATE_DECODING;
@@ -357,15 +369,34 @@ static void processHeaders() {
     }
 }
 
-static int needData = 1;
-
 static void processDecoding() {
-    needData = 0;
+	needData = 0;
     if (theoraHeaders && !videobufReady) {
         /* theora is one in, one out... */
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
-            OgvJsOutputFrameReady();
+
+			double videoPacketTime = -1;
+			double packetKeyframeTime = -1;
+			if (videoPacket.granulepos == 0xffffffffffffffffLL) {
+				// granulepos is actually listed per-page, not per-packet,
+				// so not every packet lists a granulepos.
+				// Scary, huh?
+			} else {
+				// Extract the previous-keyframe info from the granule pos. It might be handy.
+				ogg_int64_t packetGranulepos = videoPacket.granulepos;
+				ogg_int64_t packetKeyframeGranulepos = (packetGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+
+				// Convert to precious, precious seconds. Yay linear units!
+				videoPacketTime = th_granule_time(theoraDecoderContext, packetGranulepos);
+				packetKeyframeTime = th_granule_time(theoraDecoderContext, packetKeyframeGranulepos);
+				
+				// Also, if we've just resynced a stream we need to feed this down to the decoder
+				th_decode_ctl(theoraDecoderContext, TH_DECCTL_SET_GRANPOS, &packetGranulepos, sizeof(packetGranulepos));
+	        }
+			//printf("packet granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videoPacket.granulepos, (double)videoPacketTime, (int)theoraInfo.keyframe_granule_shift);
+
+            OgvJsOutputFrameReady(videoPacketTime, packetKeyframeTime);
         } else {
             needData = 1;
         }
@@ -376,7 +407,9 @@ static void processDecoding() {
         if (opusHeaders) {
             if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
                 audiobufReady = 1;
-                OgvJsOutputAudioReady();
+                audiobufGranulepos = audioPacket.granulepos;
+                audiobufTime += (double)audiobufGranulepos / audioSampleRate;
+                OgvJsOutputAudioReady(audiobufTime);
             } else {
                 needData = 1;
             }
@@ -385,7 +418,9 @@ static void processDecoding() {
         if (vorbisHeaders) {
             if (ogg_stream_packetpeek(&vorbisStreamState, &audioPacket) > 0) {
                 audiobufReady = 1;
-                OgvJsOutputAudioReady();
+                audiobufGranulepos = audioPacket.granulepos;
+                audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
+                OgvJsOutputAudioReady(audiobufTime);
             } else {
                 needData = 1;
             }
@@ -408,12 +443,19 @@ int OgvJsDecodeFrame() {
             // For some reason sometimes we get a bunch of 0s out of th_granule_time
             videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         }
+        
+        // Also record the previous keyframe time, which is useful when seeking
+		keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+        keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
+        //printf("granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videobufGranulepos, (double)videobufTime, (int)theoraInfo.keyframe_granule_shift);
+
         frames++;
         video_write();
         return 1;
     } else if (ret == TH_DUPFRAME) {
         // Duplicated frame, advance time
         videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
+        //printf("dupe videobuf time %lf\n", (double)videobufTime);
         frames++;
         video_write();
         return 1;
@@ -494,31 +536,47 @@ int OgvJsDecodeAudio() {
     return foundSome;
 }
 
+static int buffersReceived = 0;
+
 void OgvJsReceiveInput(char *buffer, int bufsize) {
     if (bufsize > 0) {
-        char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
-        memcpy(dest, buffer, bufsize);
-        ogg_sync_wrote(&oggSyncState, bufsize);
+		buffersReceived = 1;
+		if (appState == STATE_DECODING) {
+			// queue ALL the pages!
+			while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+				queue_page(&oggPage);
+			}
+		}
+		char *dest = ogg_sync_buffer(&oggSyncState, bufsize);
+		memcpy(dest, buffer, bufsize);
+		if (ogg_sync_wrote(&oggSyncState, bufsize) < 0) {
+			printf("Horrible error in ogg_sync_wrote\n");
+		}
     }
 }
 
 int OgvJsProcess() {
-    if (needData) {
-        if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
-            queue_page(&oggPage);
-        } else {
-            // out of data!
-            return 0;
-        }
-    }
+	if (!buffersReceived) {
+		return 0;
+	}
+	if (needData) {
+		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+			queue_page(&oggPage);
+		} else {
+			return 0;
+		}
+	}
     if (appState == STATE_BEGIN) {
         processBegin();
     } else if (appState == STATE_HEADERS) {
         processHeaders();
     } else if (appState == STATE_DECODING) {
         processDecoding();
-    }
-    return 1;
+    } else {
+    	// uhhh...
+    	printf("Invalid appState in OgvJsProcess\n");
+	}
+	return 1;
 }
 
 void OgvJsDestroy() {
@@ -546,3 +604,62 @@ void OgvJsDestroy() {
     ogg_sync_clear(&oggSyncState);
 }
 
+void OgvJsFlushBuffers() {
+	// First, read out anything left in our input buffer
+	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+		queue_page(&oggPage);
+	}
+	
+	// Then, dump all packets from the streams
+	if (theoraHeaders) {
+		while (ogg_stream_packetout(&theoraStreamState, &videoPacket)) {
+			// flush!
+		}
+	}
+
+	if (vorbisHeaders) {
+		while (ogg_stream_packetout(&vorbisStreamState, &audioPacket)) {
+			// flush!
+		}
+	}
+
+#ifdef OPUS
+	if (opusHeaders) {
+		while (ogg_stream_packetout(&opusStreamState, &audioPacket)) {
+			// flush!
+		}
+	}
+#endif
+
+	// And reset sync state for good measure.
+	ogg_sync_reset(&oggSyncState);
+	videobufReady = 0;
+	audiobufReady = 0;
+	videobufGranulepos = 0xffffffffffffffffLL;
+	videobufTime = 0.0;
+}
+
+void OgvJsDiscardFrame()
+{
+	if (videobufReady) {
+		if (theoraHeaders) {
+			ogg_stream_packetout(&theoraStreamState, &videoPacket);
+		}
+		videobufReady = 0;
+	}
+}
+
+void OgvJsDiscardAudio()
+{
+	if (audiobufReady) {
+		if (vorbisHeaders) {
+			ogg_stream_packetout(&vorbisStreamState, &audioPacket);
+		}
+#ifdef OPUS
+		if (opusHeaders) {
+			ogg_stream_packetout(&opusStreamState, &audioPacket);
+		}
+#endif
+		audiobufReady = 0;
+	}
+}

@@ -852,6 +852,7 @@
 		status.className = 'status-invisible';
 		status.textContent = '';
 
+		OgvJsPlayer.initSharedAudioContext();
 		player.load();
 		player.play();
 	}
@@ -895,6 +896,15 @@
 		}
 		setHash();
 	});
+	document.querySelector('#progress-total').addEventListener('click', function(event) {
+		if (player) {
+			var x = (event.clientX - this.offsetLeft),
+				fraction = x / this.offsetWidth,
+				seekTime = fraction * player.duration;
+			player.currentTime = seekTime;
+		}
+	});
+			
 	controls.querySelector('.fullscreen').addEventListener('click', function() {
 		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
 		if (fullscreenElement == container) {

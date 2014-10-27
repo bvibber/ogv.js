@@ -31,6 +31,9 @@ OgvJs = (function(options) {
     var OgvJsProcess = Module.cwrap('OgvJsProcess', 'number', []);
     var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'number', []);
     var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'number', []);
+    var OgvJsFlushBuffers = Module.cwrap('OgvJsFlushBuffers', 'void', []);
+    var OgvJsDiscardFrame = Module.cwrap('OgvJsDiscardFrame', 'void', []);
+    var OgvJsDiscardAudio = Module.cwrap('OgvJsDiscardAudio', 'void', []);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -60,8 +63,10 @@ OgvJs = (function(options) {
 		}
 	}
 	
-	function OgvJsOutputFrameReadyCallback() {
+	function OgvJsOutputFrameReadyCallback(frameTimestamp, keyframeTimestamp) {
 		self.frameReady = true;
+		self.frameTimestamp = frameTimestamp;
+		self.keyframeTimestamp = keyframeTimestamp;
 	}
 
 	var queuedFrame = null;
@@ -76,8 +81,9 @@ OgvJs = (function(options) {
 		}
 	}
 
-	function OgvJsOutputAudioReadyCallback() {
+	function OgvJsOutputAudioReadyCallback(audioTimestamp) {
 		self.audioReady = true;
+		self.audioTimestamp = audioTimestamp;
 	}
 
 	var audioBuffers = [];
@@ -118,7 +124,11 @@ OgvJs = (function(options) {
 	/**
 	 * @property number time position in seconds of last decoded frame
 	 */
-	self.videoPosition = 0.0;
+	self.frameTimestamp = 0.0;
+	
+	self.keyframeTimestamp = 0.0;
+	
+	self.audioTimestamp = 0.0;
 	
 	/**
 	 * Tear down the instance when done.
@@ -215,7 +225,25 @@ OgvJs = (function(options) {
 		} else {
 			throw new Error("called dequeueAudio when no audio ready");
 		}
-	}
+	};
+	
+	self.discardFrame = function() {
+		OgvJsDiscardFrame();
+		self.frameReady = false;
+		queuedFrame = false;
+	};
+	
+	self.discardAudio = function() {
+		OgvJsDiscardAudio();
+		self.audioReady = false;
+		audioBuffers.splice(0, audioBuffers.length);
+	};
+	
+	self.flush = function() {
+		OgvJsFlushBuffers();
+		self.discardFrame();
+		self.discardAudio();
+	};
 
 	/**
 	 * Is there processed data to handle?

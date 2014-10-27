@@ -23,8 +23,8 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	OgvJsOutputFrameReady: function(videoPosition) {
-		OgvJsOutputFrameReadyCallback(videoPosition);
+	OgvJsOutputFrameReady: function(videoTimestamp, keyframeTimestamp) {
+		OgvJsOutputFrameReadyCallback(videoTimestamp, keyframeTimestamp);
 	},
 	
 	OgvJsOutputFrame: function(bufferY, strideY,
@@ -32,7 +32,8 @@ mergeInto(LibraryManager.library, {
 	                           bufferCr, strideCr,
 	                           width, height,
 	                           hdec, vdec,
-	                           timestamp) {
+	                           timestamp,
+	                           keyframeTimestamp) {
 		
 		// Create typed array views of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
@@ -57,7 +58,8 @@ mergeInto(LibraryManager.library, {
 			height: height,
 			hdec: hdec,
 			vdec: vdec,
-			timestamp: timestamp
+			timestamp: timestamp,
+			keyframeTimestamp: keyframeTimestamp
 		});
 	},
 	
@@ -69,8 +71,8 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 	
-	OgvJsOutputAudioReady: function() {
-		OgvJsOutputAudioReadyCallback();
+	OgvJsOutputAudioReady: function(audioTimestamp) {
+		OgvJsOutputAudioReadyCallback(audioTimestamp);
 	},
 	
 	OgvJsOutputAudio: function(buffers, channels, sampleCount) {

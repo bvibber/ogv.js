@@ -12,12 +12,12 @@ appear under build/demo/
 
 See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
 
-* streaming: yes (buffering varies by browser)
+* streaming: yes (with Range header)
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * [background threading: no](https://github.com/brion/ogv.js/wiki/Threading)
 * [GPU accelerated drawing: yes (requires WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
-* seeking: no
+* seeking: yes (with Range header)
 
 
 ## Goals
@@ -122,17 +122,23 @@ In Firefox, the 'moz-chunked-array' responseType on XHR is used to stream data, 
 
 Currently in Safari and Chrome, streaming is done by using a 'binary string' read. This has no flow control so will buffer into memory as fast as possible. This will also buffer up to twice the size of the total file in memory for the entire lifetime of the player, which is wasteful but there doesn't seem to be a way around it without dividing up into subrange requests.
 
-In Flash, a URLStream is used. This is similar to the XHR+binary string in terms of flow control, but uses less memory.
+The Firefox and Safari/Chrome cases have been hacked up to do streaming buffering by chunking the requests at about a megabyte each, using the HTTP Range header. For cross-site playback, this requires CORS setup to whitelist the Range header!
+
+
+In Flash, a URLStream is used. This is similar to the XHR+binary string in terms of flow control, but uses less memory. There is no way to get Flash to send a Range header as it is blacklisted. Thanks, Flash!
 
 
 *Seeking*
 
-Seeking is tough; not yet implemented. Need to do some research:
-* how to determine file length in time
-* how to estimate position in file to seek to based on time target
-* how to reinitialize the decoder context after seeking
+Seeking is implemented via the HTTP Range: header.
 
-Jumping to a new position in the file that hasn't yet been buffered could be accomplished using partial-content HTTP requests ('Range' header), but this requires CORS header adjustment on the server side.
+Currently a simple manual bisection search is used to locate the target frame or audio position, which is very slow over the internet as it creates a lot of short-lived HTTP requests. It also doesn't quite grok all the packet timestamps and sometimes doesn't seek to a video keyframe correctly.
+
+Planning to replace this with use of liboggz, which can use Ogg Skeleton information to seek much more directly.
+
+May also need to fix reinitialization of Vorbis or Opus audio context after seeking.
+
+As with chunked streaming, cross-site playback requires CORS support for the Range header.
 
 
 *Audio output*
