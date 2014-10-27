@@ -267,7 +267,6 @@ WebGLFrameSink.isAvailable = function() {
 
 		var err = gl.getError();
 		if (err) {
-			alert(err);
 			// Doesn't support luminance textures?
 			return false;
 		} else {
