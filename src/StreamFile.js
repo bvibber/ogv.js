@@ -237,9 +237,9 @@ function StreamFile(options) {
 				internal.openXHR();
 			} else {
 				// We're out of data!
-				setTimeout(function() {
+				//setTimeout(function() {
 					ondone();
-				}, 0);
+				//}, 0);
 			}
 		},
 		
@@ -254,9 +254,9 @@ function StreamFile(options) {
 	self.readBytes = function() {
 		if (internal.dataToRead()) {
 			var buffer = internal.popBuffer();
-			setTimeout(function() {
+			//setTimeout(function() {
 				onread(buffer);
-			}, 0);
+			//}, 0);
 			if (doneBuffering && self.bytesRead < self.bytesTotal && internal.bytesBuffered() < chunkSize) {
 				seekPosition += chunkSize;
 				console.log('1 seek to: ' + seekPosition);
