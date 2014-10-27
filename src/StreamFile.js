@@ -217,7 +217,7 @@ function StreamFile(options) {
 				}
 			}
 			
-			console.log('got', bufferOut, byteLength);
+			//console.log('got', bufferOut, byteLength);
 			bytesRead += byteLength;
 			return bufferOut.slice(0, byteLength);
 		},
