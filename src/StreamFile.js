@@ -72,7 +72,22 @@ function StreamFile(options) {
 
 		getMetadata: function() {
 			var xhr = new XMLHttpRequest();
-			xhr.open("HEAD", url);
+			var headUrl = url;
+
+			if (navigator.userAgent.match(/Chrome/)) {
+				// HACK ALERT!
+				//
+				// Cache buster because cached HEAD reqs in Chrome don't
+				// include a Content-Length header, which defeats the purpose.
+				// And we're not allowed to send cache-control. Oh CORS!
+				//
+				// Better would be to get the Content-Range from the 206
+				// response, but it's not whitelisted yet. *headdesk*
+				//
+				headUrl += '?cachebuster=' + Math.random()
+			}
+
+			xhr.open("HEAD", headUrl);
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState == 2) {
 					internal.onXHRHeadersReceived(xhr);
