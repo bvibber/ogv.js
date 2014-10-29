@@ -111,7 +111,7 @@ function StreamFile(options) {
 				range = 'bytes=' + seekPosition + '-';
 			}
 			if (chunkSize) {
-				range += (seekPosition + chunkSize - 1);
+				range += Math.max(seekPosition + chunkSize, bytesTotal) - 1;
 			}
 			if (range !== null) {
 				xhr.setRequestHeader('Range', range);
