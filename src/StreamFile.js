@@ -24,6 +24,7 @@ function StreamFile(options) {
 		bufferSize = options.bufferSize || 8192,
 		minBufferSize = options.minBufferSize || 65536,
 		seekPosition = options.seekPosition || 0,
+		bufferPosition = seekPosition,
 		chunkSize = options.chunkSize || 1024 * 1024, // read/buffer up to a megabyte at a time
 		waitingForInput = false,
 		doneBuffering = false,
@@ -183,7 +184,7 @@ function StreamFile(options) {
 		},
 		
 		dataToRead: function() {
-			return internal.bytesBuffered() >= minBufferSize;
+			return internal.bytesBuffered() > 0;
 		},
 		
 		popBuffer: function() {
@@ -219,6 +220,7 @@ function StreamFile(options) {
 			
 			//console.log('got', bufferOut, byteLength);
 			bytesRead += byteLength;
+			bufferPosition += byteLength;
 			return bufferOut.slice(0, byteLength);
 		},
 		
@@ -231,6 +233,7 @@ function StreamFile(options) {
 		clearBuffers: function() {
 			internal.clearReadState();
 			buffers.splice(0, buffers.length);
+			bufferPosition = seekPosition;
 		},
 
 		// Read the next binary buffer out of the buffered data
@@ -245,17 +248,8 @@ function StreamFile(options) {
 		},
 		
 		onReadDone: function() {
-			if (self.bytesBuffered < self.bytesTotal) {
-				seekPosition += chunkSize;
-				console.log('2 seek to: ' + seekPosition);
-				internal.clearReadState();
-				internal.openXHR();
-			} else {
-				// We're out of data!
-				//setTimeout(function() {
-					ondone();
-				//}, 0);
-			}
+			console.log('onReadDone');
+			ondone();
 		},
 		
 		// See if we can seek within already-buffered data
@@ -269,13 +263,9 @@ function StreamFile(options) {
 	self.readBytes = function() {
 		if (internal.dataToRead()) {
 			var buffer = internal.popBuffer();
-			//setTimeout(function() {
-				onread(buffer);
-			//}, 0);
-			if (doneBuffering) {
-				console.log('done buffering', self.bytesBuffered, self.bytesTotal);
-			}
-			if (doneBuffering && self.bytesBuffered < self.bytesTotal) {
+			onread(buffer);
+			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
+				//console.log('yo!', doneBuffering, seekPosition, bufferPosition, self.bytesRead, self.bytesBuffered, self.bytesTotal);
 				seekPosition += chunkSize;
 				console.log('1 seek to: ' + seekPosition);
 				internal.clearReadState();
@@ -305,6 +295,7 @@ function StreamFile(options) {
 		} else {
 			self.abort();
 			seekPosition = bytePosition;
+			internal.clearBuffers();
 			internal.openXHR();
 		}
 	};
@@ -318,7 +309,7 @@ function StreamFile(options) {
 	
 	Object.defineProperty(self, 'bytesBuffered', {
 		get: function() {
-			return self.bytesRead + internal.bytesBuffered();
+			return bufferPosition + internal.bytesBuffered();
 		}
 	});
 
@@ -412,6 +403,7 @@ function StreamFile(options) {
 						len = buffer.byteLength;
 					if (len > 0) {
 						bytesRead += len;
+						bufferPosition += len;
 						onread(buffer);
 					} else {
 						// Zero length means end of stream.
