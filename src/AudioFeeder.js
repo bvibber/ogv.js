@@ -53,7 +53,8 @@
 			bufferHead = 0,
 			playbackTimeAtBufferHead = 0,
 			targetRate,
-			dropped = 0;
+			dropped = 0,
+			lostTime = 0;
 
 		if(AudioContext) {
 			if (typeof options.audioContext !== 'undefined') {
@@ -87,13 +88,20 @@
 		}
 
 		function audioProcess(event) {
+			var playbackTime;
 			if (typeof event.playbackTime === "number") {
-				playbackTimeAtBufferHead = event.playbackTime;
+				playbackTime = event.playbackTime;
 			} else if (typeof event.timeStamp === "number") {
-				playbackTimeAtBufferHead = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
+				playbackTime = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
 			} else {
 				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
 			}
+			expectedTime = playbackTimeAtBufferHead + (bufferSize / context.sampleRate);
+			if (expectedTime < playbackTime) {
+				// we may have lost some time while something ran too slow
+				lostTime += (playbackTime - expectedTime);
+			}
+			playbackTimeAtBufferHead = playbackTime;
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!inputBuffer) {
 				// We might be in a throttled background tab; go ping the decoder
@@ -289,7 +297,7 @@
 				}
 			} else {
 				return {
-					playbackPosition: context.currentTime - (dropped * bufferSize / context.sampleRate),
+					playbackPosition: context.currentTime - (dropped * bufferSize / context.sampleRate) - lostTime,
 					samplesQueued: samplesQueued(),
 					dropped: dropped
 				}
