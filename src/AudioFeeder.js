@@ -51,7 +51,7 @@
 			pendingPos = 0,
 			muted = false,
 			bufferHead = 0,
-			playbackTimeAtBufferHead = 0,
+			playbackTimeAtBufferHead = -1,
 			targetRate,
 			dropped = 0,
 			lostTime = 0;
@@ -356,6 +356,7 @@
 			} else {
 				node.onaudioprocess = audioProcess;
 				node.connect(context.destination);
+				playbackTimeAtBufferHead = context.currentTime;
 			}
 		};
 		

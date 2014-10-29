@@ -40,13 +40,13 @@ int               frames = 0;
 /* single frame video buffering */
 int               videobufReady = 0;
 ogg_int64_t       videobufGranulepos = -1;  // @todo reset with TH_CTL_whatver on seek
-double            videobufTime = 0;         // time seen on actual decoded frame
+double            videobufTime = -1;         // time seen on actual decoded frame
 ogg_int64_t       keyframeGranulepos = -1;  //
 double            keyframeTime = -1;        // last-keyframe time seen on actual decoded frame
 
 int               audiobufReady = 0;
-ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
-double            audiobufTime = 0;
+ogg_int64_t       audiobufGranulepos = -1; /* time position of last sample */
+double            audiobufTime = -1;
 double            audioSampleRate = 0;
 
 /* Audio decode state */
@@ -376,27 +376,35 @@ static void processDecoding() {
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
 
-			double videoPacketTime = -1;
-			double packetKeyframeTime = -1;
-			if (videoPacket.granulepos == 0xffffffffffffffffLL) {
+			if (videoPacket.granulepos == -1) {
 				// granulepos is actually listed per-page, not per-packet,
 				// so not every packet lists a granulepos.
 				// Scary, huh?
+				if (videobufGranulepos == -1) {
+					// don't know our position yet
+				} else {
+					videobufGranulepos++;
+				}
 			} else {
+				videobufGranulepos = videoPacket.granulepos;
+				th_decode_ctl(theoraDecoderContext, TH_DECCTL_SET_GRANPOS, &videobufGranulepos, sizeof(videobufGranulepos));
+			}
+
+			double videoPacketTime = -1;
+			double packetKeyframeTime = -1;
+			if (videobufGranulepos != -1) {
 				// Extract the previous-keyframe info from the granule pos. It might be handy.
-				ogg_int64_t packetGranulepos = videoPacket.granulepos;
-				ogg_int64_t packetKeyframeGranulepos = (packetGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
+				keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
 
 				// Convert to precious, precious seconds. Yay linear units!
-				videoPacketTime = th_granule_time(theoraDecoderContext, packetGranulepos);
-				packetKeyframeTime = th_granule_time(theoraDecoderContext, packetKeyframeGranulepos);
+				videobufTime = th_granule_time(theoraDecoderContext, videobufGranulepos);
+				keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
 				
 				// Also, if we've just resynced a stream we need to feed this down to the decoder
-				th_decode_ctl(theoraDecoderContext, TH_DECCTL_SET_GRANPOS, &packetGranulepos, sizeof(packetGranulepos));
 	        }
 			//printf("packet granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videoPacket.granulepos, (double)videoPacketTime, (int)theoraInfo.keyframe_granule_shift);
 
-            OgvJsOutputFrameReady(videoPacketTime, packetKeyframeTime);
+            OgvJsOutputFrameReady(videobufTime, keyframeTime);
         } else {
             needData = 1;
         }
@@ -407,8 +415,12 @@ static void processDecoding() {
         if (opusHeaders) {
             if (ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
                 audiobufReady = 1;
-                audiobufGranulepos = audioPacket.granulepos;
-                audiobufTime += (double)audiobufGranulepos / audioSampleRate;
+                if (audioPacket.granulepos == -1) {
+                	// we can't update the granulepos yet
+                } else {
+	                audiobufGranulepos = audioPacket.granulepos;
+    	            audiobufTime = (double)audiobufGranulepos / audioSampleRate;
+    	        }
                 OgvJsOutputAudioReady(audiobufTime);
             } else {
                 needData = 1;
@@ -418,9 +430,13 @@ static void processDecoding() {
         if (vorbisHeaders) {
             if (ogg_stream_packetpeek(&vorbisStreamState, &audioPacket) > 0) {
                 audiobufReady = 1;
-                audiobufGranulepos = audioPacket.granulepos;
-                audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
-                OgvJsOutputAudioReady(audiobufTime);
+                if (audioPacket.granulepos == -1) {
+                	// we can't update the granulepos yet
+                } else {
+	                audiobufGranulepos = audioPacket.granulepos;
+    	            audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
+        	    }
+				OgvJsOutputAudioReady(audiobufTime);
             } else {
                 needData = 1;
             }
@@ -434,7 +450,7 @@ int OgvJsDecodeFrame() {
         return 0;
     }
     videobufReady = 0;
-    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, &videobufGranulepos);
+    int ret = th_decode_packetin(theoraDecoderContext, &videoPacket, NULL);
     if (ret == 0) {
         double t = th_granule_time(theoraDecoderContext, videobufGranulepos);
         if (t > 0) {
@@ -444,9 +460,6 @@ int OgvJsDecodeFrame() {
             videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         }
         
-        // Also record the previous keyframe time, which is useful when seeking
-		keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
-        keyframeTime = th_granule_time(theoraDecoderContext, keyframeGranulepos);
         //printf("granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videobufGranulepos, (double)videobufTime, (int)theoraInfo.keyframe_granule_shift);
 
         frames++;
@@ -505,6 +518,11 @@ int OgvJsDecodeAudio() {
                             pcmp[c][s - skip] = output[s * opusChannels + c];
                         }
                     }
+                    if (audiobufGranulepos != -1) {
+						// keep track of how much time we've decodec
+	                    audiobufGranulepos += (sampleCount - skip);
+	                    audiobufTime = (double)audiobufGranulepos / audioSampleRate;
+	                }
                     OgvJsOutputAudio(pcmp, opusChannels, sampleCount - skip);
                     free(pcmp);
                     free(pcm);
@@ -524,6 +542,11 @@ int OgvJsDecodeAudio() {
 
                 float **pcm;
                 int sampleCount = vorbis_synthesis_pcmout(&vorbisDspState, &pcm);
+				if (audiobufGranulepos != -1) {
+					// keep track of how much time we've decodec
+					audiobufGranulepos += sampleCount;
+					audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
+				}
                 OgvJsOutputAudio(pcm, vorbisInfo.channels, sampleCount);
 
                 vorbis_synthesis_read(&vorbisDspState, sampleCount);
@@ -635,8 +658,12 @@ void OgvJsFlushBuffers() {
 	ogg_sync_reset(&oggSyncState);
 	videobufReady = 0;
 	audiobufReady = 0;
-	videobufGranulepos = 0xffffffffffffffffLL;
-	videobufTime = 0.0;
+	videobufGranulepos = -1;
+	videobufTime = -1;
+	keyframeGranulepos = -1;
+	keyframeTime = -1;
+	audiobufGranulepos = -1;
+	audiobufTime = -1;
 }
 
 void OgvJsDiscardFrame()

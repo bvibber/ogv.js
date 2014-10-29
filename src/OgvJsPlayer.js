@@ -284,6 +284,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	function continueSeekedPlayback() {
 		state = State.PLAYING;
 		frameEndTimestamp = codec.frameTimestamp;
+		console.log('SEEKED', codec.audioTimestamp, codec.frameTimestamp);
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
 			startAudio(seekTargetTime);
@@ -308,9 +309,17 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 			if (codec.audioReady) {
 				//console.log(codec.audioTimestamp, codec.frameTimestamp);
-				if (codec.audioTimestamp < codec.frameTimestamp) {
-					//console.log('discarding audio to catch up');
+				if (codec.audioTimestamp < 0) {
 					codec.discardAudio();
+					return true; // keep looking for packets with timestamps
+				} else if (codec.audioTimestamp < codec.frameTimestamp) {
+					console.log('discarding audio to catch up');
+					//codec.discardAudio();
+					// for the moment we have to decode audio in order to update the timestamp
+					// this can be gotten from headers but it's complicated
+					// liboggz can do it though
+					codec.decodeAudio();
+					codec.dequeueAudio();
 					return true;
 				}
 			}
@@ -319,12 +328,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 				if (lastFrameSkipped) {
 					console.log('gave up on bisect, we skipped over the target position');
+					seekTargetTime = codec.frameTimestamp;
 					continueSeekedPlayback();
 				} else {
 					if (seekBisector.left()) {
 						// wait for new data to come in
 					} else {
 						console.log('gave up on bisect left');
+						seekTargetTime = codec.frameTimestamp;
 						continueSeekedPlayback();
 					}
 					return false;
@@ -341,6 +352,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						// wait for new data to come in
 					} else {
 						console.log('gave up on bisect right');
+						seekTargetTime = codec.frameTimestamp;
 						continueSeekedPlayback();
 					}
 					return false;
@@ -396,7 +408,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (seekTargetTime - codec.audioTimestamp < 1.0) {
 					// If it's close, just keep looking for packets
 					console.log('skipping over packet');
-					codec.discardAudio();
+					//codec.discardAudio();
+					// must decode to update the time reliably
+					codec.decodeAudio();
+					codec.dequeueAudio();
 					lastFrameSkipped = true;
 				} else {
 					if (seekBisector.right()) {
@@ -450,6 +465,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	function doProcessing() {
+		//console.log(codec.audioTimestamp, codec.frameTimestamp);
 		nextProcessingTimer = null;
 		
 		var audioBuffers = [];
