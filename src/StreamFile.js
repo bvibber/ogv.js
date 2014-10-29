@@ -111,7 +111,7 @@ function StreamFile(options) {
 				range = 'bytes=' + seekPosition + '-';
 			}
 			if (chunkSize) {
-				range += Math.max(seekPosition + chunkSize, bytesTotal) - 1;
+				range += Math.min(seekPosition + chunkSize, bytesTotal) - 1;
 			}
 			if (range !== null) {
 				xhr.setRequestHeader('Range', range);
@@ -245,7 +245,7 @@ function StreamFile(options) {
 		},
 		
 		onReadDone: function() {
-			if (self.bytesBuffered < self.bytesTotal && internal.bytesBuffered() < chunkSize) {
+			if (self.bytesBuffered < self.bytesTotal) {
 				seekPosition += chunkSize;
 				console.log('2 seek to: ' + seekPosition);
 				internal.clearReadState();
@@ -272,7 +272,10 @@ function StreamFile(options) {
 			//setTimeout(function() {
 				onread(buffer);
 			//}, 0);
-			if (doneBuffering && self.bytesRead < self.bytesTotal && internal.bytesBuffered() < chunkSize) {
+			if (doneBuffering) {
+				console.log('done buffering', self.bytesBuffered, self.bytesTotal);
+			}
+			if (doneBuffering && self.bytesBuffered < self.bytesTotal) {
 				seekPosition += chunkSize;
 				console.log('1 seek to: ' + seekPosition);
 				internal.clearReadState();
