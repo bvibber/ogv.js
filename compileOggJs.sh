@@ -10,11 +10,13 @@ mkdir js
 cd js
 
 mkdir root
-mkdir libogg
-cd libogg
+mkdir ogg
+cd ogg
 
 # finally, run configuration script
-emconfigure ../../../libogg/configure --prefix="$dir/build/js/root"
+emconfigure ../../../libs/ogg/autogen.sh \
+	--prefix="$dir/build/js/root" \
+	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
 
 # compile libogg
 emmake make

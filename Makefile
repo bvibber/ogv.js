@@ -12,29 +12,26 @@ jsdemo : build/jsdemo/index.html
 
 clean:
 	rm -rf build
-	rm -f libogg/configure
-	rm -f libvorbis/configure
-	rm -f libtheora/configure
+	rm -f libs/ogg/configure
+	rm -f libs/vorbis/configure
+	rm -f libs/theora/configure
+	rm -f libs/opus/configure
 
-build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
+build/js/root/lib/libogg.a : compileOggJs.sh
 	test -d build || mkdir build
-	./configureOgg.sh
 	./compileOggJs.sh
 
-build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a configureVorbis.sh compileVorbisJs.sh
+build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a compileVorbisJs.sh
 	test -d build || mkdir build
-	./configureVorbis.sh
 	./compileVorbisJs.sh
 
-build/js/root/lib/libopus.a : build/js/root/lib/libogg.a configureOpus.sh compileOpusJs.sh
+build/js/root/lib/libopus.a : build/js/root/lib/libogg.a compileOpusJs.sh
 	test -d build || mkdir build
-	./configureOpus.sh
 	./compileOpusJs.sh
 
 
-build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh compileTheoraJs.sh
+build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a compileTheoraJs.sh
 	test -d build || mkdir build
-	./configureTheora.sh
 	./compileTheoraJs.sh
 
 build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/opus_header.c src/opus_header.h src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a build/js/root/lib/libopus.a compileOgvJs.sh
@@ -42,7 +39,8 @@ build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/op
 	./compileOgvJs.sh
 
 build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
-	 cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
+	test -d build || mkdir build
+	cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
 build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
 	test -d build || mkdir build
@@ -50,19 +48,24 @@ build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.j
 	node file2def.js src/YCbCr-fragment.glsl YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
 build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/FrameSink.js.in > build/FrameSink.js
+	test -d build || mkdir build
+	cpp -E -w -P -CC -nostdinc -Ibuild src/FrameSink.js.in > build/FrameSink.js
 
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
+	test -d build || mkdir build
+	cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
 build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OgvJsPlayer.js build/OgvJsCodec.js
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
+	test -d build || mkdir build
+	cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
 
 build/ogvjs-version.js : build/ogvjs.js
+	test -d build || mkdir build
 	echo 'window.OgvJsVersion = "'`date -u`'";' > build/ogvjs-version.js
 
 build/ogvjs.js.gz : build/ogvjs.js
-	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
+	test -d build || mkdir build
+	7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
 build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
@@ -133,19 +136,16 @@ src/dynamicaudio.swf : src/dynamicaudio.as
 
 # And the Flash version of the decoder...
 
-build/flash/root/lib/libogg.a : configureOgg.sh compileOggFlash.sh
+build/flash/root/lib/libogg.a : compileOggFlash.sh build/js/root/lib/libogg.a
 	test -d build || mkdir build
-	./configureOgg.sh
 	./compileOggFlash.sh
 
-build/flash/root/lib/libvorbis.a : build/flash/root/lib/libogg.a configureVorbis.sh compileVorbisFlash.sh
+build/flash/root/lib/libvorbis.a : build/flash/root/lib/libogg.a compileVorbisFlash.sh build/js/root/lib/libvorbis.a
 	test -d build || mkdir build
-	./configureVorbis.sh
 	./compileVorbisFlash.sh
 
-build/flash/root/lib/libtheoradec.a : build/flash/root/lib/libogg.a configureTheora.sh compileTheoraFlash.sh
+build/flash/root/lib/libtheoradec.a : build/flash/root/lib/libogg.a compileTheoraFlash.sh build/js/root/lib/libtheoradec.a
 	test -d build || mkdir build
-	./configureTheora.sh
 	./compileTheoraFlash.sh
 
 build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c src/YCbCr.h src/YCbCr.c build/flash/root/lib/libogg.a build/flash/root/lib/libtheoradec.a build/flash/root/lib/libvorbis.a compileOgvFlash.sh

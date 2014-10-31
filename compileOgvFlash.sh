@@ -9,7 +9,7 @@ gcc \
   -Ibuild/flash/root/include \
   -Lbuild/flash/root/lib \
   -logg \
-  build/flash/libogg/src/bitwise.o \
+  build/flash/ogg/src/bitwise.o \
   -lvorbis \
   -ltheoradec \
   src/ogv-libs.c \

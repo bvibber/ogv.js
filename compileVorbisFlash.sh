@@ -13,11 +13,14 @@ mkdir flash
 cd flash
 
 mkdir root
-mkdir libvorbis
-cd libvorbis
+mkdir vorbis
+cd vorbis
   
 # finally, run configuration script
-../../../libvorbis/configure --disable-shared --disable-oggtest --prefix="$dir/build/flash/root"
+../../../libs/vorbis/configure \
+  --disable-shared \
+  --disable-oggtest \
+  --prefix="$dir/build/flash/root"
 
 # compile libvorbis
 make

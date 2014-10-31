@@ -13,11 +13,13 @@ mkdir flash
 cd flash
 
 mkdir root
-mkdir libogg
-cd libogg
+mkdir ogg
+cd ogg
 
 # finally, run configuration script
-../../../libogg/configure --prefix="$dir/build/flash/root" --disable-shared
+../../../libs/ogg/configure \
+	--prefix="$dir/build/flash/root" \
+	--disable-shared
 
 # compile libogg
 make

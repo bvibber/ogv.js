@@ -10,11 +10,13 @@ mkdir js
 cd js
 
 mkdir root
-mkdir libvorbis
-cd libvorbis
+mkdir vorbis
+cd vorbis
   
 # finally, run configuration script
-emconfigure ../../../libvorbis/configure --disable-oggtest --prefix="$dir/build/js/root"
+emconfigure ../../../libs/vorbis/autogen.sh \
+	--prefix="$dir/build/js/root" \
+	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
 
 # compile libvorbis
 emmake make

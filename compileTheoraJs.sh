@@ -10,11 +10,16 @@ mkdir js
 cd js
 
 mkdir root
-mkdir libtheora
-cd libtheora
+mkdir theora
+cd theora
 
 # finally, run configuration script
-emconfigure ../../../libtheora/configure --disable-oggtest --prefix="$dir/build/js/root" --with-ogg="$dir/build/js/root" --disable-asm --disable-examples --disable-encode
+emconfigure ../../../libs/theora/autogen.sh \
+	--prefix="$dir/build/js/root" \
+	--disable-asm \
+	--disable-examples \
+	--disable-encode \
+	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
 
 # compile libtheora
 emmake make

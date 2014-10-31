@@ -13,11 +13,18 @@ mkdir flash
 cd flash
 
 mkdir root
-mkdir libtheora
-cd libtheora
+mkdir theora
+cd theora
 
 # finally, run configuration script
-../../../libtheora/configure --disable-oggtest --prefix="$dir/build/flash/root" --with-ogg="$dir/build/flash/root" --disable-asm --disable-examples --disable-encode --disable-shared
+../../../libs/theora/configure \
+	--disable-oggtest \
+	--prefix="$dir/build/flash/root" \
+	--with-ogg="$dir/build/flash/root" \
+	--disable-asm \
+	--disable-examples \
+	--disable-encode \
+	--disable-shared
 
 # compile libtheora
 make

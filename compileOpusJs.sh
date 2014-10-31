@@ -10,11 +10,19 @@ mkdir js
 cd js
 
 mkdir root
-mkdir libopus
-cd libopus
-  
+mkdir opus
+cd opus
+
+# Opus needs to run autogen.sh and configure separately.
+../../../libs/opus/autogen.sh
+
 # finally, run configuration script
-emconfigure ../../../libopus/configure --disable-asm --disable-oggtest --disable-doc --disable-extra-programs --prefix="$dir/build/js/root"
+emconfigure ../../../libs/opus/configure \
+	--disable-asm \
+	--disable-doc \
+	--disable-extra-programs \
+	--prefix="$dir/build/js/root" \
+	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
 
 # compile libopus
 emmake make
