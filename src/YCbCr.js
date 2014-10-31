@@ -28,7 +28,7 @@ function convertYCbCr(ybcbr, output) {
 		multY = 0, multCrR = 0, multCbCrG = 0, multCbB = 0,
 		x = 0, y = 0, xdec = 0, ydec = 0;
 
-	if (hdec == vdec == 1) {
+	if (hdec == 1 && vdec == 1) {
 		// Optimize for 4:2:0, which is most common
 		outPtr0 = 0;
 		outPtr1 = outStride;
