@@ -50,6 +50,7 @@ build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.j
 	node file2def.js src/YCbCr-fragment.glsl YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
 build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
+	test -d build || mkdir build
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/FrameSink.js.in > build/FrameSink.js
 
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
