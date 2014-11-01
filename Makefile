@@ -66,7 +66,9 @@ build/ogvjs.js.gz : build/ogvjs.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
 # The player demo, with the JS and Flash builds
-build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
+build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
+                        src/demo/media/ehren-paper_lights-96.opus \
+                        src/demo/media/pixel_aspect_ratio.ogg \
                         build/ogvjs.js build/ogvjs-version.js build/ogvjs.js.gz \
                         src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
                         src/cortado.jar src/CortadoPlayer.js
@@ -79,6 +81,7 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/demo/motd.js build/demo/motd.js
 	cp src/demo/minimal.html build/demo/minimal.html
 	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
+	cp src/demo/media/pixel_aspect_ratio.ogg build/demo/media/pixel_aspect_ratio.ogg
 	
 	test -d build/demo/lib || mkdir build/demo/lib
 	cp build/ogvjs.js build/demo/lib/ogvjs.js
@@ -90,7 +93,9 @@ build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.j
 	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html src/demo/media/ehren-paper_lights-96.opus \
+build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
+                          src/demo/media/ehren-paper_lights-96.opus \
+                          src/demo/media/pixel_aspect_ratio.ogg \
                           build/ogvjs.js build/ogvjs-version.js build/ogvjs.js.gz src/dynamicaudio.swf \
                           src/cortado.jar src/CortadoPlayer.js
 	test -d build/jsdemo || mkdir build/jsdemo
@@ -102,6 +107,7 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/demo/motd.js build/jsdemo/motd.js
 	cp src/demo/minimal.html build/jsdemo/minimal.html
 	cp src/demo/media/ehren-paper_lights-96.opus build/jsdemo/media/ehren-paper_lights-96.opus
+	cp src/demo/media/pixel_aspect_ratio.ogg build/jsdemo/media/pixel_aspect_ratio.ogg
 	
 	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
 	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js

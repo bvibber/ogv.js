@@ -783,10 +783,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			targetPerFrameTime = 1000 / fps;
 			
 			if (width == 0) {
-				self.style.width = info.picWidth + 'px';
+				self.style.width = self.videoWidth + 'px';
 			}
 			if (height == 0) {
-				self.style.height = info.picHeight + 'px';
+				self.style.height = self.videoHeight + 'px';
 			}
 			
 			canvas.width = info.picWidth;
@@ -1123,7 +1123,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	Object.defineProperty(self, "videoWidth", {
 		get: function getVideoWidth() {
 			if (videoInfo) {
-				return videoInfo.picWidth;
+				if (videoInfo.aspectNumerator > 0 && videoInfo.aspectDenominator > 0) {
+					return Math.round(videoInfo.picWidth * videoInfo.aspectNumerator / videoInfo.aspectDenominator);
+				} else {
+					return videoInfo.picWidth;
+				}
 			} else {
 				return 0;
 			}

@@ -8,7 +8,8 @@ mergeInto(LibraryManager.library, {
 	                         hdec, vdec,
                              fps,
                              picWidth, picHeight,
-                             picX, picY) {
+                             picX, picY,
+                             aspectNumerator, aspectDenominator) {
 		OgvJsInitVideoCallback({
 			codec: "Theora",
 			frameWidth: frameWidth,
@@ -19,7 +20,9 @@ mergeInto(LibraryManager.library, {
 			picWidth: picWidth,
 			picHeight: picHeight,
 			picX: picX,
-			picY: picY
+			picY: picY,
+			aspectNumerator: aspectNumerator,
+			aspectDenominator: aspectDenominator
 		});
 	},
 

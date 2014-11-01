@@ -96,7 +96,8 @@ extern void OgvJsInitVideo(int frameWidth, int frameHeight,
                            int hdec, int vdec,
                            double fps,
                            int picWidth, int picHeight,
-                           int picX, int picY);
+                           int picX, int picY,
+                           int aspectNumerator, int aspectDenominator);
 extern void OgvJsOutputFrameReady(double timestamp, double keyframeTimestamp);
 extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
                              unsigned char *bufferCb, int strideCb,
@@ -341,7 +342,8 @@ static void processHeaders() {
                     hdec, vdec,
                     (float) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
                     theoraInfo.pic_width, theoraInfo.pic_height,
-                    theoraInfo.pic_x, theoraInfo.pic_y);
+                    theoraInfo.pic_x, theoraInfo.pic_y,
+                    theoraInfo.aspect_numerator, theoraInfo.aspect_denominator);
         }
 
 #ifdef OPUS
