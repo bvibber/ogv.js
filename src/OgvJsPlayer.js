@@ -1003,7 +1003,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				return seekTargetTime;
 			} else {
 				if (codec && codec.hasAudio && audioFeeder) {
-					return getAudioTime();
+					if (paused) {
+						return initialAudioOffset - initialAudioPosition;
+					} else {
+						return getAudioTime();
+					}
 				} else if (codec && codec.hasVideo) {
 					return frameEndTimestamp;
 				} else {
