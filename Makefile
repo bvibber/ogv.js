@@ -10,6 +10,8 @@ demo : build/demo/index.html
 
 jsdemo : build/jsdemo/index.html
 
+tests: build/tests/index.html
+
 clean:
 	rm -rf build
 	rm -f libogg/configure
@@ -116,6 +118,26 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/cortado.jar build/jsdemo/lib/cortado.jar
 	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
 
+# QUnit test cases
+build/tests/index.html : build/tests/tests.js build/tests/lib/ogvjs.js build/tests/media/320x240.ogv src/tests/index.html
+	test -d build/tests || mkdir -p build/tests
+	cp src/tests/index.html build/tests/index.html
+
+build/tests/tests.js : src/tests/tests.js
+	test -d build/tests || mkdir -p build/tests
+	cp src/tests/tests.js build/tests/tests.js
+
+build/tests/lib/ogvjs.js : build/ogvjs.js build/tests/lib/dynamicaudio.swf
+	test -d build/tests/lib || mkdir -p build/tests/lib
+	cp build/ogvjs.js build/tests/lib/ogvjs.js
+
+build/tests/lib/dynamicaudio.swf : src/dynamicaudio.swf
+	test -d build/tests/lib || mkdir -p build/tests/lib
+	cp src/dynamicaudio.swf build/tests/lib/dynamicaudio.swf
+
+build/tests/media/320x240.ogv : src/tests/media/320x240.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp src/tests/media/320x240.ogv build/tests/media/320x240.ogv
 
 # There is a Flash shim for audio on Internet Explorer which doesn't
 # have Web Audio API.
