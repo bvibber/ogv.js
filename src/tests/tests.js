@@ -158,7 +158,7 @@ doubleAsyncTest('seekable matches duration', function(assert, player) {
 
 doubleAsyncTest('play yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before play');
-	player.src = 'media/320x240.ogv';
+	player.src = 'media/3seconds.ogv';
 	player.onloadedmetadata = function() {
 		assert.ok( true, 'onloadedmetadata was fired' );
 		assert.ok( !player.paused, 'player no longer thinks it is paused (2)');
@@ -170,7 +170,7 @@ doubleAsyncTest('play yields onloadedmetadata', function(assert, player) {
 });
 
 doubleAsyncTest('play yields onplay', function(assert, player) {
-	player.src = 'media/320x240.ogv';
+	player.src = 'media/1second.ogv';
 	player.onplay = function() {
 		assert.ok( true, 'onplay event was fired' );
 		assert.ok( !player.paused, 'player thinks it is playing');
@@ -181,7 +181,7 @@ doubleAsyncTest('play yields onplay', function(assert, player) {
 });
 
 doubleAsyncTest('play yields onended', function(assert, player) {
-	player.src = 'media/320x240.ogv';
+	player.src = 'media/1second.ogv';
 	player.onended = function() {
 		assert.ok( true, 'onended event was fired' );
 		assert.ok( player.paused, 'player thinks it is paused again');
