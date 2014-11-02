@@ -77,18 +77,42 @@ QUnit.test("OgvJsPlayer canPlayType", function( assert ) {
 
 
 function loadedMetadataTest(assert, player) {
+	assert.ok( player.paused, 'player thinks it is paused before load');
 	player.src = 'media/320x240.ogv';
 	player.onloadedmetadata = function() {
 		assert.ok( true, 'onloadedmetadata was fired' );
+		assert.ok( player.paused, 'player still thinks it is paused');
 		QUnit.start();
 	};
 	player.load();
 }
 
-QUnit.asyncTest('Native video onloadedmetadata', function(assert) {
+QUnit.asyncTest('Native video load yields onloadedmetadata', function(assert) {
 	loadedMetadataTest(assert, nativePlayer());
 });
 
-QUnit.asyncTest('OgvJsPlayer onloadedmetadata', function(assert) {
+QUnit.asyncTest('OgvJsPlayer load yields onloadedmetadata', function(assert) {
 	loadedMetadataTest(assert, ogvJsPlayer());
+});
+
+
+function playLoadedMetadataTest(assert, player) {
+	assert.ok( player.paused, 'player thinks it is paused before play');
+	player.src = 'media/320x240.ogv';
+	player.onloadedmetadata = function() {
+		assert.ok( true, 'onloadedmetadata was fired' );
+		assert.ok( !player.paused, 'player no longer thinks it is paused (2)');
+		QUnit.start();
+	};
+	player.play();
+	assert.ok( !player.paused, 'player no longer thinks it is paused (1)');
+}
+
+
+QUnit.asyncTest('Native video play yields onloadedmetadata', function(assert) {
+	playLoadedMetadataTest(assert, nativePlayer());
+});
+
+QUnit.asyncTest('OgvJsPlayer play yields onloadedmetadata', function(assert) {
+	playLoadedMetadataTest(assert, ogvJsPlayer());
 });
