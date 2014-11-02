@@ -30,7 +30,8 @@ function StreamFile(options) {
 		doneBuffering = false,
 		bytesTotal = 0,
 		bytesRead = 0,
-		buffers = [];
+		buffers = [],
+		responseHeaders = {};
 		
 
 	
@@ -69,6 +70,21 @@ function StreamFile(options) {
 			} else {
 				bytesTotal = parseInt(contentLength, 10);
 			}
+		},
+		
+		// Save HTTP response headers from the HEAD request for later
+		processResponseHeaders: function(xhr) {
+			responseHeaders = {};
+			var allResponseHeaders = xhr.getAllResponseHeaders(),
+				headerLines = allResponseHeaders.split(/\n/);
+			headerLines.forEach(function(line) {
+				var bits = line.split(/:\s*/, 2);
+				if (bits.length > 1) {
+					var name = bits[0].toLowerCase(),
+						value = bits[1];
+					responseHeaders[name] = value;
+				}
+			});
 		},
 
 		getMetadata: function() {
@@ -147,6 +163,7 @@ function StreamFile(options) {
 				xhr.abort();
 			} else {
 				internal.setBytesTotal(xhr);
+				internal.processResponseHeaders(xhr);
 				started = true;
 				onstart();
 			}
@@ -297,6 +314,16 @@ function StreamFile(options) {
 			seekPosition = bytePosition;
 			internal.clearBuffers();
 			internal.openXHR();
+		}
+	};
+	
+	self.getResponseHeader = function(headerName) {
+		var lowerName = headerName.toLowerCase(),
+			value = responseHeaders[lowerName];
+		if (value === undefined) {
+			return null;
+		} else {
+			return value;
 		}
 	};
 

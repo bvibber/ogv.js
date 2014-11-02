@@ -673,7 +673,7 @@
 			selectedUrl = selected.url;
 			console.log("Going to try streaming data from " + selectedUrl);
 			
-			// Currently the player can't determine the file duration
+			// Currently the Flash player can't determine the file duration
 			// as there's no way to seek to the end etc.
 			durationHint = mediaInfo.duration;
 
@@ -682,19 +682,16 @@
 					webGL: true, // auto
 					base: 'lib'
 				});
-				player.durationHint = durationHint;
 			} else if (playerBackend == 'js-cpu') {
 				player = new OgvJsPlayer({
 					webGL: false, // force 2d canvas
 					base: 'lib'
 				});
-				player.durationHint = durationHint;
 			} else if (playerBackend == 'webgl') {
 				player = new OgvJsPlayer({
 					forceWebGL: true,
 					base: 'lib'
 				});
-				player.durationHint = durationHint;
 			} else if (playerBackend == 'flash') {
 				player = new OgvSwfPlayer({
 					base: 'lib'

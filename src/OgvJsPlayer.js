@@ -127,8 +127,15 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		return (state.playbackPosition - initialAudioPosition) + initialAudioOffset;
 	}
 
-	var stream, byteLength = 0, nextProcessingTimer, paused = true, ended = false;
-	var started = false, loadedMetadata = false, startedPlaybackInDocument = false;
+	var stream,
+		byteLength = 0,
+		duration = null,
+		nextProcessingTimer,
+		started = false,
+		paused = true,
+		ended = false,
+		loadedMetadata = false,
+		startedPlaybackInDocument = false;
 	
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
@@ -842,6 +849,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				// Fire off the read/decode/draw loop...
 				byteLength = stream.bytesTotal;
 				console.log('byteLength: ' + byteLength);
+				
+				// If we get X-Content-Duration, that's as good as an explicit hint
+				var durationHeader = stream.getResponseHeader('X-Content-Duration');
+				if (typeof durationHeader === 'string') {
+					duration = parseFloat(durationHeader);
+					console.log('X-Content-Duration: ' + duration);
+				}
 				startProcessingVideo();
 			},
 			onread: function(data) {
@@ -998,8 +1012,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	Object.defineProperty(self, "buffered", {
 		get: function getBuffered() {
 			var estimatedBufferTime;
-			if (stream && byteLength && self.durationHint) {
-				estimatedBufferTime = (stream.bytesBuffered / byteLength) * self.durationHint;
+			if (stream && byteLength && duration) {
+				estimatedBufferTime = (stream.bytesBuffered / byteLength) * duration;
 			} else {
 				estimatedBufferTime = 0;
 			}
@@ -1029,27 +1043,21 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 		},
 		set: function setCurrentTime(val) {
-			if (stream && byteLength && self.durationHint) {
+			if (stream && byteLength && duration) {
 				seek(val, seek.SEEK_TO_KEYFRAME);
 			}
 		}
 	});
 	
 	/**
-	 * custom durationHint property
-	 */
-	self.durationHint = null;
-	
-	/**
 	 * HTMLMediaElement duration property
 	 */
 	Object.defineProperty(self, "duration", {
 		get: function getDuration() {
-			if (codec && (codec.hasAudio || codec.hasVideo)) {
-				if (self.durationHint) {
-					return self.durationHint;
+			if (codec && loadedMetadata) {
+				if (duration !== null) {
+					return duration;
 				} else {
-					// @todo figure out how to estimate it
 					return Infinity;
 				}
 			} else {
