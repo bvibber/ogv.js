@@ -124,6 +124,9 @@ build/tests/index.html : build/tests/tests.js \
                          build/tests/lib/dynamicaudio.swf \
                          build/tests/media/1frame.ogv \
                          build/tests/media/3frames.ogv \
+                         build/tests/media/1second.ogv \
+                         build/tests/media/3seconds.ogv \
+                         build/tests/media/3seconds-noskeleton.ogv \
                          build/tests/media/320x240.ogv \
                          src/tests/index.html
 	test -d build/tests || mkdir -p build/tests
@@ -148,6 +151,18 @@ build/tests/media/1frame.ogv : src/tests/media/1frame.ogv
 build/tests/media/3frames.ogv : src/tests/media/3frames.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
 	cp src/tests/media/3frames.ogv build/tests/media/3frames.ogv
+
+build/tests/media/1second.ogv : src/tests/media/1second.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp src/tests/media/1second.ogv build/tests/media/1second.ogv
+
+build/tests/media/3seconds.ogv : src/tests/media/3seconds.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp src/tests/media/3seconds.ogv build/tests/media/3seconds.ogv
+
+build/tests/media/3seconds-noskeleton.ogv : src/tests/media/3seconds-noskeleton.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp src/tests/media/3seconds-noskeleton.ogv build/tests/media/3seconds-noskeleton.ogv
 
 build/tests/media/320x240.ogv : src/tests/media/320x240.ogv
 	test -d build/tests/media || mkdir -p build/tests/media

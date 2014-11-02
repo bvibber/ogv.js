@@ -84,14 +84,32 @@ doubleTest('canPlayType', function(assert, player) {
 doubleAsyncTest('load yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before load');
 	player.src = 'media/320x240.ogv';
-	assert.equal(player.videoWidth, 0, "don't know width before");
-	assert.equal(player.videoHeight, 0, "don't know height before");
 	player.onloadedmetadata = function() {
 		assert.ok( true, 'onloadedmetadata was fired' );
 		assert.ok( player.paused, 'player still thinks it is paused');
+		// todo: assert.equal(Math.round(player.duration), 4); // more or less
+		QUnit.start();
+	};
+	player.load();
+});
+
+doubleAsyncTest('metadata detects size', function(assert, player) {
+	player.src = 'media/320x240.ogv';
+	assert.equal(player.videoWidth, 0, "don't know width before");
+	assert.equal(player.videoHeight, 0, "don't know height before");
+	player.onloadedmetadata = function() {
 		assert.equal(player.videoWidth, 320, "videoWidth");
 		assert.equal(player.videoHeight, 240, "videoHeight");
-		// todo: assert.equal(Math.round(player.duration), 4); // more or less
+		QUnit.start();
+	};
+	player.load();
+});
+
+doubleAsyncTest('metadata detects duration for file with skeleton', function(assert, player) {
+	player.src = 'media/3seconds.ogv';
+	assert.ok(isNaN(player.duration), "don't know duration before");
+	player.onloadedmetadata = function() {
+		assert.equal(player.duration, 3, "duration");
 		QUnit.start();
 	};
 	player.load();
