@@ -18,6 +18,10 @@
 #include "opus_helper.h"
 #endif
 
+#ifdef SKELETON
+#include <skeleton/skeleton.h>
+#endif
+
 /* never forget that globals are a one-way ticket to Hell */
 /* Ogg and codec state for demux/decode */
 ogg_sync_state    oggSyncState;
@@ -70,6 +74,13 @@ float             opusGain;
 int               opusStreams;
 /* 120ms at 48000 */
 #define OPUS_MAX_FRAME_SIZE (960*6)
+#endif
+
+#ifdef SKELETON
+OggSkeleton      *skeleton;
+ogg_stream_state  skeletonStreamState;
+int               skeletonHeaders;
+int               skeletonProcessingHeaders;
 #endif
 
 int               processAudio;
@@ -174,6 +185,10 @@ void OgvJsInit(int process_audio_flag, int process_video_flag) {
     /* init supporting Theora structures needed in header parsing */
     th_comment_init(&theoraComment);
     th_info_init(&theoraInfo);
+
+#ifdef SKELETON
+    skeleton = oggskel_new();
+#endif
 }
 
 static int needData = 1;
@@ -227,6 +242,12 @@ static void processBegin() {
 
             // ditch the processed packet...
             ogg_stream_packetout(&opusStreamState, NULL);
+#endif
+#ifdef SKELETON
+        } else if (!skeletonHeaders && (skeletonProcessingHeaders = oggskel_decode_header(skeleton, &oggPacket)) > 0) {
+            memcpy(&skeletonStreamState, &test, sizeof (test));
+            skeletonHeaders = 1;
+            ogg_stream_packetout(&skeletonStreamState, NULL);
 #endif
         } else {
             printf("already have stream, or not theora or vorbis or opus packet\n");
