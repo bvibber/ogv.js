@@ -503,9 +503,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			//console.log(n, state, codec.hasAudio, codec.audioReady, codec.audioTimestamp, codec.hasVideo, codec.frameReady, codec.frameTimestamp);
 			n++;
 			if (n > 100) {
-				//throw new Error("Got stuck in the loop!");
-				console.log("Got stuck in the loop!");
-				pingProcessing(10);
+				throw new Error("Got stuck in the loop!");
+				//console.log("Got stuck in the loop!");
+				//pingProcessing(10);
 				return;
 			}
 
@@ -517,6 +517,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 				if (loadedMetadata) {
 					// we just fell over from headers into content; call onloadedmetadata etc
+					if (!codec.hasVideo && !codec.hasAudio) {
+						throw new Error('No audio or video found, something is wrong');
+						return;
+					}
 					if (duration === null) {
 						if (stream.seekable) {
 							console.log('Seeking to find duration...');
