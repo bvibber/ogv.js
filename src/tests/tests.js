@@ -12,6 +12,12 @@ function ogvJsPlayer() {
 	});
 }
 
+QUnit.assert.floatClose = function(actual, expected, message) {
+	var delta = 1 / 64,
+		ok = Math.abs(actual - expected) < delta;
+	this.push(ok, actual, expected, message);
+};
+
 function doubleTest(description, func) {
 	QUnit.test("native video: " + description, function( assert ) {
 		var player = nativePlayer();
@@ -100,6 +106,16 @@ doubleAsyncTest('metadata detects size', function(assert, player) {
 	player.onloadedmetadata = function() {
 		assert.equal(player.videoWidth, 320, "videoWidth");
 		assert.equal(player.videoHeight, 240, "videoHeight");
+		QUnit.start();
+	};
+	player.load();
+});
+
+doubleAsyncTest('metadata detects duration for file with x-content-duration', function(assert, player) {
+	player.src = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3c/IP-Routing.webm/IP-Routing.webm.360p.ogv';
+	assert.ok(isNaN(player.duration), "don't know duration before");
+	player.onloadedmetadata = function() {
+		assert.floatClose(player.duration, 330.284, "duration");
 		QUnit.start();
 	};
 	player.load();
