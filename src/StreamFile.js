@@ -101,10 +101,20 @@ function StreamFile(options) {
 				// Better would be to get the Content-Range from the 206
 				// response, but it's not whitelisted yet. *headdesk*
 				//
-				headUrl += '?cachebuster=' + Math.random()
+				headUrl += '?ogvjs_cachebuster=' + Math.random()
+			} else if (navigator.userAgent.match(/AppleWebKit/)) {
+				//
+				// Safari sometimes messes up and gives us the Content-Length
+				// from the final-seeking chunk instead of the whole file. What?
+				// Seems to be a general problem with Safari and cached XHR ranges.
+				//
+				// https://bugs.webkit.org/show_bug.cgi?id=82672
+				//
+				headUrl += '?ogvjs_cacherange=HEAD';
 			}
 
 			xhr.open("HEAD", headUrl);
+			
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState == 2) {
 					internal.onXHRHeadersReceived(xhr);
@@ -118,8 +128,20 @@ function StreamFile(options) {
 		},
 		
 		openXHR: function() {
+			var getUrl = url;
+			if (navigator.userAgent.match(/AppleWebKit/)) {
+				// HACK ALERT!
+				//
+				// Safari sometimes messes up and gives us the wrong chunk.
+				// Seems to be a general problem with Safari and cached XHR ranges.
+				//
+				// https://bugs.webkit.org/show_bug.cgi?id=82672
+				//
+				getUrl += '?ogvjs_cacherange=' + seekPosition + '-' + (chunkSize ? (seekPosition + chunkSize - 1) : '');
+			}
+
 			var xhr = internal.xhr = new XMLHttpRequest();
-			xhr.open("GET", url);
+			xhr.open("GET", getUrl);
 
 			internal.setXHROptions(xhr);
 
