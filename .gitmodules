@@ -13,3 +13,6 @@
 [submodule "glsl2agal"]
 	path = glsl2agal
 	url = https://github.com/adobe/glsl2agal.git
+[submodule "libskeleton"]
+	path = libskeleton
+	url = git://git.xiph.org/libskeleton.git

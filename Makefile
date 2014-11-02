@@ -19,7 +19,7 @@ clean:
 	rm -f libvorbis/configure
 	rm -f libtheora/configure
 	rm -f libopus/configure
-
+	rm -f libskeleton/configure
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
@@ -36,13 +36,24 @@ build/js/root/lib/libopus.a : build/js/root/lib/libogg.a configureOpus.sh compil
 	./configureOpus.sh
 	./compileOpusJs.sh
 
+build/js/root/lib/libskeleton.a : build/js/root/lib/libogg.a configureSkeleton.sh compileSkeletonJs.sh
+	test -d build || mkdir build
+	./configureSkeleton.sh
+	./compileSkeletonJs.sh
+
 
 build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh compileTheoraJs.sh
 	test -d build || mkdir build
 	./configureTheora.sh
 	./compileTheoraJs.sh
 
-build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/opus_header.c src/opus_header.h src/ogv-libs-mixin.js build/js/root/lib/libogg.a build/js/root/lib/libtheoradec.a build/js/root/lib/libvorbis.a build/js/root/lib/libopus.a compileOgvJs.sh
+build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/opus_header.c src/opus_header.h src/ogv-libs-mixin.js \
+                       build/js/root/lib/libogg.a \
+                       build/js/root/lib/libtheoradec.a \
+                       build/js/root/lib/libvorbis.a \
+                       build/js/root/lib/libopus.a \
+                       build/js/root/lib/libskeleton.a \
+                       compileOgvJs.sh
 	test -d build || mkdir build
 	./compileOgvJs.sh
 

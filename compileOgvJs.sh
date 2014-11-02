@@ -21,8 +21,10 @@ EMCC_FAST_COMPILER=1 emcc \
   build/js/root/lib/libvorbis.$suffix \
   build/js/root/lib/libopus.$suffix \
   build/js/root/lib/libtheoradec.$suffix \
+  build/js/root/lib/libskeleton.$suffix \
   --js-library src/ogv-libs-mixin.js \
   -D OPUS \
+  -D SKELETON \
   src/opus_header.c \
   src/opus_helper.c \
   src/ogv-libs.c \
