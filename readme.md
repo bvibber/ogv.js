@@ -174,7 +174,7 @@ Libtheora needs a slight patch to a function signature to pass emscripten's chec
 3. `git submodule update --init`
 4. Run `make js` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
 
-Run `make jsdemo` to build a version of the demo skipping the Flash player. This is handy if you want to test the emscripten stuff but don't want to or can't install Crossbridge. This will output into build/jsdemo/.
+Run `NOFLASH=1 make` to build a version of the demo skipping the Flash player. This is handy if you want to test the emscripten stuff but don't want to or can't install Crossbridge. This will output into build/demo/.
 
 
 ## Building Flash components

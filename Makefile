@@ -1,6 +1,6 @@
-.FAKE : all clean cleanswf swf js jsdemo flash demo
+.FAKE : all clean cleanswf swf js flash demo democlean tests
 
-all : jsdemo demo
+all : demo
 
 js : build/ogvjs.js
 
@@ -8,15 +8,18 @@ flash : build/ogvswf.js
 
 demo : build/demo/index.html
 
-jsdemo : build/jsdemo/index.html
+tests : build/tests/index.html
 
-tests: build/tests/index.html
+democlean:
+	rm -rf build/demo
 
 clean:
 	rm -rf build
 	rm -f libogg/configure
 	rm -f libvorbis/configure
 	rm -f libtheora/configure
+	rm -f libopus/configure
+
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
@@ -44,6 +47,7 @@ build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/op
 	./compileOgvJs.sh
 
 build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
+	test -d build || mkdir build
 	 cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
 
 build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
@@ -67,56 +71,83 @@ build/ogvjs-version.js : build/ogvjs.js
 build/ogvjs.js.gz : build/ogvjs.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
 
-# The player demo, with the JS and Flash builds
-build/demo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
-                        src/demo/media/ehren-paper_lights-96.opus \
-                        src/demo/media/pixel_aspect_ratio.ogg \
-                        build/ogvjs.js build/ogvjs-version.js build/ogvjs.js.gz \
-                        src/dynamicaudio.swf build/ogv.swf build/ogvswf.js \
-                        src/cortado.jar src/CortadoPlayer.js
-	test -d build/demo || mkdir build/demo
-	test -d build/demo/media || mkdir build/demo/media
-	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITH_FLASH src/demo/index.html.in > build/demo/index.html
-	
-	cp src/demo/demo.css build/demo/demo.css
-	cp src/demo/demo.js build/demo/demo.js
-	cp src/demo/motd.js build/demo/motd.js
-	cp src/demo/minimal.html build/demo/minimal.html
-	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
-	cp src/demo/media/pixel_aspect_ratio.ogg build/demo/media/pixel_aspect_ratio.ogg
-	
-	test -d build/demo/lib || mkdir build/demo/lib
-	cp build/ogvjs.js build/demo/lib/ogvjs.js
-	cp build/ogvjs.js.gz build/demo/lib/ogvjs.js.gz
-	cp src/dynamicaudio.swf build/demo/lib/dynamicaudio.swf
-	cp build/ogvswf.js build/demo/lib/ogvswf.js
-	cp build/ogv.swf build/demo/lib/ogv.swf
-	cp src/cortado.jar build/demo/lib/cortado.jar
-	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
+# Build as 'NOFLASH=1 make' to skip the Flash build
+ifdef NOFLASH
+FLASHDEMO_DEPS=
+FLASHDEMO_OPTS=
+else
+FLASHDEMO_DEPS=build/demo/lib/ogv.swf build/demo/lib/ogvswf.js
+FLASHDEMO_OPTS=-DWITH_FLASH
+endif
 
-# The player demo, JS only without the Flash build
-build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo.js src/demo/motd.js src/demo/minimal.html \
-                          src/demo/media/ehren-paper_lights-96.opus \
-                          src/demo/media/pixel_aspect_ratio.ogg \
-                          build/ogvjs.js build/ogvjs-version.js build/ogvjs.js.gz src/dynamicaudio.swf \
-                          src/cortado.jar src/CortadoPlayer.js
-	test -d build/jsdemo || mkdir build/jsdemo
-	test -d build/jsdemo/media || mkdir build/jsdemo/media
-	cpp -E -w -P -CC -nostdinc -DWITH_JS -DWITHOUT_FLASH src/demo/index.html.in > build/jsdemo/index.html
-	
-	cp src/demo/demo.css build/jsdemo/demo.css
-	cp src/demo/demo.js build/jsdemo/demo.js
-	cp src/demo/motd.js build/jsdemo/motd.js
-	cp src/demo/minimal.html build/jsdemo/minimal.html
-	cp src/demo/media/ehren-paper_lights-96.opus build/jsdemo/media/ehren-paper_lights-96.opus
-	cp src/demo/media/pixel_aspect_ratio.ogg build/jsdemo/media/pixel_aspect_ratio.ogg
-	
-	test -d build/jsdemo/lib || mkdir build/jsdemo/lib
-	cp build/ogvjs.js build/jsdemo/lib/ogvjs.js
-	cp build/ogvjs.js.gz build/jsdemo/lib/ogvjs.js.gz
-	cp src/dynamicaudio.swf build/jsdemo/lib/dynamicaudio.swf
-	cp src/cortado.jar build/jsdemo/lib/cortado.jar
-	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
+# The player demo, with the JS and optionally Flash builds
+build/demo/index.html : src/demo/index.html.in \
+                        build/demo/demo.css \
+                        build/demo/demo.js \
+                        build/demo/motd.js \
+                        build/demo/minimal.html \
+                        build/demo/media/ehren-paper_lights-96.opus \
+                        build/demo/media/pixel_aspect_ratio.ogg \
+                        build/demo/lib/ogvjs.js \
+                        build/demo/lib/ogvjs.js.gz \
+                        build/demo/lib/dynamicaudio.swf \
+                        $(FLASHDEMO_DEPS) \
+                        build/demo/lib/cortado.jar \
+                        build/demo/lib/CortadoPlayer.js
+	test -d build/demo || mkdir -p build/demo
+	cpp -E -w -P -CC -nostdinc -DWITH_JS $(FLASHDEMO_OPTS) src/demo/index.html.in > build/demo/index.html
+
+build/demo/demo.css : src/demo/demo.css
+	test -d build/demo || mkdir -p build/demo
+	cp src/demo/demo.css build/demo/demo.css
+
+build/demo/demo.js : src/demo/demo.js
+	test -d build/demo || mkdir -p build/demo
+	cp src/demo/demo.js build/demo/demo.js
+
+build/demo/motd.js : src/demo/motd.js
+	test -d build/demo || mkdir -p build/demo
+	cp src/demo/motd.js build/demo/motd.js
+
+build/demo/minimal.html : src/demo/minimal.html
+	test -d build/demo || mkdir -p build/demo
+	cp src/demo/minimal.html build/demo/minimal.html
+
+build/demo/media/ehren-paper_lights-96.opus : src/demo/media/ehren-paper_lights-96.opus
+	test -d build/demo/media || mkdir -p build/demo/media
+	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
+
+build/demo/media/pixel_aspect_ratio.ogg : src/demo/media/pixel_aspect_ratio.ogg
+	test -d build/demo/media || mkdir -p build/demo/media
+	cp src/demo/media/pixel_aspect_ratio.ogg build/demo/media/pixel_aspect_ratio.ogg
+
+build/demo/lib/ogvjs.js : build/ogvjs.js
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp build/ogvjs.js build/demo/lib/ogvjs.js
+
+build/demo/lib/ogvjs.js.gz : build/ogvjs.js.gz
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp build/ogvjs.js.gz build/demo/lib/ogvjs.js.gz
+
+build/demo/lib/dynamicaudio.swf : src/dynamicaudio.swf
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp src/dynamicaudio.swf build/demo/lib/dynamicaudio.swf
+
+build/demo/lib/ogvswf.js : build/ogvswf.js
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp build/ogvswf.js build/demo/lib/ogvswf.js
+
+build/demo/lib/ogv.swf : build/ogvswf.js
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp build/ogv.swf build/demo/lib/ogv.swf
+
+build/demo/lib/cortado.jar : src/cortado.jar
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp src/cortado.jar build/demo/lib/cortado.jar
+
+build/demo/lib/CortadoPlayer.js : src/CortadoPlayer.js
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # QUnit test cases
 build/tests/index.html : build/tests/tests.js \
