@@ -561,7 +561,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (codec.hasAudio && codec.audioReady) {
 					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.audioTimestamp);
 					codec.decodeAudio();
-					codec.discardAudio();
+					codec.dequeueAudio();
 				}
 				//console.log('lastSeenTimestamp', lastSeenTimestamp);
 				
