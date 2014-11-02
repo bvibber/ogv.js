@@ -41,6 +41,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	
 	var State = {
 		INITIAL: 'INITIAL',
+		SEEKING_END: 'SEEKING_END',
 		LOADED: 'LOADED',
 		PLAYING: 'PLAYING',
 		PAUSED: 'PAUSED',
@@ -130,6 +131,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var stream,
 		byteLength = 0,
 		duration = null,
+		lastSeenTimestamp = null,
 		nextProcessingTimer,
 		started = false,
 		paused = true,
@@ -514,16 +516,26 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				var more = codec.process();
 
 				if (loadedMetadata) {
-					console.log('LOADED!', codec, codec.hasAudio, codec.hasVideo);
 					// we just fell over from headers into content; call onloadedmetadata etc
-					state = State.LOADED;
-					if (paused) {
-						// Paused? stop here.
+					if (duration === null) {
+						if (stream.seekable) {
+							console.log('Seeking to find duration...');
+							state = State.SEEKING_END;
+							lastSeenTimestamp = -1;
+							codec.flush();
+							stream.seek(Math.max(0, stream.bytesTotal - 65536 * 2));
+							stream.readBytes();
+							return;
+						} else {
+							console.log('Stream not seekable and no x-content-duration; assuming infinite stream.');
+							state = State.LOADED;
+							continue;
+						}
 					} else {
-						// Not paused? Reinit and continue on to play processing.
-						pingProcessing(0);
+						// We already know the duration.
+						state = State.LOADED;
+						continue;
 					}
-					return;
 				}
 
 				if (!more) {
@@ -536,7 +548,64 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				}
 			}
 			
+			if (state == State.SEEKING_END) {
+				// Look for the last item.
+				var more = codec.process();
+				
+				//console.log('video', codec.hasVideo, codec.frameReady, codec.frameTimestamp);
+				if (codec.hasVideo && codec.frameReady) {
+					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.frameTimestamp);
+					codec.discardFrame();
+				}
+				//console.log('audio', codec.hasAudio, codec.audioReady, codec.audioTimestamp);
+				if (codec.hasAudio && codec.audioReady) {
+					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.audioTimestamp);
+					codec.decodeAudio();
+					codec.discardAudio();
+				}
+				//console.log('lastSeenTimestamp', lastSeenTimestamp);
+				
+				if (!more) {
+					// Read more data!
+					if (stream.bytesRead < stream.bytesTotal) {
+						stream.readBytes();
+						return;
+					} else {
+						// We are at the end!
+						if (lastSeenTimestamp > 0) {
+							duration = lastSeenTimestamp;
+							console.log('detected duration ' + duration + ' from end');
+						}
+						
+						// Ok, seek back to the beginning and resync the streams.
+						state = State.LOADED;
+						codec.flush();
+						stream.seek(0);
+						stream.readBytes();
+						return;
+					}
+				} else {
+					// Keep processing headers
+					continue;
+				}
+			}
+			
 			if (state == State.LOADED) {
+				state = State.READY;
+				if (self.onloadedmetadata) {
+					self.onloadedmetadata();
+				}
+				if (paused) {
+					// Paused? stop here.
+					return;
+				} else {
+					// Not paused? Continue on to play processing.
+					continue;
+				}
+			}
+			
+			if (state == State.READY) {
+				console.log('metadata!', codec, codec.hasAudio, codec.hasVideo, duration);
 				state = State.PLAYING;
 				lastFrameTimestamp = getTimestamp();
 				targetFrameTime = lastFrameTimestamp + 1000.0 / fps
@@ -819,14 +888,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		};
 		codec.oninitaudio = function(info) {
 			audioInfo = info;
-			//initAudioFeeder();
 		};
 		codec.onloadedmetadata = function() {
-			//state = State.PLAYING;
 			loadedMetadata = true;
-			if (self.onloadedmetadata) {
-				self.onloadedmetadata();
-			}
 		};
 
 		stream.readBytes();
@@ -871,6 +935,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			ondone: function() {
 				if (state == State.SEEKING) {
 					console.log("bumped into end during seeking?");
+					pingProcessing();
+				} else if (state == State.SEEKING_END) {
+					console.log("bumped into end during seeking-to-end, that's probably good");
 					pingProcessing();
 				} else {
 					console.log("reading^H^H^^H^H buffering? done.");

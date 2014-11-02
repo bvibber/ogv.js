@@ -131,6 +131,16 @@ doubleAsyncTest('metadata detects duration for file with skeleton', function(ass
 	player.load();
 });
 
+doubleAsyncTest('metadata detects duration for file without skeleton', function(assert, player) {
+	player.src = 'media/3seconds-noskeleton.ogv';
+	assert.ok(isNaN(player.duration), "don't know duration before");
+	player.onloadedmetadata = function() {
+		assert.equal(player.duration, 3, "duration");
+		QUnit.start();
+	};
+	player.load();
+});
+
 
 doubleAsyncTest('play yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before play');

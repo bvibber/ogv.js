@@ -345,6 +345,12 @@ function StreamFile(options) {
 			return seekPosition + bytesRead;
 		}
 	});
+	
+	Object.defineProperty(self, 'seekable', {
+		get: function() {
+			return (self.bytesTotal > 0);
+		}
+	});
 
 	// Handy way to call super functions
 	var orig = {};
