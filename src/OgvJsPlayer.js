@@ -1075,6 +1075,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	self.src = "";
 	
 	/**
+	 * HTMLMediaElement buffered property
 	 */
 	Object.defineProperty(self, "buffered", {
 		get: function getBuffered() {
@@ -1085,6 +1086,19 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				estimatedBufferTime = 0;
 			}
 			return new OgvJsTimeRanges([[0, estimatedBufferTime]]);
+		}
+	});
+	
+	/**
+	 * HTMLMediaElement seekable property
+	 */
+	Object.defineProperty(self, "seekable", {
+		get: function getSeekable() {
+			if (duration === null) {
+				return new OgvJsTimeRanges([]);
+			} else {
+				return new OgvJsTimeRanges([[0, duration]]);
+			}
 		}
 	});
 	

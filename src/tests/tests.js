@@ -141,6 +141,20 @@ doubleAsyncTest('metadata detects duration for file without skeleton', function(
 	player.load();
 });
 
+doubleAsyncTest('seekable matches duration', function(assert, player) {
+	player.src = 'media/3seconds.ogv';
+	var seekable = player.seekable;
+	assert.equal(seekable.length, 0, "zero ranges in seekable pre-load");
+	player.onloadedmetadata = function() {
+		var seekable = player.seekable;
+		assert.equal(seekable.length, 1, "one range in seekable");
+		assert.equal(seekable.start(0), 0, "seekable range starts at 0");
+		assert.floatClose(seekable.end(0), player.duration, "seekable range matches duration");
+		QUnit.start();
+	};
+	player.load();
+});
+
 
 doubleAsyncTest('play yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before play');
