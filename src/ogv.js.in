@@ -1,5 +1,8 @@
-// -- OgvJsCodec.js
-#include "OgvJsCodec.js"
+//
+// -- ogv.js
+// https://github.com/brion/ogv.js
+// Copyright (c) 2013-2014 Brion Vibber
+//
 
 // -- StreamFile.js
 #include "StreamFile.js"

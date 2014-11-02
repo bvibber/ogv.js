@@ -140,7 +140,7 @@
 		</div>
 	</div>
 
-	<script src="lib/ogvjs.js"></script>
+	<script src="lib/ogv.js"></script>
 #ifdef WITH_FLASH
 	<script src="lib/ogvswf.js"></script>
 #endif

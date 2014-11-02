@@ -1,8 +1,8 @@
 .FAKE : all clean cleanswf swf js flash demo democlean tests
 
-all : demo
+all : demo build/ogv-version.js
 
-js : build/ogvjs.js
+js : build/ogv.js
 
 flash : build/ogvswf.js
 
@@ -62,14 +62,20 @@ build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
-build/ogvjs.js : src/ogvjs.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OgvJsPlayer.js build/OgvJsCodec.js
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/ogvjs.js.in > build/ogvjs.js
+build/ogv.js : src/ogv.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OgvJsPlayer.js \
+               build/ogv-codec.js \
+               build/ogv-codec.js.gz
+	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
+	echo 'window.OgvJsVersion = "'`date -u`'";' >> build/ogv.js
 
-build/ogvjs-version.js : build/ogvjs.js
-	echo 'window.OgvJsVersion = "'`date -u`'";' > build/ogvjs-version.js
+build/ogv-version.js : build/ogv.js
+	echo 'window.OgvJsVersion = "'`date -u`'";' > build/ogv-version.js
 
-build/ogvjs.js.gz : build/ogvjs.js
-	 7z -tgzip -mx=9 -so a dummy.gz build/ogvjs.js > build/ogvjs.js.gz || gzip -9 -c build/ogvjs.js > build/ogvjs.js.gz
+build/ogv-codec.js : build/OgvJsCodec.js
+	cp build/OgvJsCodec.js build/ogv-codec.js
+
+build/ogv-codec.js.gz : build/ogv-codec.js
+	 7z -tgzip -mx=9 -so a dummy.gz build/ogv-codec.js > build/ogv-codec.js.gz || gzip -9 -c build/ogv-codec.js > build/ogv-codec.js.gz
 
 # Build as 'NOFLASH=1 make' to skip the Flash build
 ifdef NOFLASH
@@ -88,8 +94,9 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/minimal.html \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
-                        build/demo/lib/ogvjs.js \
-                        build/demo/lib/ogvjs.js.gz \
+                        build/demo/lib/ogv.js \
+                        build/demo/lib/ogv-codec.js \
+                        build/demo/lib/ogv-codec.js.gz \
                         build/demo/lib/dynamicaudio.swf \
                         $(FLASHDEMO_DEPS) \
                         build/demo/lib/cortado.jar \
@@ -121,13 +128,17 @@ build/demo/media/pixel_aspect_ratio.ogg : src/demo/media/pixel_aspect_ratio.ogg
 	test -d build/demo/media || mkdir -p build/demo/media
 	cp src/demo/media/pixel_aspect_ratio.ogg build/demo/media/pixel_aspect_ratio.ogg
 
-build/demo/lib/ogvjs.js : build/ogvjs.js
+build/demo/lib/ogv.js : build/ogv.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogvjs.js build/demo/lib/ogvjs.js
+	cp build/ogv.js build/demo/lib/ogv.js
 
-build/demo/lib/ogvjs.js.gz : build/ogvjs.js.gz
+build/demo/lib/ogv-codec.js : build/ogv-codec.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogvjs.js.gz build/demo/lib/ogvjs.js.gz
+	cp build/ogv-codec.js build/demo/lib/ogv-codec.js
+
+build/demo/lib/ogv-codec.js.gz : build/ogv-codec.js.gz
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp build/ogv-codec.js.gz build/demo/lib/ogv-codec.js.gz
 
 build/demo/lib/dynamicaudio.swf : src/dynamicaudio.swf
 	test -d build/demo/lib || mkdir -p build/demo/lib
@@ -151,8 +162,7 @@ build/demo/lib/CortadoPlayer.js : src/CortadoPlayer.js
 
 # QUnit test cases
 build/tests/index.html : build/tests/tests.js \
-                         build/tests/lib/ogvjs.js \
-                         build/tests/lib/dynamicaudio.swf \
+                         build/tests/lib/ogv.js \
                          build/tests/media/1frame.ogv \
                          build/tests/media/3frames.ogv \
                          build/tests/media/1second.ogv \
@@ -167,9 +177,15 @@ build/tests/tests.js : src/tests/tests.js
 	test -d build/tests || mkdir -p build/tests
 	cp src/tests/tests.js build/tests/tests.js
 
-build/tests/lib/ogvjs.js : build/ogvjs.js build/tests/lib/dynamicaudio.swf
+build/tests/lib/ogv.js : build/ogv.js \
+                         build/tests/lib/ogv-codec.js \
+                         build/tests/lib/dynamicaudio.swf
 	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp build/ogvjs.js build/tests/lib/ogvjs.js
+	cp build/ogv.js build/tests/lib/ogv.js
+
+build/tests/lib/ogv-codec.js : build/ogv-codec.js
+	test -d build/tests/lib || mkdir -p build/tests/lib
+	cp build/ogv-codec.js build/tests/lib/ogv-codec.js
 
 build/tests/lib/dynamicaudio.swf : src/dynamicaudio.swf
 	test -d build/tests/lib || mkdir -p build/tests/lib

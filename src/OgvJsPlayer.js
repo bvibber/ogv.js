@@ -900,6 +900,45 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		stream.readBytes();
 	}
 	
+	function loadCodec(callback) {
+		if (typeof window.OgvJs == 'function') {
+			if (callback) {
+				callback();
+			}
+		} else if (OgvJsPlayer.loadingNode !== null) {
+			if (callback) {
+				OgvJsPlayer.loadingCallbacks.push(callback);
+			}
+		} else {
+			if (callback) {
+				OgvJsPlayer.loadingCallbacks.push(callback);
+			}
+			OgvJsPlayer.loadingNode = document.createElement('script');
+			document.querySelector('head').appendChild(OgvJsPlayer.loadingNode);
+
+			var url = 'ogv-codec.js';
+			if (options.base) {
+				url = options.base + '/' + url;
+			}
+			if (typeof window.OgvJsVersion === 'string') {
+				url = url + '?version=' + encodeURIComponent(window.OgvJsVersion);
+			}
+			
+			OgvJsPlayer.loadingNode.onload = function() {
+				if (typeof window.OgvJs === 'function') {
+					OgvJsPlayer.loadingCallbacks.forEach(function(cb) {
+						cb();
+					});
+					OgvJsPlayer.loadingNode.onload = null;
+					OgvJsPlayer.loadingCallbacks.splice(0, OgvJsPlayer.loadingCallbacks.length);
+				} else {
+					throw new Error('Could not load ogv-codec.js');
+				}
+			};
+			OgvJsPlayer.loadingNode.src = url;
+		}
+	}
+	
 	/**
 	 * HTMLMediaElement load method
 	 */
@@ -908,7 +947,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			// already loaded.
 			return;
 		}
-		
+	
+		loadCodec();
+
 		started = false;
 		stream = new StreamFile({
 			url: self.src,
@@ -917,14 +958,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				// Fire off the read/decode/draw loop...
 				byteLength = stream.bytesTotal;
 				console.log('byteLength: ' + byteLength);
-				
+			
 				// If we get X-Content-Duration, that's as good as an explicit hint
 				var durationHeader = stream.getResponseHeader('X-Content-Duration');
 				if (typeof durationHeader === 'string') {
 					duration = parseFloat(durationHeader);
 					console.log('X-Content-Duration: ' + duration);
 				}
-				startProcessingVideo();
+				loadCodec(startProcessingVideo);
 			},
 			onread: function(data) {
 				// Pass chunk into the codec's buffer
@@ -947,7 +988,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					console.log("reading^H^H^^H^H buffering? done.");
 					//throw new Error('wtf is this');
 					stream = null;
-				
+			
 					// Let the read/decode/draw loop know we're out!
 					pingProcessing();
 				}
@@ -1007,7 +1048,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					pingProcessing(0);
 				}
 				if (!started) {
-					startProcessingVideo();
+					loadCodec(startProcessingVideo);
 				} else {
 					continueVideo();
 				}
@@ -1338,3 +1379,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 OgvJsPlayer.initSharedAudioContext = function() {
 	AudioFeeder.initSharedAudioContext();
 };
+
+OgvJsPlayer.loadingNode = null,
+OgvJsPlayer.loadingCallbacks = [];
