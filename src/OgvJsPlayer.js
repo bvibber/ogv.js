@@ -128,7 +128,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	var stream, byteLength = 0, nextProcessingTimer, paused = true, ended = false;
-	var started = false, loadedMetadata = false;
+	var started = false, loadedMetadata = false, startedPlaybackInDocument = false;
 	
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
@@ -217,7 +217,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	function doFrameComplete() {
-		if (!document.body.contains(self)) {
+		if (startedPlaybackInDocument && !document.body.contains(self)) {
 			// We've been de-parented since we last ran
 			// Stop playback at next opportunity!
 			setTimeout(function() {
@@ -910,6 +910,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		}
 		
 		if (paused) {
+			startedPlaybackInDocument = document.body.contains(self);
 			paused = false;
 			if (continueVideo) {
 				continueVideo();

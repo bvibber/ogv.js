@@ -107,6 +107,7 @@ function playLoadedMetadataTest(assert, player) {
 	player.onloadedmetadata = function() {
 		assert.ok( true, 'onloadedmetadata was fired' );
 		assert.ok( !player.paused, 'player no longer thinks it is paused (2)');
+		player.pause();
 		QUnit.start();
 	};
 	player.play();
@@ -121,3 +122,41 @@ QUnit.asyncTest('Native video play yields onloadedmetadata', function(assert) {
 QUnit.asyncTest('OgvJsPlayer play yields onloadedmetadata', function(assert) {
 	playLoadedMetadataTest(assert, ogvJsPlayer());
 });
+
+function playFiresPlay(assert, player) {
+	player.src = 'media/320x240.ogv';
+	player.onplay = function() {
+		assert.ok( true, 'onplay event was fired' );
+		assert.ok( !player.paused, 'player thinks it is playing');
+		player.pause();
+		QUnit.start();
+	};
+	player.play();
+}
+
+QUnit.asyncTest('Native video play yields onplay', function(assert) {
+	playFiresPlay(assert, nativePlayer());
+});
+
+QUnit.asyncTest('OgvJsPlayer play yields onplay', function(assert) {
+	playFiresPlay(assert, ogvJsPlayer());
+});
+
+function playThroughEnded(assert, player) {
+	player.src = 'media/320x240.ogv';
+	player.onended = function() {
+		assert.ok( true, 'onended event was fired' );
+		assert.ok( player.paused, 'player thinks it is paused again');
+		QUnit.start();
+	};
+	player.play();
+}
+
+QUnit.asyncTest('Native video play yields onended', function(assert) {
+	playThroughEnded(assert, nativePlayer());
+});
+
+QUnit.asyncTest('OgvJsPlayer play yields onended', function(assert) {
+	playThroughEnded(assert, ogvJsPlayer());
+});
+

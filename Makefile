@@ -119,7 +119,13 @@ build/jsdemo/index.html : src/demo/index.html.in src/demo/demo.css src/demo/demo
 	cp src/CortadoPlayer.js build/jsdemo/lib/CortadoPlayer.js
 
 # QUnit test cases
-build/tests/index.html : build/tests/tests.js build/tests/lib/ogvjs.js build/tests/media/320x240.ogv src/tests/index.html
+build/tests/index.html : build/tests/tests.js \
+                         build/tests/lib/ogvjs.js \
+                         build/tests/lib/dynamicaudio.swf \
+                         build/tests/media/1frame.ogv \
+                         build/tests/media/3frames.ogv \
+                         build/tests/media/320x240.ogv \
+                         src/tests/index.html
 	test -d build/tests || mkdir -p build/tests
 	cp src/tests/index.html build/tests/index.html
 
@@ -134,6 +140,14 @@ build/tests/lib/ogvjs.js : build/ogvjs.js build/tests/lib/dynamicaudio.swf
 build/tests/lib/dynamicaudio.swf : src/dynamicaudio.swf
 	test -d build/tests/lib || mkdir -p build/tests/lib
 	cp src/dynamicaudio.swf build/tests/lib/dynamicaudio.swf
+
+build/tests/media/1frame.ogv : src/tests/media/1frame.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp src/tests/media/1frame.ogv build/tests/media/1frame.ogv
+
+build/tests/media/3frames.ogv : src/tests/media/3frames.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp src/tests/media/3frames.ogv build/tests/media/3frames.ogv
 
 build/tests/media/320x240.ogv : src/tests/media/320x240.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
