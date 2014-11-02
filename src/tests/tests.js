@@ -79,9 +79,14 @@ QUnit.test("OgvJsPlayer canPlayType", function( assert ) {
 function loadedMetadataTest(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before load');
 	player.src = 'media/320x240.ogv';
+	assert.equal(player.videoWidth, 0, "don't know width before");
+	assert.equal(player.videoHeight, 0, "don't know height before");
 	player.onloadedmetadata = function() {
 		assert.ok( true, 'onloadedmetadata was fired' );
 		assert.ok( player.paused, 'player still thinks it is paused');
+		assert.equal(player.videoWidth, 320, "videoWidth");
+		assert.equal(player.videoHeight, 240, "videoHeight");
+		// todo: assert.equal(Math.round(player.duration), 4); // more or less
 		QUnit.start();
 	};
 	player.load();
