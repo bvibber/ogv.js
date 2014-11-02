@@ -41,6 +41,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	
 	var State = {
 		INITIAL: 'INITIAL',
+		LOADED: 'LOADED',
 		PLAYING: 'PLAYING',
 		PAUSED: 'PAUSED',
 		SEEKING: 'SEEKING',
@@ -126,8 +127,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		return (state.playbackPosition - initialAudioPosition) + initialAudioOffset;
 	}
 
-	var stream, byteLength = 0, nextProcessingTimer, paused = true;
-
+	var stream, byteLength = 0, nextProcessingTimer, paused = true, ended = false;
+	var started = false, loadedMetadata = false;
+	
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
 	var framesProcessed = 0, // frames
@@ -465,7 +467,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	function doProcessing() {
-		//console.log(codec.audioTimestamp, codec.frameTimestamp);
 		nextProcessingTimer = null;
 		
 		var audioBuffers = [];
@@ -490,6 +491,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 		var n = 0;
 		while (true) {
+			//console.log(n, state, codec.hasAudio, codec.audioReady, codec.audioTimestamp, codec.hasVideo, codec.frameReady, codec.frameTimestamp);
 			n++;
 			if (n > 100) {
 				//throw new Error("Got stuck in the loop!");
@@ -499,26 +501,19 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 
 			if (state == State.INITIAL) {
-				var hasAudio = codec.hasAudio,
-					hasVideo = codec.hasVideo;
-
 				if (placeboCodec) {
 					placeboCodec.process();
 				}
 				var more = codec.process();
 
-				if (hasAudio != codec.hasAudio || hasVideo != codec.hasVideo) {
-					// we just fell over from headers into content; reinit
-					state = State.PLAYING;
-					lastFrameTimestamp = getTimestamp();
-					targetFrameTime = lastFrameTimestamp + 1000.0 / fps
-					if (codec.hasAudio) {
-						initAudioFeeder();
-						audioFeeder.waitUntilReady(function() {
-							startAudio(0.0);
-							pingProcessing(0);
-						});
+				if (loadedMetadata) {
+					console.log('LOADED!', codec, codec.hasAudio, codec.hasVideo);
+					// we just fell over from headers into content; call onloadedmetadata etc
+					state = State.LOADED;
+					if (paused) {
+						// Paused? stop here.
 					} else {
+						// Not paused? Reinit and continue on to play processing.
 						pingProcessing(0);
 					}
 					return;
@@ -532,6 +527,24 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					// Keep processing headers
 					continue;
 				}
+			}
+			
+			if (state == State.LOADED) {
+				state = State.PLAYING;
+				lastFrameTimestamp = getTimestamp();
+				targetFrameTime = lastFrameTimestamp + 1000.0 / fps
+				if (codec.hasAudio) {
+					initAudioFeeder();
+					audioFeeder.waitUntilReady(function() {
+						startAudio(0.0);
+						pingProcessing(0);
+					});
+				} else {
+					pingProcessing(0);
+				}
+
+				// Fall over to play processing
+				return;
 			}
 			
 			if (state == State.SEEKING) {
@@ -739,9 +752,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var videoInfo,
 		audioInfo;
 
-	function playVideo() {
-		paused = false;
-		
+	function startProcessingVideo() {
 		var options = {};
 		
 		// Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1
@@ -763,6 +774,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		audioDecodingTime = 0;
 		bufferTime = 0;
 		drawingTime = 0;
+		started = true;
 
 		// There's some kind of problem with the JIT in iOS 7 Safari
 		// that sometimes trips up on optimized Vorbis builds, at least
@@ -804,23 +816,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		};
 		codec.onloadedmetadata = function() {
 			//state = State.PLAYING;
+			loadedMetadata = true;
 			if (self.onloadedmetadata) {
 				self.onloadedmetadata();
 			}
 		};
 
-		continueVideo = function() {
-			if (audioFeeder) {
-				startAudio();
-			}
-			pingProcessing(0);
-		}
-
 		stream.readBytes();
 	}
-	
-	var started = false;
-	var onstart;
 	
 	/**
 	 * HTMLMediaElement load method
@@ -837,12 +840,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			bufferSize: 65536 * 4,
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
-				started = true;
 				byteLength = stream.bytesTotal;
 				console.log('byteLength: ' + byteLength);
-				if (onstart) {
-					onstart();
-				}
+				startProcessingVideo();
 			},
 			onread: function(data) {
 				// Pass chunk into the codec's buffer
@@ -871,8 +871,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				console.log("reading error: " + err);
 			}
 		});
-		
-		paused = true;
 	};
 	
 	/**
@@ -882,11 +880,15 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		// @todo: implement better parsing
 		if (type === 'audio/ogg; codecs="vorbis"') {
 			return 'probably';
+		} else if (type === 'audio/ogg; codecs="opus"') {
+			return 'probably';
 		} else if (type.match(/^audio\/ogg\b/)) {
 			return 'maybe';
 		} else if (type === 'video/ogg; codecs="theora"') {
 			return 'probably';
 		} else if (type === 'video/ogg; codecs="theora,vorbis"') {
+			return 'probably';
+		} else if (type === 'video/ogg; codecs="theora,opus"') {
 			return 'probably';
 		} else if (type.match(/^video\/ogg\b/)) {
 			return 'maybe';
@@ -912,7 +914,17 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (continueVideo) {
 				continueVideo();
 			} else {
-				playVideo();
+				continueVideo = function() {
+					if (audioFeeder) {
+						startAudio();
+					}
+					pingProcessing(0);
+				}
+				if (!started) {
+					startProcessingVideo();
+				} else {
+					continueVideo();
+				}
 			}
 			if (self.onplay) {
 				self.onplay();
@@ -1091,7 +1103,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		}
 	});
 	
-	var poster, thumbnail;
+	var poster = '', thumbnail;
 	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
