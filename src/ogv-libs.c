@@ -585,9 +585,16 @@ int OgvJsProcess() {
 		return 0;
 	}
 	if (needData) {
-		if (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
+	    int ret = ogg_sync_pageout(&oggSyncState, &oggPage);
+		if (ret > 0) {
+		    // complete page retrieved
 			queue_page(&oggPage);
+		} else if (ret < 0) {
+		    // incomplete sync
+		    // continue on the next loop
+		    return 1;
 		} else {
+		    // need moar data
 			return 0;
 		}
 	}
@@ -666,6 +673,8 @@ void OgvJsFlushBuffers() {
 	keyframeTime = -1;
 	audiobufGranulepos = -1;
 	audiobufTime = -1;
+	
+	needData = 1;
 }
 
 void OgvJsDiscardFrame()

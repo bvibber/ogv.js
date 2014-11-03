@@ -579,6 +579,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						if (lastSeenTimestamp > 0) {
 							duration = lastSeenTimestamp;
 							console.log('detected duration ' + duration + ' from end');
+						} else {
+							console.log('did not find a duration');
 						}
 						
 						// Ok, seek back to the beginning and resync the streams.
