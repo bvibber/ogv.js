@@ -18,12 +18,20 @@ QUnit.assert.floatClose = function(actual, expected, message) {
 	this.push(ok, actual, expected, message);
 };
 
+var hasNativeOgg = (function() {
+	var video = document.createElement('video');
+	return video.canPlayType('video/ogg; codecs="theora,vorbis"') &&
+	       video.canPlayType('video/ogg; codecs="theora,opus"');
+})();
+
 function doubleTest(description, func) {
-	QUnit.test("native video: " + description, function( assert ) {
-		var player = nativePlayer();
-		document.getElementById('qunit-fixture').appendChild(player);
-		func(assert, player);
-	} );
+	if (hasNativeOgg) {
+		QUnit.test("native video: " + description, function( assert ) {
+			var player = nativePlayer();
+			document.getElementById('qunit-fixture').appendChild(player);
+			func(assert, player);
+		} );
+	}
 
 	QUnit.test("OgvJsPlayer: " + description, function( assert ) {
 		var player = ogvJsPlayer();
@@ -33,11 +41,13 @@ function doubleTest(description, func) {
 }
 
 function doubleAsyncTest(description, func) {
-	QUnit.asyncTest("native video: " + description, function( assert ) {
-		var player = nativePlayer();
-		document.getElementById('qunit-fixture').appendChild(player);
-		func(assert, player);
-	} );
+	if (hasNativeOgg) {
+		QUnit.asyncTest("native video: " + description, function( assert ) {
+			var player = nativePlayer();
+			document.getElementById('qunit-fixture').appendChild(player);
+			func(assert, player);
+		} );
+	}
 
 	QUnit.asyncTest("OgvJsPlayer: " + description, function( assert ) {
 		var player = ogvJsPlayer();
