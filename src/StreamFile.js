@@ -443,11 +443,9 @@ function StreamFile(options) {
 		};
 		
 		internal.bytesBuffered = function() {
-			if (stream) {
-				return stream.bytesBuffered - bytesRead;
-			} else {
-				return 0;
-			}
+			// We don't know how much ahead is buffered, it's opaque.
+			// Just return what we've read.
+			return 0;
 		};
 
 		self.readBytes = function() {
