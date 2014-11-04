@@ -897,6 +897,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		};
 		codec.onloadedmetadata = function() {
 			loadedMetadata = true;
+			console.log('skeleton duration', codec.duration);
 		};
 
 		stream.readBytes();

@@ -34,6 +34,11 @@ OgvJs = (function(options) {
     var OgvJsFlushBuffers = Module.cwrap('OgvJsFlushBuffers', 'void', []);
     var OgvJsDiscardFrame = Module.cwrap('OgvJsDiscardFrame', 'void', []);
     var OgvJsDiscardAudio = Module.cwrap('OgvJsDiscardAudio', 'void', []);
+    var OgvJsSkeletonGetSegmentLength = Module.cwrap('OgvJsSkeletonGetSegmentLength', 'number', []);
+    var OgvJsSkeletonGetPtimeNumerator = Module.cwrap('OgvJsSkeletonGetPtimeNumerator', 'number', []);
+    var OgvJsSkeletonGetPtimeDenominator = Module.cwrap('OgvJsSkeletonGetPtimeDenominator', 'number', []);
+    var OgvJsSkeletonGetKeypointOffset = Module.cwrap('OgvJsSkeletonGetKeypointOffset', 'number', ['number']);
+    var OgvJsSkeletonGetDuration = Module.cwrap('OgvJsSkeletonGetDuration', 'number');
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -253,6 +258,35 @@ OgvJs = (function(options) {
 	self.dataReady = function() {
 		return self.audioReady || self.frameReady;
 	}
+	
+	/**
+	 * Duration of segment in seconds, if defined in Ogg Skeleton metadata,
+	 * else Infinity (assume stream?)
+	 *
+	 * @property number
+	 */
+	Object.defineProperty(self, 'duration', {
+		get: function getDuration() {
+    		var len = OgvJsSkeletonGetDuration();
+    		console.log(len);
+    		if (len >= 0) {
+    			return len;
+    		} else {
+    			return Infinity;
+    		}
+		}
+	});
+	
+	/**
+	 * Return the offset of the relevant keyframe or other position
+	 * just before the given presentation timestamp
+	 *
+	 * @param number timeSeconds
+	 * @return number byte offset
+	 */
+	self.getKeypointOffset = function(timeSeconds) {
+    	return OgvJsSkeletonGetKeypointOffset(timeSeconds * 1000);
+	};
 
 	OgvJsInit(processAudio ? 1 : 0, processVideo ? 1 : 0);
 	return self;

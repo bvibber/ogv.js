@@ -765,3 +765,87 @@ void OgvJsDiscardAudio()
 		audiobufReady = 0;
 	}
 }
+
+#ifdef SKELETON
+
+/**
+ * @return segment length in bytes
+ */
+long OgvJsSkeletonGetSegmentLength() {
+    ogg_int64_t segment_len = -1;
+    if (skeletonHeaders) {
+        oggskel_get_segment_len(skeleton, &segment_len);
+    }
+    return (long)segment_len;
+}
+
+/**
+ * @return segment duration in seconds, or -1 if unknown
+ */
+float OgvJsSkeletonGetDuration() {
+    if (skeleton) {
+        ogg_uint16_t ver_maj = -1, ver_min = -1;
+        oggskel_get_ver_maj(skeleton, &ver_maj);
+        oggskel_get_ver_min(skeleton, &ver_min);
+        printf("ver_maj %d\n", ver_maj);
+        printf("ver_min %d\n", ver_min);
+    
+        ogg_int64_t first_sample_num = -1,
+                    first_sample_denum = -1,
+                    last_sample_num = -1,
+                    last_sample_denum = -1;
+        int ret;
+        ret = oggskel_get_first_sample_num(skeleton, &first_sample_num);
+        printf("%d\n", ret);
+        ret = oggskel_get_first_sample_denum(skeleton, &first_sample_denum);
+        printf("%d\n", ret);
+        ret = oggskel_get_last_sample_num(skeleton, &last_sample_num);
+        printf("%d\n", ret);
+        ret = oggskel_get_last_sample_denum(skeleton, &last_sample_denum);
+        printf("%d\n", ret);
+        printf("%lld %lld %lld %lld\n", first_sample_num, first_sample_denum, last_sample_num, last_sample_denum);
+        return ((double)last_sample_num / (double)last_sample_denum) -
+               ((double)first_sample_num / (double)first_sample_denum);
+    }
+    return -1;
+}
+
+long OgvJsSkeletonGetPtimeNumerator() {
+    ogg_int64_t ptime_num = -1;
+    if (skeletonHeaders) {
+        oggskel_get_ptime_num(skeleton, &ptime_num);
+    }
+    return (long)ptime_num;
+}
+
+long OgvJsSkeletonGetPtimeDenominator() {
+    ogg_int64_t ptime_denum = -1;
+    if (skeletonHeaders) {
+        oggskel_get_ptime_denum(skeleton, &ptime_denum);
+    }
+    return (long)ptime_denum;
+}
+
+long OgvJsSkeletonGetKeypointOffset(long time_ms)
+{
+    ogg_int64_t offset = -1;
+    if (skeletonHeaders) {
+        ogg_int32_t serial_nos[4];
+        size_t nstreams = 0;
+        if (theoraHeaders) {
+            serial_nos[nstreams++] = theoraStreamState.serialno;
+        }
+#ifdef OPUS
+        if (opusHeaders) {
+            serial_nos[nstreams++] = opusStreamState.serialno;
+        }
+#endif
+        if (vorbisHeaders) {
+            serial_nos[nstreams++] = vorbisStreamState.serialno;
+        }
+        oggskel_get_keypoint_offset(skeleton, serial_nos, nstreams, time_ms, &offset);
+    }
+    return (long)offset;
+}
+        
+#endif
