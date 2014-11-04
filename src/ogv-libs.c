@@ -77,10 +77,11 @@ int               opusStreams;
 #endif
 
 #ifdef SKELETON
-OggSkeleton      *skeleton;
+OggSkeleton      *skeleton = NULL;
 ogg_stream_state  skeletonStreamState;
-int               skeletonHeaders;
-int               skeletonProcessingHeaders;
+int               skeletonHeaders = 0;
+int               skeletonProcessingHeaders = 0;
+int               skeletonDone = 0;
 #endif
 
 int               processAudio;
@@ -164,6 +165,9 @@ static int queue_page(ogg_page *page) {
 #ifdef OPUS
     if (opusHeaders) ogg_stream_pagein(&opusStreamState, page);
 #endif
+#ifdef SKELETON
+    if (skeletonHeaders) ogg_stream_pagein(&skeletonStreamState, page);
+#endif
     return 0;
 }
 
@@ -244,9 +248,12 @@ static void processBegin() {
             ogg_stream_packetout(&opusStreamState, NULL);
 #endif
 #ifdef SKELETON
-        } else if (!skeletonHeaders && (skeletonProcessingHeaders = oggskel_decode_header(skeleton, &oggPacket)) > 0) {
+        } else if (!skeletonHeaders && (skeletonProcessingHeaders = oggskel_decode_header(skeleton, &oggPacket)) >= 0) {
             memcpy(&skeletonStreamState, &test, sizeof (test));
             skeletonHeaders = 1;
+            skeletonDone = 0;
+
+            // ditch the processed packet...
             ogg_stream_packetout(&skeletonStreamState, NULL);
 #endif
         } else {
@@ -264,13 +271,42 @@ static void processBegin() {
 
 static void processHeaders() {
 
+    if ((theoraHeaders && theoraProcessingHeaders)
+        || (vorbisHeaders && vorbisHeaders < 3)
 #ifdef OPUS
-    if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3) || (opusHeaders && opusHeaders < 2)) {
-#else
-    if ((theoraHeaders && theoraProcessingHeaders) || (vorbisHeaders && vorbisHeaders < 3)) {
+        || (opusHeaders && opusHeaders < 2)
 #endif
+#ifdef SKELETON
+        || (skeletonHeaders && !skeletonDone)
+#endif
+    ) {
         printf("processHeaders pass... %d %d %d\n", theoraHeaders, theoraProcessingHeaders, vorbisHeaders);
         int ret;
+
+#ifdef SKELETON
+        // Rest of the skeleton comes before everything else, so process it up!
+        if (skeletonHeaders && !skeletonDone) {
+            ret = ogg_stream_packetout(&skeletonStreamState, &oggPacket);
+            if (ret < 0) {
+                printf("Error reading skeleton headers: %d.\n", ret);
+                exit(1);
+            }
+            if (ret > 0) {
+                printf("Checking another skeleton header packet...\n");
+                skeletonProcessingHeaders = oggskel_decode_header(skeleton, &oggPacket);
+                if (skeletonProcessingHeaders < 0) {
+                    printf("Error processing skeleton header packet: %d\n", skeletonProcessingHeaders);
+                }
+                if (oggPacket.e_o_s) {
+                    printf("Found the skeleton end of stream!\n");
+                    skeletonDone = 1;
+                }
+            }
+            if (ret == 0) {
+                printf("No skeleton header packet...\n");
+            }
+        }
+#endif
 
         /* look for further theora headers */
         if (theoraHeaders && theoraProcessingHeaders) {
@@ -651,6 +687,13 @@ void OgvJsDestroy() {
 #ifdef OPUS
     if (opusHeaders) {
         opus_multistream_decoder_destroy(opusDecoder);
+    }
+#endif
+
+#ifdef SKELETON
+    if (skeletonHeaders) {
+        ogg_stream_clear(&skeletonStreamState);
+        oggskel_destroy(skeleton);
     }
 #endif
 
