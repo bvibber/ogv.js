@@ -261,18 +261,17 @@ OgvJs = (function(options) {
 	
 	/**
 	 * Duration of segment in seconds, if defined in Ogg Skeleton metadata,
-	 * else Infinity (assume stream?)
+	 * else NaN
 	 *
 	 * @property number
 	 */
 	Object.defineProperty(self, 'duration', {
 		get: function getDuration() {
     		var len = OgvJsSkeletonGetDuration();
-    		console.log(len);
     		if (len >= 0) {
     			return len;
     		} else {
-    			return Infinity;
+    			return NaN;
     		}
 		}
 	});

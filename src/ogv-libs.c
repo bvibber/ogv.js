@@ -790,22 +790,50 @@ float OgvJsSkeletonGetDuration() {
         printf("ver_maj %d\n", ver_maj);
         printf("ver_min %d\n", ver_min);
     
-        ogg_int64_t first_sample_num = -1,
-                    first_sample_denum = -1,
-                    last_sample_num = -1,
-                    last_sample_denum = -1;
-        int ret;
-        ret = oggskel_get_first_sample_num(skeleton, &first_sample_num);
-        printf("%d\n", ret);
-        ret = oggskel_get_first_sample_denum(skeleton, &first_sample_denum);
-        printf("%d\n", ret);
-        ret = oggskel_get_last_sample_num(skeleton, &last_sample_num);
-        printf("%d\n", ret);
-        ret = oggskel_get_last_sample_denum(skeleton, &last_sample_denum);
-        printf("%d\n", ret);
-        printf("%lld %lld %lld %lld\n", first_sample_num, first_sample_denum, last_sample_num, last_sample_denum);
-        return ((double)last_sample_num / (double)last_sample_denum) -
-               ((double)first_sample_num / (double)first_sample_denum);
+        ogg_int32_t serial_nos[4];
+        size_t nstreams = 0;
+        if (theoraHeaders) {
+            serial_nos[nstreams++] = theoraStreamState.serialno;
+        }
+#ifdef OPUS
+        if (opusHeaders) {
+            serial_nos[nstreams++] = opusStreamState.serialno;
+        }
+#endif
+        if (vorbisHeaders) {
+            serial_nos[nstreams++] = vorbisStreamState.serialno;
+        }
+        
+        double firstSample = -1,
+               lastSample = -1;
+        for (int i = 0; i < nstreams; i++) {
+            ogg_int64_t first_sample_num = -1,
+                        first_sample_denum = -1,
+                        last_sample_num = -1,
+                        last_sample_denum = -1;
+            int ret;
+            ret = oggskel_get_first_sample_num(skeleton, serial_nos[i], &first_sample_num);
+            printf("%d\n", ret);
+            ret = oggskel_get_first_sample_denum(skeleton, serial_nos[i], &first_sample_denum);
+            printf("%d\n", ret);
+            ret = oggskel_get_last_sample_num(skeleton, serial_nos[i], &last_sample_num);
+            printf("%d\n", ret);
+            ret = oggskel_get_last_sample_denum(skeleton, serial_nos[i], &last_sample_denum);
+            printf("%d\n", ret);
+            printf("%lld %lld %lld %lld\n", first_sample_num, first_sample_denum, last_sample_num, last_sample_denum);
+            
+            double firstStreamSample = (double)first_sample_num / (double)first_sample_denum;
+            if (firstSample == -1 || firstStreamSample < firstSample) {
+                firstSample = firstStreamSample;
+            }
+            
+            double lastStreamSample = (double)last_sample_num / (double)last_sample_denum;
+            if (lastSample == -1 || lastStreamSample > lastSample) {
+                lastSample = lastStreamSample;
+            }
+        }
+        
+        return lastSample - firstSample;
     }
     return -1;
 }
@@ -834,14 +862,15 @@ long OgvJsSkeletonGetKeypointOffset(long time_ms)
         size_t nstreams = 0;
         if (theoraHeaders) {
             serial_nos[nstreams++] = theoraStreamState.serialno;
-        }
+        } else {
 #ifdef OPUS
-        if (opusHeaders) {
-            serial_nos[nstreams++] = opusStreamState.serialno;
-        }
+            if (opusHeaders) {
+                serial_nos[nstreams++] = opusStreamState.serialno;
+            }
 #endif
-        if (vorbisHeaders) {
-            serial_nos[nstreams++] = vorbisStreamState.serialno;
+            if (vorbisHeaders) {
+                serial_nos[nstreams++] = vorbisStreamState.serialno;
+            }
         }
         oggskel_get_keypoint_offset(skeleton, serial_nos, nstreams, time_ms, &offset);
     }

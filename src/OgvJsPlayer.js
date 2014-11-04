@@ -255,7 +255,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		lastSeekPosition,
 		lastFrameSkipped,
 		seekBisector,
-		seekMode;
+		seekMode,
+		seekModeIndex = false;
 	function seek(toTime, shouldSeekToKeyframe) {
 		seekMode = shouldSeekToKeyframe;
 		if (stream.bytesTotal == 0) {
@@ -270,10 +271,24 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		if (codec.hasAudio && audioFeeder) {
 			stopAudio();
 		}
-
+		
+		var offset = codec.getKeypointOffset(toTime),
+			start,
+			end;
+		if (offset >= 0) {
+			start = offset;
+			end = offset;
+			seekMode = seek.SEEK_ONCE;
+			seekModeIndex = true;
+		} else {
+			start = 0;
+			end = stream.bytesTotal - 1;
+			seekModeIndex = false;
+		}
+		
 		seekBisector = new Bisector({
-			start: 0,
-			end: stream.bytesTotal - 1,
+			start: start,
+			end: end,
 			process: function(start, end, position) {
 				if (position == lastSeekPosition) {
 					return false;
@@ -352,6 +367,12 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					return false;
 				}
 			} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
+				if (seekModeIndex) {
+					console.log('seeked through index to keyframe: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
+					seekTargetTime = codec.frameTimestamp;
+					continueSeekedPlayback();
+					return false;
+				}
 				console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 				if (seekTargetTime - codec.frameTimestamp < 1.0) {
 					// If it's close, just keep looking for packets
@@ -503,9 +524,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			//console.log(n, state, codec.hasAudio, codec.audioReady, codec.audioTimestamp, codec.hasVideo, codec.frameReady, codec.frameTimestamp);
 			n++;
 			if (n > 100) {
-				throw new Error("Got stuck in the loop!");
-				//console.log("Got stuck in the loop!");
-				//pingProcessing(10);
+				//throw new Error("Got stuck in the loop!");
+				console.log("Got stuck in the loop!");
+				pingProcessing(10);
 				return;
 			}
 
@@ -898,6 +919,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		codec.onloadedmetadata = function() {
 			loadedMetadata = true;
 			console.log('skeleton duration', codec.duration);
+			if (!isNaN(codec.duration)) {
+				// Use duration from ogg skeleton index
+				duration = codec.duration;
+			}
 		};
 
 		stream.readBytes();
