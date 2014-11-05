@@ -783,7 +783,7 @@ long OgvJsSkeletonGetSegmentLength() {
  * @return segment duration in seconds, or -1 if unknown
  */
 float OgvJsSkeletonGetDuration() {
-    if (skeleton) {
+    if (skeletonHeaders) {
         ogg_uint16_t ver_maj = -1, ver_min = -1;
         oggskel_get_ver_maj(skeleton, &ver_maj);
         oggskel_get_ver_min(skeleton, &ver_min);
