@@ -260,11 +260,33 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	// -- seek functions
 	var seekTargetTime = 0.0,
 		seekTargetKeypoint = 0.0,
+		bisectTargetTime = 0.0,
 		lastSeekPosition,
 		lastFrameSkipped,
 		seekBisector;
-	function seek(toTime, shouldSeekToKeyframe) {
-		seekMode = shouldSeekToKeyframe;
+
+	function startBisection(targetTime) {
+		bisectTargetTime = targetTime;
+		seekBisector = new Bisector({
+			start: 0,
+			end: stream.bytesTotal - 1,
+			process: function(start, end, position) {
+				if (position == lastSeekPosition) {
+					return false;
+				} else {
+					lastSeekPosition = position;
+					lastFrameSkipped = false;
+					codec.flush();
+					stream.seek(position);
+					stream.readBytes();
+					return true;
+				}
+			}
+		});
+		seekBisector.start();
+	}
+
+	function seek(toTime) {
 		if (stream.bytesTotal == 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
@@ -296,27 +318,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			// have to decode forward back to the desired time.
 			//
 			seekState = SeekState.BISECT_TO_TARGET;
-			seekBisector = new Bisector({
-				start: 0,
-				end: stream.bytesTotal - 1,
-				process: function(start, end, position) {
-					if (position == lastSeekPosition) {
-						return false;
-					} else {
-						lastSeekPosition = position;
-						lastFrameSkipped = false;
-						codec.flush();
-						stream.seek(position);
-						stream.readBytes();
-						return true;
-					}
-				}
-			});
-			seekBisector.start();
+			startBisection(seekTargetTime);
 		}
 	}
-	seek.SEEK_TO_KEYFRAME = 'toKeyframe';
-	seek.SEEK_ONCE = 'once';
 	
 	function continueSeekedPlayback() {
 		seekState = SeekState.NOT_SEEKING;
@@ -381,146 +385,79 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		return true;
 	}
 	
-	/**
-	 * @return {boolean} true to continue processing, false to wait for input data
-	 */
-	function doProcessSeekingVideo() {
-		if (codec.frameReady) {
-			var fudgeFactor = (1 / videoInfo.fps);
-			if (codec.frameTimestamp < 0) {
-				// Invalid granule pos? um.
-				// move on past it
-				//console.log('invalid granule pos?');
-				codec.discardFrame();
-				//lastFrameSkipped = true;
-				return true; // keep looking for frames with timestamps
+	function doProcessBisectionSeek() {
+		var frameDuration,
+			timestamp;
+		if (codec.hasVideo) {
+			if (!codec.frameReady) {
+				console.log('no frame found yet');
+				// Haven't found a frame yet, process more data
+				return true;
+			}
+			timestamp = codec.frameTimestamp;
+			frameDuration = 1 / videoInfo.fps;
+		} else if (codec.hasAudio) {
+			if (!codec.audioReady) {
+				console.log('no audio found yet');
+				// Haven't found an audio packet yet, process more data
+				return true;
+			}
+			timestamp = codec.audioTimestamp;
+			frameDuration = 1 / 256; // approximate packet audio size, fake!
+		} else {
+			throw new Error('Invalid seek state; no audio or video track available');
+		}
+
+		if (timestamp < 0) {
+			console.log('no timestamps found yet');
+			// Haven't found a time yet.
+			// Decode in case we're at our keyframe or a following intraframe...
+			if (codec.frameReady) {
+				codec.decodeFrame();
+				codec.dequeueFrame();
 			}
 			if (codec.audioReady) {
-				//console.log(codec.audioTimestamp, codec.frameTimestamp);
-				if (codec.audioTimestamp < 0) {
-					codec.discardAudio();
-					return true; // keep looking for packets with timestamps
-				} else if (codec.audioTimestamp < codec.frameTimestamp) {
-					console.log('discarding audio to catch up');
-					//codec.discardAudio();
-					// for the moment we have to decode audio in order to update the timestamp
-					// this can be gotten from headers but it's complicated
-					// liboggz can do it though
-					codec.decodeAudio();
-					codec.dequeueAudio();
-					return true;
-				}
+				codec.decodeAudio();
+				codec.dequeueAudio();
 			}
-			
-			if (codec.frameTimestamp > seekTargetTime + fudgeFactor) {
-				console.log('frame too high: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-				if (lastFrameSkipped) {
-					console.log('gave up on bisect, we skipped over the target position');
-					seekTargetTime = codec.frameTimestamp;
-					continueSeekedPlayback();
-				} else {
-					if (seekBisector.left()) {
-						// wait for new data to come in
-					} else {
-						console.log('gave up on bisect left');
-						seekTargetTime = codec.frameTimestamp;
-						continueSeekedPlayback();
-					}
-					return false;
-				}
-			} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
-				console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-				if (seekTargetTime - codec.frameTimestamp < 1.0) {
-					// If it's close, just keep looking for packets
-					console.log('skipping frame');
-					codec.discardFrame();
-					lastFrameSkipped = true;
-				} else {
-					if (seekBisector.right()) {
-						// wait for new data to come in
-					} else {
-						console.log('gave up on bisect right');
-						seekTargetTime = codec.frameTimestamp;
-						continueSeekedPlayback();
-					}
-					return false;
-				}
+			return true;
+		} else if (timestamp - frameDuration > bisectTargetTime) {
+			console.log('frame too high', codec.frameTimestamp, bisectTargetTime);
+			if (seekBisector.left()) {
+				// wait for new data to come in
 			} else {
-				// We found it!
-				console.log('frame FOUND: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-				if (codec.keyframeTimestamp < codec.frameTimestamp) {
-					console.log('keyframe is ' + codec.keyframeTimestamp);
-					if (seekMode == seek.SEEK_TO_KEYFRAME) {
-						seek(codec.keyframeTimestamp, seek.SEEK_ONCE);
-						return;
-					}
-				}
+				console.log('gave up on bisect left');
+				seekTargetTime = codec.frameTimestamp;
 				continueSeekedPlayback();
-				return false;
 			}
+			return false;
+		} else if (timestamp + frameDuration < bisectTargetTime) {
+			console.log('frame too low', codec.frameTimestamp, bisectTargetTime);
+			if (seekBisector.right()) {
+				// wait for new data to come in
+			} else {
+				console.log('gave up on bisect right');
+				seekTargetTime = codec.frameTimestamp;
+				continueSeekedPlayback();
+			}
+			return false;
 		} else {
-			// Keep reading for more data.
+			console.log('found it?', timestamp, bisectTargetTime);
+			// Reached the bisection target!
+			if (seekState == SeekState.BISECT_TO_TARGET && (codec.hasVideo && codec.keyframeTimestamp < codec.frameTimestamp)) {
+				// We have to go back and find a keyframe. Sigh.
+				seekState = SeekState.BISECT_TO_KEYPOINT;
+				startBisection(codec.keyframeTimestamp);
+				return false;
+			} else {
+				// Switch to linear mode to find the final target.
+				seekState = SeekState.LINEAR_TO_TARGET;
+				return true;
+			}
 		}
 		return true;
 	}
-
-	/**
-	 * @return {boolean} true to continue processing, false to wait for input data
-	 */
-	function doProcessSeekingAudio() {
-		if (codec.audioReady) {
-			var fudgeFactor = (1 / 10);
-			if (codec.audioTimestamp < 0) {
-				// Invalid granule pos? um.
-				// move on past it
-				codec.discardAudio();
-				return true; // keep looking for packets with timestamps
-			}
-			
-			if (codec.audioTimestamp > seekTargetTime + fudgeFactor) {
-				console.log('audio too high: ', codec.audioTimestamp, seekTargetTime, fudgeFactor);
-				if (lastFrameSkipped) {
-					console.log('gave up on bisect, we skipped over the target position');
-					continueSeekedPlayback();
-				} else {
-					if (seekBisector.left()) {
-						// wait for new data to come in
-					} else {
-						console.log('gave up on bisect left');
-						continueSeekedPlayback();
-					}
-					return false;
-				}
-			} else if (codec.audioTimestamp < seekTargetTime - fudgeFactor) {
-				console.log('audio too low: ', codec.audioTimestamp, seekTargetTime, fudgeFactor);
-				if (seekTargetTime - codec.audioTimestamp < 1.0) {
-					// If it's close, just keep looking for packets
-					console.log('skipping over packet');
-					//codec.discardAudio();
-					// must decode to update the time reliably
-					codec.decodeAudio();
-					codec.dequeueAudio();
-					lastFrameSkipped = true;
-				} else {
-					if (seekBisector.right()) {
-						// wait for new data to come in
-					} else {
-						console.log('gave up on bisect right');
-						continueSeekedPlayback();
-					}
-					return false;
-				}
-			} else {
-				// We found it!
-				console.log('audio FOUND: ', codec.audioTimestamp, seekTargetTime, fudgeFactor);
-				continueSeekedPlayback();
-				return false;
-			}
-		} else {
-			// Keep reading for more data.
-		}
-		return true;
-	}
+	
 
 	/**
 	 * In IE, pushing data to the Flash shim is expensive.
@@ -714,25 +651,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				if (seekState == SeekState.NOT_SEEKING) {
 					throw new Error('seeking in invalid state (not seeking?)');
 				} else if (seekState == SeekState.BISECT_TO_TARGET) {
-					if (codec.hasVideo) {
-						// seek according to frames, look for the last keyframe
-						doProcessSeekingVideo();
-					} else if (codec.hasAudio) {
-						// no worry about keyframes, at least
-						doProcessSeekingAudio();
-					} else {
-						throw new Error('seeking in invalid state (no audio or video)');
-					}
+					doProcessBisectionSeek();
 				} else if (seekState == SeekState.BISECT_TO_KEYPOINT) {
-					if (codec.hasVideo) {
-						// seek according to frames, look for the last keyframe
-						doProcessSeekingVideo();
-					} else if (codec.hasAudio) {
-						// no worry about keyframes, at least
-						doProcessSeekingAudio();
-					} else {
-						throw new Error('seeking in invalid state (no audio or video)');
-					}
+					doProcessBisectionSeek();
 				} else if (seekState == SeekState.LINEAR_TO_TARGET) {
 					doProcessLinearSeeking();
 				}
@@ -1271,7 +1192,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		},
 		set: function setCurrentTime(val) {
 			if (stream && byteLength && duration) {
-				seek(val, seek.SEEK_TO_KEYFRAME);
+				seek(val);
 			}
 		}
 	});
