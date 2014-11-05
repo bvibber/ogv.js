@@ -49,6 +49,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		ENDED: 'ENDED'
 	}, state = State.INITIAL;
 	
+	var SeekState = {
+		NOT_SEEKING: 'NOT_SEEKING',
+		BISECT_TO_TARGET: 'BISECT_TO_TARGET',
+		BISECT_TO_KEYPOINT: 'BISECT_TO_KEYPOINT',
+		LINEAR_TO_TARGET: 'LINEAR_TO_TARGET'
+	}, seekState = SeekState.NOT_SEEKING;
+	
 	var audioOptions = {};
 	if (typeof options.base === 'string') {
 		// Pass the resource dir down to AudioFeeder,
@@ -252,11 +259,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 	// -- seek functions
 	var seekTargetTime = 0.0,
+		seekTargetKeypoint = 0.0,
 		lastSeekPosition,
 		lastFrameSkipped,
-		seekBisector,
-		seekMode,
-		seekModeIndex = false;
+		seekBisector;
 	function seek(toTime, shouldSeekToKeyframe) {
 		seekMode = shouldSeekToKeyframe;
 		if (stream.bytesTotal == 0) {
@@ -264,6 +270,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		}
 		state = State.SEEKING;
 		seekTargetTime = toTime;
+		seekTargetKeypoint = -1;
 		lastFrameSkipped = false;
 		lastSeekPosition = -1;
 		codec.flush();
@@ -272,42 +279,47 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			stopAudio();
 		}
 		
-		var offset = codec.getKeypointOffset(toTime),
-			start,
-			end;
-		if (offset >= 0) {
-			start = offset;
-			end = offset;
-			seekMode = seek.SEEK_ONCE;
-			seekModeIndex = true;
+		var offset = codec.getKeypointOffset(toTime);
+		if (offset > 0) {
+			// This file has an index!
+			//
+			// Start at the keypoint, then decode forward to the desired time.
+			//
+			seekState = SeekState.LINEAR_TO_TARGET;
+			stream.seek(offset);
+			stream.readBytes();
 		} else {
-			start = 0;
-			end = stream.bytesTotal - 1;
-			seekModeIndex = false;
-		}
-		
-		seekBisector = new Bisector({
-			start: start,
-			end: end,
-			process: function(start, end, position) {
-				if (position == lastSeekPosition) {
-					return false;
-				} else {
-					lastSeekPosition = position;
-					lastFrameSkipped = false;
-					codec.flush();
-					stream.seek(position);
-					stream.readBytes();
-					return true;
+			// No index.
+			//
+			// Bisect through the file finding our target time, then we'll
+			// have to do it again to reach the keypoint, and *then* we'll
+			// have to decode forward back to the desired time.
+			//
+			seekState = SeekState.BISECT_TO_TARGET;
+			seekBisector = new Bisector({
+				start: 0,
+				end: stream.bytesTotal - 1,
+				process: function(start, end, position) {
+					if (position == lastSeekPosition) {
+						return false;
+					} else {
+						lastSeekPosition = position;
+						lastFrameSkipped = false;
+						codec.flush();
+						stream.seek(position);
+						stream.readBytes();
+						return true;
+					}
 				}
-			}
-		});
-		seekBisector.start();
+			});
+			seekBisector.start();
+		}
 	}
 	seek.SEEK_TO_KEYFRAME = 'toKeyframe';
 	seek.SEEK_ONCE = 'once';
 	
 	function continueSeekedPlayback() {
+		seekState = SeekState.NOT_SEEKING;
 		state = State.PLAYING;
 		frameEndTimestamp = codec.frameTimestamp;
 		console.log('SEEKED', codec.audioTimestamp, codec.frameTimestamp);
@@ -317,6 +329,56 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		} else {
 			seekTargetTime = codec.frameTimestamp;
 		}
+	}
+	
+	/**
+	 * @return {boolean} true to continue processing, false to wait for input data
+	 */
+	function doProcessLinearSeeking() {
+		var frameDuration;
+		if (codec.hasVideo) {
+			frameDuration = 1 / videoInfo.fps;
+		} else {
+			frameDuration = 1 / 256; // approximate packet audio size, fake!
+		}
+		
+		if (codec.hasVideo) {
+			if (!codec.frameReady) {
+				// Haven't found a frame yet, process more data
+				return true;
+			} else if (codec.frameTimestamp < 0 || codec.frameTimestamp + frameDuration < seekTargetTime) {
+				// Haven't found a time yet, or haven't reached the target time.
+				// Decode it in case we're at our keyframe or a following intraframe...
+				codec.decodeFrame();
+				codec.dequeueFrame();
+				return true;
+			} else {
+				// Reached or surpassed the target time. 
+				if (codec.hasAudio) {
+					// Keep processing the audio track
+				} else {
+					continueSeekedPlayback();
+					return false;
+				}
+			}
+		}
+		if (codec.hasAudio) {
+			if (!codec.audioReady) {
+				// Haven't found an audio packet yet, process more data
+				return true;
+			}
+			if (codec.audioTimestamp < 0 || codec.audioTimestamp + frameDuration < seekTargetTime) {
+				// Haven't found a time yet, or haven't reached the target time.
+				// Decode it so when we reach the target we've got consistent data.
+				codec.decodeAudio();
+				codec.dequeueAudio();
+				return true;
+			} else {
+				continueSeekedPlayback();
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -367,12 +429,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					return false;
 				}
 			} else if (codec.frameTimestamp < seekTargetTime - fudgeFactor) {
-				if (seekModeIndex) {
-					console.log('seeked through index to keyframe: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
-					seekTargetTime = codec.frameTimestamp;
-					continueSeekedPlayback();
-					return false;
-				}
 				console.log('frame too low: ', codec.frameTimestamp, seekTargetTime, fudgeFactor);
 				if (seekTargetTime - codec.frameTimestamp < 1.0) {
 					// If it's close, just keep looking for packets
@@ -655,15 +711,32 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					stream.readBytes();
 					return;
 				}
-				if (codec.hasVideo) {
-					// seek according to frames, look for the last keyframe
-					doProcessSeekingVideo();
-				} else if (codec.hasAudio) {
-					// no worry about keyframes, at least
-					doProcessSeekingAudio();
-				} else {
-					throw new Error('seeking in invalid state (no audio or video)');
+				if (seekState == SeekState.NOT_SEEKING) {
+					throw new Error('seeking in invalid state (not seeking?)');
+				} else if (seekState == SeekState.BISECT_TO_TARGET) {
+					if (codec.hasVideo) {
+						// seek according to frames, look for the last keyframe
+						doProcessSeekingVideo();
+					} else if (codec.hasAudio) {
+						// no worry about keyframes, at least
+						doProcessSeekingAudio();
+					} else {
+						throw new Error('seeking in invalid state (no audio or video)');
+					}
+				} else if (seekState == SeekState.BISECT_TO_KEYPOINT) {
+					if (codec.hasVideo) {
+						// seek according to frames, look for the last keyframe
+						doProcessSeekingVideo();
+					} else if (codec.hasAudio) {
+						// no worry about keyframes, at least
+						doProcessSeekingAudio();
+					} else {
+						throw new Error('seeking in invalid state (no audio or video)');
+					}
+				} else if (seekState == SeekState.LINEAR_TO_TARGET) {
+					doProcessLinearSeeking();
 				}
+				
 				// Back to the loop to process more data
 				continue;
 			}
