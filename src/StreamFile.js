@@ -31,6 +31,7 @@ function StreamFile(options) {
 		bytesTotal = 0,
 		bytesRead = 0,
 		buffers = [],
+		cachever = 0,
 		responseHeaders = {};
 		
 
@@ -63,12 +64,17 @@ function StreamFile(options) {
 		},
 
 		setBytesTotal: function(xhr) {
-			var contentLength = xhr.getResponseHeader('Content-Length');
-			if (contentLength == null || contentLength == '') {
-				// Unknown file length... maybe streaming live?
-				bytesTotal = 0;
+			if (xhr.status == 206) {
+				bytesTotal = internal.getXHRRangeTotal(xhr);
+				console.log('Total file size is ' + bytesTotal);
 			} else {
-				bytesTotal = parseInt(contentLength, 10);
+				var contentLength = xhr.getResponseHeader('Content-Length');
+				if (contentLength == null || contentLength == '') {
+					// Unknown file length... maybe streaming live?
+					bytesTotal = 0;
+				} else {
+					bytesTotal = parseInt(contentLength, 10);
+				}
 			}
 		},
 		
@@ -86,58 +92,21 @@ function StreamFile(options) {
 				}
 			});
 		},
-
-		getMetadata: function() {
-			var xhr = new XMLHttpRequest();
-			var headUrl = url;
-
-			if (navigator.userAgent.match(/Chrome/)) {
-				// HACK ALERT!
-				//
-				// Cache buster because cached HEAD reqs in Chrome don't
-				// include a Content-Length header, which defeats the purpose.
-				// And we're not allowed to send cache-control. Oh CORS!
-				//
-				// Better would be to get the Content-Range from the 206
-				// response, but it's not whitelisted yet. *headdesk*
-				//
-				headUrl += '?ogvjs_cachebuster=' + Math.random()
-			} else if (navigator.userAgent.match(/AppleWebKit/)) {
-				//
-				// Safari sometimes messes up and gives us the Content-Length
-				// from the final-seeking chunk instead of the whole file. What?
-				// Seems to be a general problem with Safari and cached XHR ranges.
-				//
-				// https://bugs.webkit.org/show_bug.cgi?id=82672
-				//
-				headUrl += '?ogvjs_cacherange=HEAD';
-			}
-
-			xhr.open("HEAD", headUrl);
-			
-			xhr.onreadystatechange = function(event) {
-				if (xhr.readyState == 2) {
-					internal.onXHRHeadersReceived(xhr);
-				} else if (xhr.readyState == 4) {
-					xhr.onreadystatechange = null;
-					xhr = null;
-					internal.openXHR();
-				}
-			};
-			xhr.send();
-		},
 		
 		openXHR: function() {
 			var getUrl = url;
-			if (navigator.userAgent.match(/AppleWebKit/)) {
-				// HACK ALERT!
+			if (cachever) {
 				//
 				// Safari sometimes messes up and gives us the wrong chunk.
 				// Seems to be a general problem with Safari and cached XHR ranges.
 				//
+				// Interestingly, it allows you to request _later_ ranges successfully,
+				// but when requesting _earlier_ ranges it returns the latest one retrieved.
+				// So we only need to update the cache-buster when we rewind.
+				//
 				// https://bugs.webkit.org/show_bug.cgi?id=82672
 				//
-				getUrl += '?ogvjs_cacherange=' + seekPosition + '-' + (chunkSize ? (seekPosition + chunkSize - 1) : '');
+				getUrl += '?ogvjs_cachever=' + cachever;
 			}
 
 			var xhr = internal.xhr = new XMLHttpRequest();
@@ -150,7 +119,11 @@ function StreamFile(options) {
 				range = 'bytes=' + seekPosition + '-';
 			}
 			if (chunkSize) {
-				range += Math.min(seekPosition + chunkSize, bytesTotal) - 1;
+				if (bytesTotal) {
+					range += Math.min(seekPosition + chunkSize, bytesTotal) - 1;
+				} else {
+					range += (seekPosition + chunkSize) - 1;
+				}
 			}
 			if (range !== null) {
 				xhr.setRequestHeader('Range', range);
@@ -160,6 +133,34 @@ function StreamFile(options) {
 
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState == 2) {
+					if (xhr.status == 206) {
+						var foundPosition = internal.getXHRRangeStart(xhr);
+						if (seekPosition != foundPosition) {
+							//
+							// Safari sometimes messes up and gives us the wrong chunk.
+							// Seems to be a general problem with Safari and cached XHR ranges.
+							//
+							// Interestingly, it allows you to request _later_ ranges successfully,
+							// but when requesting _earlier_ ranges it returns the latest one retrieved.
+							// So we only need to update the cache-buster when we rewind and actually
+							// get an incorrect range.
+							//
+							// https://bugs.webkit.org/show_bug.cgi?id=82672
+							//
+							console.log('Expected start at ' + seekPosition + ' but got ' + foundPosition +
+								'; working around Safari range caching bug: https://bugs.webkit.org/show_bug.cgi?id=82672');
+							cachever++;
+							internal.abortXHR(xhr);
+							internal.openXHR();
+							return;
+						}
+					}
+					if (!started) {
+						internal.setBytesTotal(xhr);
+						internal.processResponseHeaders(xhr);
+						started = true;
+						onstart();
+					}
 					//internal.onXHRHeadersReceived(xhr);
 					// @todo check that partial content was supported if relevant
 				} else if (xhr.readyState == 3) {
@@ -173,10 +174,36 @@ function StreamFile(options) {
 			xhr.send();
 		},
 		
+		getXHRRangeMatches: function(xhr) {
+			// Note Content-Range must be whitelisted for CORS requests
+			var contentRange = xhr.getResponseHeader('Content-Range');
+			console.log(contentRange);
+			return contentRange && contentRange.match(/^bytes (\d+)-(\d+)\/(\d+)/);
+		},
+		
+		getXHRRangeStart: function(xhr) {
+			var matches = internal.getXHRRangeMatches(xhr);
+			if (matches) {
+				return parseInt(matches[1], 10);
+			} else {
+				return 0;
+			}
+		},
+		
+		getXHRRangeTotal: function(xhr) {
+			var matches = internal.getXHRRangeMatches(xhr);
+			if (matches) {
+				return parseInt(matches[3], 10);
+			} else {
+				return 0;
+			}
+		},
+		
 		setXHROptions: function(xhr) {
 			throw new Error('abstract function');
 		},
 
+		/*
 		onXHRHeadersReceived: function(xhr) {
 			if (xhr.status >= 400) {
 				// errrorrrrrrr
@@ -190,6 +217,7 @@ function StreamFile(options) {
 				onstart();
 			}
 		},
+		*/
 		
 		onXHRLoading: function(xhr) {
 			throw new Error('abstract function');
@@ -533,5 +561,5 @@ function StreamFile(options) {
 		throw new Error("No streaming HTTP input method found.");
 	}
 	
-	internal.getMetadata();
+	internal.openXHR();
 }
