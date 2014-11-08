@@ -435,11 +435,11 @@ static void processDecoding() {
         if (ogg_stream_packetpeek(&theoraStreamState, &videoPacket) > 0) {
             videobufReady = 1;
 
-			if (videoPacket.granulepos == -1) {
+			if (videoPacket.granulepos < 0) {
 				// granulepos is actually listed per-page, not per-packet,
 				// so not every packet lists a granulepos.
 				// Scary, huh?
-				if (videobufGranulepos == -1) {
+				if (videobufGranulepos < 0) {
 					// don't know our position yet
 				} else {
 					videobufGranulepos++;
@@ -451,7 +451,7 @@ static void processDecoding() {
 
 			double videoPacketTime = -1;
 			double packetKeyframeTime = -1;
-			if (videobufGranulepos != -1) {
+			if (videobufGranulepos < 0) {
 				// Extract the previous-keyframe info from the granule pos. It might be handy.
 				keyframeGranulepos = (videobufGranulepos >> theoraInfo.keyframe_granule_shift) << theoraInfo.keyframe_granule_shift;
 
