@@ -7,20 +7,23 @@
 
 <body>
 
-<script src="lib/ogvjs.js"></script>
+<script src="lib/ogv.js"></script>
 
 <script language="JavaScript">
 
 var player = null;
 var paused = false;
-var sampleFile = 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Jarry_-_M%C3%A9tro_de_Montr%C3%A9al_%28640%C3%97360%29.ogv';
+//var sampleFile = 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Jarry_-_M%C3%A9tro_de_Montr%C3%A9al_%28640%C3%97360%29.ogv';
+var sampleFile = 'media/curiosity.ogv?x';
 
 function play(src) {
 	if(player) {
 		player.stop();
 		player.parentNode.removeChild(player);
 	}
-	player = new OgvJsPlayer();
+	player = new OgvJsPlayer({
+		base: 'lib'
+	});
 	//player = new OgvSwfPlayer();
 	//player = document.createElement('video');
 	player.src = src;
@@ -59,6 +62,7 @@ function switchmedia(src) {
 <div id="videoarea"></div>
 
 <select onchange="switchmedia(this)">
+	<option value="media/curiosity.ogv?x">Curiosity's Seven Minutes of Terror (Vorbis, Theora; 160p)</option>
 	<option value="https://upload.wikimedia.org/wikipedia/commons/3/3f/Jarry_-_M%C3%A9tro_de_Montr%C3%A9al_%28640%C3%97360%29.ogv">Jarry metro station (Vorbis, Theora)</option>
 	<option value="media/ehren-paper_lights-96.opus">Ehren - Paper Lights (Opus)</option>
 	<option value="media/pixel_aspect_ratio.ogg">Theora Test suite pixel_aspect_ratio.ogg</option>
