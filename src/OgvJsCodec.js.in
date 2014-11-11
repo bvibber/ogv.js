@@ -9,6 +9,7 @@
  * @license MIT-style
  */
 OgvJs = (function(options) {
+	var ident = ++OgvJs.instanceCount;
 	options = options || {};
 	var self = this,
 		processAudio = (options.audio !== undefined) ? !!options.audio : true,
@@ -19,11 +20,12 @@ OgvJs = (function(options) {
     	noExitRuntime: true,
     	TOTAL_MEMORY: 32 * 1024 * 1024, // default heap is 16M
     	print: function(str) {
-    		console.log("OgvJs: " + str);
+    		console.log("OgvJs" + ident + ": " + str);
     	}
     };
 
 	#include "../build/js/ogv-libs.js"
+	window.Module = undefined;
     
     var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
     var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
@@ -290,3 +292,4 @@ OgvJs = (function(options) {
 	OgvJsInit(processAudio ? 1 : 0, processVideo ? 1 : 0);
 	return self;
 });
+OgvJs.instanceCount = 0;

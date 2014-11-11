@@ -28,6 +28,12 @@ function play(src) {
 	//player = document.createElement('video');
 	player.src = src;
 	document.getElementById("videoarea").appendChild(player);
+	/*
+	player.load();
+	player.onloadedmetadata = function() {
+		player.play();
+	}
+	*/
 	player.play();
 	
 }
