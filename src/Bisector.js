@@ -21,7 +21,6 @@ function Bisector(options) {
 	function iterate() {
 		n++;
 		position = Math.floor((start + end) / 2);
-		console.log('iterateBisect', n, start, end, position);
 		return options.process(start, end, position);
 	}
 	

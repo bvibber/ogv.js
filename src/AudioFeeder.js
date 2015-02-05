@@ -313,7 +313,6 @@
 		}
 		
 		this.close = function() {
-			console.log('CLOSE AUDIO FEEDER');
 			this.stop();
 
 			if(this.flashaudio) {

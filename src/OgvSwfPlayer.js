@@ -35,7 +35,7 @@ OgvSwfPlayer = window.OgvSwfPlayer = function(options) {
 			'onloadedmetadata'
 		];
 	self.ontrace = function(str) {
-		console.log('Flash: ' + str);
+		//console.log('Flash: ' + str);
 	};
 	
 	// Register a global function for callbacks. :P

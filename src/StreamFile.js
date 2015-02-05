@@ -66,7 +66,6 @@ function StreamFile(options) {
 		setBytesTotal: function(xhr) {
 			if (xhr.status == 206) {
 				bytesTotal = internal.getXHRRangeTotal(xhr);
-				console.log('Total file size is ' + bytesTotal);
 			} else {
 				var contentLength = xhr.getResponseHeader('Content-Length');
 				if (contentLength == null || contentLength == '') {
@@ -177,7 +176,6 @@ function StreamFile(options) {
 		getXHRRangeMatches: function(xhr) {
 			// Note Content-Range must be whitelisted for CORS requests
 			var contentRange = xhr.getResponseHeader('Content-Range');
-			console.log(contentRange);
 			return contentRange && contentRange.match(/^bytes (\d+)-(\d+)\/(\d+)/);
 		},
 		
@@ -224,7 +222,6 @@ function StreamFile(options) {
 		},
 		
 		onXHRDone: function(xhr) {
-			console.log("DONE BUFFERING");
 			doneBuffering = true;
 		},
 		
@@ -285,7 +282,6 @@ function StreamFile(options) {
 				}
 			}
 			
-			//console.log('got', bufferOut, byteLength);
 			bytesRead += byteLength;
 			bufferPosition += byteLength;
 			return bufferOut.slice(0, byteLength);
@@ -315,7 +311,6 @@ function StreamFile(options) {
 		},
 		
 		onReadDone: function() {
-			console.log('onReadDone');
 			ondone();
 		},
 		
@@ -332,9 +327,7 @@ function StreamFile(options) {
 			var buffer = internal.popBuffer();
 			onread(buffer);
 			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
-				//console.log('yo!', doneBuffering, seekPosition, bufferPosition, self.bytesRead, self.bytesBuffered, self.bytesTotal);
 				seekPosition += chunkSize;
-				console.log('1 seek to: ' + seekPosition);
 				internal.clearReadState();
 				internal.openXHR();
 			}
@@ -356,9 +349,8 @@ function StreamFile(options) {
 	};
 	
 	self.seek = function(bytePosition) {
-		console.log('seeking to: ' + bytePosition);
 		if (internal.quickSeek(bytePosition)) {
-			console.log('quick seek successful');
+			//console.log('quick seek successful');
 		} else {
 			self.abort();
 			seekPosition = bytePosition;
@@ -410,8 +402,6 @@ function StreamFile(options) {
 
 	// -- Backend selection and method overrides
 	if (internal.tryMethod('moz-chunked-arraybuffer')) {
-		console.log("Streaming input using moz-chunked-arraybuffer");
-
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = 'moz-chunked-arraybuffer';
 
@@ -432,8 +422,7 @@ function StreamFile(options) {
 		
 	} else if (internal.tryMethod('ms-stream')) {
 		// IE 10 supports returning a Stream from XHR.
-		console.log("Streaming input using MSStreamReader");
-		
+
 		// Don't bother reading in chunks, MSStream handles it for us
 		chunkSize = 0;
 		
@@ -441,12 +430,10 @@ function StreamFile(options) {
 		var restarted = false;
 		
 		internal.setXHROptions = function(xhr) {
-			console.log('setting up new xhr');
 			xhr.responseType = 'ms-stream';
 		};
 
 		internal.abortXHR = function(xhr) {
-			console.log('aborting XHR and StreamReader');
 			restarted = true;
 			if (streamReader) {
 				streamReader.abort();
@@ -460,7 +447,6 @@ function StreamFile(options) {
 		};
 		
 		internal.onXHRLoading = function(xhr) {
-			console.log('transferring to StreamReader');
 			// Transfer us over to the StreamReader...
 			stream = xhr.response;
 			xhr.onreadystatechange = null;
@@ -504,7 +490,6 @@ function StreamFile(options) {
 
 		// Use old binary string method since we can read reponseText
 		// progressively and extract ArrayBuffers from that.
-		console.log("Streaming input using XHR progressive binary string");
 		
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = "text";
