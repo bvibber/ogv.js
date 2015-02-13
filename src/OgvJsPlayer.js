@@ -43,6 +43,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		INITIAL: 'INITIAL',
 		SEEKING_END: 'SEEKING_END',
 		LOADED: 'LOADED',
+        READY: 'READY',
 		PLAYING: 'PLAYING',
 		PAUSED: 'PAUSED',
 		SEEKING: 'SEEKING',
@@ -158,10 +159,14 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 	function stopVideo() {
 		// kill the previous video if any
-		paused = true; // ?
+		state = State.INITIAL;
+		started = false;
+		paused = true;
 		ended = true;
-		
+		loadedMetadata = false;
 		continueVideo = null;
+		frameEndTimestamp = 0.0;
+		lastFrameDecodeTime = 0.0;
 		
 		if (stream) {
 			stream.abort();
@@ -177,7 +182,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		}
 		if (audioFeeder) {
 			audioFeeder.close();
-			audioFeeder = null;
+			audioFeeder = undefined;
 		}
 		if (nextProcessingTimer) {
 			clearTimeout(nextProcessingTimer);
@@ -853,6 +858,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		bufferTime = 0;
 		drawingTime = 0;
 		started = true;
+		ended = false;
 
 		// There's some kind of problem with the JIT in iOS 7 Safari
 		// that sometimes trips up on optimized Vorbis builds, at least
