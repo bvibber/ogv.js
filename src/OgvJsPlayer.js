@@ -43,7 +43,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		INITIAL: 'INITIAL',
 		SEEKING_END: 'SEEKING_END',
 		LOADED: 'LOADED',
-        READY: 'READY',
+		READY: 'READY',
 		PLAYING: 'PLAYING',
 		PAUSED: 'PAUSED',
 		SEEKING: 'SEEKING',
