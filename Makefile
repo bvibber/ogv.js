@@ -1,10 +1,8 @@
-.FAKE : all clean cleanswf swf js flash demo democlean tests
+.FAKE : all clean cleanswf swf js demo democlean tests
 
 all : demo build/ogv-version.js
 
 js : build/ogv.js
-
-flash : build/ogvswf.js
 
 demo : build/demo/index.html
 
@@ -88,16 +86,7 @@ build/ogv-codec.js : build/OgvJsCodec.js
 build/ogv-codec.js.gz : build/ogv-codec.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogv-codec.js > build/ogv-codec.js.gz || gzip -9 -c build/ogv-codec.js > build/ogv-codec.js.gz
 
-# Build as 'NOFLASH=1 make' to skip the Flash build
-ifdef NOFLASH
-FLASHDEMO_DEPS=
-FLASHDEMO_OPTS=
-else
-FLASHDEMO_DEPS=build/demo/lib/ogv.swf build/demo/lib/ogvswf.js
-FLASHDEMO_OPTS=-DWITH_FLASH
-endif
-
-# The player demo, with the JS and optionally Flash builds
+# The player demo, with the JS build
 build/demo/index.html : src/demo/index.html.in \
                         build/demo/demo.css \
                         build/demo/demo.js \
@@ -110,11 +99,10 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/lib/ogv-codec.js \
                         build/demo/lib/ogv-codec.js.gz \
                         build/demo/lib/dynamicaudio.swf \
-                        $(FLASHDEMO_DEPS) \
                         build/demo/lib/cortado.jar \
                         build/demo/lib/CortadoPlayer.js
 	test -d build/demo || mkdir -p build/demo
-	cpp -E -w -P -CC -nostdinc -DWITH_JS $(FLASHDEMO_OPTS) src/demo/index.html.in > build/demo/index.html
+	cpp -E -w -P -CC -nostdinc -DWITH_JS src/demo/index.html.in > build/demo/index.html
 
 build/demo/demo.css : src/demo/demo.css
 	test -d build/demo || mkdir -p build/demo
@@ -250,34 +238,3 @@ cleanswf:
 
 src/dynamicaudio.swf : src/dynamicaudio.as
 	mxmlc -o src/dynamicaudio.swf -file-specs src/dynamicaudio.as
-
-
-# And the Flash version of the decoder...
-
-build/flash/root/lib/libogg.a : configureOgg.sh compileOggFlash.sh
-	test -d build || mkdir build
-	./configureOgg.sh
-	./compileOggFlash.sh
-
-build/flash/root/lib/libvorbis.a : build/flash/root/lib/libogg.a configureVorbis.sh compileVorbisFlash.sh
-	test -d build || mkdir build
-	./configureVorbis.sh
-	./compileVorbisFlash.sh
-
-build/flash/root/lib/libtheoradec.a : build/flash/root/lib/libogg.a configureTheora.sh compileTheoraFlash.sh
-	test -d build || mkdir build
-	./configureTheora.sh
-	./compileTheoraFlash.sh
-
-build/flash/ogv-libs.swc : src/ogv-libs.c src/ogv-libs-mixin-flash.c src/YCbCr.h src/YCbCr.c build/flash/root/lib/libogg.a build/flash/root/lib/libtheoradec.a build/flash/root/lib/libvorbis.a compileOgvFlash.sh
-	test -d build || mkdir build
-	./compileOgvFlash.sh
-
-build/ogv.swf : src/ogv.as src/OgvCodec.as build/flash/ogv-libs.swc
-	mxmlc -o build/ogv.swf -static-link-runtime-shared-libraries -library-path=build/flash/ogv-libs.swc -source-path+=build src/ogv.as
-
-build/ogvswf-version.js : build/ogv.swf
-	echo 'OgvSwfPlayer.buildDate = "'`date -u`'";' > build/ogvswf-version.js
-
-build/ogvswf.js : src/OgvSwfPlayer.js build/ogvswf-version.js
-	cat src/OgvSwfPlayer.js build/ogvswf-version.js > build/ogvswf.js
