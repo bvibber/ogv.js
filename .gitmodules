@@ -16,3 +16,6 @@
 [submodule "libskeleton"]
 	path = libskeleton
 	url = https://github.com/brion/libskeleton.git
+[submodule "OGVCore"]
+	path = OGVCore
+	url = https://github.com/brion/OGVCore.git
