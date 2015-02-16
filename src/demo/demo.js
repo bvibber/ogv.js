@@ -10,7 +10,6 @@
 	}
 
 	var player;
-	var durationHint;
 	var averageDemuxingTime = 0, // ms
 		averageVideoDecodingTime = 0, // ms
 		averageAudioDecodingTime = 0, // ms
@@ -673,10 +672,6 @@
 			selectedUrl = selected.url;
 			console.log("Going to try streaming data from " + selectedUrl);
 			
-			// Currently the Flash player can't determine the file duration
-			// as there's no way to seek to the end etc.
-			durationHint = mediaInfo.duration;
-
 			if (playerBackend == 'js') {
 				player = new OgvJsPlayer({
 					webGL: true, // auto
@@ -692,14 +687,9 @@
 					forceWebGL: true,
 					base: 'lib'
 				});
-			} else if (playerBackend == 'flash') {
-				player = new OgvSwfPlayer({
-					base: 'lib'
-				});
-				player.durationHint = durationHint;
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();
-				player.durationHint = durationHint;
+				player.durationHint = mediaInfo.duration;
 				player.videoWidthHint = selected.width;
 				player.videoHeightHint = selected.height;
 			} else if (playerBackend == 'native') {

@@ -72,9 +72,6 @@
 								<option value="js">JavaScript (auto)</option>
 								<option value="js-cpu">JS no WebGL</option>
 								<option value="webgl">JS force WebGL</option>
-#ifdef WITH_FLASH
-								<option value="flash">Flash</option>
-#endif
 								<option value="native">native</option>
 								<option value="cortado">Cortado (Java)</option>
 							</select>
@@ -141,9 +138,6 @@
 	</div>
 
 	<script src="lib/ogv.js"></script>
-#ifdef WITH_FLASH
-	<script src="lib/ogvswf.js"></script>
-#endif
 	<script src="lib/CortadoPlayer.js"></script>
 	<script src="motd.js"></script>
 	<script src="demo.js"></script>
