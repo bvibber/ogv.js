@@ -2,6 +2,13 @@
 #include <emscripten/bind.h>
 
 namespace OGVCore {
+
+	std::shared_ptr<Decoder>
+	DecoderJS_ctor(std::unique_ptr<Decoder::Delegate> &&aDelegate)
+	{
+		return std::make_shared<Decoder>(std::move(aDelegate));
+	}
+
 	emscripten::memory_view<unsigned char>
 	PlaneBufferJS_getBytes(const PlaneBuffer &aPlane)
 	{
@@ -76,7 +83,7 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		;
 
     class_<Decoder>("OGVCoreDecoder")
-        .smart_ptr_constructor("OGVCoreDecoder", &std::make_shared<Decoder>)
+        .smart_ptr_constructor("OGVCoreDecoder", &DecoderJS_ctor)
 	    .property("hasAudio", &Decoder::hasAudio)
 	    .property("hasVideo", &Decoder::hasVideo)
 	    .property("isAudioReady", &Decoder::isAudioReady)
