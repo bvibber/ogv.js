@@ -17,14 +17,15 @@ namespace OGVCore {
 
 
 	std::shared_ptr<Decoder>
-	DecoderJS_ctor(std::unique_ptr<Decoder::Delegate> &&aDelegate)
+	DecoderJS_ctor(Decoder::Delegate *aDelegate)
 	{
-		return std::make_shared<Decoder>(std::move(aDelegate));
+		return std::make_shared<Decoder>(std::unique_ptr<Decoder::Delegate>(aDelegate));
 	}
 	
 	class DecoderDelegateWrapper : public emscripten::wrapper<Decoder::Delegate> {
 	public:
 		EMSCRIPTEN_WRAPPER(DecoderDelegateWrapper);
+
 		void onLoadedMetadata() {
 			return call<void>("onLoadedMetadata");
 		}
@@ -93,7 +94,7 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		;
 
     class_<Decoder>("OGVCoreDecoder")
-        .smart_ptr_constructor("OGVCoreDecoder", &DecoderJS_ctor)
+        .smart_ptr_constructor("OGVCoreDecoder", &DecoderJS_ctor, allow_raw_pointers())
 	    .property("hasAudio", &Decoder::hasAudio)
 	    .property("hasVideo", &Decoder::hasVideo)
 	    .property("isAudioReady", &Decoder::isAudioReady)

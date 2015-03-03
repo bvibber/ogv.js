@@ -23,6 +23,6 @@
 	
 	this.OgvJs = {
 		Decoder: Module.OGVCoreDecoder,
-		VectorByte: Module.VectorByte
+		DecoderDelegate: Module.OGVCoreDecoderDelegate
 	};
 })();
