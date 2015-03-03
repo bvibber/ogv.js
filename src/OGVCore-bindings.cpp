@@ -3,12 +3,6 @@
 
 namespace OGVCore {
 
-	std::shared_ptr<Decoder>
-	DecoderJS_ctor(std::unique_ptr<Decoder::Delegate> &&aDelegate)
-	{
-		return std::make_shared<Decoder>(std::move(aDelegate));
-	}
-
 	emscripten::memory_view<unsigned char>
 	PlaneBufferJS_getBytes(const PlaneBuffer &aPlane)
 	{
@@ -20,6 +14,22 @@ namespace OGVCore {
 	{
 		// stub, only needed for embind
 	}
+
+
+	std::shared_ptr<Decoder>
+	DecoderJS_ctor(std::unique_ptr<Decoder::Delegate> &&aDelegate)
+	{
+		return std::make_shared<Decoder>(std::move(aDelegate));
+	}
+	
+	class DecoderDelegateWrapper : public emscripten::wrapper<Decoder::Delegate> {
+	public:
+		EMSCRIPTEN_WRAPPER(DecoderDelegateWrapper);
+		void onLoadedMetadata() {
+			return call<void>("onLoadedMetadata");
+		}
+	};
+
 }
 
 using namespace OGVCore;
@@ -103,4 +113,10 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 	    .function("getDuration", &Decoder::getDuration)
 	    .function("getKeypointOffset", &Decoder::getKeypointOffset)
 	    ;
+	
+	class_<Decoder::Delegate>("OGVCoreDecoderDelegate")
+		.function("onLoadedMetadata", &Decoder::Delegate::onLoadedMetadata, pure_virtual())
+		.allow_subclass<DecoderDelegateWrapper>("DecoderDelegateWrapper")
+		;
+
 }
