@@ -1,8 +1,24 @@
 #include <OGVCore.h>
 #include <emscripten/bind.h>
 
+namespace OGVCore {
+	emscripten::memory_view<unsigned char>
+	PlaneBufferJS_getBytes(const PlaneBuffer &aPlane)
+	{
+		return emscripten::typed_memory_view(aPlane.stride * aPlane.height, aPlane.bytes);
+	}
+	
+	void
+	PlaneBufferJS_setBytes(PlaneBuffer &aPlane, emscripten::val aVal)
+	{
+		// stub, only needed for embind
+	}
+}
+
 using namespace OGVCore;
 using namespace emscripten;
+
+
 
 EMSCRIPTEN_BINDINGS(OGVCore)
 {
@@ -37,6 +53,22 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		.property("subsampling", &FrameLayout::subsampling)
 		.property("aspectRatio", &FrameLayout::aspectRatio)
 		.property("fps", &FrameLayout::fps)
+		;
+
+	value_object<PlaneBuffer>("OGVCorePlaneBuffer")
+		.field("bytes", &PlaneBufferJS_getBytes, &PlaneBufferJS_setBytes)
+		.field("stride", &PlaneBuffer::stride)
+		.field("height", &PlaneBuffer::height)
+		;
+
+	class_<FrameBuffer>("OGVCoreFrameBuffer")
+		.smart_ptr<std::shared_ptr<FrameBuffer>>("OGVCoreFrameBufferPtr")
+		.property("layout", &FrameBuffer::layout)
+		.property("timestamp", &FrameBuffer::timestamp)
+		.property("keyframeTimestamp", &FrameBuffer::keyframeTimestamp)
+		.property("Y", &FrameBuffer::Y)
+		.property("Cb", &FrameBuffer::Cb)
+		.property("Cr", &FrameBuffer::Cr)
 		;
 
     class_<Decoder>("OGVCoreDecoder")
