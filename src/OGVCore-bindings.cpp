@@ -22,6 +22,10 @@ using namespace emscripten;
 
 EMSCRIPTEN_BINDINGS(OGVCore)
 {
+	register_vector<unsigned char *>("VectorByte");
+	register_vector<float>("VectorFloat");
+	register_vector<std::vector<float>>("VectorVectorFloat");
+
 	value_object<Point>("OGVCorePoint")
 		.field("x", &Point::x)
 		.field("y", &Point::y)
@@ -73,12 +77,12 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 
     class_<Decoder>("OGVCoreDecoder")
         .smart_ptr_constructor("OGVCoreDecoder", &std::make_shared<Decoder>)
-	    .function("hasAudio", &Decoder::hasAudio) // @fixme property?
-	    .function("hasVideo", &Decoder::hasVideo) // @fixme property?
-	    .function("isAudioReady", &Decoder::isAudioReady) // @fixme property?
-	    .function("isFrameReady", &Decoder::isFrameReady) // @fixme property?
- 	    .function("getAudioLayout", &Decoder::getAudioLayout) // @fixme property?
-	    .function("getFrameLayout", &Decoder::getFrameLayout) // @fixme property?
+	    .property("hasAudio", &Decoder::hasAudio)
+	    .property("hasVideo", &Decoder::hasVideo)
+	    .property("isAudioReady", &Decoder::isAudioReady)
+	    .property("isFrameReady", &Decoder::isFrameReady)
+ 	    .property("audioLayout", &Decoder::getAudioLayout)
+	    .property("frameLayout", &Decoder::getFrameLayout)
 	    .function("receiveInput", &Decoder::receiveInput)
 	    .function("process", &Decoder::process)
 	    .function("decodeFrame", &Decoder::decodeFrame)
@@ -88,5 +92,8 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 	    .function("dequeueAudio", &Decoder::dequeueAudio)
 	    .function("discardAudio", &Decoder::discardAudio)
 	    .function("flush", &Decoder::flush)
+	    .function("getSegmentLength", &Decoder::getSegmentLength)
+	    .function("getDuration", &Decoder::getDuration)
+	    .function("getKeypointOffset", &Decoder::getKeypointOffset)
 	    ;
 }

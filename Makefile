@@ -55,7 +55,26 @@ build/js/ogv-libs.js : src/ogv-libs.c src/opus_helper.c src/opus_helper.h src/op
 	test -d build || mkdir build
 	./compileOgvJs.sh
 
-build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/ogv-libs.js
+build/js/OGVCore.js : src/OGVCore-bindings.cpp \
+                      src/opus_helper.c \
+                      src/opus_helper.h \
+                      src/opus_header.c \
+                      src/opus_header.h \
+                      OGVCore/include/OGVCore.h \
+                      OGVCore/src/OGVCore/Bisector.h \
+                      OGVCore/src/OGVCore/Decoder.cpp \
+                      OGVCore/src/OGVCore/Player.cpp \
+                      build/js/root/lib/libogg.a \
+                      build/js/root/lib/libtheoradec.a \
+                      build/js/root/lib/libvorbis.a \
+                      build/js/root/lib/libopus.a \
+                      build/js/root/lib/libskeleton.a \
+                      compileOGVCore.sh
+	test -d build || mkdir build
+	./compileOGVCore.sh
+
+
+build/OgvJsCodec.js : src/OgvJsCodec.js.in build/js/OGVCore.js
 	test -d build || mkdir build
 	 cpp -E -w -P -CC -nostdinc src/OgvJsCodec.js.in > build/OgvJsCodec.js
 

@@ -864,9 +864,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		//
 		// Non-deterministic debugging ROCKS!
 		//
-		placeboCodec = new OgvJs(options);
+		placeboCodec = new OgvJs.Decoder();
 
-		codec = new OgvJs(options);
+		codec = new OgvJs.Decoder();
+		// @fixme move these out or define a callback method
 		codec.oninitvideo = function(info) {
 			videoInfo = info;
 			fps = info.fps;
@@ -902,7 +903,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 	
 	function loadCodec(callback) {
-		if (typeof window.OgvJs == 'function') {
+		if (typeof window.OgvJs !== 'undefined') {
 			if (callback) {
 				callback();
 			}
