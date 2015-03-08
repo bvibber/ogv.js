@@ -15,6 +15,12 @@ namespace OGVCore {
 		// stub, only needed for embind
 	}
 
+	void DecoderJS_receiveInput(Decoder &aDecoder, std::string aBuffer)
+	{
+		// embind doesn't know how to convert ArrayBuffer to vector<>
+		std::vector<unsigned char> vec(aBuffer.cbegin(), aBuffer.cend());
+		aDecoder.receiveInput(vec);
+	}
 
 	std::shared_ptr<Decoder>
 	DecoderJS_ctor(Decoder::Delegate *aDelegate)
@@ -97,11 +103,11 @@ EMSCRIPTEN_BINDINGS(OGVCore)
         .smart_ptr_constructor("OGVCoreDecoder", &DecoderJS_ctor, allow_raw_pointers())
 	    .property("hasAudio", &Decoder::hasAudio)
 	    .property("hasVideo", &Decoder::hasVideo)
-	    .property("isAudioReady", &Decoder::isAudioReady)
-	    .property("isFrameReady", &Decoder::isFrameReady)
+	    .property("audioReady", &Decoder::audioReady)
+	    .property("frameReady", &Decoder::frameReady)
  	    .property("audioLayout", &Decoder::getAudioLayout)
 	    .property("frameLayout", &Decoder::getFrameLayout)
-	    .function("receiveInput", &Decoder::receiveInput)
+	    .function("receiveInput", &DecoderJS_receiveInput)
 	    .function("process", &Decoder::process)
 	    .function("decodeFrame", &Decoder::decodeFrame)
 	    .function("dequeueFrame", &Decoder::dequeueFrame)

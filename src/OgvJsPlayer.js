@@ -930,7 +930,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 			
 			OgvJsPlayer.loadingNode.onload = function() {
-				if (typeof window.OgvJs === 'function') {
+				if (typeof window.OgvJs !== 'undefined') {
 					OgvJsPlayer.loadingCallbacks.forEach(function(cb) {
 						cb();
 					});
