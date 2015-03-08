@@ -9,6 +9,13 @@ namespace OGVCore {
 		return emscripten::val(emscripten::typed_memory_view(aPlane.stride * aPlane.height, aPlane.bytes));
 	}
 
+	emscripten::val
+	AudioBufferJS_getChannelData(AudioBuffer &aBuffer, int aChannel)
+	{
+		auto floatVec = aBuffer.getChannelData(aChannel);
+		return emscripten::val(emscripten::typed_memory_view(floatVec.size(), floatVec.data()));
+	}
+
 	void
 	DecoderJS_receiveInput(Decoder &aDecoder, std::string aBuffer)
 	{
@@ -44,10 +51,6 @@ using namespace emscripten;
 
 EMSCRIPTEN_BINDINGS(OGVCore)
 {
-	register_vector<unsigned char *>("VectorByte");
-	register_vector<float>("VectorFloat");
-	register_vector<std::vector<float>>("VectorVectorFloat");
-
 	value_object<Point>("OGVCorePoint")
 		.field("x", &Point::x)
 		.field("y", &Point::y)
@@ -66,9 +69,10 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 
 	class_<AudioBuffer>("OGVCoreAudioBuffer")
 		.smart_ptr<std::shared_ptr<AudioBuffer>>("OGVCoreAudioBufferPtr")
-		.property("layout", &AudioBuffer::layout)
-		.property("sampleCount", &AudioBuffer::sampleCount)
-		.property("samples", &AudioBuffer::samples)
+		.property("length", &AudioBuffer::length)
+		.property("numberOfChannels", &AudioBuffer::numberOfChannels)
+		.property("duration", &AudioBuffer::duration)
+		.function("getChannelData", &AudioBufferJS_getChannelData)
 		;
 
 	class_<FrameLayout>("OGVCoreFrameLayout")
