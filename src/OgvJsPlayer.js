@@ -168,11 +168,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			stream = null;
 		}
 		if (placeboCodec) {
-			placeboCodec.destroy();
+			placeboCodec.delete();
 			placeboCodec = null;
 		}
 		if (codec) {
-			codec.destroy();
+			codec.delete();
 			codec = null;
 		}
 		if (audioFeeder) {
@@ -876,7 +876,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			
 			if (codec.hasVideo) {
 				videoInfo = codec.frameLayout;
-				fps = info.fps;
+				fps = videoInfo.fps;
 				targetPerFrameTime = 1000 / fps;
 		
 				if (width == 0) {
