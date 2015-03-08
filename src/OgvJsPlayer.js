@@ -866,41 +866,40 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		//
 		//placeboCodec = new OgvJs.Decoder();
 
-		codec = new OgvJs.Decoder(OgvJs.DecoderDelegate.implement({
-			onLoadedMetadata: function() {
-				loadedMetadata = true;
-				
-				if (codec.hasAudio) {
-					audioInfo = codec.audioLayout;
-				}
-				
-				if (codec.hasVideo) {
-					videoInfo = codec.frameLayout;
-					fps = info.fps;
-					targetPerFrameTime = 1000 / fps;
+		codec = new OgvJs.Decoder();
+		codec.onloadedmetadata = function() {
+			loadedMetadata = true;
 			
-					if (width == 0) {
-						self.style.width = self.videoWidth + 'px';
-					}
-					if (height == 0) {
-						self.style.height = self.videoHeight + 'px';
-					}
+			if (codec.hasAudio) {
+				audioInfo = codec.audioLayout;
+			}
 			
-					canvas.width = info.picWidth;
-					canvas.height = info.picHeight;
-					if (useWebGL) {
-						frameSink = new WebGLFrameSink(canvas, videoInfo);
-					} else {
-						frameSink = new FrameSink(canvas, videoInfo);
-					}
+			if (codec.hasVideo) {
+				videoInfo = codec.frameLayout;
+				fps = info.fps;
+				targetPerFrameTime = 1000 / fps;
+		
+				if (width == 0) {
+					self.style.width = self.videoWidth + 'px';
 				}
-				
-				if (!isNaN(codec.duration)) {
-					// Use duration from ogg skeleton index
-					duration = codec.duration;
+				if (height == 0) {
+					self.style.height = self.videoHeight + 'px';
+				}
+		
+				canvas.width = info.picWidth;
+				canvas.height = info.picHeight;
+				if (useWebGL) {
+					frameSink = new WebGLFrameSink(canvas, videoInfo);
+				} else {
+					frameSink = new FrameSink(canvas, videoInfo);
 				}
 			}
-		}));
+			
+			if (!isNaN(codec.duration)) {
+				// Use duration from ogg skeleton index
+				duration = codec.duration;
+			}
+		};
 		
 		stream.readBytes();
 	}

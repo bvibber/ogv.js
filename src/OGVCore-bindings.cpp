@@ -15,27 +15,31 @@ namespace OGVCore {
 		// stub, only needed for embind
 	}
 
-	void DecoderJS_receiveInput(Decoder &aDecoder, std::string aBuffer)
+	void
+	DecoderJS_receiveInput(Decoder &aDecoder, std::string aBuffer)
 	{
 		// embind doesn't know how to convert ArrayBuffer to vector<>
 		std::vector<unsigned char> vec(aBuffer.cbegin(), aBuffer.cend());
 		aDecoder.receiveInput(vec);
 	}
 
-	std::shared_ptr<Decoder>
-	DecoderJS_ctor(Decoder::Delegate *aDelegate)
+	emscripten::val
+	DecoderJS_getOnLoadedMetadata(const Decoder &aDecoder)
 	{
-		return std::make_shared<Decoder>(std::unique_ptr<Decoder::Delegate>(aDelegate));
+		return emscripten::val(nullptr);
 	}
 	
-	class DecoderDelegateWrapper : public emscripten::wrapper<Decoder::Delegate> {
-	public:
-		EMSCRIPTEN_WRAPPER(DecoderDelegateWrapper);
-
-		void onLoadedMetadata() {
-			return call<void>("onLoadedMetadata");
-		}
-	};
+	void
+	DecoderJS_setOnLoadedMetadata(Decoder &aDecoder, emscripten::val aCallback)
+	{
+		aDecoder.setOnLoadedMetadata([aCallback] () {
+			// Due to compiler oddities we can't do aCallback() directly
+			// because the lambda captures it as const. This may make sense
+			// to someone on the C++11 committee, but not to me. :)
+			emscripten::val callback(aCallback);
+			callback();
+		});
+	}
 
 }
 
@@ -100,7 +104,8 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		;
 
     class_<Decoder>("OGVCoreDecoder")
-        .smart_ptr_constructor("OGVCoreDecoder", &DecoderJS_ctor, allow_raw_pointers())
+        .smart_ptr_constructor("OGVCoreDecoder", &std::make_shared<Decoder>)
+        .property("onloadedmetadata", &DecoderJS_getOnLoadedMetadata, &DecoderJS_setOnLoadedMetadata)
 	    .property("hasAudio", &Decoder::hasAudio)
 	    .property("hasVideo", &Decoder::hasVideo)
 	    .property("audioReady", &Decoder::audioReady)
@@ -120,10 +125,4 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 	    .function("getDuration", &Decoder::getDuration)
 	    .function("getKeypointOffset", &Decoder::getKeypointOffset)
 	    ;
-	
-	class_<Decoder::Delegate>("OGVCoreDecoderDelegate")
-		.function("onLoadedMetadata", &Decoder::Delegate::onLoadedMetadata, pure_virtual())
-		.allow_subclass<DecoderDelegateWrapper>("DecoderDelegateWrapper")
-		;
-
 }
