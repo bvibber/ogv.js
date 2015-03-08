@@ -105,7 +105,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			// When audio buffers run out, go decode some more stuff.
 			pingProcessing();
 		};
-		audioFeeder.init(audioInfo.channels, audioInfo.rate);
+		audioFeeder.init(audioInfo.channelCount, audioInfo.sampleRate);
 	}
 	
 	function startAudio(offset) {
@@ -446,12 +446,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		return true;
 	}
 	
-
+	// @todo move this into AudioFeeder's flash implementation
 	/**
 	 * In IE, pushing data to the Flash shim is expensive.
 	 * Combine multiple small Vorbis packet outputs into
 	 * larger buffers so we don't have to make as many calls.
 	 */
+	/*
 	function joinAudioBuffers(buffers) {
 		if (buffers.length == 1) {
 			return buffers[0];
@@ -476,10 +477,12 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		}
 		return out;
 	}
+	*/
 
 	function doProcessing() {
 		nextProcessingTimer = null;
 		
+		/*
 		var audioBuffers = [];
 		function queueAudio() {
 			if (audioBuffers.length > 0) {
@@ -495,6 +498,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				}
 			}
 		}
+		*/
 		
 		var audioBufferedDuration = 0,
 			decodedSamples = 0,
@@ -523,7 +527,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						return;
 					}
 					if (duration === null) {
-						if (false && stream.seekable) {
+						if (stream.seekable) {
 							state = State.SEEKING_END;
 							lastSeenTimestamp = -1;
 							codec.flush();
@@ -659,7 +663,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			demuxingTime += delta;
 
 			if (!more) {
-				queueAudio();
 				if (stream) {
 					// Ran out of buffered input
 					stream.readBytes();
@@ -712,10 +715,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					var start = getTimestamp();
 					if (ok) {
 						var buffer = codec.dequeueAudio();
-						//audioFeeder.bufferData(buffer);
-						audioBuffers.push(buffer);
-						audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
-						decodedSamples += buffer[0].length;
+						audioFeeder.bufferData(buffer);
+						audioBufferedDuration += (buffer.duration) * 1000;
+						decodedSamples += buffer.length;
 					}
 				}
 				if (codec.frameReady && readyForFrame) {
@@ -756,15 +758,19 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					if (placeboCodec) {
 						// We've primed the JIT compiler... or something... by now;
 						// throw away the placebo copy.
-						placeboCodec.destroy();
+						placeboCodec.delete();
 						placeboCodec = null;
 					}
 
 					// Keep track of how much time we spend queueing audio as well
 					// This is slow when using the Flash shim on IE 10/11
 					var start = getTimestamp();
-					queueAudio();
+					if (!codec.hasVideo) {
+						framesProcessed++; // pretend!
+						doFrameComplete();
+					}
 					var delta = getTimestamp() - start;
+					bufferTime += delta;
 					pingProcessing(Math.max(0, nextDelay - delta));
 					return;
 				}

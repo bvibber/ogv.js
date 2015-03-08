@@ -234,7 +234,17 @@
 			return digits;
 		}
 	
-		this.bufferData = function(samplesPerChannel) {
+		/**
+		 * @param {OGVCoreAudioBuffer} buffer
+		 */
+		this.bufferData = function(buffer) {
+			if (buffer.length == 0) {
+				return;
+			}
+			var samplesPerChannel = [];
+			for (var i = 0; i < buffer.numberOfChannels; i++) {
+				samplesPerChannel.push(new Float32Array(buffer.getChannelData(i)));
+			}
 			if(this.flashaudio) {
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 				var flashElement = this.flashaudio.flashElement;
@@ -251,7 +261,7 @@
 					}
 				}
 			} else if (buffers) {
-				samples = resample(samplesPerChannel);
+				var samples = resample(samplesPerChannel);
 				pushSamples(samples);
 			} else {
 				console.log('no valid whatsit');
