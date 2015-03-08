@@ -119,8 +119,8 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 	    .function("dequeueAudio", &Decoder::dequeueAudio)
 	    .function("discardAudio", &Decoder::discardAudio)
 	    .function("flush", &Decoder::flush)
-	    .function("getSegmentLength", &Decoder::getSegmentLength)
-	    .function("getDuration", &Decoder::getDuration)
+	    .property("segmentLength", &Decoder::getSegmentLength)
+	    .property("duration", &Decoder::getDuration)
 	    .function("getKeypointOffset", &Decoder::getKeypointOffset)
 	    ;
 }
