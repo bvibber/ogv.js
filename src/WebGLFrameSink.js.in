@@ -159,10 +159,10 @@ function WebGLFrameSink(canvas, videoInfo) {
 		// Set up the texture geometry...
 		function setupTexturePosition(varname, texWidth, texHeight) {
 			// Warning: assumes that the stride for Cb and Cr is the same size in output pixels
-			var textureX0 = videoInfo.picX / texWidth;
-			var textureX1 = (videoInfo.picX + videoInfo.picWidth) / texWidth;
-			var textureY0 = videoInfo.picY / texHeight;
-			var textureY1 = (videoInfo.picY + videoInfo.picHeight) / texHeight;
+			var textureX0 = videoInfo.offset.x / texWidth;
+			var textureX1 = (videoInfo.offset.x + videoInfo.picture.width) / texWidth;
+			var textureY0 = videoInfo.offset.y / texHeight;
+			var textureY1 = (videoInfo.offset.y + videoInfo.picture.height) / texHeight;
 			var textureRectangle = new Float32Array([
 				textureX0, textureY0,
 				textureX1, textureY0,

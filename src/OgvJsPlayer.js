@@ -886,8 +886,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					self.style.height = self.videoHeight + 'px';
 				}
 		
-				canvas.width = info.picWidth;
-				canvas.height = info.picHeight;
+				canvas.width = videoInfo.picture.width;
+				canvas.height = videoInfo.picture.height;
 				if (useWebGL) {
 					frameSink = new WebGLFrameSink(canvas, videoInfo);
 				} else {
@@ -1272,9 +1272,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		get: function getVideoWidth() {
 			if (videoInfo) {
 				if (videoInfo.aspectNumerator > 0 && videoInfo.aspectDenominator > 0) {
-					return Math.round(videoInfo.picWidth * videoInfo.aspectNumerator / videoInfo.aspectDenominator);
+					return Math.round(videoInfo.picture.width * videoInfo.aspectNumerator / videoInfo.aspectDenominator);
 				} else {
-					return videoInfo.picWidth;
+					return videoInfo.picture.width;
 				}
 			} else {
 				return 0;
@@ -1284,7 +1284,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	Object.defineProperty(self, "videoHeight", {
 		get: function getVideoHeight() {
 			if (videoInfo) {
-				return videoInfo.picHeight;
+				return videoInfo.picture.height;
 			} else {
 				return 0;
 			}
@@ -1304,7 +1304,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	Object.defineProperty(self, "ogvjsAudioChannels", {
 		get: function getOgvJsAudioChannels() {
 			if (audioInfo) {
-				return audioInfo.channels;
+				return audioInfo.channelCount;
 			} else {
 				return 0;
 			}
@@ -1313,7 +1313,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	Object.defineProperty(self, "ogvjsAudioSampleRate", {
 		get: function getOgvJsAudioChannels() {
 			if (audioInfo) {
-				return audioInfo.rate;
+				return audioInfo.sampleRate;
 			} else {
 				return 0;
 			}

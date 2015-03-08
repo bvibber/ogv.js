@@ -5,13 +5,13 @@
 function FrameSink(canvas, videoInfo) {
 	var self = this,
 		ctx = canvas.getContext('2d'),
-		imageData = ctx.createImageData(videoInfo.frameWidth, videoInfo.frameHeight);
+		imageData = ctx.createImageData(videoInfo.frame.width, videoInfo.frame.height);
 
 	#include "YCbCr.js"
 
 	// Prefill the alpha to opaque
 	var data = imageData.data,
-		pixelCount = videoInfo.frameWidth * videoInfo.frameHeight * 4;
+		pixelCount = videoInfo.frame.width * videoInfo.frame.height * 4;
 	for (var i = 0; i < pixelCount; i += 4) {
 		data[i + 3] = 255;
 	}
@@ -24,8 +24,8 @@ function FrameSink(canvas, videoInfo) {
 
 		ctx.putImageData(imageData,
 						 0, 0,
-						 videoInfo.picX, videoInfo.picY,
-						 videoInfo.picWidth, videoInfo.picHeight);
+						 videoInfo.offset.x, videoInfo.offset.y,
+						 videoInfo.picture.width, videoInfo.picture.height);
 
 	};
 
