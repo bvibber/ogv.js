@@ -188,33 +188,34 @@ function WebGLFrameSink(canvas, videoInfo) {
 			gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0);
 			checkError();
 		}
-		setupTexturePosition('aLumaPosition', yCbCrBuffer.strideY, yCbCrBuffer.height);
-		setupTexturePosition('aChromaPosition', yCbCrBuffer.strideCb << yCbCrBuffer.hdec, yCbCrBuffer.height);
+		setupTexturePosition('aLumaPosition', yCbCrBuffer.Y.stride, yCbCrBuffer.Y.height);
+		setupTexturePosition('aChromaPosition', yCbCrBuffer.Cb.stride << videoInfo.subsampling.x,
+		                                        yCbCrBuffer.Cb.height << videoInfo.subsampling.y);
 		
 		// Create the textures...
 		var textureY = attachTexture(
 			'uTextureY',
 			gl.TEXTURE0,
 			0,
-			yCbCrBuffer.strideY,
-			yCbCrBuffer.height,
-			yCbCrBuffer.bytesY
+			yCbCrBuffer.Y.stride,
+			yCbCrBuffer.Y.height,
+			yCbCrBuffer.Y.bytes
 		);
 		var textureCb = attachTexture(
 			'uTextureCb',
 			gl.TEXTURE1,
 			1,
-			yCbCrBuffer.strideCb,
-			yCbCrBuffer.height >> yCbCrBuffer.vdec,
-			yCbCrBuffer.bytesCb
+			yCbCrBuffer.Cb.stride,
+			yCbCrBuffer.Cb.height,
+			yCbCrBuffer.Cb.bytes
 		);
 		var textureCr = attachTexture(
 			'uTextureCr',
 			gl.TEXTURE2,
 			2,
-			yCbCrBuffer.strideCr,
-			yCbCrBuffer.height >> yCbCrBuffer.vdec,
-			yCbCrBuffer.bytesCr
+			yCbCrBuffer.Cr.stride,
+			yCbCrBuffer.Cr.height,
+			yCbCrBuffer.Cr.bytes
 		);
 
 		// Aaaaand draw stuff.

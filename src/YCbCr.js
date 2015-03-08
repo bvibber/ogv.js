@@ -10,10 +10,10 @@
  * Assumes that the output array already has alpha channel set to opaque.
  */
 function convertYCbCr(ybcbr, output) {
-	var width = ybcbr.width,
-		height = ybcbr.height,
-		hdec = ybcbr.hdec,
-		vdec = ybcbr.vdec,
+	var width = ybcbr.layout.frame.width,
+		height = ybcbr.layout.frame.height,
+		hdec = ybcbr.layout.subsampling.x,
+		vdec = ybcbr.layout.subsampling.y,
 		bytesY = ybcbr.Y.bytes,
 		bytesCb = ybcbr.Cb.bytes,
 		bytesCr = ybcbr.Cr.bytes,

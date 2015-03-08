@@ -3,16 +3,10 @@
 
 namespace OGVCore {
 
-	emscripten::memory_view<unsigned char>
+	emscripten::val
 	PlaneBufferJS_getBytes(const PlaneBuffer &aPlane)
 	{
-		return emscripten::typed_memory_view(aPlane.stride * aPlane.height, aPlane.bytes);
-	}
-	
-	void
-	PlaneBufferJS_setBytes(PlaneBuffer &aPlane, emscripten::val aVal)
-	{
-		// stub, only needed for embind
+		return emscripten::val(emscripten::typed_memory_view(aPlane.stride * aPlane.height, aPlane.bytes));
 	}
 
 	void
@@ -87,10 +81,10 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		.property("fps", &FrameLayout::fps)
 		;
 
-	value_object<PlaneBuffer>("OGVCorePlaneBuffer")
-		.field("bytes", &PlaneBufferJS_getBytes, &PlaneBufferJS_setBytes)
-		.field("stride", &PlaneBuffer::stride)
-		.field("height", &PlaneBuffer::height)
+	class_<PlaneBuffer>("OGVCorePlaneBuffer")
+		.property("bytes", &PlaneBufferJS_getBytes)
+		.property("stride", &PlaneBuffer::stride)
+		.property("height", &PlaneBuffer::height)
 		;
 
 	class_<FrameBuffer>("OGVCoreFrameBuffer")

@@ -523,7 +523,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						return;
 					}
 					if (duration === null) {
-						if (stream.seekable) {
+						if (false && stream.seekable) {
 							state = State.SEEKING_END;
 							lastSeenTimestamp = -1;
 							codec.flush();
