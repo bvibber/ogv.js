@@ -14,7 +14,7 @@
     	noExitRuntime: true,
     	TOTAL_MEMORY: 32 * 1024 * 1024, // default heap is 16M
     	print: function(str) {
-    		//console.log("OgvJs" + ident + ": " + str);
+    		console.log("OgvJs: " + str);
     	}
     };
 
@@ -22,7 +22,6 @@
 	window.Module = undefined;
 	
 	this.OgvJs = {
-		Decoder: Module.OGVCoreDecoder,
-		DecoderDelegate: Module.OGVCoreDecoderDelegate
+		Decoder: Module.OGVCoreDecoder
 	};
 })();
