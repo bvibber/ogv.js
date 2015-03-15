@@ -9,7 +9,6 @@ fi
 EMCC_FAST_COMPILER=1 em++ \
   -O3 \
   --bind \
-  --profiling \
   --std=c++11 \
   --memory-init-file 0 \
   -s ASM_JS=1 \
