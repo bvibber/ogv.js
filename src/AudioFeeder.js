@@ -96,7 +96,7 @@
 			} else {
 				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
 			}
-			expectedTime = playbackTimeAtBufferHead + (bufferSize / context.sampleRate);
+			var expectedTime = playbackTimeAtBufferHead + (bufferSize / context.sampleRate);
 			if (expectedTime < playbackTime) {
 				// we may have lost some time while something ran too slow
 				lostTime += (playbackTime - expectedTime);

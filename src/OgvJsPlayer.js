@@ -509,7 +509,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		
 		var audioBufferedDuration = 0,
 			decodedSamples = 0,
-			audioState = null;
+			audioState = null,
+			audioPlaybackPosition = 0;
 
 		var n = 0;
 		while (true) {
@@ -1000,6 +1001,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					pingProcessing();
 				} else {
 					//throw new Error('wtf is this');
+					console.log('stream ended');
 					stream = null;
 			
 					// Let the read/decode/draw loop know we're out!
