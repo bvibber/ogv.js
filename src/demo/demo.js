@@ -161,7 +161,7 @@
 		var components = [];
 		for (var key in params) {
 			if (params.hasOwnProperty(key)) {
-				pair = encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+				var pair = encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
 				components[components.length] = pair;
 			}
 		}

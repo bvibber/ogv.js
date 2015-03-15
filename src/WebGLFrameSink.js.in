@@ -231,7 +231,8 @@ function WebGLFrameSink(canvas, videoInfo) {
  * @return boolean
  */
 WebGLFrameSink.isAvailable = function() {
-	var canvas = document.createElement('canvas');
+	var canvas = document.createElement('canvas'),
+		gl;
 	canvas.width = 1;
 	canvas.height = 1;
 	try {
