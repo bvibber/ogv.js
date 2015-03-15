@@ -341,9 +341,9 @@
 		}
 		
 		var today = new Date(),
-			year = 2014,
-			month = 06,
-			day = 29; // where we left off in motd.js
+			year = 2015,
+			month = 03,
+			day = 14; // where we left off in motd.js
 		
 		var input = '';
 		while (true) {
