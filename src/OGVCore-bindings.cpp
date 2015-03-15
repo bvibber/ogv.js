@@ -16,6 +16,28 @@ namespace OGVCore {
 		return emscripten::val(emscripten::typed_memory_view(floatVec.size(), floatVec.data()));
 	}
 
+	emscripten::val
+	DecoderJS_getAudioLayout(const Decoder &aDecoder)
+	{
+		auto layout = aDecoder.getAudioLayout();
+		if (layout == nullptr) {
+			return emscripten::val(nullptr);
+		} else {
+			return emscripten::val(*layout);
+		}
+	}
+	
+	emscripten::val
+	DecoderJS_getFrameLayout(const Decoder &aDecoder)
+	{
+		auto layout = aDecoder.getFrameLayout();
+		if (layout == nullptr) {
+			return emscripten::val(nullptr);
+		} else {
+			return emscripten::val(*layout);
+		}
+	}
+	
 	void
 	DecoderJS_receiveInput(Decoder &aDecoder, std::string aBuffer)
 	{
@@ -41,7 +63,25 @@ namespace OGVCore {
 			callback();
 		});
 	}
+	
+	bool
+	DecoderJS_decodeFrame(Decoder &aDecoder, emscripten::val aCallback)
+	{
+		return aDecoder.decodeFrame([aCallback] (FrameBuffer &aBuffer) {
+			emscripten::val callback(aCallback);
+			callback(aBuffer);
+		});
+	}
 
+	bool
+	DecoderJS_decodeAudio(Decoder &aDecoder, emscripten::val aCallback)
+	{
+		return aDecoder.decodeAudio([aCallback] (AudioBuffer &aBuffer) {
+			emscripten::val callback(aCallback);
+			callback(aBuffer);
+		});
+	}
+	
 }
 
 using namespace OGVCore;
@@ -61,10 +101,9 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		.field("height", &Size::height)
 		;
 
-	class_<AudioLayout>("OGVCoreAudioLayout")
-		.smart_ptr<std::shared_ptr<AudioLayout>>("OGVCoreFrameLayoutPtr")
-		.property("channelCount", &AudioLayout::channelCount)
-		.property("sampleRate", &AudioLayout::sampleRate)
+	value_object<AudioLayout>("OGVCoreAudioLayout")
+		.field("channelCount", &AudioLayout::channelCount)
+		.field("sampleRate", &AudioLayout::sampleRate)
 		;
 
 	class_<AudioBuffer>("OGVCoreAudioBuffer")
@@ -75,14 +114,13 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		.function("getChannelData", &AudioBufferJS_getChannelData)
 		;
 
-	class_<FrameLayout>("OGVCoreFrameLayout")
-		.smart_ptr<std::shared_ptr<FrameLayout>>("OGVCoreFrameLayoutPtr")
-		.property("frame", &FrameLayout::frame)
-		.property("picture", &FrameLayout::picture)
-		.property("offset", &FrameLayout::offset)
-		.property("subsampling", &FrameLayout::subsampling)
-		.property("aspectRatio", &FrameLayout::aspectRatio)
-		.property("fps", &FrameLayout::fps)
+	value_object<FrameLayout>("OGVCoreFrameLayout")
+		.field("frame", &FrameLayout::frame)
+		.field("picture", &FrameLayout::picture)
+		.field("offset", &FrameLayout::offset)
+		.field("subsampling", &FrameLayout::subsampling)
+		.field("aspectRatio", &FrameLayout::aspectRatio)
+		.field("fps", &FrameLayout::fps)
 		;
 
 	class_<PlaneBuffer>("OGVCorePlaneBuffer")
@@ -111,15 +149,13 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 	    .property("audioTimestamp", &Decoder::audioTimestamp)
 	    .property("frameTimestamp", &Decoder::frameTimestamp)
 	    .property("keyframeTimestamp", &Decoder::keyframeTimestamp)
- 	    .property("audioLayout", &Decoder::getAudioLayout)
-	    .property("frameLayout", &Decoder::getFrameLayout)
+ 	    .property("audioLayout", &DecoderJS_getAudioLayout)
+	    .property("frameLayout", &DecoderJS_getFrameLayout)
 	    .function("receiveInput", &DecoderJS_receiveInput)
 	    .function("process", &Decoder::process)
-	    .function("decodeFrame", &Decoder::decodeFrame)
-	    .function("dequeueFrame", &Decoder::dequeueFrame)
+	    .function("decodeFrame", &DecoderJS_decodeFrame)
 	    .function("discardFrame", &Decoder::discardFrame)
-	    .function("decodeAudio", &Decoder::decodeAudio)
-	    .function("dequeueAudio", &Decoder::dequeueAudio)
+	    .function("decodeAudio", &DecoderJS_decodeAudio)
 	    .function("discardAudio", &Decoder::discardAudio)
 	    .function("flush", &Decoder::flush)
 	    .property("segmentLength", &Decoder::getSegmentLength)

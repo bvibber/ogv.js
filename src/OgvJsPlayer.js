@@ -201,28 +201,24 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	var continueVideo = null;
 	
 	var lastFrameTime = getTimestamp(),
-		frameEndTimestamp = 0.0,
-		yCbCrBuffer = null;
+		frameEndTimestamp = 0.0;
 	var lastFrameDecodeTime = 0.0;		
 	var targetFrameTime;
 	var lastFrameTimestamp = 0.0;
 
-	function processFrame() {
-		yCbCrBuffer = codec.dequeueFrame();
-		frameEndTimestamp = yCbCrBuffer.timestamp;
-	}
-
-	function drawFrame() {
+	function drawFrame(buffer) {
 		if (thumbnail) {
 			self.removeChild(thumbnail);
 			thumbnail = null;
 		}
 
+		frameEndTimestamp = buffer.timestamp;
+
 		var start, delta;
 
 		start = getTimestamp();
 
-		frameSink.drawFrame(yCbCrBuffer);
+		frameSink.drawFrame(buffer);
 
 		delta = getTimestamp() - start;
 		lastFrameDecodeTime += delta;
@@ -354,9 +350,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			} else if (codec.frameTimestamp < 0 || codec.frameTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it in case we're at our keyframe or a following intraframe...
-				if (codec.decodeFrame()) {
-					codec.dequeueFrame();
-				}
+				codec.decodeFrame(function(buffer) {});
 				return true;
 			} else {
 				// Reached or surpassed the target time. 
@@ -376,9 +370,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (codec.audioTimestamp < 0 || codec.audioTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it so when we reach the target we've got consistent data.
-				if (codec.decodeAudio()) {
-					codec.dequeueAudio();
-				}
+				codec.decodeAudio(function(buffer) {});
 				return true;
 			} else {
 				continueSeekedPlayback();
@@ -413,12 +405,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			// Haven't found a time yet.
 			// Decode in case we're at our keyframe or a following intraframe...
 			if (codec.frameReady) {
-				codec.decodeFrame();
-				codec.dequeueFrame();
+				codec.decodeFrame(function(buffer){});
 			}
 			if (codec.audioReady) {
-				codec.decodeAudio();
-				codec.dequeueAudio();
+				codec.decodeAudio(function(buffer){});
 			}
 			return true;
 		} else if (timestamp - frameDuration > bisectTargetTime) {
@@ -574,8 +564,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				}
 				if (codec.hasAudio && codec.audioReady) {
 					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.audioTimestamp);
-					codec.decodeAudio();
-					codec.dequeueAudio();
+					codec.decodeAudio(function(buffer){});
 				}
 				
 				if (!more) {
@@ -715,33 +704,29 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
 					var start = getTimestamp();
-					var ok = codec.decodeAudio();
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					audioDecodingTime += delta;
+					var ok = codec.decodeAudio(function(buffer) {
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						audioDecodingTime += delta;
 
-					var start = getTimestamp();
-					if (ok) {
-						var buffer = codec.dequeueAudio();
 						audioFeeder.bufferData(buffer);
 						audioBufferedDuration += (buffer.duration) * 1000;
 						decodedSamples += buffer.length;
-					}
+					});
 				}
 				if (codec.frameReady && readyForFrame) {
 					var start = getTimestamp();
-					var ok = codec.decodeFrame();
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					videoDecodingTime += delta;
-					if (ok) {
-						processFrame();
-						drawFrame();
-					} else {
+					var ok = codec.decodeFrame(function(buffer) {
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						videoDecodingTime += delta;
+						drawFrame(buffer);
+						targetFrameTime = currentTime + 1000.0 / fps;
+					});
+					if (!ok) {
 						// Bad packet or something.
 						console.log('Bad video packet or something');
 					}
-					targetFrameTime = currentTime + 1000.0 / fps;
 				}
 			
 				// Check in when all audio runs out
@@ -794,16 +779,15 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 
 					// it's time to draw
 					var start = getTimestamp();
-					var ok = codec.decodeFrame();
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					videoDecodingTime += delta;
-					if (ok) {
-						processFrame();
-						drawFrame();
+					var ok = codec.decodeFrame(function(buffer) {
+						var delta = (getTimestamp() - start);
+						lastFrameDecodeTime += delta;
+						videoDecodingTime += delta;
+						drawFrame(buffer);
 						targetFrameTime += 1000.0 / fps;
 						pingProcessing(0);
-					} else {
+					});
+					if (!ok) {
 						console.log('Bad video packet or something');
 						pingProcessing(Math.max(0, targetFrameTime - getTimestamp()));
 					}
