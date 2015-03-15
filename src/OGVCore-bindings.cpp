@@ -16,10 +16,22 @@ namespace OGVCore {
 	}
 
 	emscripten::val
-	AudioBufferJS_getChannelData(AudioBuffer &aBuffer, int aChannel)
+	AudioBufferJS_getSamples(const AudioBuffer &aBuffer)
 	{
-		auto floatVec = aBuffer.getChannelData(aChannel);
-		return emscripten::val(emscripten::typed_memory_view(floatVec.size(), floatVec.data()));
+		auto channelCount = aBuffer.layout.channelCount;
+		auto arr = emscripten::val::array();
+		for (auto i = 0; i < channelCount; i++) {
+			auto floatVec = aBuffer.samples[i];
+			emscripten::val floatView(emscripten::typed_memory_view(floatVec.size(), floatVec.data()));
+			arr.call<void>("push", floatView);
+		}
+		return arr;
+	}
+
+	void
+	AudioBufferJS_setSamples(AudioBuffer &aBuffer, emscripten::val aValue)
+	{
+		// for embind only
 	}
 
 	emscripten::val
@@ -112,12 +124,10 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		.field("sampleRate", &AudioLayout::sampleRate)
 		;
 
-	class_<AudioBuffer>("OGVCoreAudioBuffer")
-		.smart_ptr<std::shared_ptr<AudioBuffer>>("OGVCoreAudioBufferPtr")
-		.property("length", &AudioBuffer::length)
-		.property("numberOfChannels", &AudioBuffer::numberOfChannels)
-		.property("duration", &AudioBuffer::duration)
-		.function("getChannelData", &AudioBufferJS_getChannelData)
+	value_object<AudioBuffer>("OGVCoreAudioBuffer")
+		.field("layout", &AudioBuffer::layout)
+		.field("sampleCount", &AudioBuffer::sampleCount)
+		.field("samples", &AudioBufferJS_getSamples, &AudioBufferJS_setSamples)
 		;
 
 	value_object<FrameLayout>("OGVCoreFrameLayout")

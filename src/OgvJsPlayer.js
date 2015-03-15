@@ -710,8 +710,8 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						audioDecodingTime += delta;
 
 						audioFeeder.bufferData(buffer);
-						audioBufferedDuration += (buffer.duration) * 1000;
-						decodedSamples += buffer.length;
+						audioBufferedDuration += (buffer.sampleCount / audioInfo.sampleRate) * 1000;
+						decodedSamples += buffer.sampleCount;
 					});
 				}
 				if (codec.frameReady && readyForFrame) {

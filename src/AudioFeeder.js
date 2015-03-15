@@ -238,12 +238,12 @@
 		 * @param {OGVCoreAudioBuffer} buffer
 		 */
 		this.bufferData = function(buffer) {
-			if (buffer.length == 0) {
+			if (buffer.sampleCount == 0) {
 				return;
 			}
 			var samplesPerChannel = [];
-			for (var i = 0; i < buffer.numberOfChannels; i++) {
-				samplesPerChannel.push(new Float32Array(buffer.getChannelData(i)));
+			for (var i = 0; i < buffer.layout.channelCount; i++) {
+				samplesPerChannel.push(new Float32Array(buffer.samples[i]));
 			}
 			if(this.flashaudio) {
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
