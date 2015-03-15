@@ -349,8 +349,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			} else if (codec.frameTimestamp < 0 || codec.frameTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it in case we're at our keyframe or a following intraframe...
-				codec.decodeFrame();
-				codec.dequeueFrame();
+				if (codec.decodeFrame()) {
+					codec.dequeueFrame();
+				}
 				return true;
 			} else {
 				// Reached or surpassed the target time. 
@@ -370,8 +371,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (codec.audioTimestamp < 0 || codec.audioTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it so when we reach the target we've got consistent data.
-				codec.decodeAudio();
-				codec.dequeueAudio();
+				if (codec.decodeAudio()) {
+					codec.dequeueAudio();
+				}
 				return true;
 			} else {
 				continueSeekedPlayback();
