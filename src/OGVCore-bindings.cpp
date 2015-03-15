@@ -9,6 +9,12 @@ namespace OGVCore {
 		return emscripten::val(emscripten::typed_memory_view(aPlane.stride * aPlane.height, aPlane.bytes));
 	}
 
+	void
+	PlaneBufferJS_setBytes(PlaneBuffer &aPlane, emscripten::val aValue)
+	{
+		// for embind only
+	}
+
 	emscripten::val
 	AudioBufferJS_getChannelData(AudioBuffer &aBuffer, int aChannel)
 	{
@@ -123,20 +129,19 @@ EMSCRIPTEN_BINDINGS(OGVCore)
 		.field("fps", &FrameLayout::fps)
 		;
 
-	class_<PlaneBuffer>("OGVCorePlaneBuffer")
-		.property("bytes", &PlaneBufferJS_getBytes)
-		.property("stride", &PlaneBuffer::stride)
-		.property("height", &PlaneBuffer::height)
+	value_object<PlaneBuffer>("OGVCorePlaneBuffer")
+		.field("bytes", &PlaneBufferJS_getBytes, &PlaneBufferJS_setBytes)
+		.field("stride", &PlaneBuffer::stride)
+		.field("height", &PlaneBuffer::height)
 		;
 
-	class_<FrameBuffer>("OGVCoreFrameBuffer")
-		.smart_ptr<std::shared_ptr<FrameBuffer>>("OGVCoreFrameBufferPtr")
-		.property("layout", &FrameBuffer::layout)
-		.property("timestamp", &FrameBuffer::timestamp)
-		.property("keyframeTimestamp", &FrameBuffer::keyframeTimestamp)
-		.property("Y", &FrameBuffer::Y)
-		.property("Cb", &FrameBuffer::Cb)
-		.property("Cr", &FrameBuffer::Cr)
+	value_object<FrameBuffer>("OGVCoreFrameBuffer")
+		.field("layout", &FrameBuffer::layout)
+		.field("timestamp", &FrameBuffer::timestamp)
+		.field("keyframeTimestamp", &FrameBuffer::keyframeTimestamp)
+		.field("Y", &FrameBuffer::Y)
+		.field("Cb", &FrameBuffer::Cb)
+		.field("Cr", &FrameBuffer::Cr)
 		;
 
     class_<Decoder>("OGVCoreDecoder")
