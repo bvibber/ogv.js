@@ -169,7 +169,7 @@ Libtheora needs a slight patch to a function signature to pass emscripten's chec
 
 ## Building JS components
 
-1. You will need autoconf, automake, and libtool. These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
+1. You will need autoconf, automake, libtool, and pkg-config. These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
 2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html).
 3. `git submodule update --init`
 4. Run `make js` to configure and build libogg, libvorbis, libtheora, and the C wrapper. Run this again whenever you make changes to the C wrapper or a new version of libogg is released.
