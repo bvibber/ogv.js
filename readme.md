@@ -33,6 +33,7 @@ Short-ish clips of a few seconds to at most a few minutes at SD resolution or be
 The primary target browsers are (testing 360p/30fps):
 * Safari 6.1+ on Mac OS X 10.8+
 * Safari on iOS 7+ 64-bit
+* Edge on Windows 10
 * Internet Explorer 10+ on Windows 7+ (JS)
 * Internet Explorer 9 on Windows 7+ (Flash)
 
@@ -56,9 +57,11 @@ Early versions have only been spot-checked with a couple of small sample files o
 
 *Target browsers*
 
-On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging. WebGL acceleration works on OS X with developer options enabled and on iOS 8.
+On Mac OS X, Safari 6.1 and 7 perform much better than Safari 6.0. Note that Safari seems to disable the JIT when the developer console is open, so beware when debugging. WebGL acceleration works on OS X with developer options enabled and on iOS 8. Safari in iOS 8 works as well, with performance varying by CPU speed. An A7 or later 64-bit CPU is recommended for 360p video.
 
-IE 10 and IE 11 on Windows 7, 8 and 8.1 perform pretty well. Older versions of IE are not supported at all for the JavaScript target. WebGL acceleration currently works with IE 11 update 1 and later.
+Edge (aka 'Project Spartan') on Windows 10 preview builds works on desktop and mobile devices. WebGL drawing acceleration and Web Audio are used natively; no plugins are required. As with iOS, mobile also works but lower-end devices are too slow for 360p.
+
+IE 10 and IE 11 on Windows 7, 8 and 8.1 perform pretty well. Older versions of IE are not supported at all for the JavaScript target. WebGL acceleration currently works with IE 11 update 1 and later. IE 10/11 require the Flash plugin for audio and will automatically use it when available.
 
 IE 9 runs the demo page with the Flash version of the decoder, but IE 6/7/8 don't currently run the demo and so are untested.
 
@@ -116,7 +119,7 @@ Note that in Flash, more direct heap sharing may be possible.
 
 *Streaming*
 
-In IE 10, the (MS-prefixed) Stream/StreamReader interface is used to read data on demand into ArrayBuffer objects.
+In IE and Edge, the (MS-prefixed) Stream/StreamReader interface is used to read data on demand into ArrayBuffer objects.
 
 In Firefox, the 'moz-chunked-array' responseType on XHR is used to stream data, however there is no flow control so the file will buffer into memory as fast as possible, then drain over time.
 
@@ -143,9 +146,9 @@ As with chunked streaming, cross-site playback requires CORS support for the Ran
 
 *Audio output*
 
-Firefox, Safari and Chrome support the W3C Web Audio API.
+Firefox, Safari, Chrome, and Edge support the W3C Web Audio API.
 
-IE doesn't support Web Audio yet, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
+IE doesn't support Web Audio, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
 
 The all-Flash decoder fallback also supports audio.
 
