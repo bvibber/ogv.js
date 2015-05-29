@@ -167,8 +167,6 @@ Have not yet tested using Crossbridge on Linux (only on Mac).
 
 We've experimented with tremor (libivorbis), an integer-only variant of libvorbis. This actually does *not* decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library. However on slow devices like iPod Touch 5th-generation, it makes a significant negative impact on the decode time so we've gone back to libvorbis.
 
-Libtheora needs a slight patch to a function signature to pass emscripten's checks for asm.js-mode function pointer compatibility.
-
 
 ## Building JS components
 
