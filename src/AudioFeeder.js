@@ -251,7 +251,7 @@
 					}
 				}
 			} else if (buffers) {
-				samples = resample(samplesPerChannel);
+				var samples = resample(samplesPerChannel);
 				pushSamples(samples);
 			} else {
 				console.log('no valid whatsit');
