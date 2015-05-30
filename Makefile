@@ -1,4 +1,4 @@
-.FAKE : all clean cleanswf swf js demo democlean tests
+.FAKE : all clean cleanswf swf js demo democlean tests jshint
 
 all : demo build/ogv-version.js
 
@@ -238,3 +238,8 @@ cleanswf:
 
 src/dynamicaudio.swf : src/dynamicaudio.as
 	mxmlc -o src/dynamicaudio.swf -file-specs src/dynamicaudio.as
+
+
+# fixme move all this to grunt and modules
+jshint : js
+	jshint src/*.js build/FrameSink.js build/WebGLFrameSink.js

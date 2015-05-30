@@ -11,7 +11,7 @@ function WebGLFrameSink(canvas, videoInfo) {
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
 		debug = false; // swap this to enable more error checks, which can slow down rendering
 	
-	if (gl == null) {
+	if (gl === null) {
 		throw new Error('WebGL unavailable');
 	}
 
@@ -19,7 +19,7 @@ function WebGLFrameSink(canvas, videoInfo) {
 	function checkError() {
 		if (debug) {
 			err = gl.getError();
-			if (err != 0) {
+			if (err !== 0) {
 				throw new Error("GL error " + err);
 			}
 		}
@@ -75,7 +75,7 @@ function WebGLFrameSink(canvas, videoInfo) {
 		checkError();
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		checkError();
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		checkError();
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		checkError();
@@ -249,7 +249,7 @@ WebGLFrameSink.isAvailable = function() {
 
 		gl.activeTexture(register);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);

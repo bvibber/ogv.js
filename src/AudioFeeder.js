@@ -67,9 +67,9 @@
 			}
 
 			if (context.createScriptProcessor) {
-				node = context.createScriptProcessor(bufferSize, 0, outputChannels)
+				node = context.createScriptProcessor(bufferSize, 0, outputChannels);
 			} else if (context.createJavaScriptNode) {
-				node = context.createJavaScriptNode(bufferSize, 0, outputChannels)
+				node = context.createJavaScriptNode(bufferSize, 0, outputChannels);
 			} else {
 				throw new Error("Bad version of web audio API?");
 			}
@@ -111,13 +111,14 @@
 					inputBuffer = popNextBuffer(bufferSize);
 				}
 			}
+			var channel, input, output, i;
 			if (!muted && inputBuffer) {
 				bufferHead += (bufferSize / context.sampleRate);
 				playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
-				for (var channel = 0; channel < outputChannels; channel++) {
-					var input = inputBuffer[channel],
-						output = event.outputBuffer.getChannelData(channel);
-					for (var i = 0; i < Math.min(bufferSize, input.length); i++) {
+				for (channel = 0; channel < outputChannels; channel++) {
+					input = inputBuffer[channel];
+					output = event.outputBuffer.getChannelData(channel);
+					for (i = 0; i < Math.min(bufferSize, input.length); i++) {
 						output[i] = input[i];
 					}
 				}
@@ -129,9 +130,9 @@
 				} else {
 					dropped++;
 				}
-				for (var channel = 0; channel < outputChannels; channel++) {
-					var output = event.outputBuffer.getChannelData(channel);
-					for (var i = 0; i < bufferSize; i++) {
+				for (channel = 0; channel < outputChannels; channel++) {
+					output = event.outputBuffer.getChannelData(channel);
+					for (i = 0; i < bufferSize; i++) {
 						output[i] = 0;
 					}
 				}
@@ -239,7 +240,7 @@
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 				var flashElement = this.flashaudio.flashElement;
 				if(resamples.length > 0) {
-					var str = hexString(resamples.buffer)
+					var str = hexString(resamples.buffer);
 					//console.log(str.length + ' bytes sent to Flash');
 					if (flashElement.write) {
 						flashElement.write(str);
@@ -261,19 +262,19 @@
 	
 		function samplesQueued() {
 			if (buffers) {
-				var samplesQueued = 0;
+				var numSamplesQueued = 0;
 				buffers.forEach(function(buffer) {
-					samplesQueued += buffer[0].length;
+					numSamplesQueued += buffer[0].length;
 				});
 			
-				var bufferedSamples = samplesQueued;
+				var bufferedSamples = numSamplesQueued;
 				var remainingSamples = Math.floor(Math.max(0, (playbackTimeAtBufferHead - context.currentTime)) * context.sampleRate);
 			
 				return bufferedSamples + remainingSamples;
 			} else {
 				return 0;
 			}
-		};
+		}
 	
 		/**
 		 * @return {
@@ -300,9 +301,9 @@
 					playbackPosition: context.currentTime - (dropped * bufferSize / context.sampleRate) - lostTime,
 					samplesQueued: samplesQueued(),
 					dropped: dropped
-				}
+				};
 			}
-		}
+		};
 	
 		this.mute = function() {
 			this.muted = muted = true;
@@ -310,7 +311,7 @@
 	
 		this.unmute = function() {
 			this.muted = muted = false;
-		}
+		};
 		
 		this.close = function() {
 			this.stop();
@@ -326,23 +327,23 @@
 		};
 	
 		this.waitUntilReady = function(callback) {
+			var times = 0,
+				maxTimes = 100;
+			function pingFlashPlugin() {
+				setTimeout(function doPingFlashPlugin() {
+					times++;
+					if (self.flashaudio && self.flashaudio.flashElement.write) {
+						callback(this);
+					} else if (times > maxTimes) {
+						console.log("Failed to initialize Flash audio shim");
+						self.close();
+						callback(null);
+					} else {
+						pingFlashPlugin();
+					}
+				}, 20);
+			}
 			if (self.flashaudio) {
-				var times = 0,
-					maxTimes = 100;
-				function pingFlashPlugin() {
-					setTimeout(function doPingFlashPlugin() {
-						times++;
-						if (self.flashaudio && self.flashaudio.flashElement.write) {
-							callback(this);
-						} else if (times > maxTimes) {
-							console.log("Failed to initialize Flash audio shim");
-							self.close();
-							callback(null);
-						} else {
-							pingFlashPlugin();
-						}
-					}, 20);
-				}
 				pingFlashPlugin();
 			} else {
 				setTimeout(callback, 0);
@@ -461,8 +462,8 @@
 			var self = this;
 			self.id = DynamicAudio.nextId++;
 
-			if (opts && typeof opts['swf'] !== 'undefined') {
-				self.swf = opts['swf'];
+			if (opts && typeof opts.swf !== 'undefined') {
+				self.swf = opts.swf;
 			}
 
 
@@ -470,11 +471,11 @@
 			self.flashWrapper.id = 'dynamicaudio-flashwrapper-'+self.id;
 			// Credit to SoundManager2 for this:
 			var s = self.flashWrapper.style;
-			s['position'] = 'fixed';
-			s['width'] = '11px'; // must be at least 6px for flash to run fast
-			s['height'] = '11px';
-			s['bottom'] = s['left'] = '0px';
-			s['overflow'] = 'hidden';
+			s.position = 'fixed';
+			s.width = '11px'; // must be at least 6px for flash to run fast
+			s.height = '11px';
+			s.bottom = s.left = '0px';
+			s.overflow = 'hidden';
 			self.flashElement = document.createElement('div');
 			self.flashElement.id = 'dynamicaudio-flashelement-'+self.id;
 			self.flashWrapper.appendChild(self.flashElement);

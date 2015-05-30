@@ -79,7 +79,7 @@ mergeInto(LibraryManager.library, {
 	},
 	
 	OgvJsOutputAudio: function(buffers, channels, sampleCount) {
-		if (buffers == 0) {
+		if (buffers === 0) {
 			OgvJsAudioCallback(null);
 			return;
 		}
@@ -89,7 +89,7 @@ mergeInto(LibraryManager.library, {
 		var HEAPF32 = Module.HEAPF32;
 		
 		var outputBuffers = [];
-		if (buffers != 0) {
+		if (buffers !== 0) {
 			var inPtr, inArray, outArray, i;
 			for (var channel = 0; channel < channels; channel++) {
 				inPtr = HEAPU32[buffers / 4 + channel];

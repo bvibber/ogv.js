@@ -11,7 +11,7 @@ function CortadoTimeRanges(ranges) {
 	};
 	this.end = function(i) {
 		return ranges[i][1];
-	}
+	};
 	return this;
 }
 
@@ -32,7 +32,7 @@ function CortadoPlayer() {
 	function createApplet(playImmediately) {
 		applet = document.createElement('applet');
 
-		if (src != '') {
+		if (src !== '') {
 			applet.appendChild(param('url', src));
 		}
 		if (durationHint > 0) {

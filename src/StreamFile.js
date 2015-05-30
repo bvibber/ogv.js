@@ -68,7 +68,7 @@ function StreamFile(options) {
 				bytesTotal = internal.getXHRRangeTotal(xhr);
 			} else {
 				var contentLength = xhr.getResponseHeader('Content-Length');
-				if (contentLength == null || contentLength == '') {
+				if (contentLength === null || contentLength === '') {
 					// Unknown file length... maybe streaming live?
 					bytesTotal = 0;
 				} else {
@@ -476,10 +476,10 @@ function StreamFile(options) {
 						// Zero length means end of stream.
 						ondone();
 					}
-				}
+				};
 				streamReader.onerror = function(event) {
 					onerror('mystery error streaming');
-				}
+				};
 				streamReader.readAsArrayBuffer(stream, bufferSize);
 			} else {
 				waitingForInput = true;
@@ -499,7 +499,7 @@ function StreamFile(options) {
 		var lastPosition = 0;
 		
 		// Is there a better way to do this conversion? :(
-		function stringToArrayBuffer(chunk) {
+		var stringToArrayBuffer = function(chunk) {
 			var len = chunk.length,
 				buffer = new ArrayBuffer(len),
 				bytes = new Uint8Array(buffer);
@@ -507,7 +507,7 @@ function StreamFile(options) {
 				bytes[i] = chunk.charCodeAt(i);
 			}
 			return buffer;
-		}
+		};
 		
 		internal.clearReadState = function() {
 			orig.clearReadState();

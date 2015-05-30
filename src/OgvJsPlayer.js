@@ -15,9 +15,9 @@ OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
 	};
 	this.end = function(i) {
 		return ranges[i][1];
-	}
+	};
 	return this;
-}
+};
 
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
@@ -289,7 +289,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 
 	function seek(toTime) {
-		if (stream.bytesTotal == 0) {
+		if (stream.bytesTotal === 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
 		state = State.SEEKING;
@@ -526,7 +526,6 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 					// we just fell over from headers into content; call onloadedmetadata etc
 					if (!codec.hasVideo && !codec.hasAudio) {
 						throw new Error('No audio or video found, something is wrong');
-						return;
 					}
 					if (duration === null) {
 						if (stream.seekable) {
@@ -616,7 +615,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (state == State.READY) {
 				state = State.PLAYING;
 				lastFrameTimestamp = getTimestamp();
-				targetFrameTime = lastFrameTimestamp + 1000.0 / fps
+				targetFrameTime = lastFrameTimestamp + 1000.0 / fps;
 				if (codec.hasAudio) {
 					initAudioFeeder();
 					audioFeeder.waitUntilReady(function() {
@@ -879,10 +878,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			fps = info.fps;
 			targetPerFrameTime = 1000 / fps;
 			
-			if (width == 0) {
+			if (width === 0) {
 				self.style.width = self.videoWidth + 'px';
 			}
-			if (height == 0) {
+			if (height === 0) {
 				self.style.height = self.videoHeight + 'px';
 			}
 			
@@ -1050,7 +1049,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 						startAudio();
 					}
 					pingProcessing(0);
-				}
+				};
 				if (!started) {
 					loadCodec(startProcessingVideo);
 				} else {
@@ -1260,13 +1259,13 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 				thumbnail.style.width = '100%';
 				thumbnail.style.height = '100%';
 				thumbnail.onload = function() {
-					if (width == 0) {
+					if (width === 0) {
 						self.style.width = thumbnail.naturalWidth + 'px';
 					}
-					if (height == 0) {
+					if (height === 0) {
 						self.style.height = thumbnail.naturalHeight + 'px';
 					}
-				}
+				};
 				self.appendChild(thumbnail);
 			}
 		}
@@ -1376,11 +1375,11 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	self.onended = null;
 	
 	return self;
-}
+};
 
 OgvJsPlayer.initSharedAudioContext = function() {
 	AudioFeeder.initSharedAudioContext();
 };
 
-OgvJsPlayer.loadingNode = null,
+OgvJsPlayer.loadingNode = null;
 OgvJsPlayer.loadingCallbacks = [];
