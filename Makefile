@@ -18,6 +18,7 @@ clean:
 	rm -f libtheora/configure
 	rm -f libopus/configure
 	rm -f libskeleton/configure
+	rm -f libnestegg/configure
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
