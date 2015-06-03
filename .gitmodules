@@ -16,3 +16,9 @@
 [submodule "libskeleton"]
 	path = libskeleton
 	url = https://github.com/brion/libskeleton.git
+[submodule "libvpx"]
+	path = libvpx
+	url = https://chromium.googlesource.com/webm/libvpx
+[submodule "libnestegg"]
+	path = libnestegg
+	url = https://github.com/kinetiknz/nestegg.git
