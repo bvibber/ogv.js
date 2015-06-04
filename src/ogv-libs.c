@@ -1,3 +1,5 @@
+#include "codecjs.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,29 +102,6 @@ enum AppState {
     STATE_DECODING
 } appState;
 
-
-// Callbacks
-extern void OgvJsLoadedMetadata();
-
-extern void OgvJsInitVideo(int frameWidth, int frameHeight,
-                           int hdec, int vdec,
-                           double fps,
-                           int picWidth, int picHeight,
-                           int picX, int picY,
-                           int aspectNumerator, int aspectDenominator);
-extern void OgvJsOutputFrameReady(double timestamp, double keyframeTimestamp);
-extern void OgvJsOutputFrame(unsigned char *bufferY, int strideY,
-                             unsigned char *bufferCb, int strideCb,
-                             unsigned char *bufferCr, int strideCr,
-                             int width, int height,
-                             int hdec, int vdec,
-                             double timestamp,
-                             double keyframeTimestamp);
-
-extern void OgvJsInitAudio(int channels, int rate);
-extern void OgvJsOutputAudioReady(double audioTimestamp);
-extern void OgvJsOutputAudio(float **buffers, int channels, int sampleCount);
-
 /*Write out the planar YUV frame, uncropped.*/
 static void video_write(void) {
     th_ycbcr_buffer ycbcr;
@@ -131,12 +110,12 @@ static void video_write(void) {
     int hdec = !(theoraInfo.pixel_fmt & 1);
     int vdec = !(theoraInfo.pixel_fmt & 2);
 
-    OgvJsOutputFrame(ycbcr[0].data, ycbcr[0].stride,
-            ycbcr[1].data, ycbcr[1].stride,
-            ycbcr[2].data, ycbcr[2].stride,
-            theoraInfo.frame_width, theoraInfo.frame_height,
-            hdec, vdec,
-            videobufTime, keyframeTime);
+    codecjs_callback_frame(ycbcr[0].data, ycbcr[0].stride,
+                           ycbcr[1].data, ycbcr[1].stride,
+                           ycbcr[2].data, ycbcr[2].stride,
+                           theoraInfo.frame_width, theoraInfo.frame_height,
+                           hdec, vdec,
+                           videobufTime, keyframeTime);
 }
 
 /* dump the theora comment header */
@@ -171,7 +150,7 @@ static int queue_page(ogg_page *page) {
     return 0;
 }
 
-void OgvJsInit(int process_audio_flag, int process_video_flag) {
+void codecjs_init(int process_audio_flag, int process_video_flag) {
     // Allow the caller to specify whether we want audio, video, or both.
     // Or neither, but that won't be very useful.
     processAudio = process_audio_flag;
@@ -395,12 +374,12 @@ static void processHeaders() {
 
             int hdec = !(theoraInfo.pixel_fmt & 1);
             int vdec = !(theoraInfo.pixel_fmt & 2);
-            OgvJsInitVideo(theoraInfo.frame_width, theoraInfo.frame_height,
-                    hdec, vdec,
-                    (float) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
-                    theoraInfo.pic_width, theoraInfo.pic_height,
-                    theoraInfo.pic_x, theoraInfo.pic_y,
-                    theoraInfo.aspect_numerator, theoraInfo.aspect_denominator);
+            codecjs_callback_init_video(theoraInfo.frame_width, theoraInfo.frame_height,
+                                        hdec, vdec,
+                                        (float) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
+                                        theoraInfo.pic_width, theoraInfo.pic_height,
+                                        theoraInfo.pic_x, theoraInfo.pic_y,
+                                        theoraInfo.aspect_numerator, theoraInfo.aspect_denominator);
         }
 
 #ifdef OPUS
@@ -409,7 +388,7 @@ static void processHeaders() {
             // opusDecoder should already be initialized
             // Opus has a fixed internal sampling rate of 48000 Hz
             audioSampleRate = 48000;
-            OgvJsInitAudio(opusChannels, audioSampleRate);
+            codecjs_callback_init_audio(opusChannels, audioSampleRate);
         } else
 #endif
         if (vorbisHeaders) {
@@ -419,12 +398,12 @@ static void processHeaders() {
                     vorbisStreamState.serialno, vorbisInfo.channels, vorbisInfo.rate);
 
 			audioSampleRate = vorbisInfo.rate;
-            OgvJsInitAudio(vorbisInfo.channels, audioSampleRate);
+            codecjs_callback_init_audio(vorbisInfo.channels, audioSampleRate);
         }
 
         appState = STATE_DECODING;
         printf("Done with headers step\n");
-        OgvJsLoadedMetadata();
+        codecjs_callback_loaded_metadata();
     }
 }
 
@@ -463,7 +442,7 @@ static void processDecoding() {
 	        }
 			//printf("packet granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videoPacket.granulepos, (double)videoPacketTime, (int)theoraInfo.keyframe_granule_shift);
 
-            OgvJsOutputFrameReady(videobufTime, keyframeTime);
+            codecjs_callback_frame_ready(videobufTime, keyframeTime);
         } else {
             needData = 1;
         }
@@ -480,7 +459,7 @@ static void processDecoding() {
 	                audiobufGranulepos = audioPacket.granulepos;
     	            audiobufTime = (double)audiobufGranulepos / audioSampleRate;
     	        }
-                OgvJsOutputAudioReady(audiobufTime);
+                codecjs_callback_audio_ready(audiobufTime);
             } else {
                 needData = 1;
             }
@@ -495,7 +474,7 @@ static void processDecoding() {
 	                audiobufGranulepos = audioPacket.granulepos;
     	            audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
         	    }
-				OgvJsOutputAudioReady(audiobufTime);
+				codecjs_callback_audio_ready(audiobufTime);
             } else {
                 needData = 1;
             }
@@ -503,7 +482,7 @@ static void processDecoding() {
     }
 }
 
-int OgvJsDecodeFrame() {
+int codecjs_decode_frame() {
     if (ogg_stream_packetout(&theoraStreamState, &videoPacket) <= 0) {
         printf("Theora packet didn't come out of stream\n");
         return 0;
@@ -537,7 +516,7 @@ int OgvJsDecodeFrame() {
     }
 }
 
-int OgvJsDecodeAudio() {
+int codecjs_decode_audio() {
     int packetRet = 0;
     audiobufReady = 0;
     int foundSome = 0;
@@ -582,7 +561,7 @@ int OgvJsDecodeAudio() {
 	                    audiobufGranulepos += (sampleCount - skip);
 	                    audiobufTime = (double)audiobufGranulepos / audioSampleRate;
 	                }
-                    OgvJsOutputAudio(pcmp, opusChannels, sampleCount - skip);
+                    codecjs_callback_audio(pcmp, opusChannels, sampleCount - skip);
                     free(pcmp);
                     free(pcm);
                 }
@@ -606,7 +585,7 @@ int OgvJsDecodeAudio() {
 					audiobufGranulepos += sampleCount;
 					audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
 				}
-                OgvJsOutputAudio(pcm, vorbisInfo.channels, sampleCount);
+                codecjs_callback_audio(pcm, vorbisInfo.channels, sampleCount);
 
                 vorbis_synthesis_read(&vorbisDspState, sampleCount);
             } else {
@@ -620,7 +599,7 @@ int OgvJsDecodeAudio() {
 
 static int buffersReceived = 0;
 
-void OgvJsReceiveInput(char *buffer, int bufsize) {
+void codecjs_receive_input(char *buffer, int bufsize) {
     if (bufsize > 0) {
 		buffersReceived = 1;
 		if (appState == STATE_DECODING) {
@@ -637,7 +616,7 @@ void OgvJsReceiveInput(char *buffer, int bufsize) {
     }
 }
 
-int OgvJsProcess() {
+int codecjs_process() {
 	if (!buffersReceived) {
 		return 0;
 	}
@@ -663,12 +642,12 @@ int OgvJsProcess() {
         processDecoding();
     } else {
     	// uhhh...
-    	printf("Invalid appState in OgvJsProcess\n");
+    	printf("Invalid appState in codecjs_process\n");
 	}
 	return 1;
 }
 
-void OgvJsDestroy() {
+void codecjs_destroy() {
     if (theoraHeaders) {
         ogg_stream_clear(&theoraStreamState);
         th_decode_free(theoraDecoderContext);
@@ -700,7 +679,7 @@ void OgvJsDestroy() {
     ogg_sync_clear(&oggSyncState);
 }
 
-void OgvJsFlushBuffers() {
+void codecjs_flush_buffers() {
 	// First, read out anything left in our input buffer
 	while (ogg_sync_pageout(&oggSyncState, &oggPage) > 0) {
 		queue_page(&oggPage);
@@ -741,7 +720,7 @@ void OgvJsFlushBuffers() {
 	needData = 1;
 }
 
-void OgvJsDiscardFrame()
+void codecjs_discard_frame()
 {
 	if (videobufReady) {
 		if (theoraHeaders) {
@@ -751,7 +730,7 @@ void OgvJsDiscardFrame()
 	}
 }
 
-void OgvJsDiscardAudio()
+void codecjs_discard_audio()
 {
 	if (audiobufReady) {
 		if (vorbisHeaders) {
@@ -769,9 +748,9 @@ void OgvJsDiscardAudio()
 #ifdef SKELETON
 
 /**
- * @return segment length in bytes
+ * @return segment length in bytes, or -1 if unknown
  */
-long OgvJsSkeletonGetSegmentLength() {
+long codecjs_media_length() {
     ogg_int64_t segment_len = -1;
     if (skeletonHeaders) {
         oggskel_get_segment_len(skeleton, &segment_len);
@@ -782,7 +761,7 @@ long OgvJsSkeletonGetSegmentLength() {
 /**
  * @return segment duration in seconds, or -1 if unknown
  */
-float OgvJsSkeletonGetDuration() {
+float codecjs_media_duration() {
     if (skeletonHeaders) {
         ogg_uint16_t ver_maj = -1, ver_min = -1;
         oggskel_get_ver_maj(skeleton, &ver_maj);
@@ -838,7 +817,7 @@ float OgvJsSkeletonGetDuration() {
     return -1;
 }
 
-long OgvJsSkeletonGetKeypointOffset(long time_ms)
+long codecjs_keypoint_offset(long time_ms)
 {
     ogg_int64_t offset = -1;
     if (skeletonHeaders) {

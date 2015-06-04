@@ -27,18 +27,18 @@ OgvJs = (function(options) {
 	#include "../build/js/ogv-libs.js"
 	window.Module = undefined;
     
-    var OgvJsInit = Module.cwrap('OgvJsInit', 'void', ['number', 'number']);
-    var OgvJsDestroy = Module.cwrap('OgvJsDestroy', 'void', []);
-    var OgvJsReceiveInput = Module.cwrap('OgvJsReceiveInput', 'void', ['number', 'number']);
-    var OgvJsProcess = Module.cwrap('OgvJsProcess', 'number', []);
-    var OgvJsDecodeFrame = Module.cwrap('OgvJsDecodeFrame', 'number', []);
-    var OgvJsDecodeAudio = Module.cwrap('OgvJsDecodeAudio', 'number', []);
-    var OgvJsFlushBuffers = Module.cwrap('OgvJsFlushBuffers', 'void', []);
-    var OgvJsDiscardFrame = Module.cwrap('OgvJsDiscardFrame', 'void', []);
-    var OgvJsDiscardAudio = Module.cwrap('OgvJsDiscardAudio', 'void', []);
-    var OgvJsSkeletonGetSegmentLength = Module.cwrap('OgvJsSkeletonGetSegmentLength', 'number', []);
-    var OgvJsSkeletonGetKeypointOffset = Module.cwrap('OgvJsSkeletonGetKeypointOffset', 'number', ['number']);
-    var OgvJsSkeletonGetDuration = Module.cwrap('OgvJsSkeletonGetDuration', 'number');
+    var codecjs_init = Module.cwrap('codecjs_init', 'void', ['number', 'number']);
+    var codecjs_destroy = Module.cwrap('codecjs_destroy', 'void', []);
+    var codecjs_receive_input = Module.cwrap('codecjs_receive_input', 'void', ['number', 'number']);
+    var codecjs_process = Module.cwrap('codecjs_process', 'number', []);
+    var codecjs_decode_frame = Module.cwrap('codecjs_decode_frame', 'number', []);
+    var codecjs_decode_audio = Module.cwrap('codecjs_decode_audio', 'number', []);
+    var codecjs_flush_buffers = Module.cwrap('codecjs_flush_buffers', 'void', []);
+    var codecjs_discard_frame = Module.cwrap('codecjs_discard_frame', 'void', []);
+    var codecjs_discard_audio = Module.cwrap('codecjs_discard_audio', 'void', []);
+    var codecjs_media_length = Module.cwrap('codecjs_media_length', 'number', []);
+    var codecjs_media_duration = Module.cwrap('codecjs_media_duration', 'number');
+    var codecjs_keypoint_offset = Module.cwrap('codecjs_keypoint_offset', 'number', ['number']);
 
 	var inputBuffer, inputBufferSize;
 	function reallocInputBuffer(size) {
@@ -144,7 +144,7 @@ OgvJs = (function(options) {
 			Module._free(inputBuffer);
 			inputBuffer = undefined;
 		}
-		OgvJsDestroy();
+		codecjs_destroy();
 	};
 	
 	/**
@@ -158,14 +158,14 @@ OgvJs = (function(options) {
 		var buffer = reallocInputBuffer(len);
 		Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-		OgvJsReceiveInput(buffer, len);
+		codecjs_receive_input(buffer, len);
 	};
 	
 	/**
 	 * Process the next packet in the stream
 	 */
 	self.process = function() {
-		return OgvJsProcess();
+		return codecjs_process();
 	}
 	
 	/**
@@ -176,7 +176,7 @@ OgvJs = (function(options) {
 	self.decodeFrame = function() {
 		if (self.frameReady) {
 			self.frameReady = false;
-			return !!OgvJsDecodeFrame();
+			return !!codecjs_decode_frame();
 		} else {
 			throw new Error("called decodeFrame when no frame ready");
 		}
@@ -205,7 +205,7 @@ OgvJs = (function(options) {
 	self.decodeAudio = function() {
 		if (self.audioReady) {
 			self.audioReady = false;
-			return !!OgvJsDecodeAudio();
+			return !!codecjs_decode_audio();
 		} else {
 			throw new Error("called decodeAudio when no audio ready");
 		}
@@ -231,19 +231,19 @@ OgvJs = (function(options) {
 	};
 	
 	self.discardFrame = function() {
-		OgvJsDiscardFrame();
+		codecjs_discard_frame();
 		self.frameReady = false;
 		queuedFrame = false;
 	};
 	
 	self.discardAudio = function() {
-		OgvJsDiscardAudio();
+		codecjs_discard_audio();
 		self.audioReady = false;
 		audioBuffers.splice(0, audioBuffers.length);
 	};
 	
 	self.flush = function() {
-		OgvJsFlushBuffers();
+		codecjs_flush_buffers();
 		self.discardFrame();
 		self.discardAudio();
 	};
@@ -265,7 +265,7 @@ OgvJs = (function(options) {
 	 */
 	Object.defineProperty(self, 'duration', {
 		get: function getDuration() {
-    		var len = OgvJsSkeletonGetDuration();
+    		var len = codecjs_media_duration();
     		if (len >= 0) {
     			return len;
     		} else {
@@ -282,10 +282,10 @@ OgvJs = (function(options) {
 	 * @return number byte offset
 	 */
 	self.getKeypointOffset = function(timeSeconds) {
-    	return OgvJsSkeletonGetKeypointOffset(timeSeconds * 1000);
+    	return codecjs_keypoint_offset(timeSeconds * 1000);
 	};
 
-	OgvJsInit(processAudio ? 1 : 0, processVideo ? 1 : 0);
+	codecjs_init(processAudio ? 1 : 0, processVideo ? 1 : 0);
 	return self;
 });
 OgvJs.instanceCount = 0;

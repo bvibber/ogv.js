@@ -14,7 +14,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
   -s NO_FILESYSTEM=1 \
   -s NO_BROWSER=1 \
-  -s EXPORTED_FUNCTIONS="['_OgvJsInit', '_OgvJsDestroy', '_OgvJsReceiveInput', '_OgvJsProcess', '_OgvJsDecodeFrame', '_OgvJsDecodeAudio', '_OgvJsFlushBuffers', '_OgvJsDiscardFrame', '_OgvJsDiscardAudio', '_OgvJsSkeletonGetSegmentLength', '_OgvJsSkeletonGetDuration', '_OgvJsSkeletonGetKeypointOffset']" \
+  -s EXPORTED_FUNCTIONS="['_codecjs_init', '_codecjs_destroy', '_codecjs_receive_input', '_codecjs_process', '_codecjs_decode_frame', '_codecjs_decode_audio', '_codecjs_flush_buffers', '_codecjs_discard_frame', '_codecjs_discard_audio', '_codecjs_media_length', '_codecjs_media_duration', '_codecjs_keypoint_offset']" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \

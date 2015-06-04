@@ -1,15 +1,15 @@
 mergeInto(LibraryManager.library, {
 	
-	OgvJsLoadedMetadata: function() {
+	codecjs_callback_loaded_metadata: function() {
 		OgvJsLoadedMetadataCallback();
 	},
 	
-	OgvJsInitVideo: function(frameWidth, frameHeight,
-	                         hdec, vdec,
-                             fps,
-                             picWidth, picHeight,
-                             picX, picY,
-                             aspectNumerator, aspectDenominator) {
+	codecjs_callback_init_video: function(frameWidth, frameHeight,
+	                                      hdec, vdec,
+                                          fps,
+                                          picWidth, picHeight,
+                                          picX, picY,
+                                          aspectNumerator, aspectDenominator) {
 		OgvJsInitVideoCallback({
 			codec: "Theora",
 			frameWidth: frameWidth,
@@ -26,17 +26,17 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	OgvJsOutputFrameReady: function(videoTimestamp, keyframeTimestamp) {
+	codecjs_callback_frame_ready: function(videoTimestamp, keyframeTimestamp) {
 		OgvJsOutputFrameReadyCallback(videoTimestamp, keyframeTimestamp);
 	},
 	
-	OgvJsOutputFrame: function(bufferY, strideY,
-	                           bufferCb, strideCb,
-	                           bufferCr, strideCr,
-	                           width, height,
-	                           hdec, vdec,
-	                           timestamp,
-	                           keyframeTimestamp) {
+	codecjs_callback_frame: function(bufferY, strideY,
+	                                 bufferCb, strideCb,
+	                                 bufferCr, strideCr,
+	                                 width, height,
+	                                 hdec, vdec,
+	                                 timestamp,
+	                                 keyframeTimestamp) {
 		
 		// Create typed array views of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
@@ -66,7 +66,7 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 	
-	OgvJsInitAudio: function(channels, rate) {
+	codecjs_callback_init_audio: function(channels, rate) {
 		OgvJsInitAudioCallback({
 			codec: "Vorbis",
 			channels: channels,
@@ -74,11 +74,11 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 	
-	OgvJsOutputAudioReady: function(audioTimestamp) {
+	codecjs_callback_audio_ready: function(audioTimestamp) {
 		OgvJsOutputAudioReadyCallback(audioTimestamp);
 	},
 	
-	OgvJsOutputAudio: function(buffers, channels, sampleCount) {
+	codecjs_callback_audio: function(buffers, channels, sampleCount) {
 		if (buffers === 0) {
 			OgvJsAudioCallback(null);
 			return;
