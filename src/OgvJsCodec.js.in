@@ -37,8 +37,6 @@ OgvJs = (function(options) {
     var OgvJsDiscardFrame = Module.cwrap('OgvJsDiscardFrame', 'void', []);
     var OgvJsDiscardAudio = Module.cwrap('OgvJsDiscardAudio', 'void', []);
     var OgvJsSkeletonGetSegmentLength = Module.cwrap('OgvJsSkeletonGetSegmentLength', 'number', []);
-    var OgvJsSkeletonGetPtimeNumerator = Module.cwrap('OgvJsSkeletonGetPtimeNumerator', 'number', []);
-    var OgvJsSkeletonGetPtimeDenominator = Module.cwrap('OgvJsSkeletonGetPtimeDenominator', 'number', []);
     var OgvJsSkeletonGetKeypointOffset = Module.cwrap('OgvJsSkeletonGetKeypointOffset', 'number', ['number']);
     var OgvJsSkeletonGetDuration = Module.cwrap('OgvJsSkeletonGetDuration', 'number');
 

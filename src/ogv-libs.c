@@ -838,22 +838,6 @@ float OgvJsSkeletonGetDuration() {
     return -1;
 }
 
-long OgvJsSkeletonGetPtimeNumerator() {
-    ogg_int64_t ptime_num = -1;
-    if (skeletonHeaders) {
-        oggskel_get_ptime_num(skeleton, &ptime_num);
-    }
-    return (long)ptime_num;
-}
-
-long OgvJsSkeletonGetPtimeDenominator() {
-    ogg_int64_t ptime_denum = -1;
-    if (skeletonHeaders) {
-        oggskel_get_ptime_denum(skeleton, &ptime_denum);
-    }
-    return (long)ptime_denum;
-}
-
 long OgvJsSkeletonGetKeypointOffset(long time_ms)
 {
     ogg_int64_t offset = -1;
