@@ -20,7 +20,12 @@ EMCONFIGURE_JS=1 \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/js/root" \
     --target=generic-gnu \
-    --extra-cflags=-I`dirname \`which emcc\``/system/lib/libcxxabi/include/
+    --extra-cflags=-I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
+    --disable-vp8-encoder \
+    --disable-vp9-encoder \
+    --enable-shared \
+    --disable-docs \
+    --disable-examples
 
 # compile libvpx
 emmake make

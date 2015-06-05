@@ -4,8 +4,9 @@ suffix=so
 if [ `uname -s` == "Darwin" ]; then
 	suffix=dylib
 fi
+# note the libvpx build system wants to make .so even on Mac
 
-# compile wrapper around libogg + libvorbis + libtheora
+# compile wrapper around libnestegg + libvpx + libogg + libvorbis
 EMCC_FAST_COMPILER=1 emcc \
   -O2 \
   --memory-init-file 0 \
@@ -19,13 +20,8 @@ EMCC_FAST_COMPILER=1 emcc \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/libvorbis.$suffix \
-  build/js/root/lib/libopus.$suffix \
-  build/js/root/lib/libtheoradec.$suffix \
-  build/js/root/lib/libskeleton.$suffix \
+  build/js/root/lib/libnestegg.$suffix \
+  build/js/root/lib/libvpx.so \
   --js-library src/codec-libs-mixin.js \
-  -D OPUS \
-  -D SKELETON \
-  src/opus_header.c \
-  src/opus_helper.c \
-  src/ogv-libs.c \
-  -o build/js/ogv-libs.js
+  src/webm-libs.c \
+  -o build/js/webm-libs.js
