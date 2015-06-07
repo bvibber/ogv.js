@@ -877,7 +877,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		//
 		//placeboCodec = new OgvJs(options);
 
-		codec = new OgvJs(options);
+		codec = new codecClass(options);
 		codec.oninitvideo = function(info) {
 			videoInfo = info;
 			fps = info.fps;
@@ -915,7 +915,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	function loadCodec(callback) {
 		// @todo fix this proper
 		if (self.src.match(/\.webm$/i)) {
-			codecClassName = 'WebM';
+			codecClassName = 'WebMJS';
 			codecClassFile = 'webm-codec.js';
 		} else {
 			codecClassName = 'OgvJs';

@@ -91,7 +91,7 @@ build/js/webm-libs.js : src/webm-libs.c \
 
 build/webm-codec.js : src/codec-libs.js.in build/js/webm-libs.js
 	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=WebMJs -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
+	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=WebMJS -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
 
 
 build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
@@ -135,6 +135,8 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/lib/ogv.js \
                         build/demo/lib/ogv-codec.js \
                         build/demo/lib/ogv-codec.js.gz \
+                        build/demo/lib/webm-codec.js \
+                        build/demo/lib/webm-codec.js.gz \
                         build/demo/lib/dynamicaudio.swf \
                         build/demo/lib/cortado.jar \
                         build/demo/lib/CortadoPlayer.js
@@ -185,13 +187,13 @@ build/demo/lib/dynamicaudio.swf : src/dynamicaudio.swf
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp src/dynamicaudio.swf build/demo/lib/dynamicaudio.swf
 
-build/demo/lib/ogvswf.js : build/ogvswf.js
+build/demo/lib/webm-codec.js : build/webm-codec.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogvswf.js build/demo/lib/ogvswf.js
+	cp build/webm-codec.js build/demo/lib/webm-codec.js
 
-build/demo/lib/ogv.swf : build/ogvswf.js
+build/demo/lib/webm-codec.js.gz : build/webm-codec.js.gz
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogv.swf build/demo/lib/ogv.swf
+	cp build/webm-codec.js.gz build/demo/lib/webm-codec.js.gz
 
 build/demo/lib/cortado.jar : src/cortado.jar
 	test -d build/demo/lib || mkdir -p build/demo/lib
