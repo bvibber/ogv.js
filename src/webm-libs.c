@@ -33,6 +33,7 @@
 static nestegg        *demuxContext;
 static char           *bufferQueue = NULL;
 static size_t          bufferSize = 0;
+static uint64_t        bufferBytesRead = 0;
 
 static bool            hasVideo = false;
 static unsigned int    videoTrack = 0;
@@ -130,22 +131,24 @@ static int readCallback(void * buffer, size_t length, void *userdata)
 	
 	// and save the rest...
 	bufferSize -= length;
+	bufferBytesRead += length;
 	memcpy(bufferQueue, bufferQueue + length, bufferSize);
 	bufferQueue = realloc(bufferQueue, bufferSize);
 	
-	return 0;
+	return 1;
 }
 
 static int seekCallback(int64_t offset, int whence, void * userdata)
 {
 	// @todo rework to use asyncify
+	abort();
 	return -1;
 }
 
 static int64_t tellCallback(void * userdata)
 {
 	// @todo rework to use asyncify
-	return -1;
+	return bufferBytesRead;
 }
 
 static nestegg_io ioCallbacks = {
@@ -162,6 +165,7 @@ static void processBegin() {
 	printf("nestegg_init starting...\n");
 	if (nestegg_init(&demuxContext, ioCallbacks, logCallback, -1) < 0) {
 		printf("nestegg_init failed\n");
+		abort();
 	}
 	
 	// Look through the tracks finding our video and audio
