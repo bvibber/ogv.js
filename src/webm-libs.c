@@ -373,7 +373,7 @@ int codecjs_decode_frame() {
 			size_t data_size;
 			nestegg_packet_data(packet, chunk, &data, &data_size);
 			
-			vpx_codec_decode(&vpxContext, data, data_size, NULL, 0);
+			vpx_codec_decode(&vpxContext, data, data_size, NULL, 1);
 			// @todo check return value
 			
 			vpx_codec_iter_t iter = NULL;
