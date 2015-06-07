@@ -21,6 +21,7 @@ EMCONFIGURE_JS=1 \
     --prefix="$dir/build/js/root" \
     --target=generic-gnu \
     --extra-cflags=-I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
+    --disable-multithread \
     --enable-vp9-decoder \
     --disable-vp8-encoder \
     --disable-vp9-encoder \
