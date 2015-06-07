@@ -16,6 +16,8 @@ EMCC_FAST_COMPILER=1 emcc \
   -s NO_FILESYSTEM=1 \
   -s NO_BROWSER=1 \
   -s EXPORTED_FUNCTIONS="`< src/codec-libs-exports.json`" \
+  --profiling \
+  -s ASSERTIONS=2 \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \

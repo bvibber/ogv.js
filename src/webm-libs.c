@@ -1,8 +1,8 @@
 #include "codecjs.h"
 
-#include <stdbool.h>
-
 #include <assert.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -110,6 +110,14 @@ void codecjs_init(int process_audio_flag, int process_video_flag) {
 
 static int needData = 1;
 
+static void logCallback(nestegg *context, unsigned int severity, char const * format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+}
+
 static int readCallback(void * buffer, size_t length, void *userdata)
 {
 	if (length > bufferSize) {
@@ -151,7 +159,10 @@ static void processBegin() {
 	// This will read through headers, hopefully we have enough data
 	// or else it may fail and explode.
 	// @todo rework all this to faux sync or else full async
-	nestegg_init(&demuxContext, ioCallbacks, NULL, -1);
+	printf("nestegg_init starting...\n");
+	if (nestegg_init(&demuxContext, ioCallbacks, logCallback, -1) < 0) {
+		printf("nestegg_init failed\n");
+	}
 	
 	// Look through the tracks finding our video and audio
 	unsigned int tracks;
@@ -510,53 +521,53 @@ int codecjs_process() {
 	if (!buffersReceived) {
 		return 0;
 	}
-	if (needData) {
-		// Do the nestegg_read_packet dance until it fails to read more data,
-		// at which point we ask for more. Hope it doesn't explode.
-		nestegg_packet *packet = NULL;
-		int ret = nestegg_read_packet(demuxContext, &packet);
-		if (ret == 0) {
-			// end of stream?
-			return 0;
-		} else if (ret > 0) {
-			unsigned int track;
-			nestegg_packet_track(packet, &track);
-
-			if (hasVideo && track == videoTrack) {
-				if (videoPacketCount >= PACKET_QUEUE_MAX) {
-					// that's not good
-				}
-				videoPackets[videoPacketCount++] = packet;
-			} else if (hasAudio && track == audioTrack) {
-				if (audioPacketCount >= PACKET_QUEUE_MAX) {
-					// that's not good
-				}
-				audioPackets[audioPacketCount++] = packet;
-			} else {
-				// throw away unknown packets
-				nestegg_free_packet(packet);
-			}
-		}
-		/*
-	    int ret = ogg_sync_pageout(&oggSyncState, &oggPage);
-		if (ret > 0) {
-		    // complete page retrieved
-			queue_page(&oggPage);
-		} else if (ret < 0) {
-		    // incomplete sync
-		    // continue on the next loop
-		    return 1;
-		} else {
-		    // need moar data
-			return 0;
-		}
-		*/
-	}
     if (appState == STATE_BEGIN) {
         processBegin();
     //} else if (appState == STATE_HEADERS) {
     //    processHeaders();
     } else if (appState == STATE_DECODING) {
+		if (needData) {
+			// Do the nestegg_read_packet dance until it fails to read more data,
+			// at which point we ask for more. Hope it doesn't explode.
+			nestegg_packet *packet = NULL;
+			int ret = nestegg_read_packet(demuxContext, &packet);
+			if (ret == 0) {
+				// end of stream?
+				return 0;
+			} else if (ret > 0) {
+				unsigned int track;
+				nestegg_packet_track(packet, &track);
+
+				if (hasVideo && track == videoTrack) {
+					if (videoPacketCount >= PACKET_QUEUE_MAX) {
+						// that's not good
+					}
+					videoPackets[videoPacketCount++] = packet;
+				} else if (hasAudio && track == audioTrack) {
+					if (audioPacketCount >= PACKET_QUEUE_MAX) {
+						// that's not good
+					}
+					audioPackets[audioPacketCount++] = packet;
+				} else {
+					// throw away unknown packets
+					nestegg_free_packet(packet);
+				}
+			}
+			/*
+			int ret = ogg_sync_pageout(&oggSyncState, &oggPage);
+			if (ret > 0) {
+				// complete page retrieved
+				queue_page(&oggPage);
+			} else if (ret < 0) {
+				// incomplete sync
+				// continue on the next loop
+				return 1;
+			} else {
+				// need moar data
+				return 0;
+			}
+			*/
+		}
         processDecoding();
     } else {
     	// uhhh...
