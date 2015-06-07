@@ -1,5 +1,7 @@
 #include "codecjs.h"
 
+#include <stdbool.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +9,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
+
+#include <nestegg/nestegg.h>
+
+#include <vpx/vpx_decoder.h>
+#include <vpx/vp8dx.h>
 
 #include <ogg/ogg.h>
 
@@ -18,9 +25,32 @@
 #include "opus_helper.h"
 #endif
 
+#define PACKET_QUEUE_MAX 64
+
 /* never forget that globals are a one-way ticket to Hell */
+
+static nestegg        *demuxContext;
+static char           *bufferQueue = NULL;
+static size_t          bufferSize = 0;
+
+static bool            hasVideo = false;
+static unsigned int    videoTrack = 0;
+static int             videoCodec = -1;
+static unsigned int    videoPacketCount = 0;
+static nestegg_packet *videoPackets[PACKET_QUEUE_MAX];
+
+static bool            hasAudio = false;
+static unsigned int    audioTrack = 0;
+static int             audioCodec = -1;
+static unsigned int    audioPacketCount = 0;
+static nestegg_packet *audioPackets[PACKET_QUEUE_MAX];
+
 /* Ogg and codec state for demux/decode */
 ogg_packet        audioPacket;
+
+static vpx_codec_ctx_t    vpxContext;
+static vpx_codec_iface_t *vpxDecoder;
+
 
 /* single frame video buffering */
 int               videobufReady = 0;
@@ -58,13 +88,6 @@ int               opusStreams;
 int               processAudio;
 int               processVideo;
 
-int               crop = 0;
-int               gotSigint = 0;
-
-static void sigint_handler(int signal) {
-    gotSigint = 1;
-}
-
 enum AppState {
     STATE_BEGIN,
     STATE_HEADERS,
@@ -86,18 +109,90 @@ void codecjs_init(int process_audio_flag, int process_video_flag) {
 
 static int needData = 1;
 
+static int readCallback(void * buffer, size_t length, void *userdata)
+{
+	if (length > bufferSize) {
+		// @todo rework to use asyncify
+		return -1;
+	}
+	
+	// return the first bytes...
+	memcpy(buffer, bufferQueue, length);
+	
+	// and save the rest...
+	bufferSize -= length;
+	memcpy(bufferQueue, bufferQueue + length, bufferSize);
+	bufferQueue = realloc(bufferQueue, bufferSize);
+	
+	return 0;
+}
+
+static int seekCallback(int64_t offset, int whence, void * userdata)
+{
+	// @todo rework to use asyncify
+	return -1;
+}
+
+static int64_t tellCallback(void * userdata)
+{
+	// @todo rework to use asyncify
+	return -1;
+}
+
+static nestegg_io ioCallbacks = {
+	readCallback,
+	seekCallback,
+	tellCallback,
+	NULL
+};
+
 static void processBegin() {
-    if (0) {
-        printf("Packet is at start of a bitstream\n");
-        /* identify the codec */
+	// This will read through headers, hopefully we have enough data
+	// or else it may fail and explode.
+	// @todo rework all this to faux sync or else full async
+	nestegg_init(&demuxContext, ioCallbacks, NULL, -1);
+	
+	// Look through the tracks finding our video and audio
+	unsigned int tracks;
+	if (nestegg_track_count(demuxContext, &tracks) < 0) {
+		tracks = 0;
+	}
+	for (unsigned int track = 0; track < tracks; track++) {
+		int trackType = nestegg_track_type(demuxContext, track);
+		int codec = nestegg_track_codec_id(demuxContext, track);
+		
+		if (trackType == NESTEGG_TRACK_VIDEO && !hasVideo) {
+			if (codec == NESTEGG_CODEC_VP8 || codec == NESTEGG_CODEC_VP9) {
+				hasVideo = 1;
+				videoTrack = track;
+				videoCodec = codec;
+			}
+		}
+		
+		if (trackType == NESTEGG_TRACK_AUDIO && !hasAudio) {
+			if (codec == NESTEGG_CODEC_VORBIS || codec == NESTEGG_CODEC_OPUS) {
+				hasAudio = 1;
+				audioTrack = track;
+				audioCodec = codec;
+			}
+		}
+	}
+
+	// @fixme figure out this initialization stuff
+	
+	if (hasAudio && audioCodec == NESTEGG_CODEC_VORBIS) {
         // todo: initialize audioPacket
-        if (processAudio && !vorbisHeaders && (vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &audioPacket)) == 0) {
+        if ((vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &audioPacket)) == 0) {
             // it's vorbis! save this as our audio stream...
             vorbisHeaders = 1;
 
             // ditch the processed packet...
+        }
+    }
 #ifdef OPUS
-        } else if (processAudio && !opusHeaders && (opusDecoder = opus_process_header(&audioPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
+    if (hasAudio && audioCodec == NESTEGG_CODEC_OPUS) {
+    	// todo: initialize audioPacket
+        if ((opusDecoder = opus_process_header(&audioPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
             printf("found Opus stream! (first of two headers)\n");
             if (opusGain) {
                 opus_multistream_decoder_ctl(opusDecoder, OPUS_SET_GAIN(opusGain));
@@ -106,17 +201,54 @@ static void processBegin() {
             opusHeaders = 1;
 
             // ditch the processed packet...
-#endif
-        } else {
-            printf("already have stream, or not theora or vorbis or opus packet\n");
-            /* whatever it is, we don't care about it */
         }
-    } else {
-        printf("Moving on to header decoding...\n");
-        // Not a bitstream start -- move on to header decoding...
-        appState = STATE_HEADERS;
-        //processHeaders();
     }
+#endif
+
+	//printf("Moving on to header decoding...\n");
+	//appState = STATE_HEADERS;
+
+	
+	// @todo kill this callback and replace it with a state check?
+	codecjs_callback_loaded_metadata();
+
+	if (hasVideo) {
+		nestegg_video_params videoParams;
+		if (nestegg_track_video_params(demuxContext, videoTrack, &videoParams) < 0) {
+			// failed! something is wrong...
+			hasVideo = 0;
+		} else {
+			if (videoCodec == NESTEGG_CODEC_VP8) {
+				vpxDecoder = vpx_codec_vp8_dx();
+			} else if (videoCodec == NESTEGG_CODEC_VP9) {
+				vpxDecoder = vpx_codec_vp9_dx();
+			}
+			vpx_codec_dec_init(&vpxContext, vpxDecoder, NULL, 0);
+			
+			codecjs_callback_init_video(videoParams.width, videoParams.height,
+			                            1, 1, // @todo assuming 4:2:0
+			                            30.0, // @todo get fps
+			                            videoParams.display_width, videoParams.display_height,
+                                        videoParams.crop_left, videoParams.crop_right,
+                                        1, 1); // @todo get pixel aspect ratio
+			
+		}
+	}
+	
+	if (hasAudio) {
+		nestegg_audio_params audioParams;
+		if (nestegg_track_audio_params(demuxContext, audioTrack, &audioParams) < 0) {
+			// failed! something is wrong
+			hasAudio = 0;
+		} else {
+			codecjs_callback_init_audio(audioParams.channels, (int)audioParams.rate);
+		}
+	}
+
+	// @fixme still need those headers for audio!
+	appState = STATE_DECODING;
+	printf("Done with headers step\n");
+	codecjs_callback_loaded_metadata();
 }
 
 static void processHeaders() {
@@ -197,41 +329,75 @@ static void processHeaders() {
 
 static void processDecoding() {
 	needData = 0;
-    if (!audiobufReady) {
-#ifdef OPUS
-        if (opusHeaders) {
-            if (1) { //ogg_stream_packetpeek(&opusStreamState, &audioPacket) > 0) {
-                audiobufReady = 1;
-                if (audioPacket.granulepos == -1) {
-                	// we can't update the granulepos yet
-                } else {
-	                audiobufGranulepos = audioPacket.granulepos;
-    	            audiobufTime = (double)audiobufGranulepos / audioSampleRate;
-    	        }
-                codecjs_callback_audio_ready(audiobufTime);
-            } else {
-                needData = 1;
-            }
-        } else
-#endif
-        if (vorbisHeaders) {
-            if (1) { //ogg_stream_packetpeek(&vorbisStreamState, &audioPacket) > 0) {
-                audiobufReady = 1;
-                if (audioPacket.granulepos == -1) {
-                	// we can't update the granulepos yet
-                } else {
-	                audiobufGranulepos = audioPacket.granulepos;
-    	            audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
-        	    }
-				codecjs_callback_audio_ready(audiobufTime);
-            } else {
-                needData = 1;
-            }
-        }
-    }
+
+	if (hasVideo && !videobufReady) {
+		if (videoPacketCount) {
+			// @fixme implement or kill the buffer/keyframe times
+			codecjs_callback_frame_ready(videobufTime, keyframeTime);
+		} else {
+			needData = 1;
+		}
+	}
+	
+	if (hasAudio && !audiobufReady) {
+		if (audioPacketCount) {
+			// @fixme implement or kill the buffer times
+			codecjs_callback_audio_ready(audiobufTime);
+		} else {
+			needData = 1;
+		}
+	}
+}
+
+static nestegg_packet *packet_queue_shift(nestegg_packet **queue, unsigned int *count)
+{
+	if (count > 0) {
+		nestegg_packet *first = queue[0];
+		memcpy(&(queue[0]), &(queue[1]), sizeof(nestegg_packet *) * (*count - 1));
+		(*count)--;
+		return first;
+	} else {
+		return NULL;
+	}
 }
 
 int codecjs_decode_frame() {
+	nestegg_packet *packet = packet_queue_shift(videoPackets, &videoPacketCount);
+	
+	if (packet) {
+		unsigned int chunks;
+		nestegg_packet_count(packet, &chunks);
+		
+		for (unsigned int chunk = 0; chunk < chunks; ++chunk) {
+			unsigned char *data;
+			size_t data_size;
+			nestegg_packet_data(packet, chunk, &data, &data_size);
+			
+			vpx_codec_decode(&vpxContext, data, data_size, NULL, 0);
+			// @todo check return value
+			
+			vpx_codec_iter_t iter = NULL;
+			vpx_image_t *image = NULL;
+			while ((image = vpx_codec_get_frame(&vpxContext, &iter))) {
+				// is it possible to get more than one at a time? ugh
+				
+				// @fixme check thingies
+				codecjs_callback_frame(image->planes[0], image->stride[0],
+									   image->planes[1], image->stride[1],
+									   image->planes[2], image->stride[2],
+									   image->w, image->h,
+									   1, 1, // @todo pixel format
+									   0, 0);
+				// @fixme timestamps?!!!
+			}
+			
+		}
+		
+		nestegg_free_packet(packet);
+		return 1; // ??
+	}
+	
+	return 0;
 }
 
 int codecjs_decode_audio() {
@@ -239,6 +405,7 @@ int codecjs_decode_audio() {
     audiobufReady = 0;
     int foundSome = 0;
 
+	// @todo implement using the nestegg packet
 #ifdef OPUS
     if (opusHeaders) {
         if (ogg_stream_packetout(&opusStreamState, &audioPacket) > 0) {
@@ -320,7 +487,14 @@ static int buffersReceived = 0;
 void codecjs_receive_input(char *buffer, int bufsize) {
     if (bufsize > 0) {
 		buffersReceived = 1;
-		// @todo
+
+		// stuff received data on end of an input queue
+		// which will be drained by the sync io callback
+		
+		// @fixme this is hella inefficient i bet
+		bufferQueue = realloc(bufferQueue, bufferSize + bufsize);
+		memcpy(bufferQueue + bufferSize, buffer, bufsize);
+		bufferSize += bufsize;
     }
 }
 
@@ -329,6 +503,32 @@ int codecjs_process() {
 		return 0;
 	}
 	if (needData) {
+		// Do the nestegg_read_packet dance until it fails to read more data,
+		// at which point we ask for more. Hope it doesn't explode.
+		nestegg_packet *packet = NULL;
+		int ret = nestegg_read_packet(demuxContext, &packet);
+		if (ret == 0) {
+			// end of stream?
+			return 0;
+		} else if (ret > 0) {
+			unsigned int track;
+			nestegg_packet_track(packet, &track);
+
+			if (hasVideo && track == videoTrack) {
+				if (videoPacketCount >= PACKET_QUEUE_MAX) {
+					// that's not good
+				}
+				videoPackets[videoPacketCount++] = packet;
+			} else if (hasAudio && track == audioTrack) {
+				if (audioPacketCount >= PACKET_QUEUE_MAX) {
+					// that's not good
+				}
+				audioPackets[audioPacketCount++] = packet;
+			} else {
+				// throw away unknown packets
+				nestegg_free_packet(packet);
+			}
+		}
 		/*
 	    int ret = ogg_sync_pageout(&oggSyncState, &oggPage);
 		if (ret > 0) {
@@ -346,8 +546,8 @@ int codecjs_process() {
 	}
     if (appState == STATE_BEGIN) {
         processBegin();
-    } else if (appState == STATE_HEADERS) {
-        processHeaders();
+    //} else if (appState == STATE_HEADERS) {
+    //    processHeaders();
     } else if (appState == STATE_DECODING) {
         processDecoding();
     } else {
@@ -422,6 +622,7 @@ void codecjs_discard_audio()
  * @return segment length in bytes, or -1 if unknown
  */
 long codecjs_media_length() {
+	// @todo check if this is needed? maybe an ogg-specific thing
 	return -1;
 }
 
@@ -429,10 +630,27 @@ long codecjs_media_length() {
  * @return segment duration in seconds, or -1 if unknown
  */
 float codecjs_media_duration() {
-    return -1;
+	uint64_t duration_ns;
+    if (nestegg_duration(demuxContext, &duration_ns) < 0) {
+    	return -1;
+    } else {
+	    return duration_ns / 1000000000.0;
+	}
 }
 
 long codecjs_keypoint_offset(long time_ms)
 {
+	// @todo implement or rework
+	// nestegg's seeking implementation is sync
 	return -1;
 }
+
+/*
+
+ok may work to:
+* have a read callback that returns queued data or fails
+** detect the fail high-level and retry
+* have a stub seek/tell callback that just explodes...
+** thus, avoid using the seeking functions for now
+
+*/

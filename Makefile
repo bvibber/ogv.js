@@ -72,7 +72,7 @@ build/ogv-codec.js : src/codec-libs.js.in build/js/ogv-libs.js
 	test -d build || mkdir build
 	cpp -E -w -P -CC -nostdinc src/codec-libs.js.in > build/ogv-codec.js
 
-build/js/webm-libs.js : src/ogv-libs.c \
+build/js/webm-libs.js : src/webm-libs.c \
                         src/codecjs.h \
                         src/opus_helper.c \
                         src/opus_helper.h \
@@ -85,7 +85,7 @@ build/js/webm-libs.js : src/ogv-libs.c \
                         build/js/root/lib/libopus.a \
                         build/js/root/lib/libnestegg.a \
                         build/js/root/lib/libvpx.a \
-                        compileOgvJs.sh
+                        compileWebMJs.sh
 	test -d build || mkdir build
 	./compileWebMJs.sh
 
