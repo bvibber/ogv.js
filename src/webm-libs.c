@@ -245,7 +245,7 @@ static void processBegin() {
 			                            1, 1, // @todo assuming 4:2:0
 			                            30.0, // @todo get fps
 			                            videoParams.display_width, videoParams.display_height,
-                                        videoParams.crop_left, videoParams.crop_right,
+                                        videoParams.crop_left, videoParams.crop_top,
                                         1, 1); // @todo get pixel aspect ratio
 			
 		}
@@ -410,7 +410,7 @@ int codecjs_decode_frame() {
 			codecjs_callback_frame(image->planes[0], image->stride[0],
 								   image->planes[1], image->stride[1],
 								   image->planes[2], image->stride[2],
-								   image->w, image->h,
+								   image->w, image->d_h,
 								   1, 1, // @todo pixel format
 								   0, 0);
 			// @fixme timestamps?!!!
@@ -522,9 +522,11 @@ void codecjs_receive_input(char *buffer, int bufsize) {
 }
 
 int codecjs_process() {
-	if (!buffersReceived) {
+	// quick i/o hack
+	if (!buffersReceived || bufferSize < 256 * 1024) {
 		return 0;
 	}
+
     if (appState == STATE_BEGIN) {
         processBegin();
     //} else if (appState == STATE_HEADERS) {
