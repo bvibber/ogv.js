@@ -62,9 +62,11 @@
 							Source:
 							<select height=1 id="video-preferred-size">
 								<option value="original">original</option>
-								<option value="480p.ogv">480p</option>
-								<option value="360p.ogv">360p</option>
-								<option value="160p.ogv">160p</option>
+								<option value="480p.ogv">480p Ogg</option>
+								<option value="360p.ogv">360p Ogg</option>
+								<option value="160p.ogv">160p Ogg</option>
+								<option value="480p.webm">480p WebM</option>
+								<option value="360p.webm">360p WebM</option>
 							</select>
 							
 							Player:

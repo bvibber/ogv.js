@@ -30,6 +30,11 @@ OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
  */
 OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	options = options || {};
+
+	var codecClassName = null,
+		codecClassFile = null,
+		codecClass = null;
+
 	var webGLdetected = WebGLFrameSink.isAvailable();
 	var useWebGL = !!options.webGL && webGLdetected;
 	if(!!options.forceWebGL) {
@@ -870,7 +875,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 		//
 		// Non-deterministic debugging ROCKS!
 		//
-		placeboCodec = new OgvJs(options);
+		//placeboCodec = new OgvJs(options);
 
 		codec = new OgvJs(options);
 		codec.oninitvideo = function(info) {
@@ -908,7 +913,16 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	}
 	
 	function loadCodec(callback) {
-		if (typeof window.OgvJs == 'function') {
+		// @todo fix this proper
+		if (self.src.match(/\.webm$/i)) {
+			codecClassName = 'WebM';
+			codecClassFile = 'webm-codec.js';
+		} else {
+			codecClassName = 'OgvJs';
+			codecClassFile = 'ogv-codec.js';
+		}
+		codecClass = window[codecClassName];
+		if (typeof codecClass === 'function') {
 			if (callback) {
 				callback();
 			}
@@ -923,7 +937,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			OgvJsPlayer.loadingNode = document.createElement('script');
 			document.querySelector('head').appendChild(OgvJsPlayer.loadingNode);
 
-			var url = 'ogv-codec.js';
+			var url = codecClassFile;
 			if (options.base) {
 				url = options.base + '/' + url;
 			}
@@ -932,14 +946,17 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			}
 			
 			OgvJsPlayer.loadingNode.onload = function() {
-				if (typeof window.OgvJs === 'function') {
+				codecClass = window[codecClassName];
+				if (typeof codecClass === 'function') {
 					OgvJsPlayer.loadingCallbacks.forEach(function(cb) {
 						cb();
 					});
 					OgvJsPlayer.loadingNode.onload = null;
 					OgvJsPlayer.loadingCallbacks.splice(0, OgvJsPlayer.loadingCallbacks.length);
+					OgvJsPlayer.loadingNode.parentNode.removeChild(OgvJsPlayer.loadingNode);
+					OgvJsPlayer.loadingNode = null;
 				} else {
-					throw new Error('Could not load ogv-codec.js');
+					throw new Error('Could not load ' + codecClassFile);
 				}
 			};
 			OgvJsPlayer.loadingNode.src = url;

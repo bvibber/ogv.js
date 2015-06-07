@@ -12,6 +12,7 @@
 
 #include <nestegg/nestegg.h>
 
+#define VPX_CODEC_DISABLE_COMPAT 1
 #include <vpx/vpx_decoder.h>
 #include <vpx/vp8dx.h>
 
@@ -368,6 +369,7 @@ int codecjs_decode_frame() {
 		unsigned int chunks;
 		nestegg_packet_count(packet, &chunks);
 		
+		// uh, can this happen? curiouser :D
 		for (unsigned int chunk = 0; chunk < chunks; ++chunk) {
 			unsigned char *data;
 			size_t data_size;
@@ -375,22 +377,28 @@ int codecjs_decode_frame() {
 			
 			vpx_codec_decode(&vpxContext, data, data_size, NULL, 1);
 			// @todo check return value
-			
-			vpx_codec_iter_t iter = NULL;
-			vpx_image_t *image = NULL;
-			while ((image = vpx_codec_get_frame(&vpxContext, &iter))) {
-				// is it possible to get more than one at a time? ugh
-				
-				// @fixme check thingies
-				codecjs_callback_frame(image->planes[0], image->stride[0],
-									   image->planes[1], image->stride[1],
-									   image->planes[2], image->stride[2],
-									   image->w, image->h,
-									   1, 1, // @todo pixel format
-									   0, 0);
-				// @fixme timestamps?!!!
+		}
+		// last chunk!
+		vpx_codec_decode(&vpxContext, NULL, 0, NULL, 1);
+
+		vpx_codec_iter_t iter = NULL;
+		vpx_image_t *image = NULL;
+		bool foundImage = false;
+		while ((image = vpx_codec_get_frame(&vpxContext, &iter))) {
+			// is it possible to get more than one at a time? ugh
+			// @fixme can we have multiples really? how does this worky
+			if (foundImage) {
+				// skip for now
+				continue;
 			}
-			
+			foundImage = true;
+			codecjs_callback_frame(image->planes[0], image->stride[0],
+								   image->planes[1], image->stride[1],
+								   image->planes[2], image->stride[2],
+								   image->w, image->h,
+								   1, 1, // @todo pixel format
+								   0, 0);
+			// @fixme timestamps?!!!
 		}
 		
 		nestegg_free_packet(packet);

@@ -70,7 +70,7 @@ build/js/ogv-libs.js : src/ogv-libs.c src/codecjs.h src/opus_helper.c src/opus_h
 
 build/ogv-codec.js : src/codec-libs.js.in build/js/ogv-libs.js
 	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc src/codec-libs.js.in > build/ogv-codec.js
+	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OgvJs -DCODEC_TARGET='"../build/js/ogv-libs.js"' src/codec-libs.js.in > build/ogv-codec.js
 
 build/js/webm-libs.js : src/webm-libs.c \
                         src/codecjs.h \
@@ -91,7 +91,7 @@ build/js/webm-libs.js : src/webm-libs.c \
 
 build/webm-codec.js : src/codec-libs.js.in build/js/webm-libs.js
 	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc src/codec-libs.js.in > build/webm-codec.js
+	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=WebMJs -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
 
 
 build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
