@@ -369,7 +369,7 @@ static void processDecoding() {
 
 static nestegg_packet *packet_queue_shift(nestegg_packet **queue, unsigned int *count)
 {
-	if (count > 0) {
+	if (*count > 0) {
 		nestegg_packet *first = queue[0];
 		memcpy(&(queue[0]), &(queue[1]), sizeof(nestegg_packet *) * (*count - 1));
 		(*count)--;
