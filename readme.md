@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-libogg, libvorbis, libtheora, and libopus compiled to JavaScript with Emscripten.
+libogg, libvorbis, libtheora, libopus, and libnestegg compiled to JavaScript with Emscripten.
 
 
 ## Current status
@@ -19,12 +19,15 @@ See a sample of MediaWiki with seamless ogv.js playback mode for Safari/IE/Edge 
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * [background threading: no](https://github.com/brion/ogv.js/wiki/Threading)
 * [GPU accelerated drawing: yes (requires WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
-* seeking: yes (with Range header)
+* seeking: yes for Ogg (with Range header), no for WebM
+* SIMD acceleration: no
+
+Ogg files are fairly well supported, but WebM is still very experimental.
 
 
 ## Goals
 
-Long-form goal is to create a drop-in replacement for the HTML5 video and audio tags which can be used for basic playback of Ogg Theora and Vorbis media on browsers that don't support Ogg or WebM natively.
+Long-form goal is to create a drop-in replacement for the HTML5 video and audio tags which can be used for basic playback of Ogg Theora and Vorbis or WebM media on browsers that don't support Ogg or WebM natively.
 
 (Note that a more user-friendly solution in most cases is to provide media in both open and MPEG-LA formats, if you're not averse to using patent-encumbered formats. This will use much less CPU and battery than performing JavaScript decoding!)
 
@@ -51,7 +54,9 @@ Testing browsers (these support .ogv natively):
 
 ## Performance
 
-As of 2015, for SD-or-less resolution basic decoding speed seems adequate on desktop and newer high-end mobile devices. Older and low-end mobile devices may have difficulty on any but the lowest-resolution files.
+As of 2015, for SD-or-less resolution basic Ogg Theora decoding speed seems adequate on desktop and newer high-end mobile devices. Older and low-end mobile devices may have difficulty on any but the lowest-resolution files.
+
+WebM is much slower, and remains experimental.
 
 
 *Target browsers*
@@ -139,6 +144,13 @@ A/V synchronization is performed on files with both audio and video, and seems t
 actually work. Yay!
 
 Note that autoplay doesn't work on iOS Safari due to limitations with starting audio playback.
+
+
+*WebM*
+
+WebM support was added in June 2015, and is currently very experimental. Not everything works yet, and performance is pretty bad. See [issue tracker for WebM milestone](https://github.com/brion/ogv.js/milestones/WebM%20playback) on the GitHub page.
+
+The i/o model of the nestegg WebM container demuxing library is a bit different from what ogv.js was designed around so seeking is not yet supported and it may sometimes cut off partway through a file. Needs more work.
 
 
 ## Upstream library notes
