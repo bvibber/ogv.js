@@ -386,6 +386,10 @@ int codecjs_decode_frame() {
 		unsigned int chunks;
 		nestegg_packet_count(packet, &chunks);
 		
+		uint64_t timestamp;
+		nestegg_packet_tstamp(packet, &timestamp);
+		videobufTime = timestamp / 1000000000.0;
+		
 		// uh, can this happen? curiouser :D
 		for (unsigned int chunk = 0; chunk < chunks; ++chunk) {
 			unsigned char *data;
@@ -414,8 +418,8 @@ int codecjs_decode_frame() {
 								   image->planes[2], image->stride[2],
 								   image->w, image->d_h,
 								   1, 1, // @todo pixel format
-								   0, 0);
-			// @fixme timestamps?!!!
+								   videobufTime, videobufTime);
+			// @todo is keyframe timestamp still needed?
 		}
 		
 		nestegg_free_packet(packet);
