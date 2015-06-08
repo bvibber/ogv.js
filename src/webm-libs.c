@@ -62,7 +62,7 @@ ogg_int64_t       keyframeGranulepos = -1;  //
 double            keyframeTime = -1;        // last-keyframe time seen on actual decoded frame
 
 int               audiobufReady = 0;
-ogg_int64_t       audiobufGranulepos = -1; /* time position of last sample */
+ogg_int64_t       audiobufGranulepos = 0; /* time position of last sample */
 double            audiobufTime = -1;
 double            audioSampleRate = 0;
 
@@ -92,7 +92,6 @@ int               processVideo;
 
 enum AppState {
     STATE_BEGIN,
-    STATE_HEADERS,
     STATE_DECODING
 } appState;
 
@@ -160,6 +159,41 @@ static nestegg_io ioCallbacks = {
 	NULL
 };
 
+static nestegg_packet *packet_queue_shift(nestegg_packet **queue, unsigned int *count)
+{
+	if (*count > 0) {
+		nestegg_packet *first = queue[0];
+		memcpy(&(queue[0]), &(queue[1]), sizeof(nestegg_packet *) * (*count - 1));
+		(*count)--;
+		return first;
+	} else {
+		return NULL;
+	}
+}
+
+static void data_to_ogg_packet(unsigned char *data, size_t data_size, ogg_packet *dest)
+{
+	dest->packet = data;
+	dest->bytes = data_size;
+	dest->b_o_s = 0;
+	dest->e_o_s = 0;
+	dest->granulepos = 0; // ?
+	dest->packetno = 0; // ?
+}
+
+static void ne_packet_to_ogg_packet(nestegg_packet *src, ogg_packet *dest)
+{
+	unsigned int count;
+	nestegg_packet_count(src, &count);
+	assert(count == 1);
+	
+	unsigned char *data;
+	size_t data_size;
+	nestegg_packet_data(src, 0, &data, &data_size);
+
+	data_to_ogg_packet(data, data_size, dest);
+}
+
 static void processBegin() {
 	// This will read through headers, hopefully we have enough data
 	// or else it may fail and explode.
@@ -195,41 +229,7 @@ static void processBegin() {
 			}
 		}
 	}
-
-	// @fixme figure out this initialization stuff
 	
-	if (hasAudio && audioCodec == NESTEGG_CODEC_VORBIS) {
-        // todo: initialize audioPacket
-        if ((vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &audioPacket)) == 0) {
-            // it's vorbis! save this as our audio stream...
-            vorbisHeaders = 1;
-
-            // ditch the processed packet...
-        }
-    }
-#ifdef OPUS
-    if (hasAudio && audioCodec == NESTEGG_CODEC_OPUS) {
-    	// todo: initialize audioPacket
-        if ((opusDecoder = opus_process_header(&audioPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
-            printf("found Opus stream! (first of two headers)\n");
-            if (opusGain) {
-                opus_multistream_decoder_ctl(opusDecoder, OPUS_SET_GAIN(opusGain));
-            }
-            opusPrevPacketGranpos = 0;
-            opusHeaders = 1;
-
-            // ditch the processed packet...
-        }
-    }
-#endif
-
-	//printf("Moving on to header decoding...\n");
-	//appState = STATE_HEADERS;
-
-	
-	// @todo kill this callback and replace it with a state check?
-	codecjs_callback_loaded_metadata();
-
 	if (hasVideo) {
 		nestegg_video_params videoParams;
 		if (nestegg_track_video_params(demuxContext, videoTrack, &videoParams) < 0) {
@@ -259,90 +259,83 @@ static void processBegin() {
 			// failed! something is wrong
 			hasAudio = 0;
 		} else {
-			codecjs_callback_init_audio(audioParams.channels, (int)audioParams.rate);
+			unsigned int codecDataCount;
+			nestegg_track_codec_data_count(demuxContext, audioTrack, &codecDataCount);
+			printf("codec data for audio: %d\n", codecDataCount);
+			
+            for (unsigned int i = 0; i < codecDataCount; i++) {
+                unsigned char *data;
+                size_t len;
+                int ret = nestegg_track_codec_data(demuxContext, audioTrack, i, &data, &len);
+                if (ret < 0) {
+                	printf("failed to read codec data %d\n", i);
+                	abort();
+                }
+				data_to_ogg_packet(data, len, &audioPacket);
+				audioPacket.b_o_s = (i == 0); // haaaaaack
+
+				if (audioCodec == NESTEGG_CODEC_VORBIS) {
+					printf("checking vorbis headers...\n");
+			
+					printf("Checking a vorbis header packet (%d)...\n", i);
+					ret = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &audioPacket);
+					if (ret == 0) {
+						printf("Completed another vorbis header (of 3 total)...\n");
+						vorbisHeaders++;
+					} else {
+						printf("Invalid vorbis header? %d\n", ret);
+						abort();
+					}
+				}
+#ifdef OPUS
+				else if (audioCodec == NESTEGG_CODEC_OPUS) {
+					printf("checking for opus headers...\n");
+			
+					if (opusHeaders == 0) {
+						if ((opusDecoder = opus_process_header(&audioPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
+							printf("found Opus stream! (first of two headers)\n");
+							if (opusGain) {
+								opus_multistream_decoder_ctl(opusDecoder, OPUS_SET_GAIN(opusGain));
+							}
+							opusPrevPacketGranpos = 0;
+							opusHeaders = 1;
+
+							// ditch the processed packet...
+						}
+					}
+					if (opusHeaders == 1) {
+						// FIXME: perhaps actually *check* if this is a comment packet ;-)
+						opusHeaders++;
+						printf("discarding Opus comments...\n");
+					}
+				}
+#endif
+			}
 		}
 	}
 
-	// @fixme still need those headers for audio!
+#ifdef OPUS
+	// If we have both Vorbis and Opus, prefer Opus
+	if (opusHeaders) {
+		// opusDecoder should already be initialized
+		// Opus has a fixed internal sampling rate of 48000 Hz
+		audioSampleRate = 48000;
+		codecjs_callback_init_audio(opusChannels, audioSampleRate);
+	} else
+#endif
+	if (vorbisHeaders) {
+		vorbis_synthesis_init(&vorbisDspState, &vorbisInfo);
+		vorbis_block_init(&vorbisDspState, &vorbisBlock);
+		//printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
+		//        vorbisStreamState.serialno, vorbisInfo.channels, vorbisInfo.rate);
+
+		audioSampleRate = vorbisInfo.rate;
+		codecjs_callback_init_audio(vorbisInfo.channels, audioSampleRate);
+	}
+
 	appState = STATE_DECODING;
 	printf("Done with headers step\n");
 	codecjs_callback_loaded_metadata();
-}
-
-static void processHeaders() {
-
-    if ((vorbisHeaders && vorbisHeaders < 3)
-#ifdef OPUS
-        || (opusHeaders && opusHeaders < 2)
-#endif
-    ) {
-        int ret;
-
-        if (vorbisHeaders && (vorbisHeaders < 3)) {
-            printf("checking vorbis headers...\n");
-
-            // -> audioPacket
-            if (ret < 0) {
-                printf("Error reading vorbis headers: %d.\n", ret);
-                exit(1);
-            }
-            if (ret > 0) {
-                printf("Checking another vorbis header packet...\n");
-                vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &audioPacket);
-                if (vorbisProcessingHeaders == 0) {
-                    printf("Completed another vorbis header (of 3 total)...\n");
-                    vorbisHeaders++;
-                } else {
-                    printf("Invalid vorbis header?\n");
-                    exit(1);
-                }
-            }
-            if (ret == 0) {
-                printf("No vorbis header packet...\n");
-            }
-        }
-#ifdef OPUS
-        if (opusHeaders && (opusHeaders < 2)) {
-            printf("checking for opus headers...\n");
-
-            ret = ogg_stream_packetpeek(&opusStreamState, &audioPacket);
-            if (ret < 0) {
-                printf("Error reading Opus headers: %d.\n", ret);
-                exit(1);
-            }
-            // FIXME: perhaps actually *check* if this is a comment packet ;-)
-            opusHeaders++;
-            printf("discarding Opus comments...\n");
-            ogg_stream_packetout(&opusStreamState, NULL);
-        }
-#endif
-
-    } else {
-        /* and now we have it all.  initialize decoders */
-
-#ifdef OPUS
-        // If we have both Vorbis and Opus, prefer Opus
-        if (opusHeaders) {
-            // opusDecoder should already be initialized
-            // Opus has a fixed internal sampling rate of 48000 Hz
-            audioSampleRate = 48000;
-            codecjs_callback_init_audio(opusChannels, audioSampleRate);
-        } else
-#endif
-        if (vorbisHeaders) {
-            vorbis_synthesis_init(&vorbisDspState, &vorbisInfo);
-            vorbis_block_init(&vorbisDspState, &vorbisBlock);
-            //printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
-            //        vorbisStreamState.serialno, vorbisInfo.channels, vorbisInfo.rate);
-
-			audioSampleRate = vorbisInfo.rate;
-            codecjs_callback_init_audio(vorbisInfo.channels, audioSampleRate);
-        }
-
-        appState = STATE_DECODING;
-        printf("Done with headers step\n");
-        codecjs_callback_loaded_metadata();
-    }
 }
 
 static void processDecoding() {
@@ -364,18 +357,6 @@ static void processDecoding() {
 		} else {
 			needData = 1;
 		}
-	}
-}
-
-static nestegg_packet *packet_queue_shift(nestegg_packet **queue, unsigned int *count)
-{
-	if (*count > 0) {
-		nestegg_packet *first = queue[0];
-		memcpy(&(queue[0]), &(queue[1]), sizeof(nestegg_packet *) * (*count - 1));
-		(*count)--;
-		return first;
-	} else {
-		return NULL;
 	}
 }
 
@@ -424,90 +405,90 @@ int codecjs_decode_frame() {
 		
 		nestegg_free_packet(packet);
 		return 1; // ??
+	} else {
+		return 0;
 	}
-	
-	return 0;
 }
 
 int codecjs_decode_audio() {
     int packetRet = 0;
     audiobufReady = 0;
     int foundSome = 0;
+    
+    nestegg_packet *packet = packet_queue_shift(audioPackets, &audioPacketCount);
+    ne_packet_to_ogg_packet(packet, &audioPacket);
 
 	// @todo implement using the nestegg packet
 #ifdef OPUS
     if (opusHeaders) {
-        if (ogg_stream_packetout(&opusStreamState, &audioPacket) > 0) {
-            float *output = malloc(sizeof (float)*OPUS_MAX_FRAME_SIZE * opusChannels);
-            int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*) audioPacket.packet, audioPacket.bytes, output, OPUS_MAX_FRAME_SIZE, 0);
-            if (sampleCount < 0) {
-                printf("Opus decoding error, code %d\n", sampleCount);
-            } else {
-                int skip = opusPreskip;
-                if (audioPacket.granulepos != -1) {
-                    if (audioPacket.granulepos <= opusPrevPacketGranpos) {
-                        sampleCount = 0;
-                    } else {
-                        ogg_int64_t endSample = opusPrevPacketGranpos + sampleCount;
-                        if (audioPacket.granulepos < endSample) {
-                            sampleCount = (int) (endSample - audioPacket.granulepos);
-                        }
-                    }
-                    opusPrevPacketGranpos = audioPacket.granulepos;
-                } else {
-                    opusPrevPacketGranpos += sampleCount;
-                }
-                if (skip >= sampleCount) {
-                    skip = sampleCount;
-                } else {
-                    foundSome = 1;
-                    // reorder Opus' interleaved samples into two-dimensional [channel][sample] form
-                    float *pcm = malloc(sizeof (*pcm)*(sampleCount - skip) * opusChannels);
-                    float **pcmp = malloc(sizeof (*pcmp) * opusChannels);
-                    for (int c = 0; c < opusChannels; ++c) {
-                        pcmp[c] = pcm + c * (sampleCount - skip);
-                        for (int s = skip; s < sampleCount; ++s) {
-                            pcmp[c][s - skip] = output[s * opusChannels + c];
-                        }
-                    }
-                    if (audiobufGranulepos != -1) {
-						// keep track of how much time we've decodec
-	                    audiobufGranulepos += (sampleCount - skip);
-	                    audiobufTime = (double)audiobufGranulepos / audioSampleRate;
-	                }
-                    codecjs_callback_audio(pcmp, opusChannels, sampleCount - skip);
-                    free(pcmp);
-                    free(pcm);
-                }
-                opusPreskip -= skip;
-            }
-            free(output);
-        }
+		float *output = malloc(sizeof (float)*OPUS_MAX_FRAME_SIZE * opusChannels);
+		int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*) audioPacket.packet, audioPacket.bytes, output, OPUS_MAX_FRAME_SIZE, 0);
+		if (sampleCount < 0) {
+			printf("Opus decoding error, code %d\n", sampleCount);
+		} else {
+			int skip = opusPreskip;
+			if (audioPacket.granulepos != -1) {
+				if (audioPacket.granulepos <= opusPrevPacketGranpos) {
+					sampleCount = 0;
+				} else {
+					ogg_int64_t endSample = opusPrevPacketGranpos + sampleCount;
+					if (audioPacket.granulepos < endSample) {
+						sampleCount = (int) (endSample - audioPacket.granulepos);
+					}
+				}
+				opusPrevPacketGranpos = audioPacket.granulepos;
+			} else {
+				opusPrevPacketGranpos += sampleCount;
+			}
+			if (skip >= sampleCount) {
+				skip = sampleCount;
+			} else {
+				foundSome = 1;
+				// reorder Opus' interleaved samples into two-dimensional [channel][sample] form
+				float *pcm = malloc(sizeof (*pcm)*(sampleCount - skip) * opusChannels);
+				float **pcmp = malloc(sizeof (*pcmp) * opusChannels);
+				for (int c = 0; c < opusChannels; ++c) {
+					pcmp[c] = pcm + c * (sampleCount - skip);
+					for (int s = skip; s < sampleCount; ++s) {
+						pcmp[c][s - skip] = output[s * opusChannels + c];
+					}
+				}
+				if (audiobufGranulepos != -1) {
+					// keep track of how much time we've decodec
+					audiobufGranulepos += (sampleCount - skip);
+					audiobufTime = (double)audiobufGranulepos / audioSampleRate;
+				}
+				codecjs_callback_audio(pcmp, opusChannels, sampleCount - skip);
+				free(pcmp);
+				free(pcm);
+			}
+			opusPreskip -= skip;
+		}
+		free(output);
     } else
 #endif
     if (vorbisHeaders) {
-        if (1) { //ogg_stream_packetout(&vorbisStreamState, &audioPacket) > 0) {
-            int ret = vorbis_synthesis(&vorbisBlock, &audioPacket);
-            if (ret == 0) {
-                foundSome = 1;
-                vorbis_synthesis_blockin(&vorbisDspState, &vorbisBlock);
+		int ret = vorbis_synthesis(&vorbisBlock, &audioPacket);
+		if (ret == 0) {
+			foundSome = 1;
+			vorbis_synthesis_blockin(&vorbisDspState, &vorbisBlock);
 
-                float **pcm;
-                int sampleCount = vorbis_synthesis_pcmout(&vorbisDspState, &pcm);
-				if (audiobufGranulepos != -1) {
-					// keep track of how much time we've decodec
-					audiobufGranulepos += sampleCount;
-					audiobufTime = vorbis_granule_time(&vorbisDspState, audiobufGranulepos);
-				}
-                codecjs_callback_audio(pcm, vorbisInfo.channels, sampleCount);
+			float **pcm;
+			int sampleCount = vorbis_synthesis_pcmout(&vorbisDspState, &pcm);
+			if (audiobufGranulepos != -1) {
+				// keep track of how much time we've decodec
+				audiobufGranulepos += sampleCount;
+				audiobufTime = (double)audiobufGranulepos / audioSampleRate;
+			}
+			codecjs_callback_audio(pcm, vorbisInfo.channels, sampleCount);
 
-                vorbis_synthesis_read(&vorbisDspState, sampleCount);
-            } else {
-                printf("Vorbis decoder failed mysteriously? %d", ret);
-            }
-        }
+			vorbis_synthesis_read(&vorbisDspState, sampleCount);
+		} else {
+			printf("Vorbis decoder failed mysteriously? %d", ret);
+		}
     }
 
+	nestegg_free_packet(packet);
     return foundSome;
 }
 
@@ -533,53 +514,38 @@ int codecjs_process() {
 		return 0;
 	}
 
+	if (needData && appState != STATE_BEGIN) {
+		// Do the nestegg_read_packet dance until it fails to read more data,
+		// at which point we ask for more. Hope it doesn't explode.
+		nestegg_packet *packet = NULL;
+		int ret = nestegg_read_packet(demuxContext, &packet);
+		if (ret == 0) {
+			// end of stream?
+			return 0;
+		} else if (ret > 0) {
+			unsigned int track;
+			nestegg_packet_track(packet, &track);
+
+			if (hasVideo && track == videoTrack) {
+				if (videoPacketCount >= PACKET_QUEUE_MAX) {
+					// that's not good
+				}
+				videoPackets[videoPacketCount++] = packet;
+			} else if (hasAudio && track == audioTrack) {
+				if (audioPacketCount >= PACKET_QUEUE_MAX) {
+					// that's not good
+				}
+				audioPackets[audioPacketCount++] = packet;
+			} else {
+				// throw away unknown packets
+				nestegg_free_packet(packet);
+			}
+		}
+	}
+
     if (appState == STATE_BEGIN) {
         processBegin();
-    //} else if (appState == STATE_HEADERS) {
-    //    processHeaders();
     } else if (appState == STATE_DECODING) {
-		if (needData) {
-			// Do the nestegg_read_packet dance until it fails to read more data,
-			// at which point we ask for more. Hope it doesn't explode.
-			nestegg_packet *packet = NULL;
-			int ret = nestegg_read_packet(demuxContext, &packet);
-			if (ret == 0) {
-				// end of stream?
-				return 0;
-			} else if (ret > 0) {
-				unsigned int track;
-				nestegg_packet_track(packet, &track);
-
-				if (hasVideo && track == videoTrack) {
-					if (videoPacketCount >= PACKET_QUEUE_MAX) {
-						// that's not good
-					}
-					videoPackets[videoPacketCount++] = packet;
-				} else if (hasAudio && track == audioTrack) {
-					if (audioPacketCount >= PACKET_QUEUE_MAX) {
-						// that's not good
-					}
-					audioPackets[audioPacketCount++] = packet;
-				} else {
-					// throw away unknown packets
-					nestegg_free_packet(packet);
-				}
-			}
-			/*
-			int ret = ogg_sync_pageout(&oggSyncState, &oggPage);
-			if (ret > 0) {
-				// complete page retrieved
-				queue_page(&oggPage);
-			} else if (ret < 0) {
-				// incomplete sync
-				// continue on the next loop
-				return 1;
-			} else {
-				// need moar data
-				return 0;
-			}
-			*/
-		}
         processDecoding();
     } else {
     	// uhhh...
