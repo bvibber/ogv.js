@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-libogg, libvorbis, libtheora, libopus, and libnestegg compiled to JavaScript with Emscripten.
+libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compiled to JavaScript with Emscripten.
 
 
 ## Current status
