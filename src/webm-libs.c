@@ -113,10 +113,12 @@ static int needData = 1;
 
 static void logCallback(nestegg *context, unsigned int severity, char const * format, ...)
 {
-	va_list args;
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
+	if (severity >= NESTEGG_LOG_INFO) {
+		va_list args;
+		va_start(args, format);
+		vprintf(format, args);
+		va_end(args);
+	}
 }
 
 static int readCallback(void * buffer, size_t length, void *userdata)
