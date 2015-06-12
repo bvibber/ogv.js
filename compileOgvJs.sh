@@ -1,10 +1,5 @@
 #!/bin/bash
 
-suffix=so
-if [ `uname -s` == "Darwin" ]; then
-	suffix=dylib
-fi
-
 # compile wrapper around libogg + libvorbis + libtheora
 EMCC_FAST_COMPILER=1 emcc \
   -O2 \
@@ -17,11 +12,11 @@ EMCC_FAST_COMPILER=1 emcc \
   -s EXPORTED_FUNCTIONS="`< src/codec-libs-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
-  build/js/root/lib/libogg.$suffix \
-  build/js/root/lib/libvorbis.$suffix \
-  build/js/root/lib/libopus.$suffix \
-  build/js/root/lib/libtheoradec.$suffix \
-  build/js/root/lib/libskeleton.$suffix \
+  -logg \
+  -lvorbis \
+  -lopus \
+  -ltheoradec \
+  -lskeleton \
   --js-library src/codec-libs-mixin.js \
   -D OPUS \
   -D SKELETON \

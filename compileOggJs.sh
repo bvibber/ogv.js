@@ -14,7 +14,9 @@ mkdir libogg
 cd libogg
 
 # finally, run configuration script
-emconfigure ../../../libogg/configure --prefix="$dir/build/js/root"
+emconfigure ../../../libogg/configure \
+  --host=asmjs-local-emscripten \
+  --prefix="$dir/build/js/root"
 
 # compile libogg
 emmake make

@@ -15,8 +15,9 @@ cd libskeleton
   
 # finally, run configuration script
 emconfigure ../../../libskeleton/configure \
-	--prefix="$dir/build/js/root" \
-	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
+  --host=asmjs-local-emscripten \
+  --prefix="$dir/build/js/root" \
+  PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
 
 # compile libskeleton
 emmake make

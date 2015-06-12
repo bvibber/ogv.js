@@ -14,7 +14,10 @@ mkdir libnestegg
 cd libnestegg
 
 # finally, run configuration script
-EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure ../../../libnestegg/configure --prefix="$dir/build/js/root"
+EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure \
+  ../../../libnestegg/configure \
+    --host=asmjs-local-emscripten \
+    --prefix="$dir/build/js/root"
 
 # compile libnestegg
 emmake make
