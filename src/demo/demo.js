@@ -342,8 +342,8 @@
 		
 		var today = new Date(),
 			year = 2015,
-			month = 03,
-			day = 14; // where we left off in motd.js
+			month = 6,
+			day = 12; // where we left off in motd.js
 		
 		var input = '';
 		while (true) {
@@ -435,7 +435,12 @@
 				return 'File:' + title;
 			}
 		}
-		return 'File:Jarry_-_Métro_de_Montréal_(640×360).ogv';
+
+		// classics! soothing noises, no lipsync to worry about
+		//return 'File:Jarry_-_Métro_de_Montréal_(640×360).ogv';
+
+		// clean CG imagery, 1080p source, sound effects but no speech
+		return 'File:Caminandes_-_Gran_Dillama_-_Blender_Foundation\'s_new_Open_Movie.webm';
 	}
 
 	function dismissChooser() {
