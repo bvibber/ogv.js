@@ -440,7 +440,10 @@
 		//return 'File:Jarry_-_Métro_de_Montréal_(640×360).ogv';
 
 		// clean CG imagery, 1080p source, sound effects but no speech
-		return 'File:Caminandes_-_Gran_Dillama_-_Blender_Foundation\'s_new_Open_Movie.webm';
+		//return 'File:Caminandes_-_Gran_Dillama_-_Blender_Foundation\'s_new_Open_Movie.webm';
+
+		// video mostly talking heads, 1080p source, speech needs lipsync
+		return 'File:How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv';
 	}
 
 	function dismissChooser() {
