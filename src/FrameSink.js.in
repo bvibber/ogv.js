@@ -5,21 +5,30 @@
 function FrameSink(canvas, videoInfo) {
 	var self = this,
 		ctx = canvas.getContext('2d'),
-		imageData = ctx.createImageData(videoInfo.frameWidth, videoInfo.frameHeight);
+		imageData = null;
 
 	#include "YCbCr.js"
 
-	// Prefill the alpha to opaque
-	var data = imageData.data,
-		pixelCount = videoInfo.frameWidth * videoInfo.frameHeight * 4;
-	for (var i = 0; i < pixelCount; i += 4) {
-		data[i + 3] = 255;
+	function initImageData(width, height) {
+		imageData = ctx.createImageData(width, height)
+
+		// Prefill the alpha to opaque
+		var data = imageData.data,
+			pixelCount = width * height * 4;
+		for (var i = 0; i < pixelCount; i += 4) {
+			data[i + 3] = 255;
+		}
 	}
 
 	/**
 	 * Actually draw a frame into the canvas.
 	 */
 	self.drawFrame = function drawFrame(yCbCrBuffer) {
+		if (imageData == null ||
+				imageData.width != yCbCrBuffer.width ||
+				imageData.height != yCbCrBuffer.height) {
+			initImageData(yCbCrBuffer.width, yCbCrBuffer.height);
+		}
 		convertYCbCr(yCbCrBuffer, imageData.data);
 
 		ctx.putImageData(imageData,
