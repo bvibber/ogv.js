@@ -129,7 +129,7 @@ function CortadoPlayer() {
 	Object.defineProperty(self, "buffered", {
 		get: function getBuffered() {
 			// not implemented
-			return new OgvJsTimeRanges([]);
+			return new CortadoTimeRanges([]);
 		}
 	});
 	

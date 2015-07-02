@@ -4,7 +4,7 @@
  *
  * Pass an array of two-element arrays, each containing a start and end time.
  */
-OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
+OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
 	Object.defineProperty(this, 'length', {
 		get: function getLength() {
 			return ranges.length;
@@ -28,7 +28,7 @@ OgvJsTimeRanges = window.OgvJsTimeRanges = function(ranges) {
  *                 'webGL': bool; pass true to use WebGL acceleration if available
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
  */
-OgvJsPlayer = window.OgvJsPlayer = function(options) {
+OGVPlayer = window.OGVPlayer = function(options) {
 	options = options || {};
 
 	var codecClassName = null,
@@ -920,10 +920,10 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	function loadCodec(callback) {
 		// @todo fix this proper
 		if (self.src.match(/\.webm$/i)) {
-			codecClassName = 'WebMJS';
+			codecClassName = 'OGVWebMDecoder';
 			codecClassFile = 'webm-codec.js';
 		} else {
-			codecClassName = 'OgvJs';
+			codecClassName = 'OGVOggDecoder';
 			codecClassFile = 'ogv-codec.js';
 		}
 		codecClass = window[codecClassName];
@@ -931,40 +931,40 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			if (callback) {
 				callback();
 			}
-		} else if (OgvJsPlayer.loadingNode !== null) {
+		} else if (OGVPlayer.loadingNode !== null) {
 			if (callback) {
-				OgvJsPlayer.loadingCallbacks.push(callback);
+				OGVPlayer.loadingCallbacks.push(callback);
 			}
 		} else {
 			if (callback) {
-				OgvJsPlayer.loadingCallbacks.push(callback);
+				OGVPlayer.loadingCallbacks.push(callback);
 			}
-			OgvJsPlayer.loadingNode = document.createElement('script');
-			document.querySelector('head').appendChild(OgvJsPlayer.loadingNode);
+			OGVPlayer.loadingNode = document.createElement('script');
+			document.querySelector('head').appendChild(OGVPlayer.loadingNode);
 
 			var url = codecClassFile;
 			if (options.base) {
 				url = options.base + '/' + url;
 			}
-			if (typeof window.OgvJsVersion === 'string') {
-				url = url + '?version=' + encodeURIComponent(window.OgvJsVersion);
+			if (typeof window.OGVVersion === 'string') {
+				url = url + '?version=' + encodeURIComponent(window.OGVVersion);
 			}
 			
-			OgvJsPlayer.loadingNode.onload = function() {
+			OGVPlayer.loadingNode.onload = function() {
 				codecClass = window[codecClassName];
 				if (typeof codecClass === 'function') {
-					OgvJsPlayer.loadingCallbacks.forEach(function(cb) {
+					OGVPlayer.loadingCallbacks.forEach(function(cb) {
 						cb();
 					});
-					OgvJsPlayer.loadingNode.onload = null;
-					OgvJsPlayer.loadingCallbacks.splice(0, OgvJsPlayer.loadingCallbacks.length);
-					OgvJsPlayer.loadingNode.parentNode.removeChild(OgvJsPlayer.loadingNode);
-					OgvJsPlayer.loadingNode = null;
+					OGVPlayer.loadingNode.onload = null;
+					OGVPlayer.loadingCallbacks.splice(0, OGVPlayer.loadingCallbacks.length);
+					OGVPlayer.loadingNode.parentNode.removeChild(OGVPlayer.loadingNode);
+					OGVPlayer.loadingNode = null;
 				} else {
 					throw new Error('Could not load ' + codecClassFile);
 				}
 			};
-			OgvJsPlayer.loadingNode.src = url;
+			OGVPlayer.loadingNode.src = url;
 		}
 	}
 	
@@ -1053,7 +1053,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	 */
 	self.play = function() {
 		if (!audioOptions.audioContext) {
-			OgvJsPlayer.initSharedAudioContext();
+			OGVPlayer.initSharedAudioContext();
 		}
 		
 		if (!stream) {
@@ -1153,7 +1153,7 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 			} else {
 				estimatedBufferTime = 0;
 			}
-			return new OgvJsTimeRanges([[0, estimatedBufferTime]]);
+			return new OGVTimeRanges([[0, estimatedBufferTime]]);
 		}
 	});
 	
@@ -1163,9 +1163,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	Object.defineProperty(self, "seekable", {
 		get: function getSeekable() {
 			if (duration === null) {
-				return new OgvJsTimeRanges([]);
+				return new OGVTimeRanges([]);
 			} else {
-				return new OgvJsTimeRanges([[0, duration]]);
+				return new OGVTimeRanges([[0, duration]]);
 			}
 		}
 	});
@@ -1399,9 +1399,9 @@ OgvJsPlayer = window.OgvJsPlayer = function(options) {
 	return self;
 };
 
-OgvJsPlayer.initSharedAudioContext = function() {
+OGVPlayer.initSharedAudioContext = function() {
 	AudioFeeder.initSharedAudioContext();
 };
 
-OgvJsPlayer.loadingNode = null;
-OgvJsPlayer.loadingCallbacks = [];
+OGVPlayer.loadingNode = null;
+OGVPlayer.loadingCallbacks = [];

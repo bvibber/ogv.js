@@ -1,8 +1,10 @@
 //
 // -- ogv.js
 // https://github.com/brion/ogv.js
-// Copyright (c) 2013-2014 Brion Vibber
+// Copyright (c) 2013-2015 Brion Vibber
 //
+
+(function() {
 
 // -- StreamFile.js
 #include "StreamFile.js"
@@ -19,5 +21,9 @@
 // -- Bisector.js
 #include "Bisector.js"
 
-// -- OgvJsPlayer.js
-#include "OgvJsPlayer.js"
+// -- Player.js
+#include "OGVPlayer.js"
+
+this.OGVPlayer = OGVPlayer;
+
+})();

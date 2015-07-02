@@ -1,13 +1,13 @@
-QUnit.test( "OgvJsPlayer loaded", function( assert ) {
-	assert.ok( window.OgvJsPlayer !== undefined, "Passed!" );
+QUnit.test( "OGVPlayer loaded", function( assert ) {
+	assert.ok( window.OGVPlayer !== undefined, "Passed!" );
 });
 
 function nativePlayer() {
 	return document.createElement('video');
 }
 
-function ogvJsPlayer() {
-	return new OgvJsPlayer({
+function ogvPlayer() {
+	return new OGVPlayer({
 		base: 'lib',
 	});
 }
@@ -33,8 +33,8 @@ function doubleTest(description, func) {
 		} );
 	}
 
-	QUnit.test("OgvJsPlayer: " + description, function( assert ) {
-		var player = ogvJsPlayer();
+	QUnit.test("OGVPlayer: " + description, function( assert ) {
+		var player = ogvPlayer();
 		document.getElementById('qunit-fixture').appendChild(player);
 		func(assert, player);
 	} );
@@ -49,8 +49,8 @@ function doubleAsyncTest(description, func) {
 		} );
 	}
 
-	QUnit.asyncTest("OgvJsPlayer: " + description, function( assert ) {
-		var player = ogvJsPlayer();
+	QUnit.asyncTest("OGVPlayer: " + description, function( assert ) {
+		var player = ogvPlayer();
 		document.getElementById('qunit-fixture').appendChild(player);
 		func(assert, player);
 	} );

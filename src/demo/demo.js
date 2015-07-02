@@ -686,17 +686,17 @@
 			console.log("Going to try streaming data from " + selectedUrl);
 			
 			if (playerBackend == 'js') {
-				player = new OgvJsPlayer({
+				player = new OGVPlayer({
 					webGL: true, // auto
 					base: 'lib'
 				});
 			} else if (playerBackend == 'js-cpu') {
-				player = new OgvJsPlayer({
+				player = new OGVPlayer({
 					webGL: false, // force 2d canvas
 					base: 'lib'
 				});
 			} else if (playerBackend == 'webgl') {
-				player = new OgvJsPlayer({
+				player = new OGVPlayer({
 					forceWebGL: true,
 					base: 'lib'
 				});
@@ -852,7 +852,7 @@
 		status.className = 'status-invisible';
 		status.textContent = '';
 
-		OgvJsPlayer.initSharedAudioContext();
+		OGVPlayer.initSharedAudioContext();
 		player.load();
 		player.play();
 	}

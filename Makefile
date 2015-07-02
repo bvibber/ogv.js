@@ -70,7 +70,7 @@ build/js/ogv-libs.js : src/ogv-libs.c src/codecjs.h src/opus_helper.c src/opus_h
 
 build/ogv-codec.js : src/codec-libs.js.in build/js/ogv-libs.js
 	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OgvJs -DCODEC_TARGET='"../build/js/ogv-libs.js"' src/codec-libs.js.in > build/ogv-codec.js
+	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OGVOggDecoder -DCODEC_TARGET='"../build/js/ogv-libs.js"' src/codec-libs.js.in > build/ogv-codec.js
 
 build/js/webm-libs.js : src/webm-libs.c \
                         src/codecjs.h \
@@ -91,7 +91,7 @@ build/js/webm-libs.js : src/webm-libs.c \
 
 build/webm-codec.js : src/codec-libs.js.in build/js/webm-libs.js
 	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=WebMJS -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
+	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OGVWebMDecoder -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
 
 
 build/YCbCr-shaders.h : src/YCbCr-vertex.glsl src/YCbCr-fragment.glsl file2def.js
@@ -106,16 +106,16 @@ build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
-build/ogv.js : src/ogv.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OgvJsPlayer.js \
+build/ogv.js : src/ogv.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OGVPlayer.js \
                build/ogv-codec.js \
                build/ogv-codec.js.gz \
                build/webm-codec.js \
                build/webm-codec.js.gz
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
-	echo 'window.OgvJsVersion = "'`date -u`'";' >> build/ogv.js
+	echo 'window.OGVVersion = "'`date -u`'";' >> build/ogv.js
 
 build/ogv-version.js : build/ogv.js
-	echo 'window.OgvJsVersion = "'`date -u`'";' > build/ogv-version.js
+	echo 'window.OGVVersion = "'`date -u`'";' > build/ogv-version.js
 
 build/ogv-codec.js.gz : build/ogv-codec.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogv-codec.js > build/ogv-codec.js.gz || gzip -9 -c build/ogv-codec.js > build/ogv-codec.js.gz

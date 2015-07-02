@@ -1,3 +1,5 @@
+var AudioFeeder;
+
 (function() {
 	var global = this,
 		AudioContext = global.AudioContext || global.webkitAudioContext;
@@ -12,7 +14,7 @@
 	 *                 'base' - Base URL to find additional resources in,
 	 *                          such as the Flash audio output shim
 	 */
-	function AudioFeeder(options) {
+	AudioFeeder = function(options) {
 		var self = this;
 		options = options || {};
 	
@@ -375,7 +377,7 @@
 		 * A callback when we find we're out of buffered data.
 		 */
 		this.onstarved = null;
-	}
+	};
 	
 	AudioFeeder.sharedAudioContext = null;
 	AudioFeeder.initSharedAudioContext = function() {
@@ -399,9 +401,6 @@
 			}
 		}
 	};
-	
-	global.AudioFeeder = AudioFeeder;
-
 
 
 	/** Flash fallback **/
