@@ -96,6 +96,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	} else {
 		getTimestamp = window.performance.now.bind(window.performance);
 	}
+	function time(cb) {
+		var start = getTimestamp();
+		cb();
+		var delta = getTimestamp() - start;
+		lastFrameDecodeTime += delta;
+		return delta;
+	}
 
 	var placeboCodec, codec, audioFeeder;
 	var muted = false,
@@ -223,15 +230,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			thumbnail = null;
 		}
 
-		var start, delta;
-
-		start = getTimestamp();
-
-		frameSink.drawFrame(yCbCrBuffer);
-
-		delta = getTimestamp() - start;
-		lastFrameDecodeTime += delta;
-		drawingTime += delta;
+		drawingTime += time(function() {
+			frameSink.drawFrame(yCbCrBuffer);
+		});
 
 		framesProcessed++;
 		framesPlayed++;
@@ -497,11 +498,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		var audioBuffers = [];
 		function queueAudio() {
 			if (audioBuffers.length > 0) {
-				var start = getTimestamp();
-				audioFeeder.bufferData(joinAudioBuffers(audioBuffers));
-				var delta = (getTimestamp() - start);
-				lastFrameDecodeTime += delta;
-				bufferTime += delta;
+				bufferTime += time(function() {
+					audioFeeder.bufferData(joinAudioBuffers(audioBuffers));
+				});
 
 				if (!codec.hasVideo) {
 					framesProcessed++; // pretend!
@@ -662,16 +661,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			// Process until we run out of data or
 			// completely decode a video frame...
 			var currentTime = getTimestamp();
-			var start = getTimestamp();
-			
-			if (placeboCodec) {
-				placeboCodec.process();
-			}
-			var more = codec.process();
-			
-			var delta = (getTimestamp() - start);
-			lastFrameDecodeTime += delta;
-			demuxingTime += delta;
+			var more;
+			demuxingTime += time(function() {
+				if (placeboCodec) {
+					placeboCodec.process();
+				}
+				more = codec.process();
+			});
 
 			if (!more) {
 				queueAudio();
@@ -718,13 +714,11 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
-					var start = getTimestamp();
-					var ok = codec.decodeAudio();
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					audioDecodingTime += delta;
+					var ok;
+					audioDecodingTime += time(function() {
+						ok = codec.decodeAudio();
+					});
 
-					var start = getTimestamp();
 					if (ok) {
 						var buffer = codec.dequeueAudio();
 						//audioFeeder.bufferData(buffer);
@@ -734,11 +728,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					}
 				}
 				if (codec.frameReady && readyForFrame) {
-					var start = getTimestamp();
-					var ok = codec.decodeFrame();
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					videoDecodingTime += delta;
+					var ok;
+					videoDecodingTime += time(function() {
+						ok = codec.decodeFrame();
+					});
 					if (ok) {
 						processFrame();
 						drawFrame();
@@ -794,11 +787,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					}
 
 					// it's time to draw
-					var start = getTimestamp();
-					var ok = codec.decodeFrame();
-					var delta = (getTimestamp() - start);
-					lastFrameDecodeTime += delta;
-					videoDecodingTime += delta;
+					var ok;
+					videoDecodingTime += time(function() {
+						ok = codec.decodeFrame();
+					});
 					if (ok) {
 						processFrame();
 						drawFrame();
