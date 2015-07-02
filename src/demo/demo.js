@@ -446,6 +446,7 @@
 		return 'File:How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv';
 	}
 
+	var chooserState = 0;
 	function dismissChooser() {
 		document.getElementById('media-chooser-stub').className = '';
 		document.getElementById('media-chooser').className = '';
@@ -478,7 +479,9 @@
 			mediaList.appendChild(document.createTextNode('No matches'));
 			return;
 		}
-		
+
+		chooserState++;
+		var state = chooserState;
 		commonsApi({
 			action: 'query',
 			prop: 'imageinfo',
@@ -487,23 +490,25 @@
 			iiurlheight: 128,
 			titles: selection.join('|')
 		}, function(data) {
-			var pages = data.query.pages,
-				mediaItems = {};
-			for (var pageId in pages) {
-				if (pages.hasOwnProperty(pageId)) {
-					var page = pages[pageId];
-					if (page.imageinfo) {
-						var imageinfo = page.imageinfo[0];
-						mediaItems[page.title] = imageinfo;
+			if (state == chooserState) {
+				var pages = data.query.pages,
+					mediaItems = {};
+				for (var pageId in pages) {
+					if (pages.hasOwnProperty(pageId)) {
+						var page = pages[pageId];
+						if (page.imageinfo) {
+							var imageinfo = page.imageinfo[0];
+							mediaItems[page.title] = imageinfo;
+						}
 					}
 				}
+				selection.forEach(function(title) {
+					var imageinfo = mediaItems[title];
+					if (imageinfo) {
+						addMediaSelector(title, imageinfo);
+					}
+				});
 			}
-			selection.forEach(function(title) {
-				var imageinfo = mediaItems[title];
-				if (imageinfo) {
-					addMediaSelector(title, imageinfo);
-				}
-			});
 		});
 	}
 	filter.addEventListener('change', showChooser);
