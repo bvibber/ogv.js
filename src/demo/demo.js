@@ -321,7 +321,7 @@
 								bitrate: bitrate
 							});
 						} else {
-							throw new Error("unexpected transcode key name: " + key);
+							console.log("unexpected transcode key name: " + key);
 						}
 					}
 				}
