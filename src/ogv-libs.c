@@ -89,13 +89,6 @@ int               skeletonDone = 0;
 int               processAudio;
 int               processVideo;
 
-int               crop = 0;
-int               gotSigint = 0;
-
-static void sigint_handler(int signal) {
-    gotSigint = 1;
-}
-
 enum AppState {
     STATE_BEGIN,
     STATE_HEADERS,
@@ -116,23 +109,6 @@ static void video_write(void) {
                            theoraInfo.frame_width, theoraInfo.frame_height,
                            hdec, vdec,
                            videobufTime, keyframeTime);
-}
-
-/* dump the theora comment header */
-static int dump_comments(th_comment *_tc) {
-    int i;
-    int len;
-    printf("Encoded by %s\n", _tc->vendor);
-    if (_tc->comments) {
-        printf("theora comment header:\n");
-        for (i = 0; i < _tc->comments; i++) {
-            if (_tc->user_comments[i]) {
-                len = _tc->comment_lengths[i] < INT_MAX ? _tc->comment_lengths[i] : INT_MAX;
-                printf("\t%.*s\n", len, _tc->user_comments[i]);
-            }
-        }
-    }
-    return 0;
 }
 
 /* helper: push a page into the appropriate steam */
@@ -178,7 +154,6 @@ static int needData = 1;
 
 static void processBegin() {
     if (ogg_page_bos(&oggPage)) {
-        printf("Packet is at start of a bitstream\n");
         int got_packet;
 
         // Initialize a stream state object...
@@ -196,18 +171,16 @@ static void processBegin() {
         /* identify the codec: try theora */
         if (processVideo && !theoraHeaders && (theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket)) >= 0) {
             /* it is theora -- save this stream state */
-            printf("found theora stream!\n");
             memcpy(&theoraStreamState, &test, sizeof (test));
             theoraHeaders = 1;
 
             if (theoraProcessingHeaders == 0) {
-                printf("Saving first video packet for later!\n");
+                /// Saving first video packet for later!
             } else {
                 ogg_stream_packetout(&theoraStreamState, NULL);
             }
         } else if (processAudio && !vorbisHeaders && (vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket)) == 0) {
             // it's vorbis! save this as our audio stream...
-            printf("found vorbis stream! %d\n", vorbisProcessingHeaders);
             memcpy(&vorbisStreamState, &test, sizeof (test));
             vorbisHeaders = 1;
 
@@ -215,7 +188,7 @@ static void processBegin() {
             ogg_stream_packetout(&vorbisStreamState, NULL);
 #ifdef OPUS
         } else if (processAudio && !opusHeaders && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
-            printf("found Opus stream! (first of two headers)\n");
+            // found Opus stream! (first of two headers)
             memcpy(&opusStreamState, &test, sizeof (test));
             if (opusGain) {
                 opus_multistream_decoder_ctl(opusDecoder, OPUS_SET_GAIN(opusGain));
@@ -236,12 +209,10 @@ static void processBegin() {
             ogg_stream_packetout(&skeletonStreamState, NULL);
 #endif
         } else {
-            printf("already have stream, or not theora or vorbis or opus packet\n");
             /* whatever it is, we don't care about it */
             ogg_stream_clear(&test);
         }
     } else {
-        printf("Moving on to header decoding...\n");
         // Not a bitstream start -- move on to header decoding...
         appState = STATE_HEADERS;
         //processHeaders();
@@ -259,7 +230,6 @@ static void processHeaders() {
         || (skeletonHeaders && !skeletonDone)
 #endif
     ) {
-        printf("processHeaders pass... %d %d %d\n", theoraHeaders, theoraProcessingHeaders, vorbisHeaders);
         int ret;
 
 #ifdef SKELETON
@@ -268,66 +238,52 @@ static void processHeaders() {
             ret = ogg_stream_packetout(&skeletonStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading skeleton headers: %d.\n", ret);
-                exit(1);
             }
             if (ret > 0) {
-                printf("Checking another skeleton header packet...\n");
+                // Checking another skeleton header packet...
                 skeletonProcessingHeaders = oggskel_decode_header(skeleton, &oggPacket);
                 if (skeletonProcessingHeaders < 0) {
                     printf("Error processing skeleton header packet: %d\n", skeletonProcessingHeaders);
                 }
                 if (oggPacket.e_o_s) {
-                    printf("Found the skeleton end of stream!\n");
                     skeletonDone = 1;
                 }
-            }
-            if (ret == 0) {
-                printf("No skeleton header packet...\n");
             }
         }
 #endif
 
         /* look for further theora headers */
         if (theoraHeaders && theoraProcessingHeaders) {
-            printf("checking theora headers...\n");
-
             ret = ogg_stream_packetpeek(&theoraStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading theora headers: %d.\n", ret);
                 exit(1);
             }
             if (ret > 0) {
-                printf("Checking another theora header packet...\n");
+                // Checking another theora header packet...
                 theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket);
                 if (theoraProcessingHeaders == 0) {
                     // We've completed the theora header
-                    printf("Completed theora header. Saving video packet for later...\n");
                     theoraHeaders = 3;
                 } else if (theoraProcessingHeaders < 0) {
                 	printf("Error parsing theora headers: %d.\n", theoraProcessingHeaders);
             	} else {
-                    printf("Still parsing theora headers...\n");
 					ogg_stream_packetout(&theoraStreamState, NULL);
                 }
-            }
-            if (ret == 0) {
-                printf("No theora header packet...\n");
             }
         }
 
         if (vorbisHeaders && (vorbisHeaders < 3)) {
-            printf("checking vorbis headers...\n");
-
             ret = ogg_stream_packetpeek(&vorbisStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading vorbis headers: %d.\n", ret);
                 exit(1);
             }
             if (ret > 0) {
-                printf("Checking another vorbis header packet...\n");
+                // Checking another vorbis header packet...
                 vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket);
                 if (vorbisProcessingHeaders == 0) {
-                    printf("Completed another vorbis header (of 3 total)...\n");
+                    // Completed another vorbis header (of 3 total)...
                     vorbisHeaders++;
                 } else {
                     printf("Invalid vorbis header?\n");
@@ -335,14 +291,9 @@ static void processHeaders() {
                 }
                 ogg_stream_packetout(&vorbisStreamState, NULL);
             }
-            if (ret == 0) {
-                printf("No vorbis header packet...\n");
-            }
         }
 #ifdef OPUS
         if (opusHeaders && (opusHeaders < 2)) {
-            printf("checking for opus headers...\n");
-
             ret = ogg_stream_packetpeek(&opusStreamState, &oggPacket);
             if (ret < 0) {
                 printf("Error reading Opus headers: %d.\n", ret);
@@ -350,27 +301,15 @@ static void processHeaders() {
             }
             // FIXME: perhaps actually *check* if this is a comment packet ;-)
             opusHeaders++;
-            printf("discarding Opus comments...\n");
+            // discarding Opus comments...
             ogg_stream_packetout(&opusStreamState, NULL);
         }
 #endif
 
     } else {
         /* and now we have it all.  initialize decoders */
-#ifdef OPUS
-        printf("theoraHeaders is %d; vorbisHeaders is %d, opusHeaders is %d\n", theoraHeaders, vorbisHeaders, opusHeaders);
-#else
-        printf("theoraHeaders is %d; vorbisHeaders is %d\n", theoraHeaders, vorbisHeaders);
-#endif
         if (theoraHeaders) {
-            printf("SETTING UP THEORA DECODER CONTEXT\n");
-            dump_comments(&theoraComment);
             theoraDecoderContext = th_decode_alloc(&theoraInfo, theoraSetupInfo);
-            printf("Ogg logical stream %lx is Theora %dx%d %.02f fps video\n"
-                    "Encoded frame content is %dx%d with %dx%d offset\n",
-                    theoraStreamState.serialno, theoraInfo.frame_width, theoraInfo.frame_height,
-                    (double) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
-                    theoraInfo.pic_width, theoraInfo.pic_height, theoraInfo.pic_x, theoraInfo.pic_y);
 
             int hdec = !(theoraInfo.pixel_fmt & 1);
             int vdec = !(theoraInfo.pixel_fmt & 2);
@@ -394,15 +333,12 @@ static void processHeaders() {
         if (vorbisHeaders) {
             vorbis_synthesis_init(&vorbisDspState, &vorbisInfo);
             vorbis_block_init(&vorbisDspState, &vorbisBlock);
-            printf("Ogg logical stream %lx is Vorbis %d channel %ld Hz audio.\n",
-                    vorbisStreamState.serialno, vorbisInfo.channels, vorbisInfo.rate);
 
 			audioSampleRate = vorbisInfo.rate;
             codecjs_callback_init_audio(vorbisInfo.channels, audioSampleRate);
         }
 
         appState = STATE_DECODING;
-        printf("Done with headers step\n");
         codecjs_callback_loaded_metadata();
     }
 }
@@ -440,7 +376,6 @@ static void processDecoding() {
 				
 				// Also, if we've just resynced a stream we need to feed this down to the decoder
 	        }
-			//printf("packet granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videoPacket.granulepos, (double)videoPacketTime, (int)theoraInfo.keyframe_granule_shift);
 
             codecjs_callback_frame_ready(videobufTime, keyframeTime);
         } else {
@@ -498,15 +433,12 @@ int codecjs_decode_frame() {
             videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
         }
         
-        //printf("granulepos: %llx; time %lf; offset %d\n",(unsigned long long)videobufGranulepos, (double)videobufTime, (int)theoraInfo.keyframe_granule_shift);
-
         frames++;
         video_write();
         return 1;
     } else if (ret == TH_DUPFRAME) {
         // Duplicated frame, advance time
         videobufTime += 1.0 / ((double) theoraInfo.fps_numerator / theoraInfo.fps_denominator);
-        //printf("dupe videobuf time %lf\n", (double)videobufTime);
         frames++;
         video_write();
         return 1;
@@ -766,8 +698,6 @@ float codecjs_media_duration() {
         ogg_uint16_t ver_maj = -1, ver_min = -1;
         oggskel_get_ver_maj(skeleton, &ver_maj);
         oggskel_get_ver_min(skeleton, &ver_min);
-        printf("ver_maj %d\n", ver_maj);
-        printf("ver_min %d\n", ver_min);
     
         ogg_int32_t serial_nos[4];
         size_t nstreams = 0;
@@ -790,16 +720,11 @@ float codecjs_media_duration() {
                         first_sample_denum = -1,
                         last_sample_num = -1,
                         last_sample_denum = -1;
-            int ret;
-            ret = oggskel_get_first_sample_num(skeleton, serial_nos[i], &first_sample_num);
-            printf("%d\n", ret);
-            ret = oggskel_get_first_sample_denum(skeleton, serial_nos[i], &first_sample_denum);
-            printf("%d\n", ret);
-            ret = oggskel_get_last_sample_num(skeleton, serial_nos[i], &last_sample_num);
-            printf("%d\n", ret);
-            ret = oggskel_get_last_sample_denum(skeleton, serial_nos[i], &last_sample_denum);
-            printf("%d\n", ret);
-            printf("%lld %lld %lld %lld\n", first_sample_num, first_sample_denum, last_sample_num, last_sample_denum);
+
+            oggskel_get_first_sample_num(skeleton, serial_nos[i], &first_sample_num);
+            oggskel_get_first_sample_denum(skeleton, serial_nos[i], &first_sample_denum);
+            oggskel_get_last_sample_num(skeleton, serial_nos[i], &last_sample_num);
+            oggskel_get_last_sample_denum(skeleton, serial_nos[i], &last_sample_denum);
             
             double firstStreamSample = (double)first_sample_num / (double)first_sample_denum;
             if (firstSample == -1 || firstStreamSample < firstSample) {
