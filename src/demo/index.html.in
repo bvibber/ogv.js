@@ -20,21 +20,23 @@
 		<div id="player" class="ogvjs-player">
 			<div id="top-panel">
 				<div id="top">
-					<div id="progress-total">
-						<div id="progress-buffered"></div>
-						<div id="progress-processed"></div>
-						<div id="progress-played"></div>
-					</div>
 				</div>
 			</div>
 			<div id="control-panel">
 				<div id="controls">
-					<button class="play left" title="Play"><span class="icon-play"></span></button>
-					<button class="pause left" title="Pause" style="display:none"><span class="icon-pause"></span></button>
-					<button class="fullscreen right" title="Fullscreen"><span class="icon-resize-full"></span></button>
-					<button class="unzoom right" title="Unzoom" style="display:none"><span class="icon-resize-small"></span></button>
-					<button class="mute right" title="Mute"><span class="icon-volume-up"></span></button>
-					<button class="unmute right" title="Unmute" style="display:none"><span class="icon-volume-off"></span></button>
+					<button class="play" title="Play"><span class="icon-play"></span></button>
+					<button class="pause" title="Pause" style="display:none"><span class="icon-pause"></span></button>
+					<span class="progress">
+						<div id="progress-total">
+							<div id="progress-buffered"></div>
+							<div id="progress-processed"></div>
+							<div id="progress-played"></div>
+						</div>
+					</span>
+					<button class="fullscreen" title="Fullscreen"><span class="icon-resize-full"></span></button>
+					<button class="unzoom" title="Unzoom" style="display:none"><span class="icon-resize-small"></span></button>
+					<button class="mute" title="Mute"><span class="icon-volume-up"></span></button>
+					<button class="unmute" title="Unmute" style="display:none"><span class="icon-volume-off"></span></button>
 				</div>
 			</div>
 		</div>

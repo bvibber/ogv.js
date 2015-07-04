@@ -122,13 +122,13 @@ html, body {
 	cursor: pointer;
 }
 
-#top-panel,
 #control-panel {
 	position: absolute;
 	
 	left: 0;
 	right: 0;
-	padding-bottom: 16px;
+	bottom: 0;
+	height: 44px;
 	
 	background: rgba(255, 255, 255, 0.5);
 	color: rgb(64, 64, 64);
@@ -138,19 +138,17 @@ html, body {
 	transition: opacity 1.0s;
 }
 
-#top-panel {
-	top: 0;
-	height: 40px;
-}
-#control-panel {
-	bottom: 0;
-	height: 40px;
-}
+#controls {
+	display: -webkit-flex;
+	display: -ms-flexbox;
+	display: flex;
+	
+	height: 44px;
 
-#top {
-	padding: 16px;
+	-webkit-align-items: center;
+	-ms-flex-align: center;
+	align-items: center;
 }
-
 #controls button {
 	appearance: none;
 	-moz-appearance: none;
@@ -165,29 +163,32 @@ html, body {
 	background: none;
 	border: none;
 	
-	width: 2em;
-	height: 2em;
+	width: 44px;
+	height: 44px;
 
-	line-height: 2.25em;
-	font-size: 1.5em;
+	line-height: 44px;
+	font-size: 22px;
 	cursor: pointer;
 }
 #controls button:active {
 	color: white;
 }
-#controls button.left {
-	float: left;
+#controls button {
+	/* shrink to fit */
+	-webkit-flex: 0 1 auto;
+	-ms-flex: 0 1 auto;
+	flex: 0 1 auto;
 }
-#controls button.right {
-	float: right;
-}
-#mute, label {
-	cursor: pointer;
+#controls .progress {
+	/* fill space */
+	-webkit-flex: 1 1 auto;
+	-ms-flex: 1 1 auto;
+	flex: 1 1 auto;
 }
 
+
 #progress-total{
-	height: 1.5em;
-	position: relative;
+	height: 4px;
 }
 
 #progress-buffered,
