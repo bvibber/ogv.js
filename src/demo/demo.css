@@ -130,8 +130,8 @@ html, body {
 	right: 0;
 	padding-bottom: 16px;
 	
-	background: rgba(0, 0, 0, 0.5);
-	color: white;
+	background: rgba(255, 255, 255, 0.5);
+	color: rgb(64, 64, 64);
 	text-align: center;
 	
 	opacity: 1.0;
@@ -161,8 +161,8 @@ html, body {
 	margin: 0;
 	border: none;
 
-	color: white;
-	background: transparent;
+	color: inherit;
+	background: none;
 	border: none;
 	
 	width: 2em;
@@ -171,6 +171,9 @@ html, body {
 	line-height: 2.25em;
 	font-size: 1.5em;
 	cursor: pointer;
+}
+#controls button:active {
+	color: white;
 }
 #controls button.left {
 	float: left;
