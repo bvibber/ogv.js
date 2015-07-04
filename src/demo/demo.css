@@ -289,14 +289,18 @@ body {
 
 
 /* hack for small screens */
-@media (max-width: 568px) {
+@media (max-width: 640px) {
 	#benchmark,
 	#benchmark-legend {
 		display: none;
 	}
 }
 
-@media (max-width: 568px) and (orientation: landscape) {
+/*
+ * min-width is hack for Android portrait with keyboard shown
+ * http://stackoverflow.com/questions/8883163/css-media-query-soft-keyboard-breaks-css-orientation-rules-alternative-solut
+ */
+@media (min-width: 480px) and (max-width: 640px) and (orientation: landscape) {
 	#player {
 		z-index: 9999;
 		position: absolute;
