@@ -193,6 +193,8 @@ body {
 
 	height: 10em;
 	bottom: 0;
+
+	overflow-x: hidden;
 }
 
 .media-item {
