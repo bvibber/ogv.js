@@ -184,10 +184,12 @@ html, body {
 	-webkit-flex: 1 1 auto;
 	-ms-flex: 1 1 auto;
 	flex: 1 1 auto;
+	height: 4px;
 }
 
 
-#progress-total{
+#progress-total {
+	position: relative;
 	height: 4px;
 }
 
