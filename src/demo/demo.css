@@ -294,3 +294,14 @@ body {
 		display: none;
 	}
 }
+
+@media (max-width: 568px) and (orientation: landscape) {
+	#player {
+		z-index: 9999;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+}
