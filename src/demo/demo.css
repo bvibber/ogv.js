@@ -155,18 +155,28 @@ html, body {
 	appearance: none;
 	-moz-appearance: none;
 	-webkit-appearance: none;
+	
+	/* reset some more styles from iOS */
+	padding: 0;
+	margin: 0;
+	border: none;
 
 	color: white;
 	background: transparent;
 	border: none;
 	
 	width: 2em;
-	height: 1.5em;
+	height: 2em;
 
-	line-height: 2em;
+	line-height: 2.25em;
 	font-size: 1.5em;
-	padding: 0px 16px;
 	cursor: pointer;
+}
+#controls button.left {
+	float: left;
+}
+#controls button.right {
+	float: right;
 }
 #mute, label {
 	cursor: pointer;
