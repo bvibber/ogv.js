@@ -544,7 +544,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							stream.readBytes();
 							return;
 						} else {
-							console.log('Stream not seekable and no x-content-duration; assuming infinite stream.');
+							// Stream not seekable and no x-content-duration; assuming infinite stream.
 							state = State.LOADED;
 							continue;
 						}
@@ -589,9 +589,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						// We are at the end!
 						if (lastSeenTimestamp > 0) {
 							duration = lastSeenTimestamp;
-							console.log('detected duration ' + duration + ' from end');
-						} else {
-							console.log('did not find a duration');
 						}
 						
 						// Ok, seek back to the beginning and resync the streams.
@@ -1002,8 +999,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				} else if (state == State.SEEKING_END) {
 					pingProcessing();
 				} else {
-					//throw new Error('wtf is this');
-					console.log('stream ended');
 					stream = null;
 			
 					// Let the read/decode/draw loop know we're out!

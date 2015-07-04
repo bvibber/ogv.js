@@ -247,7 +247,7 @@ var AudioFeeder;
 					if (flashElement.write) {
 						flashElement.write(str);
 					} else {
-						console.log('NOT YET READY');
+						//console.log('NOT YET READY');
 						self.waitUntilReady(function() {
 							flashElement.write(str);
 						});
@@ -291,7 +291,7 @@ var AudioFeeder;
 				if (flashElement.write) {
 					return flashElement.getPlaybackState();
 				} else {
-					console.log('getPlaybackState USED TOO EARLY');
+					//console.log('getPlaybackState USED TOO EARLY');
 					return {
 						playbackPosition: 0,
 						samplesQueued: 0,
