@@ -125,6 +125,7 @@
 			
 			document.getElementById('video-jitter').textContent = round2(info.jitter);
 			document.getElementById('audio-drops').textContent = info.droppedAudio;
+			document.getElementById('audio-delayed').textContent = round1_0(info.delayedAudio);
 			
 			
 			// keep it a rolling average

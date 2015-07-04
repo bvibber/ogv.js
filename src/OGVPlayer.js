@@ -167,7 +167,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		drawingTime = 0, // ms
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
-	var droppedAudio = 0; // number of times we were starved for audio
+	var droppedAudio = 0, // number of times we were starved for audio
+		delayedAudio = 0; // seconds audio processing was delayed by blocked CPU
 
 	function stopVideo() {
 		// kill the previous video if any
@@ -646,6 +647,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					audioPlaybackPosition = getAudioTime(audioState);
 					audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
 					droppedAudio = audioState.dropped;
+					delayedAudio = audioState.delayed;
 				}
 
 				// Drive on the audio clock!
@@ -1004,6 +1006,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			bufferTime: bufferTime,
 			drawingTime: drawingTime,
 			droppedAudio: droppedAudio,
+			delayedAudio: delayedAudio,
 			jitter: totalJitter / framesProcessed
 		};
 	};

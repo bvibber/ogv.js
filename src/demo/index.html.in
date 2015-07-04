@@ -94,7 +94,10 @@
 					<td>
 						<div>
 							Audio
-							<span id="audio-rate">n/a</span> Hz, <span id="audio-channels">n/a</span> channels (<span id="audio-drops">0</span> drops)
+							<span id="audio-rate">n/a</span> Hz,
+							<span id="audio-channels">n/a</span> ch
+							(<span id="audio-drops">0</span> drops,
+							 <span id="audio-delayed">0</span>s delay)
 						</div>
 					</td>
 				</tr>

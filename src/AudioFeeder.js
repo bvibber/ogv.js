@@ -56,7 +56,8 @@ var AudioFeeder;
 			playbackTimeAtBufferHead = -1,
 			targetRate,
 			dropped = 0,
-			lostTime = 0;
+			delayedTime = 0,
+			queuedTime = 0;
 
 		if(AudioContext) {
 			if (typeof options.audioContext !== 'undefined') {
@@ -98,10 +99,11 @@ var AudioFeeder;
 			} else {
 				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
 			}
+			queuedTime += (bufferSize / context.sampleRate);
 			var expectedTime = playbackTimeAtBufferHead + (bufferSize / context.sampleRate);
 			if (expectedTime < playbackTime) {
 				// we may have lost some time while something ran too slow
-				lostTime += (playbackTime - expectedTime);
+				delayedTime += (playbackTime - expectedTime);
 			}
 			playbackTimeAtBufferHead = playbackTime;
 			var inputBuffer = popNextBuffer(bufferSize);
@@ -295,14 +297,16 @@ var AudioFeeder;
 					return {
 						playbackPosition: 0,
 						samplesQueued: 0,
-						dropped: 0
+						dropped: 0,
+						delayed: 0
 					};
 				}
 			} else {
 				return {
-					playbackPosition: context.currentTime - (dropped * bufferSize / context.sampleRate) - lostTime,
+					playbackPosition: queuedTime - Math.max(0, playbackTimeAtBufferHead - context.currentTime),
 					samplesQueued: samplesQueued(),
-					dropped: dropped
+					dropped: dropped,
+					delayed: delayedTime
 				};
 			}
 		};
