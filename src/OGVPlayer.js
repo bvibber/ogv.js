@@ -458,52 +458,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 	
 
-	/**
-	 * In IE, pushing data to the Flash shim is expensive.
-	 * Combine multiple small Vorbis packet outputs into
-	 * larger buffers so we don't have to make as many calls.
-	 */
-	function joinAudioBuffers(buffers) {
-		if (buffers.length == 1) {
-			return buffers[0];
-		}
-		var sampleCount = 0,
-			channelCount = buffers[0].length,
-			i,
-			c,
-			out = [];
-		for (i = 0; i < buffers.length; i++) {
-			sampleCount += buffers[i][0].length;
-		}
-		for (c = 0; c < channelCount; c++) {
-			var channelOut = new Float32Array(sampleCount);
-			var position = 0;
-			for (i = 0; i < buffers.length; i++) {
-				var channelIn = buffers[i][c];
-				channelOut.set(channelIn, position);
-				position += channelIn.length;
-			}
-			out.push(channelOut);
-		}
-		return out;
-	}
-
 	function doProcessing() {
 		nextProcessingTimer = null;
-		
-		var audioBuffers = [];
-		function queueAudio() {
-			if (audioBuffers.length > 0) {
-				bufferTime += time(function() {
-					audioFeeder.bufferData(joinAudioBuffers(audioBuffers));
-				});
-
-				if (!codec.hasVideo) {
-					framesProcessed++; // pretend!
-					doFrameComplete();
-				}
-			}
-		}
 		
 		var audioBufferedDuration = 0,
 			decodedSamples = 0,
@@ -657,7 +613,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			});
 
 			if (!more) {
-				queueAudio();
 				if (stream) {
 					// Ran out of buffered input
 					stream.readBytes();
@@ -708,10 +663,15 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 					if (ok) {
 						var buffer = codec.dequeueAudio();
-						//audioFeeder.bufferData(buffer);
-						audioBuffers.push(buffer);
-						audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
-						decodedSamples += buffer[0].length;
+						if (buffer) {
+							// Keep track of how much time we spend queueing audio as well
+							// This is slow when using the Flash shim on IE 10/11
+							bufferTime += time(function() {
+								audioFeeder.bufferData(buffer);
+							});
+							audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+							decodedSamples += buffer[0].length;
+						}
 					}
 				}
 				if (codec.frameReady && readyForFrame) {
@@ -748,12 +708,11 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				
 				var nextDelay = Math.min.apply(Math, nextDelays);
 				if (nextDelays.length > 0) {
-					// Keep track of how much time we spend queueing audio as well
-					// This is slow when using the Flash shim on IE 10/11
-					var start = getTimestamp();
-					queueAudio();
-					var delta = getTimestamp() - start;
-					pingProcessing(Math.max(0, nextDelay - delta));
+					if (!codec.hasVideo) {
+						framesProcessed++; // pretend!
+						doFrameComplete();
+					}
+					pingProcessing(Math.max(0, nextDelay));
 					return;
 				}
 			} else if (codec.hasVideo) {
