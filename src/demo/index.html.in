@@ -5,6 +5,7 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<title>ogv.js demo/test</title>
 	<link rel="stylesheet" type="text/css" href="demo.css">
+	<link rel="stylesheet" type="text/css" href="iconfont.css">
 
 <body>
 	<div id="header">
@@ -28,10 +29,10 @@
 			</div>
 			<div id="control-panel">
 				<div id="controls">
-					<button class="play" title="Play">▶</button>
-					<button class="pause" title="Pause">||</button>
-					<button class="stop" title="Stop">◼</button>
-					<button class="fullscreen" title="Fullscreen">v^</button>
+					<button class="play" title="Play"><span class="icon-play"></span></button>
+					<button class="pause" title="Pause"><span class="icon-pause"></span></button>
+					<button class="stop" title="Stop"><span class="icon-stop"></span></button>
+					<button class="fullscreen" title="Fullscreen"><span class="icon-resize-full"></span></button>
 					<span><input type="checkbox" id="mute"><label for="mute">Mute</label></span>
 				</div>
 			</div>

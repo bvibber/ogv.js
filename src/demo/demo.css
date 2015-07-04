@@ -153,7 +153,8 @@ body {
 	width: 2em;
 	height: 1.5em;
 
-	font-size: 2em;
+	line-height: 2em;
+	font-size: 1.5em;
 	padding: 0px 16px;
 	cursor: pointer;
 }

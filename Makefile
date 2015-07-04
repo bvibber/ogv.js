@@ -127,6 +127,7 @@ build/webm-codec.js.gz : build/webm-codec.js
 build/demo/index.html : src/demo/index.html.in \
                         build/demo/demo.css \
                         build/demo/demo.js \
+                        build/demo/iconfont.css \
                         build/demo/motd.js \
                         build/demo/minimal.html \
                         build/demo/media/ehren-paper_lights-96.opus \
@@ -150,6 +151,10 @@ build/demo/demo.css : src/demo/demo.css
 build/demo/demo.js : src/demo/demo.js
 	test -d build/demo || mkdir -p build/demo
 	cp src/demo/demo.js build/demo/demo.js
+
+build/demo/iconfont.css : src/demo/iconfont.css
+	test -d build/demo || mkdir -p build/demo
+	cp src/demo/iconfont.css build/demo/iconfont.css
 
 build/demo/motd.js : src/demo/motd.js
 	test -d build/demo || mkdir -p build/demo
