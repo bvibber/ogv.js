@@ -104,7 +104,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		return delta;
 	}
 
-	var placeboCodec, codec, audioFeeder;
+	var codec, audioFeeder;
 	var muted = false,
 		initialAudioPosition = 0.0,
 		initialAudioOffset = 0.0;
@@ -183,10 +183,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (stream) {
 			stream.abort();
 			stream = null;
-		}
-		if (placeboCodec) {
-			placeboCodec.destroy();
-			placeboCodec = null;
 		}
 		if (codec) {
 			codec.destroy();
@@ -525,9 +521,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 
 			if (state == State.INITIAL) {
-				if (placeboCodec) {
-					placeboCodec.process();
-				}
 				var more = codec.process();
 
 				if (loadedMetadata) {
@@ -660,9 +653,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			var currentTime = getTimestamp();
 			var more;
 			demuxingTime += time(function() {
-				if (placeboCodec) {
-					placeboCodec.process();
-				}
 				more = codec.process();
 			});
 
@@ -758,13 +748,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				
 				var nextDelay = Math.min.apply(Math, nextDelays);
 				if (nextDelays.length > 0) {
-					if (placeboCodec) {
-						// We've primed the JIT compiler... or something... by now;
-						// throw away the placebo copy.
-						placeboCodec.destroy();
-						placeboCodec = null;
-					}
-
 					// Keep track of how much time we spend queueing audio as well
 					// This is slow when using the Flash shim on IE 10/11
 					var start = getTimestamp();
@@ -776,13 +759,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			} else if (codec.hasVideo) {
 				// Video-only: drive on the video clock
 				if (codec.frameReady && getTimestamp() >= targetFrameTime) {
-					if (placeboCodec) {
-						// We've primed the JIT compiler... or something... by now;
-						// throw away the placebo copy.
-						placeboCodec.destroy();
-						placeboCodec = null;
-					}
-
 					// it's time to draw
 					var ok;
 					videoDecodingTime += time(function() {
@@ -858,18 +834,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		drawingTime = 0;
 		started = true;
 		ended = false;
-
-		// There's some kind of problem with the JIT in iOS 7 Safari
-		// that sometimes trips up on optimized Vorbis builds, at least
-		// on my iPad 3 (A5X SoC).
-		//
-		// Exercising some of the ogg & vorbis library code paths with
-		// a second decoder for the first few packets of data seems to
-		// be enough to work around this.
-		//
-		// Non-deterministic debugging ROCKS!
-		//
-		//placeboCodec = new OgvJs(options);
 
 		codec = new codecClass(options);
 		codec.oninitvideo = function(info) {
@@ -986,9 +950,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			onread: function(data) {
 				// Pass chunk into the codec's buffer
 				codec.receiveInput(data);
-				if (placeboCodec) {
-					placeboCodec.receiveInput(data);
-				}
 
 				// Continue the read/decode/draw loop...
 				pingProcessing();
