@@ -399,7 +399,8 @@
 		selectedTitle = null,
 		selectedUrl = null,
 		skipAudio = false,
-		playerBackend = 'js';
+		playerBackend = 'js',
+		muted = false;
 	
 	var mediaList = document.getElementById('media-list'),
 		filter = document.getElementById('filter');
@@ -418,7 +419,7 @@
 				} else if (name === 'search') {
 					filter.value = value;
 				} else if (name === 'mute') {
-					document.getElementById('mute').checked = (value == '1');
+					muted = (value == '1');
 				} else if (name === 'size') {
 					var selector = document.getElementById('video-preferred-size');
 					selector.value = value;
@@ -568,7 +569,7 @@
 			hash += '&search=' + encodeURIComponent(filter.value);
 		}
 		
-		if (document.getElementById('mute').checked) {
+		if (muted) {
 			hash += '&mute=1';
 		}
 		
@@ -766,7 +767,7 @@
 			};
 
 			player.src = selectedUrl;
-			player.muted = controls.querySelector('#mute').checked;
+			player.muted = muted;
 			
 			var container = document.getElementById('player');
 			container.insertBefore(player, container.firstChild);
@@ -806,6 +807,13 @@
 				document.querySelector('.play').style.display = 'inline';
 				document.querySelector('.pause').style.display = 'none';
 			};
+			if (muted) {
+				controls.querySelector('.mute').style.display = 'none';
+				controls.querySelector('.unmute').style.display = 'inline';
+			} else {
+				controls.querySelector('.mute').style.display = 'inline';
+				controls.querySelector('.unmute').style.display = 'none';
+			}
 
 			player.poster = mediaInfo.thumburl;
 			player.load();
@@ -903,15 +911,22 @@
 			player.pause();
 		}
 	});
-	controls.querySelector('.stop').addEventListener('click', function() {
+	controls.querySelector('.mute').addEventListener('click', function() {
 		if (player) {
-			showVideo();
+			player.muted = true;
 		}
+		mute = true;
+		controls.querySelector('.mute').style.display = 'none';
+		controls.querySelector('.unmute').style.display = 'inline';
+		setHash();
 	});
-	controls.querySelector('#mute').addEventListener('click', function() {
+	controls.querySelector('.unmute').addEventListener('click', function() {
 		if (player) {
-			player.muted = this.checked;
+			player.muted = false;
 		}
+		mute = false;
+		controls.querySelector('.mute').style.display = 'inline';
+		controls.querySelector('.unmute').style.display = 'none';
 		setHash();
 	});
 	document.querySelector('#progress-total').addEventListener('click', function(event) {
