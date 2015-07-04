@@ -791,7 +791,7 @@
 					showControlPanel();
 				}
 			});
-			
+
 			document.querySelector('.play').style.display = 'inline';
 			document.querySelector('.pause').style.display = 'none';
 			player.onplay = function() {

@@ -21,6 +21,16 @@ h1, h2, h3, h4, h5, h6 {
 body {
 	overflow: hidden;
 }
+html, body {
+	/* hack to prevent doc overscroll on ios */
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 0;
+	margin: 0;
+}
 
 #header {
 	position: absolute;
@@ -308,5 +318,8 @@ body {
 		left: 0;
 		right: 0;
 		bottom: 0;
+	}
+	#header, #search, #metadata {
+		display: none;
 	}
 }
