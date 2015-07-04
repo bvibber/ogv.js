@@ -604,6 +604,17 @@
 	});
 
 
+	function fullResizeVideo() {
+		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+		if (fullscreenElement == container) {
+			controls.querySelector('.fullscreen').style.display = 'none';
+			controls.querySelector('.unzoom').style.display = 'inline';
+		} else {
+			controls.querySelector('.fullscreen').style.display = 'inline';
+			controls.querySelector('.unzoom').style.display = 'none';
+		}
+		resizeVideo();
+	}
 	function resizeVideo() {
 		var container = document.getElementById('player'),
 			computedStyle = window.getComputedStyle(container),
@@ -939,19 +950,17 @@
 	});
 			
 	controls.querySelector('.fullscreen').addEventListener('click', function() {
-		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-		if (fullscreenElement == container) {
-			var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
-			cancelFullscreen();
-		} else {
-			var requestFullscreen = (container.requestFullscreen || container.mozRequestFullScreen || container.webkitRequestFullscreen || container.msRequestFullscreen).bind(container);
-			requestFullscreen();
-		}
+		var requestFullscreen = (container.requestFullscreen || container.mozRequestFullScreen || container.webkitRequestFullscreen || container.msRequestFullscreen).bind(container);
+		requestFullscreen();
 	});
-	document.addEventListener('fullscreenchange', resizeVideo);
-	document.addEventListener('mozfullscreenchange', resizeVideo);
-	document.addEventListener('webkitfullscreenchange', resizeVideo);
-	document.addEventListener('MSFullscreenChange', resizeVideo);
+	controls.querySelector('.unzoom').addEventListener('click', function() {
+		var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
+		cancelFullscreen();
+	});
+	document.addEventListener('fullscreenchange', fullResizeVideo);
+	document.addEventListener('mozfullscreenchange', fullResizeVideo);
+	document.addEventListener('webkitfullscreenchange', fullResizeVideo);
+	document.addEventListener('MSFullscreenChange', fullResizeVideo);
 	
 	var topPanel = document.getElementById('top-panel'),
 		controlPanel = document.getElementById('control-panel');
