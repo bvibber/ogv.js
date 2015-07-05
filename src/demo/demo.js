@@ -514,10 +514,10 @@
 		});
 	}
 	filter.addEventListener('change', showChooser);
-	filter.addEventListener('keypress', function(event) {
-		if (event.keyCode == 10 || event.keyCode == 13) {
-			showChooser();
-		}
+	document.querySelector('#searchform').addEventListener('submit', function(event) {
+		event.preventDefault();
+		showChooser();
+		filter.blur();
 	});
 	filter.addEventListener('delete', showChooser);
 	filter.addEventListener('cut', showChooser);

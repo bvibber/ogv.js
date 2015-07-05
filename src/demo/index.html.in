@@ -13,7 +13,9 @@
 		<h2>decoding Theora and WebM video in JavaScript</h2>
 	</div>
 	<div id=search>
-		<input id=filter type=search placeholder="Search media">
+		<form id="searchform">
+			<input id=filter type=search placeholder="Search media">
+		</form>
 	</div>
 	
 	<div id="main-player">
