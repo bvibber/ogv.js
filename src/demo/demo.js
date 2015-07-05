@@ -151,6 +151,21 @@
 			document.getElementById('progress-total').title = total;
 			document.getElementById('progress-buffered').style.width = percent(buffered);
 			document.getElementById('progress-processed').style.width = percent(processed);
+			
+			function formatTime(time) {
+				var rtime = Math.round(time),
+					minutes = Math.floor(rtime / 60),
+					seconds = Math.abs(rtime % 60),
+					padding = (seconds < 10) ? '0' : '';
+				return minutes + ':' + padding + seconds;
+			}
+			
+			controls.querySelector('.time-elapsed').textContent = formatTime(processed);
+			if (player.duration < Infinity) {
+				controls.querySelector('.time-remaining').textContent = formatTime(processed - total);
+			} else {
+				controls.querySelector('.time-remaining').textContent = '';
+			}
 		}
 	}
 	
@@ -735,6 +750,8 @@
 			document.getElementById('audio-rate').textContent = '';
 			document.getElementById('audio-drops').textContent = '';
 			player.addEventListener('loadedmetadata', function() {
+				updateProgress();
+
 				// Standard metadata ain't much.
 				document.getElementById('video-pic-width').textContent = player.videoWidth;
 				document.getElementById('video-pic-height').textContent = player.videoHeight;
@@ -766,16 +783,16 @@
 			});
 			
 			player.addEventListener('ended', function() {
+				updateProgress();
 				showControlPanel();
 			});
 			
 			player.addEventListener('pause', function() {
-				console.log('paused');
+				updateProgress();
 				showControlPanel();
 			});
 			
 			player.addEventListener('play', function() {
-				console.log('played');
 				delayHideControlPanel();
 			});
 

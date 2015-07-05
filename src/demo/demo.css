@@ -181,7 +181,11 @@ html, body {
 	flex: 1 1 auto;
 	height: 4px;
 }
-
+#controls .time-elapsed,
+#controls .time-remaining {
+	font-size: 10px;
+	margin: 0 8px;
+}
 
 #progress-total {
 	position: relative;

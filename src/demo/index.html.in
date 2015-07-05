@@ -26,6 +26,7 @@
 					<button class="pause" title="Pause" style="display:none"><span class="icon-pause"></span></button>
 					<button class="mute" title="Mute"><span class="icon-volume-up"></span></button>
 					<button class="unmute" title="Unmute" style="display:none"><span class="icon-volume-off"></span></button>
+					<div class="time-elapsed"></div>
 					<div class="progress">
 						<div id="progress-total">
 							<div id="progress-buffered"></div>
@@ -33,6 +34,7 @@
 							<div id="progress-played"></div>
 						</div>
 					</div>
+					<div class="time-remaining"></div>
 					<button class="fullscreen" title="Fullscreen"><span class="icon-resize-full"></span></button>
 					<button class="unzoom" title="Unzoom" style="display:none"><span class="icon-resize-small"></span></button>
 				</div>
