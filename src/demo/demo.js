@@ -793,12 +793,10 @@
 			resizeVideo();
 			//drawPlayButton();
 
-			player.addEventListener('touchdown', function(event) {
+			player.addEventListener('touchstart', function(event) {
 				event.preventDefault();
-				if (player && !player.paused) {
-					if (controlPanel.style.opacity > 0) {
-						hideControlPanel();
-					}
+				if (controlPanel.style.opacity == 1.0) {
+					hideControlPanel();
 				} else {
 					showControlPanel();
 				}
@@ -962,13 +960,15 @@
 	document.addEventListener('webkitfullscreenchange', fullResizeVideo);
 	document.addEventListener('MSFullscreenChange', fullResizeVideo);
 	
-	var topPanel = document.getElementById('top-panel'),
-		controlPanel = document.getElementById('control-panel');
+	var controlPanel = document.getElementById('control-panel');
 	var playerTimeout;
 	function hideControlPanel() {
-		if (controlPanel.style.opacity == 1.0) {
-			controlPanel.style.opacity = 0.0;
-			topPanel.style.opacity = 0.0;
+		// don't hide if we're paused
+		// @todo or are audio-only
+		if (player && !player.paused) {
+			if (controlPanel.style.opacity == 1.0) {
+				controlPanel.style.opacity = 0.0;
+			}
 		}
 		if (playerTimeout) {
 			clearTimeout(playerTimeout);
@@ -978,21 +978,23 @@
 	function delayHideControlPanel() {
 		playerTimeout = setTimeout(function() {
 			playerTimeout = null;
-			controlPanel.style.opacity = 0.0;
-			topPanel.style.opacity = 0.0;
+			if (player && !player.paused) {
+				controlPanel.style.opacity = 0.0;
+			}
 		}, 5000);
 	}
 	function showControlPanel() {
 		if (controlPanel.style.opacity == 0.0) {
 			controlPanel.style.opacity = 1.0;
-			topPanel.style.opacity = 1.0;
+		}
+		if (playerTimeout) {
+			clearTimeout(playerTimeout);
+			playerTimeout = null;
 		}
 	}
 	container.addEventListener('mousemove', function() {
 		showControlPanel();
-		if (player && !player.paused) {
-			delayHideControlPanel();
-		}
+		delayHideControlPanel();
 	});
 
 	//nativePlayer.querySelector('.play').addEventListener('click', function() {

@@ -117,11 +117,6 @@ html, body {
 	right: 0;
 }
 
-#player canvas,
-#player video {
-	cursor: pointer;
-}
-
 #control-panel {
 	position: absolute;
 	

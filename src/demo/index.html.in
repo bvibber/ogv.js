@@ -18,10 +18,6 @@
 	
 	<div id="main-player">
 		<div id="player" class="ogvjs-player">
-			<div id="top-panel">
-				<div id="top">
-				</div>
-			</div>
 			<div id="control-panel">
 				<div id="controls">
 					<button class="play" title="Play"><span class="icon-play"></span></button>
