@@ -794,6 +794,7 @@
 			}
 			resizeVideo();
 			//drawPlayButton();
+			showControlPanel();
 
 			player.addEventListener('touchstart', function(event) {
 				event.preventDefault();
