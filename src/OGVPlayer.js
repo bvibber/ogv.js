@@ -110,18 +110,17 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 		if (typeof window.Event == 'function') {
 			// standard event creation
-			event = new CustomEvent(eventName, props);
-			event.bubbles = false;
-			event.cancelable = false;
+			event = new CustomEvent(eventName);
 		} else {
 			// IE back-compat mode
 			// https://msdn.microsoft.com/en-us/library/dn905219%28v=vs.85%29.aspx
 			event = document.createEvent('Event');
 			event.initEvent(eventName, false, false);
-			for (var prop in props) {
-				if (props.hasOwnProperty(prop)) {
-					event[prop] = props[prop];
-				}
+		}
+
+		for (var prop in props) {
+			if (props.hasOwnProperty(prop)) {
+				event[prop] = props[prop];
 			}
 		}
 

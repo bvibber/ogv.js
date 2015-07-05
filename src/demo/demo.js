@@ -734,7 +734,7 @@
 			document.getElementById('audio-channels').textContent = '';
 			document.getElementById('audio-rate').textContent = '';
 			document.getElementById('audio-drops').textContent = '';
-			player.onloadedmetadata = function() {
+			player.addEventListener('loadedmetadata', function() {
 				// Standard metadata ain't much.
 				document.getElementById('video-pic-width').textContent = player.videoWidth;
 				document.getElementById('video-pic-height').textContent = player.videoHeight;
@@ -755,27 +755,29 @@
 					document.getElementById('audio-channels').textContent = player.ogvjsAudioChannels;
 					document.getElementById('audio-rate').textContent = player.ogvjsAudioSampleRate;
 				}
-			};
+			});
 
 			clearBenchmark();
 			// There is a 'timeupdate' event on HTMLMediaElement, but it only
 			// seems to fire every quarter second. No per-frame callback for
 			// native video, sorry!
-			player.onframecallback = function(info) {
+			player.addEventListener('framecallback', function(info) {
 				recordBenchmarkPoint(info.cpuTime, info.clockTime);
-			};
+			});
 			
-			player.onended = function() {
+			player.addEventListener('ended', function() {
 				showControlPanel();
-			};
+			});
 			
-			player.onpause = function() {
+			player.addEventListener('pause', function() {
+				console.log('paused');
 				showControlPanel();
-			};
+			});
 			
-			player.onplay = function() {
+			player.addEventListener('play', function() {
+				console.log('played');
 				delayHideControlPanel();
-			};
+			});
 
 			player.src = selectedUrl;
 			player.muted = muted;
@@ -804,18 +806,18 @@
 
 			document.querySelector('.play').style.display = 'inline';
 			document.querySelector('.pause').style.display = 'none';
-			player.onplay = function() {
+			player.addEventListener('play', function() {
 				document.querySelector('.play').style.display = 'none';
 				document.querySelector('.pause').style.display = 'inline';
-			};
-			player.onpause = function() {
+			});
+			player.addEventListener('pause', function() {
 				document.querySelector('.play').style.display = 'inline';
 				document.querySelector('.pause').style.display = 'none';
-			};
-			player.onended = function() {
+			});
+			player.addEventListener('ended', function() {
 				document.querySelector('.play').style.display = 'inline';
 				document.querySelector('.pause').style.display = 'none';
-			};
+			});
 			if (muted) {
 				controls.querySelector('.mute').style.display = 'none';
 				controls.querySelector('.unmute').style.display = 'inline';
