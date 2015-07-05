@@ -104,6 +104,30 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		return delta;
 	}
 
+	function fireEvent(eventName, props) {
+		var event;
+		props = props || {};
+
+		if (typeof window.Event == 'function') {
+			// standard event creation
+			event = new CustomEvent(eventName, props);
+			event.bubbles = false;
+			event.cancelable = false;
+		} else {
+			// IE back-compat mode
+			// https://msdn.microsoft.com/en-us/library/dn905219%28v=vs.85%29.aspx
+			event = document.createEvent('Event');
+			event.initEvent(eventName, false, false);
+			for (var prop in props) {
+				if (props.hasOwnProperty(prop)) {
+					event[prop] = props[prop];
+				}
+			}
+		}
+
+		self.dispatchEvent(event);
+	}
+
 	var codec, audioFeeder;
 	var muted = false,
 		initialAudioPosition = 0.0,
@@ -251,12 +275,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			jitter = Math.abs(wallClockTime - 1000 / fps);
 		totalJitter += jitter;
 
-		if (self.onframecallback) {
-			self.onframecallback({
-				cpuTime: lastFrameDecodeTime,
-				clockTime: wallClockTime
-			});
-		}
+		fireEvent('framecallback', {
+			cpuTime: lastFrameDecodeTime,
+			clockTime: wallClockTime
+		});
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
 	}
@@ -556,9 +578,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			
 			if (state == State.LOADED) {
 				state = State.READY;
-				if (self.onloadedmetadata) {
-					self.onloadedmetadata();
-				}
+				fireEvent('loadedmetadata');
 				if (paused) {
 					// Paused? stop here.
 					return;
@@ -628,9 +648,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					setTimeout(function() {
 						stopVideo();
 						ended = true;
-						if (self.onended) {
-							self.onended();
-						}
+						fireEvent('ended');
 					}, finalDelay);
 				}
 				return;
@@ -864,7 +882,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				url = url + '?version=' + encodeURIComponent(window.OGVVersion);
 			}
 			
-			OGVPlayer.loadingNode.onload = function() {
+			OGVPlayer.loadingNode.addEventListener('load', function() {
 				codecClass = window[codecClassName];
 				if (typeof codecClass === 'function') {
 					OGVPlayer.loadingCallbacks.forEach(function(cb) {
@@ -877,7 +895,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				} else {
 					throw new Error('Could not load ' + codecClassFile);
 				}
-			};
+			});
 			OGVPlayer.loadingNode.src = url;
 		}
 	}
@@ -987,9 +1005,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					continueVideo();
 				}
 			}
-			if (self.onplay) {
-				self.onplay();
-			}
+			fireEvent('play');
 		}
 	};
 	
@@ -1034,9 +1050,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				stopAudio();
 			}
 			paused = true;
-			if (self.onpause) {
-				self.onpause();
-			}
+			fireEvent('pause');
 		}
 	};
 	
@@ -1190,14 +1204,14 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				thumbnail.style.left = '0';
 				thumbnail.style.width = '100%';
 				thumbnail.style.height = '100%';
-				thumbnail.onload = function() {
+				thumbnail.addEventListener('load', function() {
 					if (width === 0) {
 						self.style.width = thumbnail.naturalWidth + 'px';
 					}
 					if (height === 0) {
 						self.style.height = thumbnail.naturalHeight + 'px';
 					}
-				};
+				});
 				self.appendChild(thumbnail);
 			}
 		}

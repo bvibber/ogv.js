@@ -169,6 +169,14 @@ doubleAsyncTest('seekable matches duration', function(assert, player) {
 	player.load();
 });
 
+doubleAsyncTest('addEventListener for loadedmetadata', function(assert, player) {
+	player.src = 'media/320x240.ogv';
+	player.addEventListener('loadedmetadata', function() {
+		assert.ok( true, 'onloadedmetadata was fired' );
+		QUnit.start();
+	});
+	player.load();
+});
 
 doubleAsyncTest('play yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before play');
