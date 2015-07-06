@@ -477,7 +477,7 @@
 		document.getElementById('media-chooser-stub').className = 'active';
 		document.getElementById('media-chooser').className = 'active';
 		
-		var filterString = filter.value.toLowerCase();
+		var filterString = filter.value.toLowerCase().replace(/^\s+/, '').replace(/\s+$/, '');
 		
 		var max = 40, list = [];
 		for (var day in motd) {
