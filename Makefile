@@ -106,7 +106,13 @@ build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
-build/ogv.js : src/ogv.js.in src/StreamFile.js src/AudioFeeder.js build/FrameSink.js build/WebGLFrameSink.js src/Bisector.js src/OGVPlayer.js \
+build/ogv.js : src/ogv.js.in src/StreamFile.js \
+               src/AudioFeeder.js \
+               build/FrameSink.js \
+               build/WebGLFrameSink.js \
+               src/Bisector.js \
+               src/OGVMediaType.js \
+               src/OGVPlayer.js \
                build/ogv-codec.js \
                build/ogv-codec.js.gz \
                build/webm-codec.js \

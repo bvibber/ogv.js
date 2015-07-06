@@ -953,23 +953,33 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	/**
 	 * HTMLMediaElement canPlayType method
 	 */
-	self.canPlayType = function(type) {
-		// @todo: implement better parsing
-		if (type === 'audio/ogg; codecs="vorbis"') {
-			return 'probably';
-		} else if (type === 'audio/ogg; codecs="opus"') {
-			return 'probably';
-		} else if (type.match(/^audio\/ogg\b/)) {
-			return 'maybe';
-		} else if (type === 'video/ogg; codecs="theora"') {
-			return 'probably';
-		} else if (type === 'video/ogg; codecs="theora,vorbis"') {
-			return 'probably';
-		} else if (type === 'video/ogg; codecs="theora,opus"') {
-			return 'probably';
-		} else if (type.match(/^video\/ogg\b/)) {
-			return 'maybe';
+	self.canPlayType = function(contentType) {
+		var type = new OGVMediaType(contentType);
+		if (type.minor === 'ogg' &&
+			(type.major === 'audio' || type.major === 'video' || type.major === 'application')) {
+			if (type.codecs) {
+				var supported = ['vorbis', 'opus', 'theora'],
+					knownCodecs = 0,
+					unknownCodecs = 0;
+				type.codecs.forEach(function(codec) {
+					if (supported.indexOf(codec) >= 0) {
+						knownCodecs++;
+					} else {
+						unknownCodecs++;
+					}
+				});
+				if (knownCodecs == 0) {
+					return '';
+				} else if (unknownCodecs > 0) {
+					return '';
+				}
+				// All listed codecs are ones we know. Neat!
+				return 'probably';
+			} else {
+				return 'maybe';
+			}
 		} else {
+			// @todo when webm support is more complete, handle it
 			return '';
 		}
 	};

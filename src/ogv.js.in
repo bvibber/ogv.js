@@ -21,9 +21,15 @@
 // -- Bisector.js
 #include "Bisector.js"
 
-// -- Player.js
+// -- OGVMediaType.js
+#include "OGVMediaType.js"
+
+// -- OGVPlayer.js
 #include "OGVPlayer.js"
 
+// exports
+this.OGVMediaType = OGVMediaType;
+this.OGVTimeRanges = OGVTimeRanges;
 this.OGVPlayer = OGVPlayer;
 
 })();

@@ -85,6 +85,46 @@ doubleTest("object has expected properties", function(assert, player) {
 	assert.equal(typeof player.pause, 'function', 'pause');
 });
 
+QUnit.test('MediaType', function(assert) {
+	var sets = [
+		{
+			contentType: 'application/ogg',
+			major: 'application',
+			minor: 'ogg',
+			codecs: null
+		},
+		{
+			contentType: 'audio/ogg; codecs="vorbis"',
+			major: 'audio',
+			minor: 'ogg',
+			codecs: ['vorbis']
+		},
+		{
+			contentType: 'audio/ogg;codecs =" vorbis"',
+			major: 'audio',
+			minor: 'ogg',
+			codecs: ['vorbis']
+		},
+		{
+			contentType: 'video/ogg; codecs="theora,vorbis"',
+			major: 'video',
+			minor: 'ogg',
+			codecs: ['theora', 'vorbis']
+		},
+		{
+			contentType: 'video/webm; codecs=" vp9 , opus "',
+			major: 'video',
+			minor: 'webm',
+			codecs: ['vp9', 'opus']
+		},
+	];
+	sets.forEach(function(input) {
+		var type = new OGVMediaType(input.contentType);
+		assert.equal(type.major, input.major, 'type.major: ' + input.contentType);
+		assert.equal(type.minor, input.minor, 'type.minor: ' + input.contentType);
+		assert.deepEqual(type.codecs, input.codecs, 'type.codecs: ' + input.contentType);
+	});
+});
 doubleTest('canPlayType', function(assert, player) {
 	assert.equal(player.canPlayType('audio/ogg'), 'maybe', 'audio/ogg');
 	assert.equal(player.canPlayType('audio/ogg; codecs="vorbis"'), 'probably', 'audio/ogg; codecs="vorbis"');
@@ -94,6 +134,18 @@ doubleTest('canPlayType', function(assert, player) {
 	assert.equal(player.canPlayType('video/ogg; codecs="theora"'), 'probably', 'video/ogg; codecs="theora"');
 	assert.equal(player.canPlayType('video/ogg; codecs="theora,vorbis"'), 'probably', 'video/ogg; codecs="theora,vorbis"');
 	assert.equal(player.canPlayType('video/ogg; codecs="theora,opus"'), 'probably', 'video/ogg; codecs="theora,opus"');
+});
+
+doubleTest('canPlayTypeSpaces', function(assert, player) {
+	assert.equal(player.canPlayType('audio/ogg;codecs="vorbis"'), 'probably', 'audio/ogg;codecs="vorbis"');
+	assert.equal(player.canPlayType('audio/ogg; codecs="opus "'), 'probably', 'audio/ogg; codecs="opus "');
+	assert.equal(player.canPlayType('audio/ogg; codecs=" opus"'), 'probably', 'audio/ogg; codecs=" opus"');
+
+	assert.equal(player.canPlayType('video/ogg'), 'maybe', 'video/ogg');
+	assert.equal(player.canPlayType('video/ogg; codecs="theora"'), 'probably', 'video/ogg; codecs="theora"');
+	assert.equal(player.canPlayType('video/ogg; codecs="theora, vorbis"'), 'probably', 'video/ogg; codecs="theora, vorbis"');
+	assert.equal(player.canPlayType('video/ogg; codecs="vorbis,theora"'), 'probably', 'video/ogg; codecs="theora,vorbis"');
+	assert.equal(player.canPlayType('video/ogg; codecs="theora ,opus"'), 'probably', 'video/ogg; codecs="theora ,opus"');
 });
 
 
