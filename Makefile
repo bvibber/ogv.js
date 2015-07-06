@@ -1,8 +1,12 @@
 .FAKE : all clean cleanswf swf js demo democlean tests jshint
 
-all : demo build/ogv-version.js
+all : js \
+      demo \
+      tests
 
-js : build/ogv.js
+js : build/ogv.js \
+     build/ogv-version.js \
+     build/ogv-support.js
 
 demo : build/demo/index.html
 
@@ -120,6 +124,14 @@ build/ogv.js : src/ogv.js.in src/StreamFile.js \
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
 	echo 'window.OGVVersion = "'`date -u`'";' >> build/ogv.js
 
+build/ogv-support.js : src/ogv-support.js.in \
+                       src/BogoSlow.js \
+                       src/OGVCompat.js \
+                       build/ogv.js
+	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv-support.js.in > build/ogv-support.js
+	echo 'window.OGVVersion = "'`date -u`'";' >> build/ogv-support.js
+	
+
 build/ogv-version.js : build/ogv.js
 	echo 'window.OGVVersion = "'`date -u`'";' > build/ogv-version.js
 
@@ -216,6 +228,7 @@ build/demo/lib/CortadoPlayer.js : src/CortadoPlayer.js
 
 # QUnit test cases
 build/tests/index.html : build/tests/tests.js \
+                         build/tests/lib/ogv-support.js \
                          build/tests/lib/ogv.js \
                          build/tests/media/1frame.ogv \
                          build/tests/media/3frames.ogv \
@@ -240,6 +253,10 @@ build/tests/lib/ogv.js : build/ogv.js \
 build/tests/lib/ogv-codec.js : build/ogv-codec.js
 	test -d build/tests/lib || mkdir -p build/tests/lib
 	cp build/ogv-codec.js build/tests/lib/ogv-codec.js
+
+build/tests/lib/ogv-support.js : build/ogv-support.js
+	test -d build/tests/lib || mkdir -p build/tests/lib
+	cp build/ogv-support.js build/tests/lib/ogv-support.js
 
 build/tests/lib/dynamicaudio.swf : src/dynamicaudio.swf
 	test -d build/tests/lib || mkdir -p build/tests/lib
