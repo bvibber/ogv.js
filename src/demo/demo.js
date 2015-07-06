@@ -930,17 +930,35 @@
 	}
 	//window.addEventListener('error', errorHandler);
 
-	controls.querySelector('.play').addEventListener('click', function() {
+	function onclick(selector, listener) {
+		var el = controls.querySelector(selector);
+
+		el.addEventListener('click', listener);
+
+		el.addEventListener('touchstart', function(event) {
+			// :active doesn't work on iOS \o/
+			el.classList.addClass('active');
+		});
+		el.addEventListener('touchcancel', function(event) {
+			el.classList.removeClass('active');
+		});
+		el.addEventListener('touchend', function(event) {
+			el.classList.removeClass('active');
+			listener();
+		});
+	}
+	
+	onclick('.play', function() {
 		if (player) {
 			player.play();
 		}
 	});
-	controls.querySelector('.pause').addEventListener('click', function() {
+	onclick('.pause', function() {
 		if (player) {
 			player.pause();
 		}
 	});
-	controls.querySelector('.mute').addEventListener('click', function() {
+	onclick('.mute', function() {
 		if (player) {
 			player.muted = true;
 		}
@@ -949,7 +967,7 @@
 		controls.querySelector('.unmute').style.display = 'inline';
 		setHash();
 	});
-	controls.querySelector('.unmute').addEventListener('click', function() {
+	onclick('.unmute', function() {
 		if (player) {
 			player.muted = false;
 		}
@@ -966,12 +984,11 @@
 			player.currentTime = seekTime;
 		}
 	});
-			
-	controls.querySelector('.fullscreen').addEventListener('click', function() {
+	onclick('.fullscreen', function() {
 		var requestFullscreen = (container.requestFullscreen || container.mozRequestFullScreen || container.webkitRequestFullscreen || container.msRequestFullscreen).bind(container);
 		requestFullscreen();
 	});
-	controls.querySelector('.unzoom').addEventListener('click', function() {
+	onclick('.unzoom', function() {
 		var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
 		cancelFullscreen();
 	});
