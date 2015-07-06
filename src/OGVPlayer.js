@@ -1103,7 +1103,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			} else {
 				if (codec && codec.hasAudio && audioFeeder) {
 					if (paused) {
-						return initialAudioOffset - initialAudioPosition;
+						return initialAudioOffset;
 					} else {
 						return getAudioTime();
 					}
