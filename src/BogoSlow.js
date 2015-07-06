@@ -55,9 +55,9 @@ function BogoSlow() {
 	 * Return the defined cutoff speed value for 'slow' devices,
 	 * based on results measured from some test devices.
 	 *
-	 * @property {boolean}
+	 * @property {number}
 	 */
-	Object.defineProperty(self, 'cutoff', {
+	Object.defineProperty(self, 'slowCutoff', {
 		get: function() {
 			// 2012 Retina MacBook Pro (Safari 7)  ~150,000
 			// 2009 Dell T5500         (IE 11)     ~100,000
@@ -66,22 +66,52 @@ function BogoSlow() {
 			// 2010 MBP / Win7 VM      (IE 11)      ~50,000+-
 			//   ^ these play 360p ok
 			// ----------- line of moderate doom ----------
+			return 50000;
 			//   v these play 160p ok
 			// iPad Mini non-Retina    (iOS 8 beta) ~25,000
 			// Dell Inspiron Duo       (IE 11)      ~25,000
 			// Surface RT              (IE 11)      ~18,000
 			// iPod Touch 5th-gen      (iOS 8 beta) ~16,000
-			// ------------ line of total doom ------------
-			//   v these play only audio, if that
-			// iPod 4th-gen            (iOS 6.1)     ~6,750
-			// iPhone 3Gs              (iOS 6.1)     ~4,500
-			return 50000;
 		}
 	});
-	
+
+	/**
+	 * Return the defined cutoff speed value for 'too slow' devices,
+	 * based on results measured from some test devices.
+	 *
+	 * @property {number}
+	 */
+	Object.defineProperty(self, 'tooSlowCutoff', {
+		get: function() {
+			// ------------ line of total doom ------------
+			return 12000;
+			//   v these are toooooo slow and explode
+			// Chrome on iPhone 5s     (iOS 8)       ~8,000
+			// iPod 4th-gen            (iOS 6.1)     ~6,750
+			// iPhone 3Gs              (iOS 6.1)     ~4,500
+		}
+	});
+
+	/**
+	 * 'Slow' devices can play audio and should sorta play our
+	 * extra-tiny Wikimedia 160p15 transcodes
+	 *
+	 * @property {boolean}
+	 */
 	Object.defineProperty(self, 'slow', {
 		get: function() {
-			return (self.speed < self.cutoff);
+			return (self.speed < self.slowCutoff);
+		}
+	});
+
+	/**
+	 * 'Too slow' devices aren't reliable at all
+	 *
+	 * @property {boolean}
+	 */
+	Object.defineProperty(self, 'tooSlow', {
+		get: function() {
+			return (self.speed < self.tooSlowCutoff);
 		}
 	});
 }

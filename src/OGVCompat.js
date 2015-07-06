@@ -1,4 +1,6 @@
 OGVCompat = {
+	benchmark: new BogoSlow(),
+
 	hasTypedArrays: function() {
 		// emscripten-compiled code requires typed arrays
 		return !!window.Uint32Array;
@@ -43,13 +45,21 @@ OGVCompat = {
 		});
 		return blacklisted;
 	},
+	
+	isSlow: function() {
+		return this.benchmark.slow;
+	},
+
+	isTooSlow: function() {
+		return this.benchmark.tooSlow;
+	},
 
 	supported: function(component) {
 		if (component === 'OGVDecoder') {
 			return (this.hasTypedArrays() && !this.isBlacklisted(navigator.userAgent));
 		}
 		if (component === 'OGVPlayer') {
-			return (this.supported('OGVDecoder') && this.hasAudio());
+			return (this.supported('OGVDecoder') && this.hasAudio() && !this.isTooSlow());
 		}
 		return false;
 	}

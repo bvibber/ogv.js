@@ -147,6 +147,7 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/demo.js \
                         build/demo/iconfont.css \
                         build/demo/motd.js \
+                        build/demo/benchmark.html \
                         build/demo/minimal.html \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
@@ -154,6 +155,7 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/lib/ogv.js \
                         build/demo/lib/ogv-codec.js \
                         build/demo/lib/ogv-codec.js.gz \
+                        build/demo/lib/ogv-support.js \
                         build/demo/lib/webm-codec.js \
                         build/demo/lib/webm-codec.js.gz \
                         build/demo/lib/dynamicaudio.swf \
@@ -178,6 +180,10 @@ build/demo/motd.js : src/demo/motd.js
 	test -d build/demo || mkdir -p build/demo
 	cp src/demo/motd.js build/demo/motd.js
 
+build/demo/benchmark.html : src/demo/benchmark.html
+	test -d build/demo || mkdir -p build/demo
+	cp src/demo/benchmark.html build/demo/benchmark.html
+
 build/demo/minimal.html : src/demo/minimal.html
 	test -d build/demo || mkdir -p build/demo
 	cp src/demo/minimal.html build/demo/minimal.html
@@ -197,6 +203,10 @@ build/demo/media/curiosity.ogv : src/demo/media/curiosity.ogv
 build/demo/lib/ogv.js : build/ogv.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp build/ogv.js build/demo/lib/ogv.js
+
+build/demo/lib/ogv-support.js : build/ogv-support.js
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp build/ogv-support.js build/demo/lib/ogv-support.js
 
 build/demo/lib/ogv-codec.js : build/ogv-codec.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
