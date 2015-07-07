@@ -61,7 +61,7 @@ Testing browsers (these support .ogv natively):
 
 ## Usage
 
-The `OGVPlayer` class implements a player, and supports a subset of the events, properties and methods from `[HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement)` and `[HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement)`.
+The `OGVPlayer` class implements a player, and supports a subset of the events, properties and methods from [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) and [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement).
 
 ```
   // Create a new player with the constructor
