@@ -1,4 +1,7 @@
-VERSION=0.9
+VERSION:=0.9
+BUILDDATE:=$(shell date -u "+%Y%m%d%H%M%S")
+HASH:=$(shell git rev-parse --short HEAD)
+FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
 
 .FAKE : all clean cleanswf swf js demo democlean tests dist jshint
 
@@ -139,18 +142,18 @@ build/ogv.js : src/ogv.js.in src/StreamFile.js \
                build/webm-codec.js \
                build/webm-codec.js.gz
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
-	echo 'window.OGVVersion = "'`date -u`'";' >> build/ogv.js
+	echo 'window.OGVVersion = "$(FULLVER)";' >> build/ogv.js
 
 build/ogv-support.js : src/ogv-support.js.in \
                        src/BogoSlow.js \
                        src/OGVCompat.js \
                        build/ogv.js
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv-support.js.in > build/ogv-support.js
-	echo 'window.OGVVersion = "'`date -u`'";' >> build/ogv-support.js
+	echo 'window.OGVVersion = "$(FULLVER)";' >> build/ogv-support.js
 	
 
 build/ogv-version.js : build/ogv.js
-	echo 'window.OGVVersion = "'`date -u`'";' > build/ogv-version.js
+	echo 'window.OGVVersion = "$(FULLVER)";' > build/ogv-version.js
 
 build/ogv-codec.js.gz : build/ogv-codec.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogv-codec.js > build/ogv-codec.js.gz || gzip -9 -c build/ogv-codec.js > build/ogv-codec.js.gz
