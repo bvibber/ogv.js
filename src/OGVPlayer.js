@@ -36,13 +36,16 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		codecClass = null;
 
 	var webGLdetected = WebGLFrameSink.isAvailable();
-	var useWebGL = !!options.webGL && webGLdetected;
+	var useWebGL = (options.webGL !== false) && webGLdetected;
 	if(!!options.forceWebGL) {
 		useWebGL = true;
 		if(!webGLdetected) {
 			console.log("No support for WebGL detected, but WebGL forced on!");
 		}
 	}
+
+	// Experimental option
+	var enableWebM = !!options.enableWebM;
 	
 	var State = {
 		INITIAL: 'INITIAL',
@@ -850,7 +853,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	
 	function loadCodec(callback) {
 		// @todo fix this proper
-		if (self.src.match(/\.webm$/i)) {
+		if (enableWebM && self.src.match(/\.webm$/i)) {
 			codecClassName = 'OGVWebMDecoder';
 			codecClassFile = 'webm-codec.js';
 		} else {

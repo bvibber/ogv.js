@@ -715,18 +715,20 @@
 			
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
-					webGL: true, // auto
-					base: 'lib'
+					base: 'lib',
+					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'js-cpu') {
 				player = new OGVPlayer({
+					base: 'lib',
 					webGL: false, // force 2d canvas
-					base: 'lib'
+					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'webgl') {
 				player = new OGVPlayer({
+					base: 'lib',
 					forceWebGL: true,
-					base: 'lib'
+					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();
