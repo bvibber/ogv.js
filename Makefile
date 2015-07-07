@@ -19,6 +19,7 @@ democlean:
 
 clean:
 	rm -rf build
+	rm -rf dist
 	rm -f libogg/configure
 	rm -f libvorbis/configure
 	rm -f libtheora/configure
