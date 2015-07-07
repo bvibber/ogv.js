@@ -72,7 +72,7 @@ The `OGVPlayer` class implements a player, and supports a subset of the events, 
 
   // Now treat it just like a video or audio element
   containerElement.addChild(player);
-  player.source = 'path/to/media.ogv';
+  player.src = 'path/to/media.ogv';
   player.play();
 ```
 
