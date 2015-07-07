@@ -1,4 +1,6 @@
-.FAKE : all clean cleanswf swf js demo democlean tests jshint
+VERSION=0.9
+
+.FAKE : all clean cleanswf swf js demo democlean tests dist jshint
 
 all : js \
       demo \
@@ -23,6 +25,20 @@ clean:
 	rm -f libopus/configure
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
+
+dist: js src/dynamicaudio.swf readme.md COPYING
+	rm -rf dist
+	mkdir dist
+	mkdir dist/ogvjs-$(VERSION)
+	cp -p build/ogv.js \
+	      build/ogv-codec.js \
+	      build/ogv-support.js \
+	      build/ogv-version.js \
+	      src/dynamicaudio.swf \
+	      readme.md \
+	      COPYING \
+	      dist/ogvjs-$(VERSION)/
+	(cd dist && zip -r ogvjs-$(VERSION).zip ogvjs-$(VERSION))
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
