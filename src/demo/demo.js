@@ -599,7 +599,7 @@
 	}
 	
 	var preferredKey = '360p.ogv';
-	if (navigator.userAgent.match(/Mobile/)) {
+	if (OGVCompat.isSlow()) {
 		preferredKey = '160p.ogv';
 	}
 	var selector = document.getElementById('video-preferred-size');

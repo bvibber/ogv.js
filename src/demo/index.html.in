@@ -146,6 +146,7 @@
 		</div>
 	</div>
 
+	<script src="lib/ogv-support.js"></script>
 	<script src="lib/ogv.js"></script>
 	<script src="lib/CortadoPlayer.js"></script>
 	<script src="motd.js"></script>
