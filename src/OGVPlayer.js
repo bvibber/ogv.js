@@ -487,7 +487,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		nextProcessingTimer = null;
 		
 		var audioBufferedDuration = 0,
-			decodedSamples = 0,
 			audioState = null,
 			audioPlaybackPosition = 0;
 
@@ -692,7 +691,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 								audioFeeder.bufferData(buffer);
 							});
 							audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
-							decodedSamples += buffer[0].length;
 						}
 					}
 				}
