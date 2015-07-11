@@ -168,9 +168,18 @@
 			document.getElementById('progress-processed').style.width = percent(processed);
 			document.getElementById('progress-thumb').style.left = percent(thumb);
 			
+			function simtrunc(val) {
+				if (val >= 0) {
+					return Math.floor(val);
+				} else {
+					return Math.ceil(val);
+				}
+			}
+			var trunc = Math.trunc || simtrunc;
+			
 			function formatTime(time) {
 				var rtime = Math.round(time),
-					minutes = Math.trunc(rtime / 60),
+					minutes = trunc(rtime / 60),
 					seconds = Math.abs(rtime % 60),
 					padding = (seconds < 10) ? '0' : '';
 				return minutes + ':' + padding + seconds;
