@@ -14,7 +14,7 @@
 	</div>
 	<div id=search>
 		<form id="searchform">
-			<input id=filter type=search placeholder="Search media">
+			<input id=filter placeholder="Search media">
 		</form>
 	</div>
 	

@@ -61,16 +61,22 @@ html, body {
 	text-align: right;
 }
 #filter {
-	margin: 2.5em;
+	position: absolute;
+	width: 140px;
+	height: 1.5em;
+	top: 2.5em;
+	right: 2.5em;
+	z-index: 9999;
 }
 
 #media-chooser-stub {
 	background: rgba(0, 0, 0, 0.5);
 	position: absolute;
 	left: 0;
-	top: 5em;
+	top: 0;
 	right: 0;
 	bottom: 0;
+	z-index: 999;
 }
 #media-chooser {
 	background: white;
@@ -85,6 +91,7 @@ html, body {
 	bottom: 0;
 
 	overflow-y: scroll;
+	z-index: 9999;
 }
 
 #player {
