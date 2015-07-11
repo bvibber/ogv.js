@@ -9,6 +9,8 @@
 		getTimestamp = window.performance.now.bind(window.performance);
 	}
 
+	var devicePixelRatio = window.devicePixelRatio || 1;
+
 	var player;
 	var averageDemuxingTime = 0, // ms
 		averageVideoDecodingTime = 0, // ms
@@ -517,8 +519,8 @@
 			action: 'query',
 			prop: 'imageinfo',
 			iiprop: 'url|size',
-			iiurlwidth: 128,
-			iiurlheight: 128,
+			iiurlwidth: 128 * devicePixelRatio,
+			iiurlheight: 128 * devicePixelRatio,
 			titles: selection.join('|')
 		}, function(data) {
 			if (state == chooserState) {
@@ -576,8 +578,8 @@
 		
 		img.src = imageinfo.thumburl;
 		img.title = "Play video"
-		img.width = imageinfo.thumbwidth;
-		img.height = imageinfo.thumbheight;
+		img.width = imageinfo.thumbwidth / devicePixelRatio;
+		img.height = imageinfo.thumbheight / devicePixelRatio;
 		
 		item.appendChild(img);
 		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
