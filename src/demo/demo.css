@@ -124,6 +124,18 @@ html, body {
 	right: 0;
 }
 
+#player > video,
+#player > audio,
+#player > ogvjs,
+#player > applet,
+#player > object {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
 #control-panel {
 	position: absolute;
 	

@@ -633,53 +633,6 @@
 	});
 
 
-	function fullResizeVideo() {
-		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-		if (fullscreenElement == container) {
-			controls.querySelector('.fullscreen').style.display = 'none';
-			controls.querySelector('.unzoom').style.display = 'inline';
-		} else {
-			controls.querySelector('.fullscreen').style.display = 'inline';
-			controls.querySelector('.unzoom').style.display = 'none';
-		}
-		resizeVideo();
-	}
-	function resizeVideo() {
-		var container = document.getElementById('player'),
-			computedStyle = window.getComputedStyle(container),
-			containerWidth = parseInt(computedStyle.getPropertyValue('width')),
-			containerHeight = parseInt(computedStyle.getPropertyValue('height'));
-
-		var videoWidth = player.videoWidth,
-			videoHeight = player.videoHeight;
-		if (videoWidth == 0 || videoHeight == 0) {
-			// hack hack
-			// we already set these at poster setup time
-			// warning these get corrupted over time if we resize the poster a lot
-			videoWidth = player.width;
-			videoHeight = player.height;
-		}
-		var width = containerWidth,
-			height = videoHeight * width / videoWidth,
-			top = 0;
-
-		if (height > containerHeight) {
-			height = containerHeight;
-			width = videoWidth * height / videoHeight;
-		} else {
-			top = Math.round((containerHeight - height) / 2);
-		}
-		
-		player.width = width;
-		player.height = height;
-		player.style.marginTop = top + 'px';
-	}
-	window.addEventListener('resize', function() {
-		if (player) {
-			resizeVideo();
-		}
-	});
-	
 	function showVideo() {
 		window.scrollTo(0, 0);
 		stopVideo();
@@ -749,13 +702,13 @@
 				player.durationHint = mediaInfo.duration;
 				player.videoWidthHint = selected.width;
 				player.videoHeightHint = selected.height;
+				player.width = selected.width; // ?
+				player.height = selected.height;
 			} else if (playerBackend == 'native') {
 				player = document.createElement('video');
 			} else {
 				throw new Error('unknown player backend');
 			}
-			player.width = selected.width;
-			player.height = selected.height;
 
 
 			document.getElementById('video-fps').textContent = '';
@@ -818,15 +771,10 @@
 			var container = document.getElementById('player');
 			container.insertBefore(player, container.firstChild);
 
-			if (selected.height > 0) {
-				player.width = selected.width;
-				player.height = selected.height;
-			} else {
+			if (selected.height == 0) {
 				player.width = 256; // hack for audio
 				player.height = 256;
 			}
-			resizeVideo();
-			//drawPlayButton();
 			showControlPanel();
 
 			player.addEventListener('touchstart', function(event) {
@@ -864,9 +812,6 @@
 			player.load();
 
 			updateProgress();
-			
-			//nativeVideo.width = selected.width;
-			//nativeVideo.height = selected.height;
 		});
 	}
 	
@@ -1076,6 +1021,16 @@
 		var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
 		cancelFullscreen();
 	});
+	function fullResizeVideo() {
+		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+		if (fullscreenElement == container) {
+			controls.querySelector('.fullscreen').style.display = 'none';
+			controls.querySelector('.unzoom').style.display = 'inline';
+		} else {
+			controls.querySelector('.fullscreen').style.display = 'inline';
+			controls.querySelector('.unzoom').style.display = 'none';
+		}
+	}
 	document.addEventListener('fullscreenchange', fullResizeVideo);
 	document.addEventListener('mozfullscreenchange', fullResizeVideo);
 	document.addEventListener('webkitfullscreenchange', fullResizeVideo);

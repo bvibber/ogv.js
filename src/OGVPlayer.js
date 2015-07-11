@@ -31,6 +31,8 @@ OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
 OGVPlayer = window.OGVPlayer = function(options) {
 	options = options || {};
 
+	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
+
 	var codecClassName = null,
 		codecClassFile = null,
 		codecClass = null;
@@ -81,16 +83,14 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	
 	// Return a magical custom element!
 	var self = document.createElement('ogvjs');
-	self.style.display = 'inline-block';
-	self.style.position = 'relative';
-	self.style.width = '0px'; // size will be expanded later
-	self.style.height = '0px';
+	self.className = instanceId;
 
 	canvas.style.position = 'absolute';
 	canvas.style.top = '0';
 	canvas.style.left = '0';
 	canvas.style.width = '100%';
 	canvas.style.height = '100%';
+	canvas.style.objectFit = 'contain';
 	self.appendChild(canvas);
 
 	var getTimestamp;
@@ -819,16 +819,15 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			videoInfo = info;
 			fps = info.fps;
 			targetPerFrameTime = 1000 / fps;
-			
-			if (width === 0) {
-				self.style.width = self.videoWidth + 'px';
-			}
-			if (height === 0) {
-				self.style.height = self.videoHeight + 'px';
-			}
-			
+
 			canvas.width = info.picWidth;
 			canvas.height = info.picHeight;
+			OGVPlayer.styleManager.appendRule('.' + instanceId, {
+				width: info.picWidth + 'px',
+				height: info.picHeight + 'px'
+			});
+			OGVPlayer.updatePositionOnResize();
+
 			if (useWebGL) {
 				frameSink = new WebGLFrameSink(canvas, videoInfo);
 			} else {
@@ -1214,13 +1213,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				thumbnail.style.left = '0';
 				thumbnail.style.width = '100%';
 				thumbnail.style.height = '100%';
+				thumbnail.style.objectFit = 'contain';
 				thumbnail.addEventListener('load', function() {
-					if (width === 0) {
-						self.style.width = thumbnail.naturalWidth + 'px';
-					}
-					if (height === 0) {
-						self.style.height = thumbnail.naturalHeight + 'px';
-					}
+					OGVPlayer.styleManager.appendRule('.' + instanceId, {
+						width: thumbnail.naturalWidth + 'px',
+						height: thumbnail.naturalHeight + 'px'
+					});
+					OGVPlayer.updatePositionOnResize();
 				});
 				self.appendChild(thumbnail);
 			}
@@ -1339,3 +1338,87 @@ OGVPlayer.initSharedAudioContext = function() {
 
 OGVPlayer.loadingNode = null;
 OGVPlayer.loadingCallbacks = [];
+
+OGVPlayer.instanceCount = 0;
+
+function StyleManager() {
+	var self = this;
+	var el = document.createElement('style');
+	el.type = 'text/css';
+	el.textContent = 'ogvjs { display: inline-block; position: relative; }';
+	document.head.appendChild(el);
+
+	var sheet = el.sheet;
+
+	self.appendRule = function(selector, defs) {
+		var bits = [];
+		for (prop in defs) {
+			if (defs.hasOwnProperty(prop)) {
+				bits.push(prop + ':' + defs[prop]);
+			}
+		}
+		var rule = selector + '{' + bits.join(';') + '}';
+		sheet.insertRule(rule, sheet.length - 1);
+	}
+}
+OGVPlayer.styleManager = new StyleManager();
+
+OGVPlayer.supportsObjectFit = (typeof document.createElement('div').style.objectFit === 'string');
+if (OGVPlayer.supportsObjectFit) {
+	OGVPlayer.updatePositionOnResize = function() {
+		// no-op
+	};
+} else {
+	OGVPlayer.updatePositionOnResize = function() {
+		// IE and Edge don't support object-fit.
+		// Also just for fun, IE 10 doesn't support 'auto' sizing on canvas.
+		function fixup(el, width, height) {
+			var container = el.offsetParent || el.parentNode,
+				containerAspect = container.offsetWidth / container.offsetHeight,
+				intrinsicAspect = width / height;
+			if (intrinsicAspect > containerAspect) {
+				var vsize = container.offsetWidth / intrinsicAspect,
+					vpad = (container.offsetHeight - vsize) / 2;
+				el.style.width = '100%';
+				el.style.height = vsize + 'px';
+				el.style.marginLeft = 0;
+				el.style.marginRight = 0;
+				el.style.marginTop = vpad + 'px';
+				el.style.marginBottom = vpad + 'px';
+			} else {
+				var hsize = container.offsetHeight * intrinsicAspect,
+					hpad = (container.offsetWidth - hsize) / 2;
+				el.style.width = hsize + 'px';
+				el.style.height = '100%';
+				el.style.marginLeft = hpad + 'px';
+				el.style.marginRight = hpad + 'px';
+				el.style.marginTop = 0;
+				el.style.marginBottom = 0;
+			}
+		}
+		function queryOver(selector, callback) {
+			var nodeList = document.querySelectorAll(selector),
+				nodeArray = Array.prototype.slice.call(nodeList);
+			nodeArray.forEach(callback);
+		}
+
+		queryOver('ogvjs > canvas', function(canvas) {
+			fixup(canvas, canvas.width, canvas.height);
+		});
+		queryOver('ogvjs > img', function(poster) {
+			fixup(poster, poster.naturalWidth, poster.naturalHeight);
+		});
+	};
+	function fullResizeVideo() {
+		// fullscreens may ping us before the resize happens
+		setTimeout(OGVPlayer.updatePositionOnResize, 0);
+	}
+
+	window.addEventListener('resize', OGVPlayer.updatePositionOnResize);
+	window.addEventListener('orientationchange', OGVPlayer.updatePositionOnResize)
+
+	document.addEventListener('fullscreenchange', fullResizeVideo);
+	document.addEventListener('mozfullscreenchange', fullResizeVideo);
+	document.addEventListener('webkitfullscreenchange', fullResizeVideo);
+	document.addEventListener('MSFullscreenChange', fullResizeVideo);
+}
