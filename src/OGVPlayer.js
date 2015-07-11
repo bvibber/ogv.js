@@ -820,11 +820,11 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			fps = info.fps;
 			targetPerFrameTime = 1000 / fps;
 
-			canvas.width = info.picWidth;
-			canvas.height = info.picHeight;
+			canvas.width = info.displayWidth;
+			canvas.height = info.displayHeight;
 			OGVPlayer.styleManager.appendRule('.' + instanceId, {
-				width: info.picWidth + 'px',
-				height: info.picHeight + 'px'
+				width: info.displayWidth + 'px',
+				height: info.displayHeight + 'px'
 			});
 			OGVPlayer.updatePositionOnResize();
 
@@ -1230,11 +1230,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	Object.defineProperty(self, "videoWidth", {
 		get: function getVideoWidth() {
 			if (videoInfo) {
-				if (videoInfo.aspectNumerator > 0 && videoInfo.aspectDenominator > 0) {
-					return Math.round(videoInfo.picWidth * videoInfo.aspectNumerator / videoInfo.aspectDenominator);
-				} else {
-					return videoInfo.picWidth;
-				}
+				return videoInfo.picWidth;
 			} else {
 				return 0;
 			}

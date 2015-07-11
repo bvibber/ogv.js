@@ -313,12 +313,18 @@ static void processHeaders() {
 
             int hdec = !(theoraInfo.pixel_fmt & 1);
             int vdec = !(theoraInfo.pixel_fmt & 2);
+            
+            int display_width = theoraInfo.pic_width;
+            int display_height = theoraInfo.pic_height;
+            if (theoraInfo.aspect_numerator > 0 && theoraInfo.aspect_denominator > 0) {
+            	display_width = display_width * theoraInfo.aspect_numerator / theoraInfo.aspect_denominator;
+            }
             codecjs_callback_init_video(theoraInfo.frame_width, theoraInfo.frame_height,
                                         hdec, vdec,
                                         (float) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
                                         theoraInfo.pic_width, theoraInfo.pic_height,
                                         theoraInfo.pic_x, theoraInfo.pic_y,
-                                        theoraInfo.aspect_numerator, theoraInfo.aspect_denominator);
+                                        display_width, display_height);
         }
 
 #ifdef OPUS
