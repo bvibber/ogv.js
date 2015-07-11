@@ -33,6 +33,7 @@
 							<div id="progress-processed"></div>
 							<div id="progress-played"></div>
 						</div>
+						<div id="progress-thumb"></div>
 					</div>
 					<div class="time-remaining"></div>
 					<button class="fullscreen" title="Fullscreen"><span class="icon-resize-full"></span></button>
