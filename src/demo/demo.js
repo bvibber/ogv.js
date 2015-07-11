@@ -939,13 +939,13 @@
 
 		el.addEventListener('touchstart', function(event) {
 			// :active doesn't work on iOS \o/
-			el.classList.addClass('active');
+			el.classList.add('active');
 		});
 		el.addEventListener('touchcancel', function(event) {
-			el.classList.removeClass('active');
+			el.classList.remove('active');
 		});
 		el.addEventListener('touchend', function(event) {
-			el.classList.removeClass('active');
+			el.classList.remove('active');
 			listener();
 		});
 	}
