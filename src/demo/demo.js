@@ -899,12 +899,15 @@
 		el.addEventListener('touchstart', function(event) {
 			// :active doesn't work on iOS \o/
 			el.classList.add('active');
+			event.preventDefault();
 		});
 		el.addEventListener('touchcancel', function(event) {
 			el.classList.remove('active');
+			event.preventDefault();
 		});
 		el.addEventListener('touchend', function(event) {
 			el.classList.remove('active');
+			event.preventDefault();
 			listener();
 		});
 	}
