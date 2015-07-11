@@ -17,7 +17,6 @@ OGVCompat = {
 			// (Edge, Safari) or native playback, so there's no need to test
 			// other ways of loading Flash.
 			try {
-				// No IE, not a class called "name", it's a variable
 				var obj = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
 				return true;
 			} catch(e) {
