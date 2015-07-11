@@ -1,5 +1,4 @@
 // inspired by https://github.com/mbebenita/Broadway/blob/master/Player/canvas.js
-// extra 'stripe' texture fiddling to work around IE 11's lack of gl.LUMINANCE or gl.ALPHA textures
 
 precision mediump float;
 uniform sampler2D uTextureY;
