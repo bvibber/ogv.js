@@ -42,6 +42,10 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	      readme.md \
 	      COPYING \
 	      dist/ogvjs-$(VERSION)/
+	cp -p libogg/COPYING dist/ogvjs-$(VERSION)/COPYING-ogg.txt
+	cp -p libvorbis/COPYING dist/ogvjs-$(VERSION)/COPYING-vorbis.txt
+	cp -p libtheora/COPYING dist/ogvjs-$(VERSION)/COPYING-theora.txt
+	cp -p libopus/COPYING dist/ogvjs-$(VERSION)/COPYING-opus.txt
 	(cd dist && zip -r ogvjs-$(VERSION).zip ogvjs-$(VERSION))
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
