@@ -91,7 +91,8 @@ package {
             return {
                 playbackPosition: playbackPosition(),
                 samplesQueued: samplesQueued(),
-                dropped: dropped
+                dropped: dropped,
+                delayed: starvedAudioTime
             };
         }
 
