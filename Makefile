@@ -144,7 +144,8 @@ build/ogv.js : src/ogv.js.in src/StreamFile.js \
                build/ogv-codec.js \
                build/ogv-codec.js.gz \
                build/webm-codec.js \
-               build/webm-codec.js.gz
+               build/webm-codec.js.gz \
+               src/dynamicaudio.swf
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
 	echo 'window.OGVVersion = "$(FULLVER)";' >> build/ogv.js
 

@@ -157,8 +157,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 	
 	function stopAudio() {
-		initialAudioOffset = getAudioTime();
 		audioFeeder.stop();
+		initialAudioOffset = getAudioTime();
 	}
 	
 	/**

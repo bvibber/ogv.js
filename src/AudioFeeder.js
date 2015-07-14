@@ -24,7 +24,7 @@ var AudioFeeder;
 			console.log("No W3C Web Audio API available");
 			var flashOptions = {};
 			if (typeof options.base === 'string') {
-				flashOptions.swf = options.base + '/dynamicaudio.swf';
+				flashOptions.swf = options.base + '/dynamicaudio.swf?version=' + OGVVersion;
 			}
 			this.flashaudio = new DynamicAudio( flashOptions );
 		}

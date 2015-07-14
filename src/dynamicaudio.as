@@ -15,12 +15,12 @@ package {
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
         public var hexValues:Vector.<int> = new Vector.<int>(256);
 
-        private var starvedAudioTime:Number = 0; // seconds; amount of time spent "playing" when starved for audio
-        private var totalBufferedAudio:Number = 0; // seconds; total amount of audio time we've processed
-        private var droppedAudioTime:Number = 0; // seconds; amount of audio time not accounted for, assumed dropped
+        private var queuedTime:Number = 0; // seconds; total amount of audio time we've processed
+        private var delayedTime:Number = 0; // seconds; amount of audio time not accounted for, assumed dropped
+        private var playbackTimeAtBufferTail:Number = 0; // seconds; expected playback time at the end of the buffer
+        private var latency:Number = 0;
         private var dropped:Number = 0;
         private var targetRate:Number = 44100;
-        private var startTime:Number = 0;
 
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -48,25 +48,25 @@ package {
         }
 
         public function startPlayback():void {
-            startTime = flash.utils.getTimer() / 1000;
             sound = new Sound();
             sound.addEventListener(
                 SampleDataEvent.SAMPLE_DATA,
                 soundGenerator
             );
+            playbackTimeAtBufferTail = 0;
             soundChannel = this.sound.play();
         }
         
         public function stopPlayback():void {
             if (soundChannel) {
+                playbackTimeAtBufferTail = soundChannel.position / 1000;
                 soundChannel.stop();
             }
             soundChannel = null;
             sound = null;
-            droppedAudioTime = 0;
-            starvedAudioTime = 0;
-            totalBufferedAudio = 0;
 
+            queuedTime += samplesQueued() / targetRate;
+            playbackTimeAtBufferTail += samplesQueued() / targetRate;
             stringBuffer.splice(0, stringBuffer.length);
             buffer.splice(0, buffer.length);
         }
@@ -92,7 +92,7 @@ package {
                 playbackPosition: playbackPosition(),
                 samplesQueued: samplesQueued(),
                 dropped: dropped,
-                delayed: starvedAudioTime
+                delayed: delayedTime
             };
         }
 
@@ -107,12 +107,9 @@ package {
 
         public function playbackPosition():Number {
             if (soundChannel == null) {
-                return 0;
+                return queuedTime;
             } else {
-                return Math.max(0,
-                    soundChannel.position / 1000 + startTime - starvedAudioTime
-                    //(totalBufferedAudio - starvedAudioTime) + startTime
-                );
+                return queuedTime - Math.max(0, playbackTimeAtBufferTail - (soundChannel.position / 1000));
             }
         }
 
@@ -120,7 +117,13 @@ package {
             var i:int;
             flushBuffers();
 
-            droppedAudioTime = (event.position / targetRate) - totalBufferedAudio;
+            var playbackTime:Number = (event.position / targetRate);
+            
+            var expectedTime:Number = playbackTimeAtBufferTail;
+            if (expectedTime < playbackTime) {
+                // we may have lost some time while something ran too slow
+                delayedTime += (playbackTime - expectedTime);
+            }
 
             // If we haven't got enough data, write a buffer of of silence to
             // both channels (must be at least 2048 samples to keep audio running)
@@ -129,8 +132,6 @@ package {
                     event.data.writeFloat(0.0);
                     event.data.writeFloat(0.0);
                 }
-                starvedAudioTime += (bufferSize / targetRate);
-                totalBufferedAudio += bufferSize / targetRate;
                 dropped++;
                 return;
             }
@@ -141,7 +142,8 @@ package {
                 event.data.writeFloat(buffer[i * 2]);
                 event.data.writeFloat(buffer[i * 2 + 1]);
             }
-            totalBufferedAudio += sampleCount / targetRate;
+            queuedTime += sampleCount / targetRate;
+            playbackTimeAtBufferTail = playbackTime + sampleCount / targetRate;
 
             buffer = buffer.slice(sampleCount * 2, buffer.length);
         }
