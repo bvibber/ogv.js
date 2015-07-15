@@ -43,11 +43,12 @@ ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flas
 The primary target browsers are (testing 360p/30fps):
 * Safari 7/8 on Mac OS X 10.8/10.9
 * Safari on iOS 8 64-bit
-* Edge on Windows 10 (desktop/tablet and mobile)
+* Edge on Windows 10 desktop/tablet
 * Internet Explorer 10/11 on Windows 7/8/8.1 (desktop/tablet)
 
 And for lower-resolution files (testing 160p/15fps):
 * Safari on iOS 8 32-bit
+* Edge on Windows 10 Mobile
 * Internet Explorer 10/11 on Windows RT
 
 Older versions of iOS Safari have flaky JIT compilers. IE 9 and below lack typed arrays.
@@ -71,7 +72,7 @@ The `OGVPlayer` class implements a player, and supports a subset of the events, 
   });
 
   // Now treat it just like a video or audio element
-  containerElement.addChild(player);
+  containerElement.appendChild(player);
   player.src = 'path/to/media.ogv';
   player.play();
 ```
@@ -90,7 +91,7 @@ If you need a URL versioning/cache-buster parameter for `ogv.js`, you can use th
 
 ```
   var script = document.createElement('script');
-  script.src = 'ogv.js?' + encodeURIComponent(OGVVersion);
+  script.src = 'ogv.js?version=' + encodeURIComponent(OGVVersion);
 ```
 
 
