@@ -263,6 +263,13 @@ html, body {
 
 	background: #ccc;
 }
+#progress-thumb:hover {
+	border-color: #888;
+}
+#progress-thumb:active {
+	border-color: #666;
+	background: #aaa;
+}
 
 #metadata {
 	position: absolute;
