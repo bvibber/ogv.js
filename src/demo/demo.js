@@ -661,6 +661,14 @@
 			console.log('type of file: ' + mediaInfo.mediatype);
 			console.log('duration of file: ' + mediaInfo.duration);
 			
+			var selector = document.getElementById('video-preferred-size');
+			var options = selector.querySelectorAll('option'),
+				optionsMap = {};
+			for (var i = 0; i < options.length; i++) {
+				optionsMap[options[i].value] = options[i];
+				options[i].disabled = true;
+			}
+			
 			// Find the transcoded or original ogv stream for now
 			
 			// temporarily disable the smallest transcodes, except on mobiles/iOS
@@ -677,6 +685,11 @@
 				}
 				if (source.format == 'oga') {
 					oga = source;
+				}
+				if (optionsMap[source.key]) {
+					if (optionsMap.hasOwnProperty(source.key)) {
+						optionsMap[source.key].disabled = false;
+					}
 				}
 			});
 			if (selected == null) {
