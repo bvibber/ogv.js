@@ -55,7 +55,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		LOADED: 'LOADED',
 		READY: 'READY',
 		PLAYING: 'PLAYING',
-		PAUSED: 'PAUSED',
 		SEEKING: 'SEEKING',
 		ENDED: 'ENDED'
 	}, state = State.INITIAL;
@@ -358,6 +357,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
 			startAudio(seekTargetTime);
+			if (paused) {
+				stopAudio(); // :P
+			}
 		} else {
 			seekTargetTime = codec.frameTimestamp;
 		}
