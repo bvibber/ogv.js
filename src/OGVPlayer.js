@@ -1359,15 +1359,18 @@ function StyleManager() {
 }
 OGVPlayer.styleManager = new StyleManager();
 
-OGVPlayer.supportsObjectFit = (typeof document.createElement('div').style.objectFit === 'string');
+// IE 10/11 and Edge 12 don't support object-fit.
+// Chrome 43 supports it but it doesn't work on <canvas>!
+// Safari for iOS 8/9 supports it but positions our <canvas> incorrectly >:(
+// Also just for fun, IE 10 doesn't support 'auto' sizing on canvas. o_O
+//OGVPlayer.supportsObjectFit = (typeof document.createElement('div').style.objectFit === 'string');
+OGVPlayer.supportsObjectFit = false;
 if (OGVPlayer.supportsObjectFit) {
 	OGVPlayer.updatePositionOnResize = function() {
 		// no-op
 	};
 } else {
 	OGVPlayer.updatePositionOnResize = function() {
-		// IE and Edge don't support object-fit.
-		// Also just for fun, IE 10 doesn't support 'auto' sizing on canvas.
 		function fixup(el, width, height) {
 			var container = el.offsetParent || el.parentNode,
 				containerAspect = container.offsetWidth / container.offsetHeight,
