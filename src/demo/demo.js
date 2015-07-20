@@ -975,73 +975,114 @@
 			player.currentTime = seekTime;
 		}
 	});
-	document.querySelector('#progress-thumb').addEventListener('touchstart', function(event) {
-		console.log('touch start');
-		if (player) {
-			thumbSeeking = true;
-			seekTarget = player.currentTime;
-			initialThumbFraction = seekTarget / player.duration;
-			initialThumbX = event.touches[0].pageX;
+	if (window.PointerEvent) {
+		document.querySelector('#progress-thumb').addEventListener('pointerdown', function(event) {
+			console.log('touch start');
+			if (player) {
+				var thumbPointer = event.pointerId;
+				event.target.setPointerCapture(thumbPointer);
 
-			var ontouchmove = function(event) {
-				console.log('touch move');
-				var bar = document.querySelector('#progress-total'),
-					dx = event.touches[0].pageX - initialThumbX,
-					fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-				seekTarget = fraction * player.duration;
-				updateProgress();
-				event.preventDefault();
-			};
-			var ontouchup = function(event) {
-				console.log('touch up');
-				thumbSeeking = false;
-				player.currentTime = seekTarget;
-				updateProgress();
+				thumbSeeking = true;
+				seekTarget = player.currentTime;
+				initialThumbFraction = seekTarget / player.duration;
+				initialThumbX = event.clientX;
 
-				this.removeEventListener('touchmove', ontouchmove);
-				this.removeEventListener('touchend', ontouchup);
-				this.removeEventListener('touchcancel', ontouchup);
-				event.preventDefault();
-			};
-			this.addEventListener('touchmove', ontouchmove);
-			this.addEventListener('touchend', ontouchup);
-			this.addEventListener('touchcancel', ontouchup);
-		}
-		event.preventDefault();
-	});
-	document.querySelector('#progress-thumb').addEventListener('mousedown', function(event) {
-		if (player) {
-			thumbSeeking = true;
-			seekTarget = player.currentTime;
-			initialThumbFraction = seekTarget / player.duration;
-			initialThumbX = event.clientX;
+				var ontouchmove = function(event) {
+					console.log('touch move');
+					var bar = document.querySelector('#progress-total'),
+						dx = event.clientX - initialThumbX,
+						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
+					seekTarget = fraction * player.duration;
+					updateProgress();
+					event.preventDefault();
+				};
+				var ontouchup = function(event) {
+					console.log('touch up');
+					thumbSeeking = false;
+					player.currentTime = seekTarget;
+					updateProgress();
 
-			var onmove = function(event) {
-				var bar = document.querySelector('#progress-total'),
-					dx = event.clientX - initialThumbX,
-					fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-				seekTarget = fraction * player.duration;
-				updateProgress();
-				event.preventDefault();
-			};
-			var onmouseup = function(event) {
-				var bar = document.querySelector('#progress-total'),
-					dx = event.clientX - initialThumbX,
-					fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-				seekTarget = fraction * player.duration;
-				thumbSeeking = false;
-				player.currentTime = seekTarget;
-				updateProgress();
+					this.removeEventListener('pointermove', ontouchmove);
+					this.removeEventListener('pointerup', ontouchup);
+					this.removeEventListener('pointercancel', ontouchup);
+					event.preventDefault();
+					event.target.releasePointerCapture(thumbPointer);
+				};
+				this.addEventListener('pointermove', ontouchmove);
+				this.addEventListener('pointerup', ontouchup);
+				this.addEventListener('pointercancel', ontouchup);
+			}
+			event.preventDefault();
+		});
+	} else {
+		document.querySelector('#progress-thumb').addEventListener('touchstart', function(event) {
+			console.log('touch start');
+			if (player) {
+				thumbSeeking = true;
+				seekTarget = player.currentTime;
+				initialThumbFraction = seekTarget / player.duration;
+				initialThumbX = event.touches[0].pageX;
 
-				document.removeEventListener('mousemove', onmove);
-				document.removeEventListener('mouseup', onmouseup);
-				event.preventDefault();
-			};
-			document.addEventListener('mousemove', onmove);
-			document.addEventListener('mouseup', onmouseup);
-		}
-		event.preventDefault();
-	});
+				var ontouchmove = function(event) {
+					console.log('touch move');
+					var bar = document.querySelector('#progress-total'),
+						dx = event.touches[0].pageX - initialThumbX,
+						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
+					seekTarget = fraction * player.duration;
+					updateProgress();
+					event.preventDefault();
+				};
+				var ontouchup = function(event) {
+					console.log('touch up');
+					thumbSeeking = false;
+					player.currentTime = seekTarget;
+					updateProgress();
+
+					this.removeEventListener('touchmove', ontouchmove);
+					this.removeEventListener('touchend', ontouchup);
+					this.removeEventListener('touchcancel', ontouchup);
+					event.preventDefault();
+				};
+				this.addEventListener('touchmove', ontouchmove);
+				this.addEventListener('touchend', ontouchup);
+				this.addEventListener('touchcancel', ontouchup);
+			}
+			event.preventDefault();
+		});
+		document.querySelector('#progress-thumb').addEventListener('mousedown', function(event) {
+			if (player) {
+				thumbSeeking = true;
+				seekTarget = player.currentTime;
+				initialThumbFraction = seekTarget / player.duration;
+				initialThumbX = event.clientX;
+
+				var onmove = function(event) {
+					var bar = document.querySelector('#progress-total'),
+						dx = event.clientX - initialThumbX,
+						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
+					seekTarget = fraction * player.duration;
+					updateProgress();
+					event.preventDefault();
+				};
+				var onmouseup = function(event) {
+					var bar = document.querySelector('#progress-total'),
+						dx = event.clientX - initialThumbX,
+						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
+					seekTarget = fraction * player.duration;
+					thumbSeeking = false;
+					player.currentTime = seekTarget;
+					updateProgress();
+
+					document.removeEventListener('mousemove', onmove);
+					document.removeEventListener('mouseup', onmouseup);
+					event.preventDefault();
+				};
+				document.addEventListener('mousemove', onmove);
+				document.addEventListener('mouseup', onmouseup);
+			}
+			event.preventDefault();
+		});
+	}
 
 	onclick('.fullscreen', function() {
 		var requestFullscreen = (container.requestFullscreen || container.mozRequestFullScreen || container.webkitRequestFullscreen || container.msRequestFullscreen).bind(container);

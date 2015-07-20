@@ -165,6 +165,8 @@ html, body {
 
 	-webkit-user-select: none;
 	user-select: none;
+
+	touch-action: none;
 }
 #controls button {
 	appearance: none;
