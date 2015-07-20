@@ -225,6 +225,10 @@
 
 		// Whee jsonp load
 		var script = document.createElement('script');
+		script.addEventListener('error', function(event) {
+			console.log('an error happened in JSONP!');
+			callback({error: 'failed to load JSONP request'});
+		});
 		script.src = url;
 		document.querySelector('head').appendChild(script);
 	}
