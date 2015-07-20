@@ -491,7 +491,9 @@
 		return 'File:¿Qué es Wikipedia?.ogv';
 	}
 
-	var chooserState = 0;
+	var chooserState = 0,
+		typingSearchTimeout = null,
+		lastSearchValue = null;
 	function dismissChooser() {
 		document.getElementById('media-chooser-stub').className = '';
 		document.getElementById('media-chooser').className = '';
@@ -500,11 +502,19 @@
 		dismissChooser();
 	});
 	function showChooser() {
+		if (typingSearchTimeout) {
+			clearTimeout(typingSearchTimeout);
+			typingSearchTimeout = null;
+		}
 		setHash();
 		
 		document.getElementById('media-chooser-stub').className = 'active';
 		document.getElementById('media-chooser').className = 'active';
-		
+
+		if (lastSearchValue == filter.value) {
+			return;
+		}
+		lastSearchValue = filter.value;
 		var filterString = filter.value.toLowerCase().replace(/^\s+/, '').replace(/\s+$/, '');
 		
 		var max = 40, list = [];
@@ -566,6 +576,13 @@
 	filter.addEventListener('cut', showChooser);
 	filter.addEventListener('paste', showChooser);
 	filter.addEventListener('focus', showChooser);
+	filter.addEventListener('keydown', function() {
+		if (typingSearchTimeout) {
+			clearTimeout(typingSearchTimeout);
+		}
+		typingSearchTimeout = setTimeout(showChooser, 250);
+	});
+
 	window.addEventListener('hashchange', function() {
 		// Warning: sometimes this triggers when we change it programatically
 		// it seems to be normalizing our unicode or something. Fun!
