@@ -52,8 +52,8 @@ var AudioFeeder;
 			pendingBuffer = freshBuffer(),
 			pendingPos = 0,
 			muted = false,
-			bufferHead = 0,
-			playbackTimeAtBufferHead = -1,
+			queuedTime = 0,
+			playbackTimeAtBufferTail = -1,
 			targetRate,
 			dropped = 0,
 			delayedTime = 0,
@@ -91,21 +91,15 @@ var AudioFeeder;
 		}
 
 		function audioProcess(event) {
-			var playbackTime;
-			if (typeof event.playbackTime === "number") {
-				playbackTime = event.playbackTime;
-			} else if (typeof event.timeStamp === "number") {
-				playbackTime = (event.timeStamp - Date.now()) / 1000 + context.currentTime;
-			} else {
-				console.log("Unrecognized AudioProgressEvent format, no playbackTime or timestamp");
-			}
-			queuedTime += (bufferSize / context.sampleRate);
-			var expectedTime = playbackTimeAtBufferHead + (bufferSize / context.sampleRate);
+			var channel, input, output, i;
+			var playbackTime = event.playbackTime;
+
+			var expectedTime = playbackTimeAtBufferTail;
 			if (expectedTime < playbackTime) {
-				// we may have lost some time while something ran too slow
-				delayedTime += (playbackTime - expectedTime);
+                // we may have lost some time while something ran too slow
+                delayedTime += (playbackTime - expectedTime);
 			}
-			playbackTimeAtBufferHead = playbackTime;
+
 			var inputBuffer = popNextBuffer(bufferSize);
 			if (!inputBuffer) {
 				// We might be in a throttled background tab; go ping the decoder
@@ -115,32 +109,30 @@ var AudioFeeder;
 					inputBuffer = popNextBuffer(bufferSize);
 				}
 			}
-			var channel, input, output, i;
-			if (!muted && inputBuffer) {
-				bufferHead += (bufferSize / context.sampleRate);
-				playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
-				for (channel = 0; channel < outputChannels; channel++) {
-					input = inputBuffer[channel];
-					output = event.outputBuffer.getChannelData(channel);
-					for (i = 0; i < Math.min(bufferSize, input.length); i++) {
-						output[i] = input[i];
-					}
-				}
-			} else {
-				if (inputBuffer) {
-					// Pretend we played this audio
-					bufferHead += (bufferSize / context.sampleRate);
-					playbackTimeAtBufferHead += (bufferSize / context.sampleRate);
-				} else {
-					dropped++;
-				}
+
+            // If we haven't got enough data, write a buffer of of silence to
+            // both channels
+			if (!inputBuffer) {
 				for (channel = 0; channel < outputChannels; channel++) {
 					output = event.outputBuffer.getChannelData(channel);
 					for (i = 0; i < bufferSize; i++) {
 						output[i] = 0;
 					}
 				}
+				dropped++;
+				return;
 			}
+
+			var volume = (muted ? 0 : 1);
+			for (channel = 0; channel < outputChannels; channel++) {
+				input = inputBuffer[channel];
+				output = event.outputBuffer.getChannelData(channel);
+				for (i = 0; i < Math.min(bufferSize, input.length); i++) {
+					output[i] = input[i] * volume;
+				}
+			}
+			queuedTime += (bufferSize / context.sampleRate);
+			playbackTimeAtBufferTail = playbackTime + (bufferSize / context.sampleRate);
 		}
 	
 		/**
@@ -272,7 +264,7 @@ var AudioFeeder;
 				});
 			
 				var bufferedSamples = numSamplesQueued;
-				var remainingSamples = Math.floor(Math.max(0, (playbackTimeAtBufferHead - context.currentTime)) * context.sampleRate);
+				var remainingSamples = Math.floor(Math.max(0, (playbackTimeAtBufferTail - context.currentTime)) * context.sampleRate);
 			
 				return bufferedSamples + remainingSamples;
 			} else {
@@ -303,7 +295,7 @@ var AudioFeeder;
 				}
 			} else {
 				return {
-					playbackPosition: queuedTime - Math.max(0, playbackTimeAtBufferHead - context.currentTime),
+					playbackPosition: queuedTime - Math.max(0, playbackTimeAtBufferTail - context.currentTime),
 					samplesQueued: samplesQueued(),
 					dropped: dropped,
 					delayed: delayedTime
@@ -362,7 +354,7 @@ var AudioFeeder;
 			} else {
 				node.onaudioprocess = audioProcess;
 				node.connect(context.destination);
-				playbackTimeAtBufferHead = context.currentTime;
+				playbackTimeAtBufferTail = context.currentTime;
 			}
 		};
 		
