@@ -708,7 +708,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						// Bad packet or something.
 						console.log('Bad video packet or something');
 					}
-					targetFrameTime = currentTime + 1000.0 / fps;
 				}
 			
 				// Check in when all audio runs out
