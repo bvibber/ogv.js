@@ -206,6 +206,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0, // number of times we were starved for audio
 		delayedAudio = 0; // seconds audio processing was delayed by blocked CPU
+	var poster = '', thumbnail;
 
 	function stopVideo() {
 		// kill the previous video if any
@@ -1185,7 +1186,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		}
 	});
 	
-	var poster = '', thumbnail;
 	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
@@ -1210,9 +1210,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						width: thumbnail.naturalWidth + 'px',
 						height: thumbnail.naturalHeight + 'px'
 					});
+					self.appendChild(thumbnail);
 					OGVPlayer.updatePositionOnResize();
 				});
-				self.appendChild(thumbnail);
 			}
 		}
 	});
