@@ -131,8 +131,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 	var codec, audioFeeder;
 	var muted = false,
-		initialAudioPosition = 0.0,
-		initialAudioOffset = 0.0;
+		initialPlaybackPosition = 0.0,
+		initialPlaybackOffset = 0.0;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
 		if (muted) {
@@ -146,18 +146,24 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
 	}
 	
-	function startAudio(offset) {
-		audioFeeder.start();
-		var state = audioFeeder.getPlaybackState();
-		initialAudioPosition = state.playbackPosition;
+	function startPlayback(offset) {
+		if (audioFeeder) {
+			audioFeeder.start();
+			var state = audioFeeder.getPlaybackState();
+			initialPlaybackPosition = state.playbackPosition;
+		} else {
+			initialPlaybackPosition = getTimestamp() / 1000;
+		}
 		if (offset !== undefined) {
-			initialAudioOffset = offset;
+			initialPlaybackOffset = offset;
 		}
 	}
 	
-	function stopAudio() {
-		audioFeeder.stop();
-		initialAudioOffset = getAudioTime();
+	function stopPlayback() {
+		if (audioFeeder) {
+			audioFeeder.stop();
+		}
+		initialPlaybackOffset = getPlaybackTime();
 	}
 	
 	/**
@@ -165,9 +171,15 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	 *
 	 * @return {number} seconds since file start
 	 */
-	function getAudioTime(state) {
-		state = state || audioFeeder.getPlaybackState();
-		return (state.playbackPosition - initialAudioPosition) + initialAudioOffset;
+	function getPlaybackTime(state) {
+		var position;
+		if (audioFeeder) {
+			state = state || audioFeeder.getPlaybackState();
+			position = state.playbackPosition;
+		} else {
+			position = getTimestamp() / 1000;
+		}
+		return (position - initialPlaybackPosition) + initialPlaybackOffset;
 	}
 
 	var stream,
@@ -325,9 +337,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		lastSeekPosition = -1;
 		codec.flush();
 		
-		if (codec.hasAudio && audioFeeder) {
-			stopAudio();
-		}
+		stopPlayback();
 		
 		var offset = codec.getKeypointOffset(toTime);
 		if (offset > 0) {
@@ -356,12 +366,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		frameEndTimestamp = codec.frameTimestamp;
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
-			startAudio(seekTargetTime);
-			if (paused) {
-				stopAudio(); // :P
-			}
 		} else {
 			seekTargetTime = codec.frameTimestamp;
+		}
+		startPlayback(seekTargetTime);
+		if (paused) {
+			stopPlayback(); // :P
 		}
 	}
 	
@@ -490,7 +500,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		
 		var audioBufferedDuration = 0,
 			audioState = null,
-			audioPlaybackPosition = 0;
+			playbackPosition = 0;
 
 		var n = 0;
 		while (true) {
@@ -598,10 +608,11 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				if (codec.hasAudio) {
 					initAudioFeeder();
 					audioFeeder.waitUntilReady(function() {
-						startAudio(0.0);
+						startPlayback(0.0);
 						pingProcessing(0);
 					});
 				} else {
+					startPlayback(0.0);
 					pingProcessing(0);
 				}
 
@@ -665,19 +676,21 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			if (codec.hasAudio && audioFeeder) {
 				if (!audioState) {
 					audioState = audioFeeder.getPlaybackState();
-					audioPlaybackPosition = getAudioTime(audioState);
+					playbackPosition = getPlaybackTime(audioState);
 					audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
 					droppedAudio = audioState.dropped;
 					delayedAudio = audioState.delayed;
 				}
+			} else {
+				playbackPosition = getPlaybackTime();
+			}
 
+			var startTimeSpent = getTimestamp();
+
+			if (codec.hasAudio && audioFeeder) {
 				// Drive on the audio clock!
-				var fudgeDelta = 0.1,
-					readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2),
-					frameDelay = (frameEndTimestamp - audioPlaybackPosition) * 1000,
-					readyForFrame = (frameDelay <= fudgeDelta);
+				var readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
 
-				var startTimeSpent = getTimestamp();
 				if (codec.audioReady && readyForAudio) {
 					var ok;
 					audioDecodingTime += time(function() {
@@ -696,6 +709,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						}
 					}
 				}
+			}
+
+			if (codec.hasVideo) {
+				var fudgeDelta = 0.1,
+					frameDelay = (frameEndTimestamp - playbackPosition) * 1000,
+					readyForFrame = (frameDelay <= fudgeDelta);
 				if (codec.frameReady && readyForFrame) {
 					var ok;
 					videoDecodingTime += time(function() {
@@ -709,57 +728,34 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						console.log('Bad video packet or something');
 					}
 				}
-			
-				// Check in when all audio runs out
+			}
+
+			// Check in when all audio runs out
+			var nextDelays = [];
+			if (codec.hasAudio && audioFeeder) {
 				var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 1000;
-				var nextDelays = [];
 				if (audioBufferedDuration <= bufferDuration * 2) {
 					// NEED MOAR BUFFERS
+					continue;
 				} else {
 					// Check in when the audio buffer runs low again...
 					nextDelays.push(bufferDuration / 2);
-					
-					if (codec.hasVideo) {
-						// Check in when the next frame is due
-						// Subtract time we already spent decoding
-						var deltaTimeSpent = getTimestamp() - startTimeSpent;
-						nextDelays.push(frameDelay - deltaTimeSpent);
-					}
 				}
-				
-				var nextDelay = Math.min.apply(Math, nextDelays);
-				if (nextDelays.length > 0) {
-					if (!codec.hasVideo) {
-						framesProcessed++; // pretend!
-						doFrameComplete();
-					}
-					pingProcessing(Math.max(0, nextDelay));
-					return;
+			}
+			if (codec.hasVideo) {
+				// Check in when the next frame is due
+				// Subtract time we already spent decoding
+				var deltaTimeSpent = getTimestamp() - startTimeSpent;
+				nextDelays.push(frameDelay - deltaTimeSpent);
+			}
+			var nextDelay = Math.min.apply(Math, nextDelays);
+			if (nextDelays.length > 0) {
+				if (!codec.hasVideo) {
+					framesProcessed++; // pretend!
+					doFrameComplete();
 				}
-			} else if (codec.hasVideo) {
-				// Video-only: drive on the video clock
-				if (codec.frameReady && getTimestamp() >= targetFrameTime) {
-					// it's time to draw
-					var ok;
-					videoDecodingTime += time(function() {
-						ok = codec.decodeFrame();
-					});
-					if (ok) {
-						processFrame();
-						drawFrame();
-						targetFrameTime += 1000.0 / fps;
-						pingProcessing(0);
-					} else {
-						console.log('Bad video packet or something');
-						pingProcessing(Math.max(0, targetFrameTime - getTimestamp()));
-					}
-				} else {
-					// check in again soon!
-					pingProcessing(Math.max(0, targetFrameTime - getTimestamp()));
-				}
+				pingProcessing(Math.max(0, nextDelay));
 				return;
-			} else {
-				// Ok we're just waiting for more input.
 			}
 		}
 	}
@@ -1004,9 +1000,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				continueVideo();
 			} else {
 				continueVideo = function() {
-					if (audioFeeder) {
-						startAudio();
-					}
+					startPlayback();
 					pingProcessing(0);
 				};
 				if (!started) {
@@ -1056,9 +1050,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		} else if (!paused) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
-			if (audioFeeder) {
-				stopAudio();
-			}
+			stopPlayback();
 			paused = true;
 			fireEvent('pause');
 		}
@@ -1112,14 +1104,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			if (state == State.SEEKING) {
 				return seekTargetTime;
 			} else {
-				if (codec && codec.hasAudio && audioFeeder) {
+				if (codec) {
 					if (paused) {
-						return initialAudioOffset;
+						return initialPlaybackOffset;
 					} else {
-						return getAudioTime();
+						return getPlaybackTime();
 					}
-				} else if (codec && codec.hasVideo) {
-					return frameEndTimestamp;
 				} else {
 					return 0;
 				}
