@@ -164,6 +164,7 @@ html, body {
 	align-items: center;
 
 	-webkit-user-select: none;
+	-ms-user-select: none;
 	user-select: none;
 
 	touch-action: none;
@@ -212,6 +213,8 @@ html, body {
 	height: 4px;
 
 	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 }
 #controls .time-elapsed,
 #controls .time-remaining {
