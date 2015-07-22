@@ -10,7 +10,7 @@ function WebGLFrameSink(canvas, videoInfo) {
 	var self = this,
 		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'),
 		debug = false; // swap this to enable more error checks, which can slow down rendering
-	
+
 	if (gl === null) {
 		throw new Error('WebGL unavailable');
 	}
@@ -63,14 +63,21 @@ function WebGLFrameSink(canvas, videoInfo) {
 
 	var textures = {};
 	function attachTexture(name, register, index, width, height, data) {
-		var texture;
+		var texture,
+			texWidth = WebGLFrameSink.stripe ? (width / 4) : width,
+			format = WebGLFrameSink.stripe ? gl.RGBA : gl.LUMINANCE,
+			filter = WebGLFrameSink.stripe ? gl.NEAREST : gl.LINEAR;
+
 		if (textures[name]) {
 			// Reuse & update the existing texture
 			texture = textures[name];
 		} else {
 			textures[name] = texture = gl.createTexture();
+			checkError();
+
+			gl.uniform1i(gl.getUniformLocation(program, name), index);
+			checkError();
 		}
-		checkError();
 		gl.activeTexture(register);
 		checkError();
 		gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -79,33 +86,35 @@ function WebGLFrameSink(canvas, videoInfo) {
 		checkError();
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		checkError();
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
 		checkError();
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
 		checkError();
 		
 		gl.texImage2D(
 			gl.TEXTURE_2D,
 			0, // mip level
-			gl.LUMINANCE, // internal format
-			width, height,
+			format, // internal format
+			texWidth,
+			height,
 			0, // border
-			gl.LUMINANCE, // format
+			format, // format
 			gl.UNSIGNED_BYTE, //type
 			data // data!
 		);
 		checkError();
 	
-		gl.uniform1i(gl.getUniformLocation(program, name), index);
-		checkError();
-		
 		return texture;
 	}
 
 	function init(yCbCrBuffer) {
 		vertexShader = compileShader(gl.VERTEX_SHADER, YCBCR_VERTEX_SHADER);
-		fragmentShader = compileShader(gl.FRAGMENT_SHADER, YCBCR_FRAGMENT_SHADER);
-	
+		if (WebGLFrameSink.stripe) {
+			fragmentShader = compileShader(gl.FRAGMENT_SHADER, YCBCR_STRIPE_FRAGMENT_SHADER);
+		} else {
+			fragmentShader = compileShader(gl.FRAGMENT_SHADER, YCBCR_FRAGMENT_SHADER);
+		}
+
 		program = gl.createProgram();
 		gl.attachShader(program, vertexShader);
 		checkError();
@@ -122,6 +131,40 @@ function WebGLFrameSink(canvas, videoInfo) {
 
 		gl.useProgram(program);
 		checkError();
+
+		if (WebGLFrameSink.stripe) {
+			function buildStripe(width, height) {
+				var len = width * height,
+					out = new Uint32Array(len);
+				for (var i = 0; i < len; i += 4) {
+					out[i    ] = 0x000000ff;
+					out[i + 1] = 0x0000ff00;
+					out[i + 2] = 0x00ff0000;
+					out[i + 3] = 0xff000000;
+				}
+				return new Uint8Array(out.buffer);
+			}
+
+			attachTexture(
+				'uStripeLuma',
+				gl.TEXTURE3,
+				3,
+				yCbCrBuffer.strideY * 4,
+				yCbCrBuffer.height,
+				buildStripe(yCbCrBuffer.strideY, yCbCrBuffer.height)
+			);
+			checkError();
+
+			attachTexture(
+				'uStripeChroma',
+				gl.TEXTURE4,
+				4,
+				yCbCrBuffer.strideCb * 4,
+				yCbCrBuffer.height >> yCbCrBuffer.vdec,
+				buildStripe(yCbCrBuffer.strideCb, yCbCrBuffer.height >> yCbCrBuffer.vdec)
+			);
+			checkError();
+		}
 	}
 	
 	self.drawFrame = function(yCbCrBuffer) {
@@ -223,6 +266,18 @@ function WebGLFrameSink(canvas, videoInfo) {
 	return self;
 }
 
+// For IE and Edge; luminance and alpha textures are ssllooww to upload,
+// so we pack into RGBA and unpack in the shaders.
+WebGLFrameSink.stripe = (function() {
+	if (navigator.userAgent.indexOf('Trident' !== -1)) {
+		return true;
+	}
+	if (navigator.userAgent.indexOf('Edge' !== -1)) {
+		return true;
+	}
+	return false;
+});
+
 /**
  * Static function to check if WebGL will be available with appropriate features.
  *
@@ -243,21 +298,25 @@ WebGLFrameSink.isAvailable = function() {
 			width = 4,
 			height = 4,
 			texture = gl.createTexture(),
-			data = new Uint8Array(width * height);
+			data = new Uint8Array(width * height),
+			texWidth = WebGLFrameSink.stripe ? (width / 4) : width,
+			format = WebGLFrameSink.stripe ? gl.RGBA : gl.LUMINANCE,
+			filter = WebGLFrameSink.stripe ? gl.NEAREST : gl.LINEAR;
 
 		gl.activeTexture(register);
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
 		gl.texImage2D(
 			gl.TEXTURE_2D,
 			0, // mip level
-			gl.LUMINANCE, // internal format
-			width, height,
+			format, // internal format
+			texWidth,
+			height,
 			0, // border
-			gl.LUMINANCE, // format
+			format, // format
 			gl.UNSIGNED_BYTE, //type
 			data // data!
 		);

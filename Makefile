@@ -122,10 +122,11 @@ build/webm-codec.js : src/codec-libs.js.in build/js/webm-libs.js
 	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OGVWebMDecoder -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
 
 
-build/YCbCr-shaders.h : src/YCbCr.vsh src/YCbCr.fsh file2def.js
+build/YCbCr-shaders.h : src/YCbCr.vsh src/YCbCr.fsh src/YCbCr-stripe.fsh file2def.js
 	test -d build || mkdir build
 	node file2def.js src/YCbCr.vsh YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
 	node file2def.js src/YCbCr.fsh YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
+	node file2def.js src/YCbCr-stripe.fsh YCBCR_STRIPE_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
 build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 	test -d build || mkdir build
