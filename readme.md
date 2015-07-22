@@ -41,7 +41,7 @@ The API isn't quite complete, but works pretty well.
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
 The primary target browsers are (testing 360p/30fps):
-* Safari 7/8 on Mac OS X 10.8/10.9
+* Safari 6.1/7/8 on Mac OS X 10.7/10.8/10.9
 * Safari on iOS 8 64-bit
 * Edge on Windows 10 desktop/tablet
 * Internet Explorer 10/11 on Windows 7/8/8.1 (desktop/tablet)
@@ -51,7 +51,7 @@ And for lower-resolution files (testing 160p/15fps):
 * Edge on Windows 10 Mobile
 * Internet Explorer 10/11 on Windows RT
 
-Older versions of iOS Safari have flaky JIT compilers. IE 9 and below lack typed arrays.
+Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arrays.
 
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS, Windows RT, or Windows 10 Mobile.)
 
@@ -105,7 +105,7 @@ WebM is much slower, and remains experimental.
 
 See [device notes](https://github.com/brion/ogv.js/wiki/Device-notes) for testing status.
 
-On iOS 7, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. As of March 2014, I've gotten barely acceptable performance for 160p/15fps files on iPod Touch 5th-gen and iPad 3. Files at 360p and up play acceptably only on the latest 64-bit iPhones and iPads.
+On iOS 8, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. As of March 2014, I've gotten acceptable performance for 160p/15fps files on iPod Touch 5th-gen and iPad 3. Files at 360p and often 480p play acceptably on newer 64-bit iPhones and iPads.
 
 IE 11 on Windows RT 8.1 on an original Surface RT tablet performs barely acceptably with 160p/15fps files, but sound sync is poor (due to Flash overhead?). Larger files play unacceptably slowly.
 
@@ -144,6 +144,7 @@ The Firefox and Safari/Chrome cases have been hacked up to do streaming bufferin
 
 [Safari has a bug with Range headers](https://bugs.webkit.org/show_bug.cgi?id=82672) which is worked around as necessary with a 'cache-busting' URL string parameter. Hopefully this will be fixed in future versions of Mac OS X and iOS.
 
+
 *Seeking*
 
 Seeking is implemented via the HTTP Range: header.
@@ -159,12 +160,12 @@ As with chunked streaming, cross-site playback requires CORS support for the Ran
 
 Firefox, Safari, Chrome, and Edge support the W3C Web Audio API.
 
-IE doesn't support Web Audio, but does bundle the Flash player. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
+IE doesn't support Web Audio, but does bundle the Flash player in Windows 8/8.1/RT. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
 
 A/V synchronization is performed on files with both audio and video, and seems to
 actually work. Yay!
 
-Note that autoplay doesn't work on iOS Safari due to limitations with starting audio playback.
+Note that autoplay doesn't work on iOS Safari due to limitations with starting audio playback from event handlers.
 
 
 *WebM*

@@ -92,7 +92,12 @@ var AudioFeeder;
 
 		function audioProcess(event) {
 			var channel, input, output, i;
-			var playbackTime = event.playbackTime;
+			if (typeof event.playbackTime === 'number') {
+				var playbackTime = event.playbackTime;
+			} else {
+				// Safari 6.1 hack
+				playbackTime = context.currentTime + (bufferSize / targetRate);
+			}
 
 			var expectedTime = playbackTimeAtBufferTail;
 			if (expectedTime < playbackTime) {
