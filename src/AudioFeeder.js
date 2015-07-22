@@ -230,21 +230,32 @@ var AudioFeeder;
 			}
 			return digits;
 		}
-	
+
+		var flashBuffer = '',
+			flushTimeout = null;
+		function flushFlashBuffer() {
+			var chunk = flashBuffer;
+			if (self.flashaudio.flashElement.write) {
+				self.flashaudio.flashElement.write(chunk);
+			} else {
+				self.waitUntilReady(function() {
+					self.flashaudio.flashElement.write(chunk);
+				});
+			}
+			flashBuffer = '';
+			flushTimeout = null;
+		}
 		this.bufferData = function(samplesPerChannel) {
 			if(this.flashaudio) {
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 				var flashElement = this.flashaudio.flashElement;
 				if(resamples.length > 0) {
 					var str = hexString(resamples.buffer);
-					//console.log(str.length + ' bytes sent to Flash');
-					if (flashElement.write) {
-						flashElement.write(str);
-					} else {
-						//console.log('NOT YET READY');
-						self.waitUntilReady(function() {
-							flashElement.write(str);
-						});
+					flashBuffer += str;
+					if (!flushTimeout) {
+						// consolidate multiple consecutive tiny buffers in one pass;
+						// pushing data to Flash is relatively expensive on slow machines
+						flushTimeout = setTimeout(flushFlashBuffer, 0);
 					}
 				}
 			} else if (buffers) {
@@ -283,7 +294,9 @@ var AudioFeeder;
 			if (this.flashaudio) {
 				var flashElement = this.flashaudio.flashElement;
 				if (flashElement.write) {
-					return flashElement.getPlaybackState();
+					var state = flashElement.getPlaybackState();
+					state.samplesQueued += flashBuffer.length / 2;
+					return state;
 				} else {
 					//console.log('getPlaybackState USED TOO EARLY');
 					return {
