@@ -177,6 +177,7 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
                         build/demo/media/curiosity.ogv \
+                        build/demo/media/sneak.ogv \
                         build/demo/lib/ogv.js \
                         build/demo/lib/ogv-codec.js \
                         build/demo/lib/ogv-codec.js.gz \
@@ -224,6 +225,10 @@ build/demo/media/pixel_aspect_ratio.ogg : src/demo/media/pixel_aspect_ratio.ogg
 build/demo/media/curiosity.ogv : src/demo/media/curiosity.ogv
 	test -d build/demo/media || mkdir -p build/demo/media
 	cp src/demo/media/curiosity.ogv build/demo/media/curiosity.ogv
+
+build/demo/media/sneak.ogv : src/demo/media/sneak.ogv
+	test -d build/demo/media || mkdir -p build/demo/media
+	cp src/demo/media/sneak.ogv build/demo/media/sneak.ogv
 
 build/demo/lib/ogv.js : build/ogv.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
