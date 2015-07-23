@@ -269,14 +269,14 @@ function WebGLFrameSink(canvas, videoInfo) {
 // For IE and Edge; luminance and alpha textures are ssllooww to upload,
 // so we pack into RGBA and unpack in the shaders.
 WebGLFrameSink.stripe = (function() {
-	if (navigator.userAgent.indexOf('Trident' !== -1)) {
+	if (navigator.userAgent.indexOf('Trident') !== -1) {
 		return true;
 	}
-	if (navigator.userAgent.indexOf('Edge' !== -1)) {
+	if (navigator.userAgent.indexOf('Edge') !== -1) {
 		return true;
 	}
 	return false;
-});
+})();
 
 /**
  * Static function to check if WebGL will be available with appropriate features.
