@@ -114,11 +114,11 @@ In both cases, a native application looms as a possibly better alternative. If i
 
 *WebGL drawing acceleration*
 
-Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers (Firefox, Chrome, IE 11 update 1, Edge, and Safari for iOS 8 & OS X 10.9), and is enabled by default if available.
+Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting browsers (Firefox, Chrome, IE 11, Edge, and Safari for iOS 8 & OS X 10.9), and is enabled by default if available.
 
 WebGL noticeably improves playback performance at HD and SD resolutions.
 
-IE 10 and early versions of IE 11 do not support luminance textures; there used to be some code to work around by packing RGBA textures that but it's been removed to simplify things. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
+Early versions of IE 11 do not support luminance or alpha textures, and in IE 11 update 1 and Edge they are still unexpectedly slow. As a workaround, on IE and Edge the data is packed into RGBA textures for faster texture upload and unpacked in the shader. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
 
 
 ## Difficulties
