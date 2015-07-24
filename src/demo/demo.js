@@ -596,6 +596,7 @@
 			oldPlayer = playerBackend;
 		selectedTitle = getDefault();
 		if (oldTitle != selectedTitle || oldSize != preferredKey || oldPlayer != playerBackend) {
+			stopVideo();
 			showVideo();
 		}
 		if (oldFilter != filter.value && document.getElementById('media-chooser').className == 'active') {
@@ -654,6 +655,7 @@
 	var selector = document.getElementById('video-preferred-size');
 	selector.value = preferredKey;
 	selector.addEventListener('change', function() {
+		stopVideo();
 		preferredKey = selector.value;
 		console.log('changed to ' + preferredKey);
 		setHash();
@@ -728,6 +730,10 @@
 			selectedUrl = selected.url;
 			console.log("Going to try streaming data from " + selectedUrl);
 			
+			if (player) {
+				// this should not happen
+				stopVideo();
+			}
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					base: 'lib',
