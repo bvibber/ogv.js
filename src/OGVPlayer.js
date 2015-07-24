@@ -1223,7 +1223,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	Object.defineProperty(self, "videoWidth", {
 		get: function getVideoWidth() {
 			if (videoInfo) {
-				return videoInfo.picWidth;
+				return videoInfo.displayWidth;
 			} else {
 				return 0;
 			}
@@ -1232,7 +1232,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	Object.defineProperty(self, "videoHeight", {
 		get: function getVideoHeight() {
 			if (videoInfo) {
-				return videoInfo.picHeight;
+				return videoInfo.displayHeight;
 			} else {
 				return 0;
 			}
