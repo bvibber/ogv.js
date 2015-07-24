@@ -925,7 +925,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			},
 			onread: function(data) {
 				// Pass chunk into the codec's buffer
-				codec.receiveInput(data);
+				demuxingTime += time(function() {
+					codec.receiveInput(data);
+				});
 
 				// Continue the read/decode/draw loop...
 				pingProcessing();
