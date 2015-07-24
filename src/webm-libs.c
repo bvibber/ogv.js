@@ -32,7 +32,9 @@
 
 static nestegg        *demuxContext;
 static char           *bufferQueue = NULL;
+static off_t           bufferQueueIndex = 0;
 static size_t          bufferSize = 0;
+static size_t          maxBufferSize = 0;
 static uint64_t        bufferBytesRead = 0;
 
 static bool            hasVideo = false;
@@ -122,19 +124,16 @@ static void logCallback(nestegg *context, unsigned int severity, char const * fo
 
 static int readCallback(void * buffer, size_t length, void *userdata)
 {
-	if (length > bufferSize) {
+	if (bufferQueueIndex + length > bufferSize) {
 		// @todo rework to use asyncify
+		printf("READ FAIL; read %d at index %d of size %d of max size %d\n", (int)length, (int)bufferQueueIndex, (int)bufferSize, (int)maxBufferSize);
 		return -1;
 	}
 	
 	// return the first bytes...
-	memcpy(buffer, bufferQueue, length);
-	
-	// and save the rest...
-	bufferSize -= length;
-	bufferBytesRead += length;
-	memcpy(bufferQueue, bufferQueue + length, bufferSize);
-	bufferQueue = realloc(bufferQueue, bufferSize);
+	//printf("READ %d at %d\n", (int)length, (int)bufferQueueIndex);
+	memcpy(buffer, bufferQueue + bufferQueueIndex, length);
+	bufferQueueIndex += length;
 	
 	return 1;
 }
@@ -503,7 +502,24 @@ void codecjs_receive_input(char *buffer, int bufsize) {
 		// which will be drained by the sync io callback
 		
 		// @fixme this is hella inefficient i bet
-		bufferQueue = realloc(bufferQueue, bufferSize + bufsize);
+		if (bufferSize + bufsize >= maxBufferSize) {
+			if (bufferQueueIndex > 0) {
+				// shift over the data we already ready
+				printf("SHIFT index was %d of size %d of max size %d\n", (int)bufferQueueIndex, (int)bufferSize, (int)maxBufferSize);
+				bufferSize -= bufferQueueIndex;
+				memmove(bufferQueue, bufferQueue + bufferQueueIndex, bufferSize);
+				bufferQueueIndex = 0;
+			}
+			if (bufferSize + bufsize >= maxBufferSize) {
+				// still need more room? expand.
+				printf("EXPAND size was %d of max size %d\n", (int)bufferSize, (int)maxBufferSize);
+				while (bufferSize + bufsize >= maxBufferSize) {
+					maxBufferSize += 65536;
+				}
+				bufferQueue = realloc(bufferQueue, maxBufferSize);
+			}
+		}
+		printf("APPEND %d\n", (int)bufsize);
 		memcpy(bufferQueue + bufferSize, buffer, bufsize);
 		bufferSize += bufsize;
     }
@@ -511,7 +527,7 @@ void codecjs_receive_input(char *buffer, int bufsize) {
 
 int codecjs_process() {
 	// quick i/o hack
-	if (!buffersReceived || bufferSize < 256 * 1024) {
+	if (!buffersReceived || (bufferSize - bufferQueueIndex) < 256 * 1024) {
 		return 0;
 	}
 
