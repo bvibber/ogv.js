@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 0.9.2
+ * fix for time reporting issue
 * 0.9.1
  * more sound sync fixes
  * IE 11/Edge WebGL perf improvements

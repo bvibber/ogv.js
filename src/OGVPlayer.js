@@ -1105,10 +1105,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				return seekTargetTime;
 			} else {
 				if (codec) {
-					if (paused) {
-						return initialPlaybackOffset;
-					} else {
+					if (state == State.PLAYING && !paused) {
 						return getPlaybackTime();
+					} else {
+						return initialPlaybackOffset;
 					}
 				} else {
 					return 0;

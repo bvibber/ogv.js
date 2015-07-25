@@ -67,6 +67,7 @@ var AudioFeeder;
 				AudioFeeder.initSharedAudioContext();
 				context = AudioFeeder.sharedAudioContext;
 			}
+			playbackTimeAtBufferTail = context.currentTime;
 
 			if (context.createScriptProcessor) {
 				node = context.createScriptProcessor(bufferSize, 0, outputChannels);
