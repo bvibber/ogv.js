@@ -56,8 +56,7 @@ var AudioFeeder;
 			playbackTimeAtBufferTail = -1,
 			targetRate,
 			dropped = 0,
-			delayedTime = 0,
-			queuedTime = 0;
+			delayedTime = 0;
 
 		if(AudioContext) {
 			if (typeof options.audioContext !== 'undefined') {
@@ -91,9 +90,9 @@ var AudioFeeder;
 		}
 
 		function audioProcess(event) {
-			var channel, input, output, i;
+			var channel, input, output, i, playbackTime;
 			if (typeof event.playbackTime === 'number') {
-				var playbackTime = event.playbackTime;
+				playbackTime = event.playbackTime;
 			} else {
 				// Safari 6.1 hack
 				playbackTime = context.currentTime + (bufferSize / targetRate);

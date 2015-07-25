@@ -501,7 +501,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		
 		var audioBufferedDuration = 0,
 			audioState = null,
-			playbackPosition = 0;
+			playbackPosition = 0,
+			more,
+			ok;
 
 		var n = 0;
 		while (true) {
@@ -514,7 +516,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 
 			if (state == State.INITIAL) {
-				var more = codec.process();
+				more = codec.process();
 
 				if (loadedMetadata) {
 					// we just fell over from headers into content; call onloadedmetadata etc
@@ -553,7 +555,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			
 			if (state == State.SEEKING_END) {
 				// Look for the last item.
-				var more = codec.process();
+				more = codec.process();
 				
 				if (codec.hasVideo && codec.frameReady) {
 					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.frameTimestamp);
@@ -643,7 +645,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			// Process until we run out of data or
 			// completely decode a video frame...
 			var currentTime = getTimestamp();
-			var more;
 			demuxingTime += time(function() {
 				more = codec.process();
 			});
@@ -687,13 +688,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 
 			var startTimeSpent = getTimestamp();
+			var nextDelays = [];
 
 			if (codec.hasAudio && audioFeeder) {
 				// Drive on the audio clock!
 				var readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
 
 				if (codec.audioReady && readyForAudio) {
-					var ok;
 					audioDecodingTime += time(function() {
 						ok = codec.decodeAudio();
 					});
@@ -710,6 +711,16 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						}
 					}
 				}
+
+				// Check in when all audio runs out
+				var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 1000;
+				if (audioBufferedDuration <= bufferDuration * 2) {
+					// NEED MOAR BUFFERS
+					continue;
+				} else {
+					// Check in when the audio buffer runs low again...
+					nextDelays.push(bufferDuration / 2);
+				}
 			}
 
 			if (codec.hasVideo) {
@@ -717,7 +728,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					frameDelay = (frameEndTimestamp - playbackPosition) * 1000,
 					readyForFrame = (frameDelay <= fudgeDelta);
 				if (codec.frameReady && readyForFrame) {
-					var ok;
 					videoDecodingTime += time(function() {
 						ok = codec.decodeFrame();
 					});
@@ -729,26 +739,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						console.log('Bad video packet or something');
 					}
 				}
-			}
 
-			// Check in when all audio runs out
-			var nextDelays = [];
-			if (codec.hasAudio && audioFeeder) {
-				var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 1000;
-				if (audioBufferedDuration <= bufferDuration * 2) {
-					// NEED MOAR BUFFERS
-					continue;
-				} else {
-					// Check in when the audio buffer runs low again...
-					nextDelays.push(bufferDuration / 2);
-				}
-			}
-			if (codec.hasVideo) {
 				// Check in when the next frame is due
 				// Subtract time we already spent decoding
 				var deltaTimeSpent = getTimestamp() - startTimeSpent;
 				nextDelays.push(frameDelay - deltaTimeSpent);
 			}
+
 			var nextDelay = Math.min.apply(Math, nextDelays);
 			if (nextDelays.length > 0) {
 				if (!codec.hasVideo) {
@@ -968,7 +965,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						unknownCodecs++;
 					}
 				});
-				if (knownCodecs == 0) {
+				if (knownCodecs === 0) {
 					return '';
 				} else if (unknownCodecs > 0) {
 					return '';
@@ -1341,14 +1338,14 @@ function StyleManager() {
 
 	self.appendRule = function(selector, defs) {
 		var bits = [];
-		for (prop in defs) {
+		for (var prop in defs) {
 			if (defs.hasOwnProperty(prop)) {
 				bits.push(prop + ':' + defs[prop]);
 			}
 		}
 		var rule = selector + '{' + bits.join(';') + '}';
 		sheet.insertRule(rule, sheet.length - 1);
-	}
+	};
 }
 OGVPlayer.styleManager = new StyleManager();
 
@@ -1401,13 +1398,13 @@ if (OGVPlayer.supportsObjectFit) {
 			fixup(poster, poster.naturalWidth, poster.naturalHeight);
 		});
 	};
-	function fullResizeVideo() {
+	var fullResizeVideo = function() {
 		// fullscreens may ping us before the resize happens
 		setTimeout(OGVPlayer.updatePositionOnResize, 0);
-	}
+	};
 
 	window.addEventListener('resize', OGVPlayer.updatePositionOnResize);
-	window.addEventListener('orientationchange', OGVPlayer.updatePositionOnResize)
+	window.addEventListener('orientationchange', OGVPlayer.updatePositionOnResize);
 
 	document.addEventListener('fullscreenchange', fullResizeVideo);
 	document.addEventListener('mozfullscreenchange', fullResizeVideo);

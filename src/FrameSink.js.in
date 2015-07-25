@@ -12,7 +12,7 @@ function FrameSink(canvas, videoInfo) {
 	#include "YCbCr.js"
 
 	function initImageData(width, height) {
-		imageData = ctx.createImageData(width, height)
+		imageData = ctx.createImageData(width, height);
 
 		// Prefill the alpha to opaque
 		var data = imageData.data,
@@ -33,7 +33,7 @@ function FrameSink(canvas, videoInfo) {
 	 * Actually draw a frame into the canvas.
 	 */
 	self.drawFrame = function drawFrame(yCbCrBuffer) {
-		if (imageData == null ||
+		if (imageData === null ||
 				imageData.width != yCbCrBuffer.width ||
 				imageData.height != yCbCrBuffer.height) {
 			initImageData(yCbCrBuffer.width, yCbCrBuffer.height);

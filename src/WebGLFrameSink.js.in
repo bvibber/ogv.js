@@ -107,6 +107,18 @@ function WebGLFrameSink(canvas, videoInfo) {
 		return texture;
 	}
 
+	function buildStripe(width, height) {
+		var len = width * height,
+			out = new Uint32Array(len);
+		for (var i = 0; i < len; i += 4) {
+			out[i    ] = 0x000000ff;
+			out[i + 1] = 0x0000ff00;
+			out[i + 2] = 0x00ff0000;
+			out[i + 3] = 0xff000000;
+		}
+		return new Uint8Array(out.buffer);
+	}
+
 	function init(yCbCrBuffer) {
 		vertexShader = compileShader(gl.VERTEX_SHADER, YCBCR_VERTEX_SHADER);
 		if (WebGLFrameSink.stripe) {
@@ -133,18 +145,6 @@ function WebGLFrameSink(canvas, videoInfo) {
 		checkError();
 
 		if (WebGLFrameSink.stripe) {
-			function buildStripe(width, height) {
-				var len = width * height,
-					out = new Uint32Array(len);
-				for (var i = 0; i < len; i += 4) {
-					out[i    ] = 0x000000ff;
-					out[i + 1] = 0x0000ff00;
-					out[i + 2] = 0x00ff0000;
-					out[i + 3] = 0xff000000;
-				}
-				return new Uint8Array(out.buffer);
-			}
-
 			attachTexture(
 				'uStripeLuma',
 				gl.TEXTURE3,
