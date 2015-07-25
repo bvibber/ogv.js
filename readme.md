@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 0.9.1
+ * more sound sync fixes
+ * IE 11/Edge WebGL perf improvements
 * 0.9 - almost there!
  * controls attribute not yet supported
  * WebM is still experimental
