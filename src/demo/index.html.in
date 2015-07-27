@@ -82,9 +82,9 @@
 							
 							Player:
 							<select height=1 id="player-backend">
-								<option value="js">JavaScript (auto)</option>
+								<option value="js">JavaScript</option>
+								<option value="worker">JS Worker</option>
 								<option value="js-cpu">JS no WebGL</option>
-								<option value="webgl">JS force WebGL</option>
 								<option value="native">native</option>
 								<option value="cortado">Cortado (Java)</option>
 							</select>

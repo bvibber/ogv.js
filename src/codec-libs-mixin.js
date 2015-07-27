@@ -1,7 +1,7 @@
 mergeInto(LibraryManager.library, {
 	
 	codecjs_callback_loaded_metadata: function() {
-		OgvJsLoadedMetadataCallback();
+		ogvjsLoadedMetadataCallback();
 	},
 	
 	codecjs_callback_init_video: function(frameWidth, frameHeight,
@@ -10,8 +10,7 @@ mergeInto(LibraryManager.library, {
                                           picWidth, picHeight,
                                           picX, picY,
                                           displayWidth, displayHeight) {
-		OgvJsInitVideoCallback({
-			codec: "Theora",
+		ogvjsInitVideoCallback({
 			frameWidth: frameWidth,
 			frameHeight: frameHeight,
 			hdec: hdec,
@@ -27,7 +26,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	codecjs_callback_frame_ready: function(videoTimestamp, keyframeTimestamp) {
-		OgvJsOutputFrameReadyCallback(videoTimestamp, keyframeTimestamp);
+		ogvjsOutputFrameReadyCallback(videoTimestamp, keyframeTimestamp);
 	},
 	
 	codecjs_callback_frame: function(bufferY, strideY,
@@ -50,7 +49,7 @@ mergeInto(LibraryManager.library, {
 			bytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesCr);
 
 		// And queue up the output buffer!
-		OgvJsFrameCallback({
+		ogvjsFrameCallback({
 			bytesY: bytesY,
 			bytesCb: bytesCb,
 			bytesCr: bytesCr,
@@ -67,20 +66,19 @@ mergeInto(LibraryManager.library, {
 	},
 	
 	codecjs_callback_init_audio: function(channels, rate) {
-		OgvJsInitAudioCallback({
-			codec: "Vorbis",
+		ogvjsInitAudioCallback({
 			channels: channels,
 			rate: rate
 		});
 	},
 	
 	codecjs_callback_audio_ready: function(audioTimestamp) {
-		OgvJsOutputAudioReadyCallback(audioTimestamp);
+		ogvjsOutputAudioReadyCallback(audioTimestamp);
 	},
 	
 	codecjs_callback_audio: function(buffers, channels, sampleCount) {
 		if (buffers === 0) {
-			OgvJsAudioCallback(null);
+			ogvjsAudioCallback(null);
 			return;
 		}
 		
@@ -99,7 +97,7 @@ mergeInto(LibraryManager.library, {
 			}
 		}
 
-		OgvJsAudioCallback(outputBuffers);
+		ogvjsAudioCallback(outputBuffers);
 	}
 
 });

@@ -89,20 +89,12 @@ int               opusStreams;
 #define OPUS_MAX_FRAME_SIZE (960*6)
 #endif
 
-int               processAudio;
-int               processVideo;
-
 enum AppState {
     STATE_BEGIN,
     STATE_DECODING
 } appState;
 
-void codecjs_init(int process_audio_flag, int process_video_flag) {
-    // Allow the caller to specify whether we want audio, video, or both.
-    // Or neither, but that won't be very useful.
-    processAudio = process_audio_flag;
-    processVideo = process_video_flag;
-
+void codecjs_init() {
     appState = STATE_BEGIN;
 
     /* init supporting Vorbis structures needed in header parsing */

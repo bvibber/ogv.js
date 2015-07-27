@@ -24,6 +24,9 @@
 // -- OGVMediaType.js
 #include "OGVMediaType.js"
 
+// -- OGVWorkerCodec.js
+#include "OGVWorkerCodec.js"
+
 // -- OGVPlayer.js
 #include "OGVPlayer.js"
 

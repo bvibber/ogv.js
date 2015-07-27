@@ -8,13 +8,10 @@
  * @copyright 2013-2014
  * @license MIT-style
  */
-CODEC_CLASS = (function(options) {
+CODEC_CLASS = (function() {
 	var ident = ++CODEC_CLASS.instanceCount;
-	options = options || {};
-	var self = this,
-		processAudio = (options.audio !== undefined) ? !!options.audio : true,
-		processVideo = (options.video !== undefined) ? !!options.video : true;
-    
+	var self = this;
+
     var Module = {
     	noInitialRun: true,
     	noExitRuntime: true,
@@ -25,8 +22,7 @@ CODEC_CLASS = (function(options) {
     };
 
 	#include CODEC_TARGET
-	window.Module = undefined;
-    
+
     var codecjs_init = Module.cwrap('codecjs_init', 'void', ['number', 'number']);
     var codecjs_destroy = Module.cwrap('codecjs_destroy', 'void', []);
     var codecjs_receive_input = Module.cwrap('codecjs_receive_input', 'void', ['number', 'number']);
@@ -53,210 +49,77 @@ CODEC_CLASS = (function(options) {
 		inputBuffer = Module._malloc(inputBufferSize);
 		return inputBuffer;
 	}
-	
-	function OgvJsLoadedMetadataCallback() {
-		if (self.onloadedmetadata) {
-			self.onloadedmetadata();
-		}
-	}
-	
-	function OgvJsInitVideoCallback(info) {
-		self.hasVideo = true;
-		if (self.oninitvideo) {
-			self.oninitvideo(info);
-		}
-	}
-	
-	function OgvJsOutputFrameReadyCallback(frameTimestamp, keyframeTimestamp) {
-		self.frameReady = true;
-		self.frameTimestamp = frameTimestamp;
-		self.keyframeTimestamp = keyframeTimestamp;
-	}
 
-	var queuedFrame = null;
-	function OgvJsFrameCallback(frameBuffer) {
-		queuedFrame = frameBuffer;
-	}
-	
-	function OgvJsInitAudioCallback(info) {
-		self.hasAudio = true;
-		if (self.oninitaudio) {
-			self.oninitaudio(info);
-		}
-	}
+	// Internal variables backing properties...
+	var loadedMetadata = false,
+		duration = NaN,
+		videoFormat = null,
+		frameReady = false,
+		frameBuffer = null,
+		frameTimestamp = 0,
+		keyframeTimestamp = 0,
+		audioFormat = null,
+		audioReady = false,
+		audioBuffer = null,
+		audioTimestamp = 0;
 
-	function OgvJsOutputAudioReadyCallback(audioTimestamp) {
-		self.audioReady = true;
-		self.audioTimestamp = audioTimestamp;
-	}
+	// - Internal callbacks
 
-	var audioBuffers = [];
-	function OgvJsAudioCallback(audioData) {
-		audioBuffers.push(audioData);
-	}
-
-	/**
-	 * @property function({codec, frameWidth, frameHeight, fps, picWidth, picHeight, picX, picY}) event handler when initializing video stream
-	 */
-	self.onvideoinit = null;
-
-	/**
-	 * @property function({codec, channels, rate}) event handler when initializing audio stream
-	 */
-	self.onaudioinit = null;
-
-	/**
-	 * @property boolean does the media stream contain video?
-	 */
-	self.hasVideo = false;
-
-	/**
-	 * @property boolean does the media stream contain audio?
-	 */
-	self.hasAudio = false;
-
-	/**
-	 * @property boolean Have we found a frame that's ready to be decoded?
-	 */
-	self.frameReady = false;
-	
-	/**
-	 * @property boolean Have we found an audio buffer that's ready to be decoded?
-	 */
-	self.audioReady = false;
-	
-	/**
-	 * @property number time position in seconds of last decoded frame
-	 */
-	self.frameTimestamp = 0.0;
-	
-	self.keyframeTimestamp = 0.0;
-	
-	self.audioTimestamp = 0.0;
-	
-	/**
-	 * Tear down the instance when done.
-	 *
-	 * todo: do we need to do something more to destroy the C environment?
-	 */
-	self.destroy = function() {
-		if (inputBuffer) {
-			Module._free(inputBuffer);
-			inputBuffer = undefined;
-		}
-		codecjs_destroy();
-	};
-	
-	/**
-	 * Queue up a chunk of input data for later processing.
-	 *
-	 * @param ArrayBuffer data
-	 */
-	self.receiveInput = function(data) {
-		// Map the blob into a buffer in emscripten's runtime heap
-		var len = data.byteLength;
-		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
-
-		codecjs_receive_input(buffer, len);
-	};
-	
-	/**
-	 * Process the next packet in the stream
-	 */
-	self.process = function() {
-		return codecjs_process();
-	}
-	
-	/**
-	 * Decode the last-found video packet
-	 *
-	 * @return boolean true if successful decode, false if failure
-	 */
-	self.decodeFrame = function() {
-		if (self.frameReady) {
-			self.frameReady = false;
-			return !!codecjs_decode_frame();
+	function ogvjsLoadedMetadataCallback() {
+		loadedMetadata = true;
+		var len = codecjs_media_duration();
+		if (len >= 0) {
+			duration = len;
 		} else {
-			throw new Error("called decodeFrame when no frame ready");
-		}
-	}
-	
-	/**
-	 * Return the last-decoded frame, if any.
-	 *
-	 * @return Object {yBytes, cbBytes, crBytes, yStride, cbStride, crStride, width, height, hdec, vdec, timestamp}
-	 */
-	self.dequeueFrame = function() {
-		if (queuedFrame) {
-			var frame = queuedFrame;
-			queuedFrame = null;
-			return frame;
-		} else {
-			throw new Error("called dequeueFrame when no frame ready");
+			duration = NaN;
 		}
 	}
 
-	/**
-	 * Decode the last-found audio packets
-	 *
-	 * @return boolean true if successful decode, false if failure
-	 */
-	self.decodeAudio = function() {
-		if (self.audioReady) {
-			self.audioReady = false;
-			return !!codecjs_decode_audio();
-		} else {
-			throw new Error("called decodeAudio when no audio ready");
-		}
+	function ogvjsInitVideoCallback(info) {
+		videoFormat = info;
 	}
-	
-	self.audioQueued = function() {
-		return audioBuffers.length > 0;
-	};
-	
-	/**
-	 * Return the next decoded audio buffer
-	 *
-	 * @return array of audio thingies
-	 */
-	self.dequeueAudio = function() {
-		if (self.audioQueued()) {
-			var buffer = audioBuffers.shift();
-			self.audioReady = (audioBuffers.length > 0);
-			return buffer;
-		} else {
-			throw new Error("called dequeueAudio when no audio ready");
-		}
-	};
-	
-	self.discardFrame = function() {
-		codecjs_discard_frame();
-		self.frameReady = false;
-		queuedFrame = false;
-	};
-	
-	self.discardAudio = function() {
-		codecjs_discard_audio();
-		self.audioReady = false;
-		audioBuffers.splice(0, audioBuffers.length);
-	};
-	
-	self.flush = function() {
-		codecjs_flush_buffers();
-		self.discardFrame();
-		self.discardAudio();
-	};
+
+	function ogvjsOutputFrameReadyCallback(aFrameTimestamp, aKeyframeTimestamp) {
+		frameReady = true;
+		frameTimestamp = aFrameTimestamp;
+		keyframeTimestamp = aKeyframeTimestamp;
+	}
+
+	function ogvjsFrameCallback(buffer) {
+		frameBuffer = buffer;
+	}
+
+	function ogvjsInitAudioCallback(info) {
+		audioFormat = info;
+	}
+
+	function ogvjsOutputAudioReadyCallback(aAudioTimestamp) {
+		audioReady = true;
+		audioTimestamp = aAudioTimestamp;
+	}
+
+	function ogvjsAudioCallback(buffer) {
+		audioBuffer = buffer;
+	}
+
+	// - Property getters
 
 	/**
-	 * Is there processed data to handle?
-	 *
-	 * @return boolean
-	 */	
-	self.dataReady = function() {
-		return self.audioReady || self.frameReady;
-	}
-	
+	 * Are we in the middle of an asynchronous processing operation?
+	 * @property boolean
+	 */
+	Object.defineProperty(self, 'processing', {
+		get: function getProcessing() {
+			return false;
+		}
+	});
+
+	Object.defineProperty(self, 'loadedMetadata', {
+		get: function getLoadedMetadata() {
+			return loadedMetadata;
+		}
+	});
+
 	/**
 	 * Duration of segment in seconds, if defined in Ogg Skeleton metadata,
 	 * else NaN
@@ -265,27 +128,209 @@ CODEC_CLASS = (function(options) {
 	 */
 	Object.defineProperty(self, 'duration', {
 		get: function getDuration() {
-    		var len = codecjs_media_duration();
-    		if (len >= 0) {
-    			return len;
-    		} else {
-    			return NaN;
-    		}
+			return duration;
 		}
 	});
-	
+
+	Object.defineProperty(self, 'hasVideo', {
+		get: function getHasVideo() {
+			return !!videoFormat;
+		}
+	});
+
+	Object.defineProperty(self, 'videoFormat', {
+		get: function getVideoFormat() {
+			// @todo copy?
+			return videoFormat;
+		}
+	});
+
+	Object.defineProperty(self, 'hasAudio', {
+		get: function getHasAudio() {
+			return !!audioFormat;
+		}
+	});
+	Object.defineProperty(self, 'audioFormat', {
+		get: function getAudioFormat() {
+			// @todo copy?
+			return audioFormat;
+		}
+	});
+
+	/**
+	 * @property boolean Have we found a frame that's ready to be decoded?
+	 */
+	Object.defineProperty(self, 'frameReady', {
+		get: function getFrameReady() {
+			return frameReady;
+		}
+	});
+
+	/**
+	 * @property boolean Have we found an audio buffer that's ready to be decoded?
+	 */
+	Object.defineProperty(self, 'audioReady', {
+		get: function getAudioReady() {
+			return audioReady;
+		}
+	});
+
+	/**
+	 * @property number time position in seconds of last decoded frame
+	 */
+	Object.defineProperty(self, 'frameTimestamp', {
+		get: function getFrameTimestamp() {
+			return frameTimestamp;
+		}
+	});
+
+	Object.defineProperty(self, 'keyframeTimestamp', {
+		get: function getKeyframeTimestamp() {
+			return keyframeTimestamp;
+		}
+	});	
+
+	/**
+	 * Return the last-decoded frame, if any.
+	 *
+	 * @return Object {yBytes, cbBytes, crBytes, yStride, cbStride, crStride, width, height, hdec, vdec, timestamp}
+	 */
+	Object.defineProperty(self, 'frameBuffer', {
+		get: function getFrameBuffer() {
+			return frameBuffer;
+		}
+	});
+
+	Object.defineProperty(self, 'audioTimestamp', {
+		get: function getAudioTimestamp() {
+			return audioTimestamp;
+		}
+	});	
+
+	/**
+	 * Return the next decoded audio buffer
+	 *
+	 * @return array of audio thingies
+	 */
+	Object.defineProperty(self, 'audioBuffer', {
+		get: function getAudioBuffer() {
+			return audioBuffer;
+		}
+	});
+
+	// - public methods
+
+	self.init = function(type) {
+		codecjs_init();
+	};
+
+	/**
+	 * Tear down the instance when done.
+	 */
+	self.destroy = function() {
+		if (inputBuffer) {
+			Module._free(inputBuffer);
+			inputBuffer = undefined;
+		}
+		codecjs_destroy();
+		Module = null;
+	};
+
+	/**
+	 * Queue up a chunk of input data for later processing.
+	 *
+	 * @param ArrayBuffer data
+	 * @param function callback on completion
+	 */
+	self.receiveInput = function(data, callback) {
+		// Map the blob into a buffer in emscripten's runtime heap
+		var len = data.byteLength;
+		var buffer = reallocInputBuffer(len);
+		Module.HEAPU8.set(new Uint8Array(data), buffer);
+
+		codecjs_receive_input(buffer, len);
+		callback();
+	};
+
+	/**
+	 * Process the next packet in the stream
+	 *
+	 * @param function(bool) callback on completion
+	 *        takes true if still processing, false if need more data
+	 */
+	self.process = function(callback) {
+		var ok = codecjs_process();
+		callback(ok);
+	};
+
+	/**
+	 * Decode the last-found video packet
+	 *
+	 * @param function(bool) callback on completion
+	 *        takes true if successful decode, false if failure
+	 */
+	self.decodeFrame = function(callback) {
+		if (frameReady) {
+			frameReady = false;
+			var ok = !!codecjs_decode_frame();
+			callback(ok);
+		} else {
+			throw new Error("called decodeFrame when no frame ready");
+		}
+	};
+
+	/**
+	 * Decode the last-found audio packets
+	 *
+	 * @param function callback
+	 *        takes true if successful decode, false if failure
+	 */
+	self.decodeAudio = function(callback) {
+		if (audioReady) {
+			audioReady = false;
+			var ok = !!codecjs_decode_audio();
+			callback(ok);
+		} else {
+			throw new Error("called decodeAudio when no audio ready");
+		}
+	}
+
+	self.discardFrame = function(callback) {
+		codecjs_discard_frame();
+		frameReady = false;
+		frameBuffer = null;
+		callback();
+	};
+
+	self.discardAudio = function(callback) {
+		codecjs_discard_audio();
+		audioReady = false;
+		audioBuffer = null;
+		callback();
+	};
+
+	self.flush = function(callback) {
+		codecjs_flush_buffers();
+		self.discardFrame(function() {
+			self.discardAudio(function() {
+				callback();
+			});
+		});
+	};
+
 	/**
 	 * Return the offset of the relevant keyframe or other position
 	 * just before the given presentation timestamp
 	 *
 	 * @param number timeSeconds
-	 * @return number byte offset
+	 * @param function(number) callback
+	 *        takes the calculated byte offset
 	 */
-	self.getKeypointOffset = function(timeSeconds) {
-    	return codecjs_keypoint_offset(timeSeconds * 1000);
+	self.getKeypointOffset = function(timeSeconds, callback) {
+    	var offset = codecjs_keypoint_offset(timeSeconds * 1000);
+    	callback(offset);
 	};
 
-	codecjs_init(processAudio ? 1 : 0, processVideo ? 1 : 0);
 	return self;
 });
 CODEC_CLASS.instanceCount = 0;

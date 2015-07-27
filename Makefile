@@ -30,7 +30,7 @@ clean:
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
 
-dist: js src/dynamicaudio.swf readme.md COPYING
+dist: js src/dynamicaudio.swf src/ogv-worker.js readme.md COPYING
 	rm -rf dist
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
@@ -38,6 +38,7 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	      build/ogv-codec.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
+	      src/ogv-worker.js \
 	      src/dynamicaudio.swf \
 	      readme.md \
 	      COPYING \
@@ -141,12 +142,14 @@ build/ogv.js : src/ogv.js.in src/StreamFile.js \
                build/WebGLFrameSink.js \
                src/Bisector.js \
                src/OGVMediaType.js \
+               src/OGVWorkerCodec.js \
                src/OGVPlayer.js \
                build/ogv-codec.js \
                build/ogv-codec.js.gz \
                build/webm-codec.js \
                build/webm-codec.js.gz \
-               src/dynamicaudio.swf
+               src/dynamicaudio.swf \
+               src/ogv-worker.js
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
 	echo 'window.OGVVersion = "$(FULLVER)";' >> build/ogv.js
 
@@ -183,6 +186,7 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/lib/ogv-codec.js \
                         build/demo/lib/ogv-codec.js.gz \
                         build/demo/lib/ogv-support.js \
+                        build/demo/lib/ogv-worker.js \
                         build/demo/lib/webm-codec.js \
                         build/demo/lib/webm-codec.js.gz \
                         build/demo/lib/dynamicaudio.swf \
@@ -239,6 +243,10 @@ build/demo/lib/ogv-support.js : build/ogv-support.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp build/ogv-support.js build/demo/lib/ogv-support.js
 
+build/demo/lib/ogv-worker.js : src/ogv-worker.js
+	test -d build/demo/lib || mkdir -p build/demo/lib
+	cp src/ogv-worker.js build/demo/lib/ogv-worker.js
+
 build/demo/lib/ogv-codec.js : build/ogv-codec.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp build/ogv-codec.js build/demo/lib/ogv-codec.js
@@ -270,6 +278,7 @@ build/demo/lib/CortadoPlayer.js : src/CortadoPlayer.js
 # QUnit test cases
 build/tests/index.html : build/tests/tests.js \
                          build/tests/lib/ogv-support.js \
+                         build/tests/lib/ogv-worker.js \
                          build/tests/lib/ogv.js \
                          build/tests/media/1frame.ogv \
                          build/tests/media/3frames.ogv \
@@ -295,9 +304,9 @@ build/tests/lib/ogv-codec.js : build/ogv-codec.js
 	test -d build/tests/lib || mkdir -p build/tests/lib
 	cp build/ogv-codec.js build/tests/lib/ogv-codec.js
 
-build/tests/lib/ogv-support.js : build/ogv-support.js
+build/tests/lib/ogv-worker.js : src/ogv-worker.js
 	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp build/ogv-support.js build/tests/lib/ogv-support.js
+	cp src/ogv-worker.js build/tests/lib/ogv-worker.js
 
 build/tests/lib/dynamicaudio.swf : src/dynamicaudio.swf
 	test -d build/tests/lib || mkdir -p build/tests/lib

@@ -745,6 +745,12 @@
 					webGL: false, // force 2d canvas
 					enableWebM: true // experimental
 				});
+			} else if (playerBackend == 'worker') {
+				player = new OGVPlayer({
+					base: 'lib',
+					worker: true, // experimental
+					enableWebM: true // experimental
+				});
 			} else if (playerBackend == 'webgl') {
 				player = new OGVPlayer({
 					base: 'lib',

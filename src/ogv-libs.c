@@ -86,9 +86,6 @@ int               skeletonProcessingHeaders = 0;
 int               skeletonDone = 0;
 #endif
 
-int               processAudio;
-int               processVideo;
-
 enum AppState {
     STATE_BEGIN,
     STATE_HEADERS,
@@ -126,12 +123,7 @@ static int queue_page(ogg_page *page) {
     return 0;
 }
 
-void codecjs_init(int process_audio_flag, int process_video_flag) {
-    // Allow the caller to specify whether we want audio, video, or both.
-    // Or neither, but that won't be very useful.
-    processAudio = process_audio_flag;
-    processVideo = process_video_flag;
-
+void codecjs_init() {
     appState = STATE_BEGIN;
 
     /* start up Ogg stream synchronization layer */
@@ -169,7 +161,7 @@ static void processBegin() {
         }
 
         /* identify the codec: try theora */
-        if (processVideo && !theoraHeaders && (theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket)) >= 0) {
+        if (!theoraHeaders && (theoraProcessingHeaders = th_decode_headerin(&theoraInfo, &theoraComment, &theoraSetupInfo, &oggPacket)) >= 0) {
             /* it is theora -- save this stream state */
             memcpy(&theoraStreamState, &test, sizeof (test));
             theoraHeaders = 1;
@@ -179,7 +171,7 @@ static void processBegin() {
             } else {
                 ogg_stream_packetout(&theoraStreamState, NULL);
             }
-        } else if (processAudio && !vorbisHeaders && (vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket)) == 0) {
+        } else if (!vorbisHeaders && (vorbisProcessingHeaders = vorbis_synthesis_headerin(&vorbisInfo, &vorbisComment, &oggPacket)) == 0) {
             // it's vorbis! save this as our audio stream...
             memcpy(&vorbisStreamState, &test, sizeof (test));
             vorbisHeaders = 1;
@@ -187,7 +179,7 @@ static void processBegin() {
             // ditch the processed packet...
             ogg_stream_packetout(&vorbisStreamState, NULL);
 #ifdef OPUS
-        } else if (processAudio && !opusHeaders && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
+        } else if (!opusHeaders && (opusDecoder = opus_process_header(&oggPacket, &opusMappingFamily, &opusChannels, &opusPreskip, &opusGain, &opusStreams)) != NULL) {
             // found Opus stream! (first of two headers)
             memcpy(&opusStreamState, &test, sizeof (test));
             if (opusGain) {
