@@ -53,8 +53,7 @@ var handlers = {
 		} else {
 			throw new Error('Unrecognized codec type request');
 		}
-		codec.init();
-		callback();
+		codec.init(callback);
 	},
 
 	destroy: function(args, callback) {

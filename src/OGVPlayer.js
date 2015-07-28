@@ -47,8 +47,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		}
 	}
 
-	// Experimental option
-	var enableWebM = !!options.enableWebM;
+	// Experimental options
+	var enableWebM = !!options.enableWebM,
+		enableModular = !!options.enableModular;
 
 	// Running the codec in a worker thread equals happy times!
 	// Well, in theory. So far it's kinda slow.
@@ -77,6 +78,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	
 	var audioOptions = {},
 		codecOptions = {};
+	options.base = options.base || OGVLoader.base;
 	if (typeof options.base === 'string') {
 		// Pass the resource dir down to AudioFeeder, so it can load the dynamicaudio.swf
 		audioOptions.base = options.base;
@@ -88,6 +90,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		// Try passing a pre-created audioContext in?
 		audioOptions.audioContext = options.audioContext;
 	}
+	codecOptions.worker = enableWorker;
 	
 	var canvas = document.createElement('canvas');
 	var frameSink;
@@ -116,6 +119,17 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		var delta = getTimestamp() - start;
 		lastFrameDecodeTime += delta;
 		return delta;
+	}
+
+	var then = getTimestamp();
+	function log(msg) {
+		/*
+		var now = getTimestamp(),
+			delta = now - then;
+
+		console.log('+' + delta + 'ms proc: ' + msg);
+		then = now;
+		*/
 	}
 
 	function fireEvent(eventName, props) {
@@ -208,7 +222,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		started = false,
 		paused = true,
 		ended = false,
-		startedPlaybackInDocument = false;
+		startedPlaybackInDocument = false,
+		waitingOnInput = false;
 	
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
@@ -227,6 +242,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	var poster = '', thumbnail;
 
 	function stopVideo() {
+		console.log("STOPPING");
 		// kill the previous video if any
 		state = State.INITIAL;
 		started = false;
@@ -234,6 +250,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		ended = true;
 		continueVideo = null;
 		frameEndTimestamp = 0.0;
+		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
 		
 		if (stream) {
@@ -258,34 +275,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	
 	var lastFrameTime = getTimestamp(),
 		frameEndTimestamp = 0.0,
+		audioEndTimestamp = 0.0,
 		yCbCrBuffer = null;
 	var lastFrameDecodeTime = 0.0;		
 	var lastFrameTimestamp = 0.0;
-
-	function processFrame() {
-		yCbCrBuffer = codec.frameBuffer;
-		if (videoInfo.fps == 0) {
-			// WebM doesn't encode a frame rate
-			targetPerFrameTime = (yCbCrBuffer.timestamp - frameEndTimestamp) * 1000;
-		}
-		frameEndTimestamp = yCbCrBuffer.timestamp;
-	}
-
-	function drawFrame() {
-		if (thumbnail) {
-			self.removeChild(thumbnail);
-			thumbnail = null;
-		}
-
-		drawingTime += time(function() {
-			frameSink.drawFrame(yCbCrBuffer);
-		});
-
-		framesProcessed++;
-		framesPlayed++;
-
-		doFrameComplete();
-	}
 
 	function doFrameComplete() {
 		if (startedPlaybackInDocument && !document.body.contains(self)) {
@@ -332,7 +325,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					lastFrameSkipped = false;
 					codec.flush(function() {
 						stream.seek(position);
-						stream.readBytes();
+						readBytesAndWait();
 					});
 					return true;
 				}
@@ -363,7 +356,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						//
 						seekState = SeekState.LINEAR_TO_TARGET;
 						stream.seek(offset);
-						stream.readBytes();
+						readBytesAndWait();
 					} else {
 						// No index.
 						//
@@ -383,6 +376,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		seekState = SeekState.NOT_SEEKING;
 		state = State.PLAYING;
 		frameEndTimestamp = codec.frameTimestamp;
+		audioEndTimestamp = codec.audioTimestamp;
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
 		} else {
@@ -392,7 +386,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (paused) {
 			stopPlayback(); // :P
 		} else {
-			if (codec.processing) {
+			if (isProcessing()) {
 				// wait for whatever's going on to complete
 			} else {
 				pingProcessing(0);
@@ -542,7 +536,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 
 	var depth = 0,
-		useTailCalls = true;
+		useTailCalls = true,
+		pendingFrame = 0,
+		pendingAudio = 0;
 
 	function doProcessing() {
 		nextProcessingTimer = null;
@@ -550,8 +546,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (depth > 1 && !useTailCalls) {
 			throw new Error('REENTRANCY FAIL: doProcessing recursing unexpectedly');
 		}
-		if (codec.processing) {
-			throw new Error('REENTRANCY FAIL: doProcessing called while waiting on codec');
+		if (isProcessing()) {
+			throw new Error('REENTRANCY FAIL: doProcessing called while waiting on codec or input');
 		}
 
 		if (actionQueue.length) {
@@ -586,7 +582,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							lastSeenTimestamp = -1;
 							codec.flush(function() {
 								stream.seek(Math.max(0, stream.bytesTotal - 65536 * 2));
-								stream.readBytes();
+								readBytesAndWait();
 							});
 						} else {
 							// Stream not seekable and no x-content-duration; assuming infinite stream.
@@ -600,7 +596,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					}
 				} else if (!more) {
 					// Read more data!
-					stream.readBytes();
+					console.log('reading more cause we are out of data');
+					readBytesAndWait();
 				} else {
 					// Keep processing headers
 					pingProcessing();
@@ -624,7 +621,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				} else if (!more) {
 					// Read more data!
 					if (stream.bytesRead < stream.bytesTotal) {
-						stream.readBytes();
+						readBytesAndWait();
 					} else {
 						// We are at the end!
 						if (lastSeenTimestamp > 0) {
@@ -635,7 +632,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						state = State.LOADED;
 						codec.flush(function() {
 							stream.seek(0);
-							stream.readBytes();
+							readBytesAndWait();
 						});
 					}
 				} else {
@@ -674,7 +671,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 			codec.process(function processSeeking(more) {
 				if (!more) {
-					stream.readBytes();
+					readBytesAndWait();
 				} else if (seekState == SeekState.NOT_SEEKING) {
 					throw new Error('seeking in invalid state (not seeking?)');
 				} else if (seekState == SeekState.BISECT_TO_TARGET) {
@@ -694,10 +691,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				demuxingTime += delta;
 				lastFrameDecodeTime += delta;
 
+				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
+
 				if (!more) {
 					if (stream) {
 						// Ran out of buffered input
-						stream.readBytes();
+						readBytesAndWait();
 					} else {
 						// Ran out of stream!
 						var finalDelay = 0;
@@ -707,6 +706,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							finalDelay = audioBufferedDuration;
 						}
 						setTimeout(function() {
+							console.log("ENDING ALREADY");
 							stopVideo();
 							ended = true;
 							fireEvent('ended');
@@ -718,7 +718,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 				} else {
 
-					if (!(codec.audioReady || codec.frameReady)) {
+					if (!((codec.audioReady || !codec.hasAudio) && (codec.frameReady || !codec.frameReady))) {
+
+						log('need more data');
 
 						// Have to process some more pages to find data.
 						pingProcessing();
@@ -726,30 +728,40 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					} else {
 		
 						var audioBufferedDuration = 0,
+							audioDecodingDuration = 0,
 							audioState = null,
 							playbackPosition = 0,
 							nextDelays = [],
-							readyForAudio,
-							readyForFrame;
+							readyForAudioDecode,
+							readyForFrameDraw,
+							readyForFrameDecode;
 
 						if (codec.hasAudio && audioFeeder) {
 							// Drive on the audio clock!
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
 
-							audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate) * 1000;
+							audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate);
+							//audioBufferedDuration = audioEndTimestamp - playbackPosition; // @fixme?
+
+							//console.log('audio buffered', audioBufferedDuration, audioDecodingDuration);
+
 							droppedAudio = audioState.dropped;
 							delayedAudio = audioState.delayed;
-							readyForAudio = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
+							//readyForAudioDecode = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
+							var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate);
+							readyForAudioDecode = codec.audioReady && (audioBufferedDuration <= (bufferDuration * 2));
 
 							// Check in when all audio runs out
-							var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 1000;
-							if (audioBufferedDuration <= bufferDuration * 2) {
+							if (pendingAudio) {
+								// We'll check in when done decoding
+							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
-								nextDelays.push(0);
+								nextDelays.push(-1);
 							} else {
 								// Check in when the audio buffer runs low again...
-								nextDelays.push(bufferDuration / 2);
+								nextDelays.push((audioBufferedDuration - bufferDuration * 2) * 1000);
+								//nextDelays.push(bufferDuration * 1000 / 4);
 							}
 						} else {
 							// No audio; drive on the general clock.
@@ -757,24 +769,96 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							playbackPosition = getPlaybackTime();
 						}
 
-						//console.log(playbackPosition, codec.frameTimestamp, codec.audioTimestamp);
-
 						if (codec.hasVideo) {
 							var fudgeDelta = 0.1,
 								frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 
-							readyForFrame = (frameDelay <= fudgeDelta);
+							frameDelay = Math.max(0, frameDelay);
+							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
-							if (!readyForFrame) {
-								// Check in when the next frame is due
+							readyForFrameDraw = !!yCbCrBuffer && !pendingFrame && (frameDelay <= fudgeDelta);
+							readyForFrameDecode = !yCbCrBuffer && !pendingFrame && codec.frameReady;
+
+							if (yCbCrBuffer) {
+								// Check in when the decoded frame is due
+								nextDelays.push(frameDelay);
+							} else if (pendingFrame) {
+								// We'll check in when done decoding
+							} else if (!codec.frameReady) {
+								// need more data!
+								nextDelays.push(-1);
+							} else {
+								// Check in when the decoded frame is due
 								nextDelays.push(frameDelay);
 							}
 						}
 
-						if (codec.audioReady && readyForAudio) {
+						log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
+
+						if (readyForFrameDraw) {
+
+							log('ready to draw frame');
+
+							// Ready to draw the decoded frame...
+							if (thumbnail) {
+								self.removeChild(thumbnail);
+								thumbnail = null;
+							}
+
+							drawingTime += time(function() {
+								frameSink.drawFrame(yCbCrBuffer);
+							});
+							yCbCrBuffer = null;
+
+							framesProcessed++;
+							framesPlayed++;
+
+							doFrameComplete();
+
+							pingProcessing(0);
+
+						} else if (readyForFrameDecode) {
+
+							log('ready to decode frame');
+
+							var videoStartTime = getTimestamp();
+							pendingFrame++;
+							frameEndTimestamp = codec.frameTimestamp;
+							var pendingFramePing = false;
+							codec.decodeFrame(function processingDecodeFrame(ok) {
+								log('decoded frame');
+								var delta = getTimestamp() - videoStartTime;
+								videoDecodingTime += delta;
+								lastFrameDecodeTime += delta;
+								if (ok) {
+									// Save the buffer until it's time to draw
+									yCbCrBuffer = codec.frameBuffer;
+									if (videoInfo.fps == 0) {
+										// WebM doesn't encode a frame rate
+										targetPerFrameTime = (yCbCrBuffer.timestamp - frameEndTimestamp) * 1000;
+									}
+								} else {
+									// Bad packet or something.
+									console.log('Bad video packet or something');
+								}
+								pendingFrame--;
+								if (!isProcessing()) {
+									pingProcessing();
+								}
+							});
+							if (!isProcessing()) {
+								pingProcessing();
+							}
+
+						} else if (readyForAudioDecode) {
+
+							log('ready for audio');
 
 							var audioStartTime = getTimestamp();
+							pendingAudio++;
+							audioEndTimestamp = codec.audioTimestamp;
 							codec.decodeAudio(function processingDecodeAudio(ok) {
+								log('decoded audio');
 								var delta = getTimestamp() - audioStartTime;
 								audioDecodingTime += delta;
 								lastFrameDecodeTime += delta;
@@ -790,35 +874,29 @@ OGVPlayer = window.OGVPlayer = function(options) {
 										audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
 									}
 								}
-								pingProcessing(0);
-							});
-
-						} else if (codec.frameReady && readyForFrame) {
-
-							var videoStartTime = getTimestamp();
-							codec.decodeFrame(function processingDecodeFrame(ok) {
-								var delta = getTimestamp() - videoStartTime;
-								videoDecodingTime += delta;
-								lastFrameDecodeTime += delta;
-								if (ok) {
-									processFrame();
-									drawFrame();
-								} else {
-									// Bad packet or something.
-									console.log('Bad video packet or something');
+								pendingAudio--;
+								if (!isProcessing()) {
+									pingProcessing();
 								}
-								pingProcessing(0);
 							});
+							if (!isProcessing()) {
+								pingProcessing();
+							}
 
 						} else {
 
 							var nextDelay = Math.min.apply(Math, nextDelays);
 							if (nextDelays.length > 0) {
+								log('idle: ' + nextDelay + ' - ' + nextDelays.join(','));
 								if (!codec.hasVideo) {
 									framesProcessed++; // pretend!
 									doFrameComplete();
 								}
 								pingProcessing(Math.max(0, nextDelay));
+							} else if (pendingFrame || pendingAudio) {
+								log('waiting on pending events');
+							} else {
+								console.log('we may be lost');
 							}
 						}
 					}
@@ -834,16 +912,39 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		depth--;
 	}
 
+	/**
+	 * Are we waiting on an async operation we can't interrupt?
+	 */
+	function isProcessing() {
+		return waitingOnInput || (codec && codec.processing);
+	}
+
+	function readBytesAndWait() {
+		waitingOnInput = true;
+		stream.readBytes();
+	}
+
 	function pingProcessing(delay) {
 		if (delay === undefined) {
 			delay = -1;
 		}
-		if (nextProcessingTimer) {
+		if (isProcessing()) {
 			throw new Error('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
 		}
-		if (delay > 0 || !useTailCalls) {
+		if (nextProcessingTimer) {
+			log('canceling old processing timer');
+			clearTimeout(nextProcessingTimer);
+			nextProcessingTimer = null;
+		}
+		var fudge = -1 / 256;
+		if (delay > fudge || !useTailCalls) {
+			if (delay > 40) {
+				console.log('excessive delay ' + delay);
+			}
+			log('pingProcessing delay: ' + delay);
 			nextProcessingTimer = setTimeout(doProcessing, delay);
 		} else {
+			log('pingProcessing tail call (' + delay + ')');
 			doProcessing(); // warning: tail recursion is possible
 		}
 	}
@@ -866,65 +967,30 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		ended = false;
 
 		codec = new codecClass(codecOptions);
-		codec.init();
-		stream.readBytes();
+		codec.init(function() {
+			readBytesAndWait();
+		});
 	}
 	
 	function loadCodec(callback) {
 		// @todo fix this proper
 		if (enableWebM && self.src.match(/\.webm$/i)) {
 			codecClassName = 'OGVWebMDecoder';
-			codecClassFile = 'webm-codec.js';
 			codecOptions.type = 'video/webm';
 		} else {
 			codecClassName = 'OGVOggDecoder';
-			codecClassFile = 'ogv-codec.js';
 			codecOptions.type = 'video/ogg';
 		}
 		if (enableWorker) {
 			codecClassName = 'OGVWorkerCodec';
-			codecClassFile = null; // proxy class is bundled in the main JS payload
 		}
-		codecClass = window[codecClassName];
-		if (typeof codecClass === 'function') {
-			if (callback) {
-				callback();
-			}
-		} else if (OGVPlayer.loadingNode !== null) {
-			if (callback) {
-				OGVPlayer.loadingCallbacks.push(callback);
-			}
-		} else {
-			if (callback) {
-				OGVPlayer.loadingCallbacks.push(callback);
-			}
-			OGVPlayer.loadingNode = document.createElement('script');
-			document.querySelector('head').appendChild(OGVPlayer.loadingNode);
-
-			var url = codecClassFile;
-			if (options.base) {
-				url = options.base + '/' + url;
-			}
-			if (typeof window.OGVVersion === 'string') {
-				url = url + '?version=' + encodeURIComponent(window.OGVVersion);
-			}
-			
-			OGVPlayer.loadingNode.addEventListener('load', function() {
-				codecClass = window[codecClassName];
-				if (typeof codecClass === 'function') {
-					OGVPlayer.loadingCallbacks.forEach(function(cb) {
-						cb();
-					});
-					OGVPlayer.loadingNode.onload = null;
-					OGVPlayer.loadingCallbacks.splice(0, OGVPlayer.loadingCallbacks.length);
-					OGVPlayer.loadingNode.parentNode.removeChild(OGVPlayer.loadingNode);
-					OGVPlayer.loadingNode = null;
-				} else {
-					throw new Error('Could not load ' + codecClassFile);
-				}
-			});
-			OGVPlayer.loadingNode.src = url;
+		if (enableModular) {
+			codecClassName = 'OGVWrapperCodec';
 		}
+		OGVLoader.loadClass(codecClassName, function(classObj) {
+			codecClass = classObj;
+			callback();
+		});
 	}
 	
 	/**
@@ -936,8 +1002,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			return;
 		}
 	
-		loadCodec();
-
 		started = false;
 		stream = new StreamFile({
 			url: self.src,
@@ -954,20 +1018,19 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				loadCodec(startProcessingVideo);
 			},
 			onread: function(data) {
+				log('got input');
+				waitingOnInput = false;
+
 				// Save chunk to pass into the codec's buffer
 				actionQueue.push(function() {
 					codec.receiveInput(data, function() {
 						pingProcessing();
 					});
 				});
-				if (codec.processing) {
+
+				if (isProcessing()) {
 					// We're waiting on the codec already...
 				} else {
-					if (nextProcessingTimer) {
-						// Continue the read/decode/draw loop immediately...
-						clearTimeout(nextProcessingTimer);
-						nextProcessingTimer = null;
-					}
 					pingProcessing();
 				}
 			},
@@ -977,17 +1040,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				} else if (state == State.SEEKING_END) {
 					pingProcessing();
 				} else {
+					console.log('closing stream (done)');
 					stream = null;
 
-					// Let the read/decode/draw loop know we're out!
-					if (codec.processing) {
+					if (isProcessing()) {
 						// We're waiting on the codec already...
 					} else {
-						if (nextProcessingTimer) {
-							// Continue the read/decode/draw loop immediately...
-							clearTimeout(nextProcessingTimer);
-							nextProcessingTimer = null;
-						}
+						// Let the read/decode/draw loop know we're out!
 						pingProcessing();
 					}
 				}
@@ -1056,13 +1115,9 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						fireEvent('play');
 						pingProcessing(0);
 					});
-					if (codec.processing) {
+					if (isProcessing()) {
 						// waiting on the codec already
 					} else {
-						if (nextProcessingTimer) {
-							clearTimeout(nextProcessingTimer);
-							nextProcessingTimer = null;
-						}
 						pingProcessing();
 					}
 				};
@@ -1389,9 +1444,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 OGVPlayer.initSharedAudioContext = function() {
 	AudioFeeder.initSharedAudioContext();
 };
-
-OGVPlayer.loadingNode = null;
-OGVPlayer.loadingCallbacks = [];
 
 OGVPlayer.instanceCount = 0;
 

@@ -6,6 +6,9 @@
 
 (function() {
 
+// -- OGVLoader.js
+#include "OGVLoader.js"
+
 // -- StreamFile.js
 #include "StreamFile.js"
 
@@ -27,10 +30,23 @@
 // -- OGVWorkerCodec.js
 #include "OGVWorkerCodec.js"
 
+// -- OGVWrapperCodec.js
+#include "OGVWrapperCodec.js"
+
+// -- OGVProxyClass.js
+#include "OGVProxyClass.js"
+
+// -- OGVDecoderAudioProxy.js
+#include "OGVDecoderAudioProxy.js"
+
+// -- OGVDecoderVideoProxy.js
+#include "OGVDecoderVideoProxy.js"
+
 // -- OGVPlayer.js
 #include "OGVPlayer.js"
 
 // exports
+this.OGVLoader = OGVLoader;
 this.OGVMediaType = OGVMediaType;
 this.OGVTimeRanges = OGVTimeRanges;
 this.OGVPlayer = OGVPlayer;

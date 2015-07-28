@@ -738,26 +738,34 @@
 				// this should not happen
 				stopVideo();
 			}
+			OGVLoader.base = 'lib'; // @fixme autodetect this
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
-					base: 'lib',
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'js-cpu') {
 				player = new OGVPlayer({
-					base: 'lib',
 					webGL: false, // force 2d canvas
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'worker') {
 				player = new OGVPlayer({
-					base: 'lib',
 					worker: true, // experimental
+					enableWebM: true // experimental
+				});
+			} else if (playerBackend == 'modular') {
+				player = new OGVPlayer({
+					enableModular: true, // experimental
+					enableWebM: true // experimental
+				});
+			} else if (playerBackend == 'modworker') {
+				player = new OGVPlayer({
+					worker: true, // experimental
+					enableModular: true, // experimental
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'webgl') {
 				player = new OGVPlayer({
-					base: 'lib',
 					forceWebGL: true,
 					enableWebM: true // experimental
 				});

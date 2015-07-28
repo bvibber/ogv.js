@@ -122,8 +122,8 @@ OGVWorkerCodec = (function(options) {
 	});
 
 	// - public methods
-	self.init = function() {
-		proxy('init', [type, OGVVersion]);
+	self.init = function(callback) {
+		proxy('init', [type, OGVVersion], callback);
 	};
 
 	self.destroy = function() {

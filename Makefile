@@ -1,4 +1,4 @@
-VERSION:=0.9.2
+VERSION:=0.9.3beta
 BUILDDATE:=$(shell date -u "+%Y%m%d%H%M%S")
 HASH:=$(shell git rev-parse --short HEAD)
 FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
@@ -30,15 +30,22 @@ clean:
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
 
-dist: js src/dynamicaudio.swf src/ogv-worker.js readme.md COPYING
+dist: js src/dynamicaudio.swf readme.md COPYING
 	rm -rf dist
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
 	cp -p build/ogv.js \
 	      build/ogv-codec.js \
+	      build/webm-codec.js \
+	      build/ogv-demuxer-ogg.js \
+	      build/ogv-decoder-audio-opus.js \
+	      build/ogv-decoder-audio-vorbis.js \
+	      build/ogv-decoder-video-theora.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
 	      src/ogv-worker.js \
+	      build/ogv-worker-audio.js \
+	      build/ogv-worker-video.js \
 	      src/dynamicaudio.swf \
 	      readme.md \
 	      COPYING \
@@ -53,6 +60,11 @@ build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
 	./configureOgg.sh
 	./compileOggJs.sh
+
+build/js/root/lib/liboggz.a : configureOggz.sh compileOggzJs.sh
+	test -d build || mkdir build
+	./configureOggz.sh
+	./compileOggzJs.sh
 
 build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a configureVorbis.sh compileVorbisJs.sh
 	test -d build || mkdir build
@@ -122,6 +134,54 @@ build/webm-codec.js : src/codec-libs.js.in build/js/webm-libs.js
 	test -d build || mkdir build
 	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OGVWebMDecoder -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
 
+build/ogv-demuxer-ogg.js : src/ogv-demuxer-ogg.c \
+                           src/ogv-demuxer.h \
+                           src/ogv-demuxer.js \
+                           src/ogv-demuxer-callbacks.js \
+                           src/ogv-demuxer-exports.json \
+                           src/ogv-module-pre.js \
+                           build/js/root/lib/libogg.a \
+                           build/js/root/lib/liboggz.a \
+                           build/js/root/lib/libskeleton.a \
+                           compileOgvDemuxerOgg.sh
+	test -d build || mkdir build
+	./compileOgvDemuxerOgg.sh
+
+build/ogv-decoder-audio-vorbis.js : src/ogv-decoder-audio-vorbis.c \
+                                    src/ogv-decoder-audio.h \
+                                    src/ogv-decoder-audio.js \
+                                    src/ogv-decoder-audio-callbacks.js \
+                                    src/ogv-decoder-audio-exports.json \
+                                    src/ogv-module-pre.js \
+                                    build/js/root/lib/libogg.a \
+                                    build/js/root/lib/libvorbis.a \
+                                    compileOgvDecoderAudioVorbis.sh
+	test -d build || mkdir build
+	./compileOgvDecoderAudioVorbis.sh
+
+build/ogv-decoder-audio-opus.js : src/ogv-decoder-audio-opus.c \
+                                  src/ogv-decoder-audio.h \
+                                  src/ogv-decoder-audio.js \
+                                  src/ogv-decoder-audio-callbacks.js \
+                                  src/ogv-decoder-audio-exports.json \
+                                  src/ogv-module-pre.js \
+                                  build/js/root/lib/libogg.a \
+                                  build/js/root/lib/libopus.a \
+                                  compileOgvDecoderAudioOpus.sh
+	test -d build || mkdir build
+	./compileOgvDecoderAudioOpus.sh
+
+build/ogv-decoder-video-theora.js : src/ogv-decoder-video-theora.c \
+                                    src/ogv-decoder-video.h \
+                                    src/ogv-decoder-video.js \
+                                    src/ogv-decoder-video-callbacks.js \
+                                    src/ogv-decoder-video-exports.json \
+                                    src/ogv-module-pre.js \
+                                    build/js/root/lib/libogg.a \
+                                    build/js/root/lib/libtheoradec.a \
+                                    compileOgvDecoderVideoTheora.sh
+	test -d build || mkdir build
+	./compileOgvDecoderVideoTheora.sh
 
 build/YCbCr-shaders.h : src/YCbCr.vsh src/YCbCr.fsh src/YCbCr-stripe.fsh file2def.js
 	test -d build || mkdir build
@@ -136,33 +196,64 @@ build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
 	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
 
-build/ogv.js : src/ogv.js.in src/StreamFile.js \
+build/ogv.js : src/ogv.js.in \
+               src/OGVLoader.js \
+               src/StreamFile.js \
                src/AudioFeeder.js \
                build/FrameSink.js \
                build/WebGLFrameSink.js \
                src/Bisector.js \
                src/OGVMediaType.js \
                src/OGVWorkerCodec.js \
+               src/OGVWrapperCodec.js \
+               src/OGVProxyClass.js \
+               src/OGVDecoderAudioProxy.js \
+               src/OGVDecoderVideoProxy.js \
                src/OGVPlayer.js \
                build/ogv-codec.js \
                build/ogv-codec.js.gz \
+               build/ogv-demuxer-ogg.js \
+               build/ogv-decoder-audio-opus.js \
+               build/ogv-decoder-audio-vorbis.js \
+               build/ogv-decoder-video-theora.js \
                build/webm-codec.js \
                build/webm-codec.js.gz \
                src/dynamicaudio.swf \
-               src/ogv-worker.js
+               src/ogv-worker.js \
+               build/ogv-worker-audio.js \
+               build/ogv-worker-video.js
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
-	echo 'window.OGVVersion = "$(FULLVER)";' >> build/ogv.js
+	echo 'this.OGVVersion = "$(FULLVER)";' >> build/ogv.js
 
 build/ogv-support.js : src/ogv-support.js.in \
                        src/BogoSlow.js \
                        src/OGVCompat.js \
                        build/ogv.js
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv-support.js.in > build/ogv-support.js
-	echo 'window.OGVVersion = "$(FULLVER)";' >> build/ogv-support.js
-	
+	echo 'this.OGVVersion = "$(FULLVER)";' >> build/ogv-support.js
 
 build/ogv-version.js : build/ogv.js
-	echo 'window.OGVVersion = "$(FULLVER)";' > build/ogv-version.js
+	echo 'this.OGVVersion = "$(FULLVER)";' > build/ogv-version.js
+
+build/ogv-worker-audio.js : src/OGVLoader.js \
+                            src/OGVWorkerSupport.js \
+                            src/OGVWorkerAudio.js \
+                            build/ogv-version.js
+	cat src/OGVLoader.js \
+	    src/OGVWorkerSupport.js \
+	    src/OGVWorkerAudio.js \
+	    build/ogv-version.js \
+	    > build/ogv-worker-audio.js
+
+build/ogv-worker-video.js : src/OGVLoader.js \
+                            src/OGVWorkerSupport.js \
+                            src/OGVWorkerVideo.js \
+                            build/ogv-version.js
+	cat src/OGVLoader.js \
+	    src/OGVWorkerSupport.js \
+	    src/OGVWorkerVideo.js \
+	    build/ogv-version.js \
+	    > build/ogv-worker-video.js
 
 build/ogv-codec.js.gz : build/ogv-codec.js
 	 7z -tgzip -mx=9 -so a dummy.gz build/ogv-codec.js > build/ogv-codec.js.gz || gzip -9 -c build/ogv-codec.js > build/ogv-codec.js.gz
@@ -181,15 +272,7 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
                         build/demo/media/curiosity.ogv \
-                        build/demo/media/sneak.ogv \
                         build/demo/lib/ogv.js \
-                        build/demo/lib/ogv-codec.js \
-                        build/demo/lib/ogv-codec.js.gz \
-                        build/demo/lib/ogv-support.js \
-                        build/demo/lib/ogv-worker.js \
-                        build/demo/lib/webm-codec.js \
-                        build/demo/lib/webm-codec.js.gz \
-                        build/demo/lib/dynamicaudio.swf \
                         build/demo/lib/cortado.jar \
                         build/demo/lib/CortadoPlayer.js
 	test -d build/demo || mkdir -p build/demo
@@ -231,41 +314,9 @@ build/demo/media/curiosity.ogv : src/demo/media/curiosity.ogv
 	test -d build/demo/media || mkdir -p build/demo/media
 	cp src/demo/media/curiosity.ogv build/demo/media/curiosity.ogv
 
-build/demo/media/sneak.ogv : src/demo/media/sneak.ogv
-	test -d build/demo/media || mkdir -p build/demo/media
-	cp src/demo/media/sneak.ogv build/demo/media/sneak.ogv
-
-build/demo/lib/ogv.js : build/ogv.js
+build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogv.js build/demo/lib/ogv.js
-
-build/demo/lib/ogv-support.js : build/ogv-support.js
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogv-support.js build/demo/lib/ogv-support.js
-
-build/demo/lib/ogv-worker.js : src/ogv-worker.js
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp src/ogv-worker.js build/demo/lib/ogv-worker.js
-
-build/demo/lib/ogv-codec.js : build/ogv-codec.js
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogv-codec.js build/demo/lib/ogv-codec.js
-
-build/demo/lib/ogv-codec.js.gz : build/ogv-codec.js.gz
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/ogv-codec.js.gz build/demo/lib/ogv-codec.js.gz
-
-build/demo/lib/dynamicaudio.swf : src/dynamicaudio.swf
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp src/dynamicaudio.swf build/demo/lib/dynamicaudio.swf
-
-build/demo/lib/webm-codec.js : build/webm-codec.js
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/webm-codec.js build/demo/lib/webm-codec.js
-
-build/demo/lib/webm-codec.js.gz : build/webm-codec.js.gz
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp build/webm-codec.js.gz build/demo/lib/webm-codec.js.gz
+	cp -pr dist/ogvjs-$(VERSION)/* build/demo/lib/
 
 build/demo/lib/cortado.jar : src/cortado.jar
 	test -d build/demo/lib || mkdir -p build/demo/lib
@@ -277,8 +328,6 @@ build/demo/lib/CortadoPlayer.js : src/CortadoPlayer.js
 
 # QUnit test cases
 build/tests/index.html : build/tests/tests.js \
-                         build/tests/lib/ogv-support.js \
-                         build/tests/lib/ogv-worker.js \
                          build/tests/lib/ogv.js \
                          build/tests/media/1frame.ogv \
                          build/tests/media/3frames.ogv \
@@ -294,23 +343,9 @@ build/tests/tests.js : src/tests/tests.js
 	test -d build/tests || mkdir -p build/tests
 	cp src/tests/tests.js build/tests/tests.js
 
-build/tests/lib/ogv.js : build/ogv.js \
-                         build/tests/lib/ogv-codec.js \
-                         build/tests/lib/dynamicaudio.swf
+build/tests/lib/ogv.js : dist
 	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp build/ogv.js build/tests/lib/ogv.js
-
-build/tests/lib/ogv-codec.js : build/ogv-codec.js
-	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp build/ogv-codec.js build/tests/lib/ogv-codec.js
-
-build/tests/lib/ogv-worker.js : src/ogv-worker.js
-	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp src/ogv-worker.js build/tests/lib/ogv-worker.js
-
-build/tests/lib/dynamicaudio.swf : src/dynamicaudio.swf
-	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp src/dynamicaudio.swf build/tests/lib/dynamicaudio.swf
+	cp -pr dist/ogvjs-$(VERSION)/* build/tests/lib/
 
 build/tests/media/1frame.ogv : src/tests/media/1frame.ogv
 	test -d build/tests/media || mkdir -p build/tests/media

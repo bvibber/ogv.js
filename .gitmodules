@@ -22,3 +22,6 @@
 [submodule "libnestegg"]
 	path = libnestegg
 	url = https://github.com/kinetiknz/nestegg.git
+[submodule "liboggz"]
+	path = liboggz
+	url = https://github.com/brion/liboggz.git
