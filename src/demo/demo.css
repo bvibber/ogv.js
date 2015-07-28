@@ -358,6 +358,9 @@ html, body {
 .bench-target {
 	color: red;
 }
+.bench-clock {
+	color: blue;
+}
 .bench-total {
 	color: black;
 }
@@ -365,7 +368,7 @@ html, body {
 	color: brown;
 }
 .bench-video {
-	color: blue;
+	color: darkcyan;
 }
 .bench-audio {
 	color: green;

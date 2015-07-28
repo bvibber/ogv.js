@@ -214,6 +214,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	// Benchmark data, exposed via getPlaybackStats()
 	var framesProcessed = 0, // frames
 		targetPerFrameTime = 1000 / 60, // ms
+		playTime = 0, // ms
 		demuxingTime = 0, // ms
 		videoDecodingTime = 0, // ms
 		audioDecodingTime = 0, // ms
@@ -296,6 +297,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
 			jitter = Math.abs(wallClockTime - 1000 / fps);
 		totalJitter += jitter;
+		playTime += wallClockTime;
 
 		fireEvent('framecallback', {
 			cpuTime: lastFrameDecodeTime,
@@ -1078,6 +1080,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		return {
 			targetPerFrameTime: targetPerFrameTime,
 			framesProcessed: framesProcessed,
+			playTime: playTime,
 			demuxingTime: demuxingTime,
 			videoDecodingTime: videoDecodingTime,
 			audioDecodingTime: audioDecodingTime,
@@ -1090,6 +1093,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	};
 	self.resetPlaybackStats = function() {
 		framesProcessed = 0;
+		playTime = 0;
 		demuxingTime = 0;
 		videoDecodingTime = 0;
 		audioDecodingTime = 0;

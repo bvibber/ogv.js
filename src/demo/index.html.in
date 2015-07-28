@@ -117,7 +117,8 @@
 						<table id="decode-rate-table">
 							<tr>
 								<td class="bench-target">target</td>
-								<td class="bench-total">tot</td>
+								<td class="bench-clock">clock</td>
+								<td class="bench-total">cpu</td>
 								<td class="bench-demux">mux</td>
 								<td class="bench-video">vid</td>
 								<td class="bench-audio">aud</td>
@@ -126,6 +127,7 @@
 							</tr>
 							<tr>
 								<td id="bench-target" class="bench-target"></td>
+								<td id="bench-clock" class="bench-clock"></td>
 								<td id="bench-total" class="bench-total"></td>
 								<td id="bench-demux" class="bench-demux"></td>
 								<td id="bench-video" class="bench-video"></td>
