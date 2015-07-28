@@ -236,7 +236,7 @@ static void processBegin() {
 			
 			codecjs_callback_init_video(videoParams.width, videoParams.height,
 			                            1, 1, // @todo assuming 4:2:0
-			                            30.0, // @todo get fps
+			                            0, // @todo get fps
 			                            videoParams.width - videoParams.crop_left - videoParams.crop_right,
 			                            	videoParams.height - videoParams.crop_top - videoParams.crop_bottom,
                                         videoParams.crop_left, videoParams.crop_top,

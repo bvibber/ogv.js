@@ -127,7 +127,8 @@
 			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime);
 			document.getElementById('bench-buffer').textContent = round1_0(averageBufferTime);
 			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
-			
+
+			document.getElementById('video-fps').textContent = round2(player.ogvjsVideoFrameRate);
 			document.getElementById('video-jitter').textContent = round2(info.jitter);
 			document.getElementById('audio-drops').textContent = info.droppedAudio;
 			document.getElementById('audio-delayed').textContent = round1_0(info.delayedAudio);
@@ -790,7 +791,7 @@
 
 				// And grab our custom metadata...				
 				var fps;
-				if (typeof (player.ogvjsVideoFrameRate) === 'number') {
+				if (typeof (player.ogvjsVideoFrameRate) === 'number' && player.ogvjsVideoFrameRate > 0) {
 					benchmarkTargetFps = player.ogvjsVideoFrameRate;
 					fps = round2(player.ogvjsVideoFrameRate);
 				} else {

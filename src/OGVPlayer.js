@@ -260,11 +260,14 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		frameEndTimestamp = 0.0,
 		yCbCrBuffer = null;
 	var lastFrameDecodeTime = 0.0;		
-	var targetFrameTime;
 	var lastFrameTimestamp = 0.0;
 
 	function processFrame() {
 		yCbCrBuffer = codec.frameBuffer;
+		if (videoInfo.fps == 0) {
+			// WebM doesn't encode a frame rate
+			targetPerFrameTime = (yCbCrBuffer.timestamp - frameEndTimestamp) * 1000;
+		}
 		frameEndTimestamp = yCbCrBuffer.timestamp;
 	}
 
@@ -295,7 +298,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 		var newFrameTimestamp = getTimestamp(),
 			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
-			jitter = Math.abs(wallClockTime - 1000 / fps);
+			jitter = Math.abs(wallClockTime - targetPerFrameTime);
 		totalJitter += jitter;
 		playTime += wallClockTime;
 
@@ -403,7 +406,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	function doProcessLinearSeeking() {
 		var frameDuration;
 		if (codec.hasVideo) {
-			frameDuration = 1 / videoInfo.fps;
+			frameDuration = targetPerFrameTime;
 		} else {
 			frameDuration = 1 / 256; // approximate packet audio size, fake!
 		}
@@ -461,7 +464,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				return;
 			}
 			timestamp = codec.frameTimestamp;
-			frameDuration = 1 / videoInfo.fps;
+			frameDuration = targetPerFrameTime;
 		} else if (codec.hasAudio) {
 			if (!codec.audioReady) {
 				// Haven't found an audio packet yet, process more data
@@ -517,9 +520,11 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 	
 	function setupVideo() {
-		// @fixme calc fps dynamically
-		fps = videoInfo.fps;
-		targetPerFrameTime = 1000 / fps;
+		if (videoInfo.fps > 0) {
+			targetPerFrameTime = 1000 / videoInfo.fps;
+		} else {
+			targetPerFrameTime = 16.667; // recalc this later
+		}
 
 		canvas.width = videoInfo.displayWidth;
 		canvas.height = videoInfo.displayHeight;
@@ -654,7 +659,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 			state = State.PLAYING;
 			lastFrameTimestamp = getTimestamp();
-			targetFrameTime = lastFrameTimestamp + 1000.0 / fps;
 			if (codec.hasAudio) {
 				initAudioFeeder();
 				audioFeeder.waitUntilReady(function() {
@@ -843,8 +847,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			doProcessing(); // warning: tail recursion is possible
 		}
 	}
-
-	var fps = 60;
 
 	var videoInfo,
 		audioInfo;
@@ -1300,7 +1302,11 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	Object.defineProperty(self, "ogvjsVideoFrameRate", {
 		get: function getOgvJsVideoFrameRate() {
 			if (videoInfo) {
-				return videoInfo.fps;
+				if (videoInfo.fps == 0) {
+					return 1000 / targetPerFrameTime;
+				} else {
+					return videoInfo.fps;
+				}
 			} else {
 				return 0;
 			}
