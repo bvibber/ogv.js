@@ -180,10 +180,10 @@ int ogv_demuxer_process(char *buffer, int bufsize) {
 		buffersReceived = 1;
 
 		int ret = oggz_read_input(oggz, (unsigned char *)buffer, bufsize);
-		if (ret == 0) {
-			// done?
-		} else if (ret < 0) {
+		if (ret < 0) {
 			printf("Error %d from oggz_read_input\n", ret);
+		} else if (ret < bufsize) {
+			printf("Expected to read %d from oggz_read_input but gave %d\n", ret, bufsize);
 		}
     }
 
