@@ -19,8 +19,6 @@ EMCC_FAST_COMPILER=1 emcc \
   -s EXPORT_NAME="'OGVDemuxerOgg'" \
   -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/ogv-demuxer-exports.json`" \
-  -s ASSERTIONS=2 \
-  --profiling \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
