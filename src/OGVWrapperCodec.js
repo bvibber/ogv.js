@@ -129,7 +129,7 @@ OGVWrapperCodec = (function(options) {
 	self.init = function(callback) {
 		var demuxerClassName;
 		if (options.type === 'video/webm') {
-			throw new Exception('webm modules not yet built');
+			throw new Error('webm modules not yet built');
 		} else {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}

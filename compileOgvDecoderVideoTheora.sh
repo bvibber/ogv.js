@@ -16,6 +16,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -s NO_BROWSER=1 \
   -s INVOKE_RUN=0 \
   -s NO_EXIT_RUNTIME=1 \
+  -s TOTAL_MEMORY=33554432 \
   -s EXPORT_NAME="'OGVDecoderVideoTheora'" \
   -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/ogv-decoder-video-exports.json`" \

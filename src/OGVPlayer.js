@@ -123,13 +123,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 	var then = getTimestamp();
 	function log(msg) {
-		/*
-		var now = getTimestamp(),
-			delta = now - then;
+		if (options.debug) {
+			var now = getTimestamp(),
+				delta = now - then;
 
-		console.log('+' + delta + 'ms proc: ' + msg);
-		then = now;
-		*/
+			console.log('+' + delta + 'ms proc: ' + msg);
+			then = now;
+		}
 	}
 
 	function fireEvent(eventName, props) {
