@@ -938,9 +938,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		}
 		var fudge = -1 / 256;
 		if (delay > fudge || !useTailCalls) {
-			if (delay > 40) {
-				console.log('excessive delay ' + delay);
-			}
 			log('pingProcessing delay: ' + delay);
 			nextProcessingTimer = setTimeout(doProcessing, delay);
 		} else {

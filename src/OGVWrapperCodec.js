@@ -203,6 +203,22 @@ OGVWrapperCodec = (function(options) {
 
 		//console.log('process check...', self.hasAudio, demuxer.audioReady, demuxer.audioTimestamp, self.hasVideo, demuxer.frameReady, demuxer.frameTimestamp);
 
+		function doProcessData() {
+			if (inputQueue.length) {
+				var data = inputQueue.shift();
+				demuxer.process(data, function(more) {
+					if (!more && inputQueue.length) {
+						// we've got more to process already
+						more = true;
+					}
+					callback(more);
+				});
+			} else {
+				// out of data! ask for more
+				callback(false);
+			}
+		}
+
 		if (demuxer.loadedMetadata && !loadedDemuxerMetadata) {
 
 			// Demuxer just reached its metadata. Load the relevant codecs!
@@ -239,7 +255,7 @@ OGVWrapperCodec = (function(options) {
 			} else {
 
 				console.log('processing: need more audio headers');
-				callback(true);
+				doProcessData();
 
 			}
 
@@ -264,7 +280,7 @@ OGVWrapperCodec = (function(options) {
 			} else {
 
 				console.log('processing: need more video headers');
-				callback(true);
+				doProcessData();
 
 			}
 
@@ -280,18 +296,11 @@ OGVWrapperCodec = (function(options) {
 			// Already queued up some packets. Go read them!
 			callback(true);
 
-		} else if (inputQueue.length == 0) {
-
-			// out of data! ask for more
-			callback(false);
-
 		} else {
 
-			// We need to process more of the data we've already received...
-			var data = inputQueue.shift();
-			demuxer.process(data, function(more) {
-				callback(more);
-			});
+			// We need to process more of the data we've already received,
+			// or ask for more if we ran out!
+			doProcessData();
 
 		}
 

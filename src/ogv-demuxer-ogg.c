@@ -37,6 +37,10 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
+static int buffersReceived = 0;
+static int needData = 1;
+
+
 static int processSkeleton(oggz_packet *packet, long serialno);
 static int processDecoding(oggz_packet *packet, long serialno);
 
@@ -145,6 +149,8 @@ static int processDecoding(oggz_packet *packet, long serialno) {
 
 static int readPacketCallback(OGGZ *oggz, oggz_packet *packet, long serialno, void *user_data)
 {
+	needData = 0;
+
     switch (appState) {
         case STATE_BEGIN:
             return processBegin(packet, serialno);
@@ -165,14 +171,14 @@ void ogv_demuxer_init() {
     skeleton = oggskel_new();
 }
 
-static int buffersReceived = 0;
-
 int ogv_demuxer_process(char *buffer, int bufsize) {
+	needData = 1;
+
 	if (appState == STATE_DECODING) {
 		if ((!videoCodec || ogvjs_callback_frame_ready()) &&
 			(!audioCodec || ogvjs_callback_audio_ready())) {
-			// We've already got data ready, no need to process.
-			return 1; // need more data to get a video packet
+			// We've already got data ready!
+			needData = 0;
 		}
 	}
 
@@ -187,7 +193,7 @@ int ogv_demuxer_process(char *buffer, int bufsize) {
 		}
     }
 
-    return 1;
+	return !needData;
 }
 
 void ogv_demuxer_destroy() {
