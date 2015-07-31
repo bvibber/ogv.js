@@ -278,4 +278,7 @@ long ogv_demuxer_keypoint_offset(long time_ms)
 void ogv_demuxer_flush()
 {
 	oggz_purge(oggz);
+
+	// Need to "seek" to clear out stored units
+	oggz_seek(oggz, 0, SEEK_CUR);
 }
