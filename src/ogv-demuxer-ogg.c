@@ -103,9 +103,23 @@ static int processBegin(oggz_packet *packet, long serialno)
     return OGGZ_CONTINUE;
 }
 
+static float calc_keyframe_timestamp(oggz_packet *packet, long serialno)
+{
+	ogg_int64_t granulepos = oggz_tell_granulepos(oggz);
+
+	int granuleshift = oggz_get_granuleshift(oggz, serialno);
+
+	ogg_int64_t granulerate_n = 0;
+	ogg_int64_t granulerate_d = 0;
+	oggz_get_granulerate(oggz, serialno, &granulerate_n, &granulerate_d);
+
+	return (float)(granulepos >> granuleshift) * (float)granulerate_d / (float)granulerate_n;
+}
+
 static int processSkeleton(oggz_packet *packet, long serialno)
 {
 	float timestamp = oggz_tell_units(oggz) / 1000.0;
+	float keyframeTimestamp = calc_keyframe_timestamp(packet, serialno);
 
     if (skeletonStream == serialno) {
         int ret = oggskel_decode_header(skeleton, &packet->op);
@@ -121,7 +135,6 @@ static int processSkeleton(oggz_packet *packet, long serialno)
     }
 
     if (serialno == videoStream) {
-    	float keyframeTimestamp = timestamp; // @fixme do we need this? may be for seeking...
     	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
     }
 
@@ -134,9 +147,9 @@ static int processSkeleton(oggz_packet *packet, long serialno)
 
 static int processDecoding(oggz_packet *packet, long serialno) {
 	float timestamp = oggz_tell_units(oggz) / 1000.0;
+	float keyframeTimestamp = calc_keyframe_timestamp(packet, serialno);
 
     if (serialno == videoStream) {
-    	float keyframeTimestamp = timestamp; // @fixme do we need this? may be for seeking...
     	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
     }
 
