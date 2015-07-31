@@ -305,6 +305,14 @@ float ogv_demuxer_media_duration() {
 	}
 }
 
+int ogv_demuxer_seekable()
+{
+	// @todo implement or rework
+	// nestegg's seeking implementation is sync
+	//return nestegg_has_cues(demuxContext);
+	return 0;
+}
+
 long ogv_demuxer_keypoint_offset(long time_ms)
 {
 	// @todo implement or rework

@@ -272,6 +272,11 @@ float ogv_demuxer_media_duration() {
     return -1;
 }
 
+int ogv_demuxer_seekable()
+{
+	return skeletonHeadersComplete;
+}
+
 long ogv_demuxer_keypoint_offset(long time_ms)
 {
     ogg_int64_t offset = -1;

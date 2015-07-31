@@ -82,6 +82,12 @@ Object.defineProperty(Module, 'processing', {
 	}
 });
 
+Object.defineProperty(Module, 'seekable', {
+	get: function() {
+		return !!Module._ogv_demuxer_seekable();
+	}
+});
+
 // - public methods
 
 Module.init = function(callback) {

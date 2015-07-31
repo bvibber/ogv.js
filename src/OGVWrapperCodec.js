@@ -125,6 +125,12 @@ OGVWrapperCodec = (function(options) {
 		}
 	});
 
+	Object.defineProperty(self, 'seekable', {
+		get: function() {
+			return demuxer.seekable;
+		}
+	});
+
 	// - public methods
 	self.init = function(callback) {
 		var demuxerClassName;

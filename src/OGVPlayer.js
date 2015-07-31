@@ -1205,10 +1205,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	 */
 	Object.defineProperty(self, "seekable", {
 		get: function getSeekable() {
-			if (duration === null) {
-				return new OGVTimeRanges([]);
-			} else {
+			if (self.duration < Infinity && stream && stream.seekable && codec && codec.seekable) {
 				return new OGVTimeRanges([[0, duration]]);
+			} else {
+				return new OGVTimeRanges([]);
 			}
 		}
 	});

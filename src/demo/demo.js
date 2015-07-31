@@ -1002,7 +1002,7 @@
 		setHash();
 	});
 	document.querySelector('#progress-total').addEventListener('click', function(event) {
-		if (player) {
+		if (player && player.seekable.length) {
 			var x = event.offsetX,
 				fraction = x / this.offsetWidth,
 				seekTime = fraction * player.duration;
@@ -1012,7 +1012,7 @@
 	if (window.PointerEvent) {
 		document.querySelector('#progress-thumb').addEventListener('pointerdown', function(event) {
 			console.log('touch start');
-			if (player) {
+			if (player && player.seekable.length) {
 				var thumbPointer = event.pointerId;
 				event.target.setPointerCapture(thumbPointer);
 
@@ -1051,7 +1051,7 @@
 	} else {
 		document.querySelector('#progress-thumb').addEventListener('touchstart', function(event) {
 			console.log('touch start');
-			if (player) {
+			if (player && player.seekable.length) {
 				thumbSeeking = true;
 				seekTarget = player.currentTime;
 				initialThumbFraction = seekTarget / player.duration;
@@ -1084,7 +1084,7 @@
 			event.preventDefault();
 		});
 		document.querySelector('#progress-thumb').addEventListener('mousedown', function(event) {
-			if (player) {
+			if (player && player.seekable.length) {
 				thumbSeeking = true;
 				seekTarget = player.currentTime;
 				initialThumbFraction = seekTarget / player.duration;
