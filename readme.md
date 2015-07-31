@@ -7,9 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 0.9.next
+* 0.9.3
  * internal partial async retooling
- * experimental web worker threading, disabled by default
+ * web worker threading, enabled by default
 * 0.9.2
  * fix for time reporting issue
 * 0.9.1
@@ -28,7 +28,7 @@ See a sample of MediaWiki with seamless ogv.js playback mode for Safari/IE/Edge 
 * streaming: yes (with Range header)
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
-* [background threading: partial, experimental](https://github.com/brion/ogv.js/wiki/Threading)
+* background threading: yes (video, audio decoders in Workers)
 * [GPU accelerated drawing: yes (WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
 * seeking: yes for Ogg (with Range header), no for WebM
 * SIMD acceleration: no
@@ -133,31 +133,8 @@ Early versions of IE 11 do not support luminance or alpha textures, and in IE 11
 
 *Threading*
 
-Currently the video and audio codecs run on the UI thread by default.
-
-Web Workers can optionally be used to background the decoder as a subprocess, sending video frames and audio data back to the parent web page for output. This should be supported by all target and test browsers.
-
-However there is communication overhead:
-* data must be copied out of the emscripten heap
- * data copies are notoriously extra slow on IE
-* current implementation blocks on context switches and makes lots of them
- * call into decoder thread to find packets...
- * back to main thread for controller
- * call into decoder thread to decode audio packet...
- * back to main thread to queue audio for output
- * call into decoder thread to decode frame...
- * back to main thread to draw it
- * etc
-
-That's a lot of events to toss back and forth between two threads every frame! Overhead seems higher on Windows than on Mac OS X/iOS, and higher in IE and Edge than Firefox/Chrome/Safari.
-
-See [Threading](https://github.com/brion/ogv.js/wiki/Threading) and [Modularity and threading](https://github.com/brion/ogv.js/wiki/Modularity-and-threading) on the wiki for thoughts on how work could be broken more efficiently over a couple of threads.
-
-Rough plan:
-* separate demuxer, video decoder, and audio decoder into separate emscripten modules
-* run demuxer on the UI thread along with the controller, reducing context switching
-* run video and audio decoders as separate workers
-* treat decoder workers as streaming instead of blocking: don't wait on the return data before we start doing other stuff
+Currently the video and audio codecs run in worker threads by default, while the demuxer
+and player logic run on the UI thread. This seems to work pretty well.
 
 
 *Streaming download*
