@@ -748,20 +748,9 @@
 					webGL: false, // force 2d canvas
 					enableWebM: true // experimental
 				});
-			} else if (playerBackend == 'worker') {
+			} else if (playerBackend == 'js-noworker') {
 				player = new OGVPlayer({
-					worker: true, // experimental
-					enableWebM: true // experimental
-				});
-			} else if (playerBackend == 'modular') {
-				player = new OGVPlayer({
-					enableModular: true, // experimental
-					enableWebM: true // experimental
-				});
-			} else if (playerBackend == 'modworker') {
-				player = new OGVPlayer({
-					worker: true, // experimental
-					enableModular: true, // experimental
+					worker: false, // experimental
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'webgl') {

@@ -34,7 +34,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
 
 	var codecClassName = null,
-		codecClassFile = null,
 		codecClass = null,
 		codecType = null;
 
@@ -48,13 +47,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 
 	// Experimental options
-	var enableWebM = !!options.enableWebM,
-		enableModular = !!options.enableModular;
+	var enableWebM = !!options.enableWebM;
 
 	// Running the codec in a worker thread equals happy times!
-	// Well, in theory. So far it's kinda slow.
-	//var enableWorker = !!window.Worker;
-	var enableWorker = false;
+	var enableWorker = !!window.Worker;
 	if (typeof options.worker !== 'undefined') {
 		enableWorker = !!options.worker;
 	}
@@ -977,26 +973,22 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 	
 	function loadCodec(callback) {
-		// @todo fix this proper
+		// @todo use the demuxer and codec interfaces directly
+		codecClassName = 'OGVWrapperCodec';
+
+		// @todo fix detection proper
 		if (enableWebM && self.src.match(/\.webm$/i)) {
-			codecClassName = 'OGVWebMDecoder';
 			codecOptions.type = 'video/webm';
 		} else {
-			codecClassName = 'OGVOggDecoder';
 			codecOptions.type = 'video/ogg';
 		}
-		if (enableWorker) {
-			codecClassName = 'OGVWorkerCodec';
-		}
-		if (enableModular) {
-			codecClassName = 'OGVWrapperCodec';
-		}
+
 		OGVLoader.loadClass(codecClassName, function(classObj) {
 			codecClass = classObj;
 			callback();
 		});
 	}
-	
+
 	/**
 	 * HTMLMediaElement load method
 	 */

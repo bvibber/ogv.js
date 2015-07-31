@@ -2,11 +2,6 @@
 	var global = this;
 
 	var scriptMap = {
-		// old modules
-		OGVOggDecoder: 'ogv-codec.js',
-		OGVWebMDecoder: 'webm-codec.js',
-
-		// new modules
 		OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
 		OGVDemuxerWebM: 'ogv-demuxer-webm.js',
 		OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',

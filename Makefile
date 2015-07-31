@@ -35,8 +35,6 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
 	cp -p build/ogv.js \
-	      build/ogv-codec.js \
-	      build/webm-codec.js \
 	      build/ogv-demuxer-ogg.js \
 	      build/ogv-demuxer-webm.js \
 	      build/ogv-decoder-audio-opus.js \
@@ -45,7 +43,6 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
-	      src/ogv-worker.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      src/dynamicaudio.swf \
@@ -98,43 +95,6 @@ build/js/root/lib/libvpx.a : configureVpx.sh compileVpxJs.sh
 	test -d build || mkdir build
 	./configureVpx.sh
 	./compileVpxJs.sh
-
-build/js/ogv-libs.js : src/ogv-libs.c src/codecjs.h src/opus_helper.c src/opus_helper.h src/opus_header.c src/opus_header.h \
-                       src/codec-libs-mixin.js \
-                       src/codec-libs-exports.json \
-                       build/js/root/lib/libogg.a \
-                       build/js/root/lib/libtheoradec.a \
-                       build/js/root/lib/libvorbis.a \
-                       build/js/root/lib/libopus.a \
-                       build/js/root/lib/libskeleton.a \
-                       compileOgvJs.sh
-	test -d build || mkdir build
-	./compileOgvJs.sh
-
-build/ogv-codec.js : src/codec-libs.js.in build/js/ogv-libs.js
-	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OGVOggDecoder -DCODEC_TARGET='"../build/js/ogv-libs.js"' src/codec-libs.js.in > build/ogv-codec.js
-
-build/js/webm-libs.js : src/webm-libs.c \
-                        src/codecjs.h \
-                        src/opus_helper.c \
-                        src/opus_helper.h \
-                        src/opus_header.c \
-                        src/opus_header.h \
-                        src/codec-libs-mixin.js \
-                        src/codec-libs-exports.json \
-                        build/js/root/lib/libogg.a \
-                        build/js/root/lib/libvorbis.a \
-                        build/js/root/lib/libopus.a \
-                        build/js/root/lib/libnestegg.a \
-                        build/js/root/lib/libvpx.a \
-                        compileWebMJs.sh
-	test -d build || mkdir build
-	./compileWebMJs.sh
-
-build/webm-codec.js : src/codec-libs.js.in build/js/webm-libs.js
-	test -d build || mkdir build
-	cpp -E -w -P -CC -nostdinc -DCODEC_CLASS=OGVWebMDecoder -DCODEC_TARGET='"../build/js/webm-libs.js"' src/codec-libs.js.in > build/webm-codec.js
 
 build/ogv-demuxer-ogg.js : src/ogv-demuxer-ogg.c \
                            src/ogv-demuxer.h \
@@ -229,24 +189,18 @@ build/ogv.js : src/ogv.js.in \
                build/WebGLFrameSink.js \
                src/Bisector.js \
                src/OGVMediaType.js \
-               src/OGVWorkerCodec.js \
                src/OGVWrapperCodec.js \
                src/OGVProxyClass.js \
                src/OGVDecoderAudioProxy.js \
                src/OGVDecoderVideoProxy.js \
                src/OGVPlayer.js \
-               build/ogv-codec.js \
-               build/ogv-codec.js.gz \
                build/ogv-demuxer-ogg.js \
                build/ogv-demuxer-webm.js \
                build/ogv-decoder-audio-opus.js \
                build/ogv-decoder-audio-vorbis.js \
                build/ogv-decoder-video-theora.js \
                build/ogv-decoder-video-vp8.js \
-               build/webm-codec.js \
-               build/webm-codec.js.gz \
                src/dynamicaudio.swf \
-               src/ogv-worker.js \
                build/ogv-worker-audio.js \
                build/ogv-worker-video.js
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
@@ -281,12 +235,6 @@ build/ogv-worker-video.js : src/OGVLoader.js \
 	    src/OGVWorkerVideo.js \
 	    build/ogv-version.js \
 	    > build/ogv-worker-video.js
-
-build/ogv-codec.js.gz : build/ogv-codec.js
-	 7z -tgzip -mx=9 -so a dummy.gz build/ogv-codec.js > build/ogv-codec.js.gz || gzip -9 -c build/ogv-codec.js > build/ogv-codec.js.gz
-
-build/webm-codec.js.gz : build/webm-codec.js
-	 7z -tgzip -mx=9 -so a dummy.gz build/webm-codec.js > build/webm-codec.js.gz || gzip -9 -c build/webm-codec.js > build/webm-codec.js.gz
 
 # The player demo, with the JS build
 build/demo/index.html : src/demo/index.html.in \
