@@ -232,6 +232,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	// Benchmark data, exposed via getPlaybackStats()
 	var framesProcessed = 0, // frames
 		targetPerFrameTime = 1000 / 60, // ms
+		totalFrameTime = 0, // ms
+		totalFrameCount = 0, // frames
 		playTime = 0, // ms
 		demuxingTime = 0, // ms
 		videoDecodingTime = 0, // ms
@@ -826,6 +828,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 
 							var videoStartTime = getTimestamp();
 							pendingFrame++;
+							if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
+								// WebM doesn't encode a frame rate
+								targetPerFrameTime = (codec.frameTimestamp - frameEndTimestamp) * 1000;
+							}
+							totalFrameTime += targetPerFrameTime;
+							totalFrameCount++;
 							frameEndTimestamp = codec.frameTimestamp;
 							var pendingFramePing = false;
 							codec.decodeFrame(function processingDecodeFrame(ok) {
@@ -836,10 +844,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 								if (ok) {
 									// Save the buffer until it's time to draw
 									yCbCrBuffer = codec.frameBuffer;
-									if (videoInfo.fps == 0 && (yCbCrBuffer.timestamp - frameEndTimestamp) > 0) {
-										// WebM doesn't encode a frame rate
-										targetPerFrameTime = (yCbCrBuffer.timestamp - frameEndTimestamp) * 1000;
-									}
 								} else {
 									// Bad packet or something.
 									console.log('Bad video packet or something');
@@ -1157,6 +1161,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		bufferTime = 0;
 		drawingTime = 0;
 		totalJitter = 0;
+		totalFrameTime = 0;
+		totalFrameCount = 0;
 	};
 	
 	/**
@@ -1358,7 +1364,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		get: function getOgvJsVideoFrameRate() {
 			if (videoInfo) {
 				if (videoInfo.fps == 0) {
-					return 1000 / targetPerFrameTime;
+					return totalFrameCount / (totalFrameTime / 1000);
 				} else {
 					return videoInfo.fps;
 				}
