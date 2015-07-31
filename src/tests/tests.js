@@ -6,10 +6,9 @@ function nativePlayer() {
 	return document.createElement('video');
 }
 
+OGVLoader.base = 'lib';
 function ogvPlayer() {
-	return new OGVPlayer({
-		base: 'lib',
-	});
+	return new OGVPlayer();
 }
 
 QUnit.assert.floatClose = function(actual, expected, message) {
