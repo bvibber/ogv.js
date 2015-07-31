@@ -76,7 +76,7 @@
 
 		loadClass: function(className, callback, options) {
 			options = options || {};
-			if (options.worker && typeof global.Worker === 'function') {
+			if (options.worker) {
 				this.workerProxy(className, callback);
 			} else if (typeof global[className] === 'function') {
 				// already loaded!
