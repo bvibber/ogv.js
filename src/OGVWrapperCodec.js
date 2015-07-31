@@ -129,7 +129,7 @@ OGVWrapperCodec = (function(options) {
 	self.init = function(callback) {
 		var demuxerClassName;
 		if (options.type === 'video/webm') {
-			throw new Error('webm modules not yet built');
+			demuxerClassName = 'OGVDemuxerWebM';
 		} else {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
@@ -160,9 +160,16 @@ OGVWrapperCodec = (function(options) {
 			var className = audioClassMap[demuxer.audioCodec];
 			processing = true;
 			OGVLoader.loadClass(className, function(audioCodecClass) {
-				audioDecoder = new audioCodecClass();
-				processing = false;
-				callback();
+				var audioOptions = {};
+				if (demuxer.audioFormat) {
+					audioOptions.audioFormat = demuxer.audioFormat;
+				}
+				audioDecoder = new audioCodecClass(audioOptions);
+				audioDecoder.init(function() {
+					loadedAudioMetadata = audioDecoder.loadedMetadata;
+					processing = false;
+					callback();
+				});
 			}, {
 				worker: options.worker
 			});
@@ -181,9 +188,16 @@ OGVWrapperCodec = (function(options) {
 			var className = videoClassMap[demuxer.videoCodec];
 			processing = true;
 			OGVLoader.loadClass(className, function(videoCodecClass) {
-				videoDecoder = new videoCodecClass();
-				processing = false;
-				callback();
+				var videoOptions = {};
+				if (demuxer.videoFormat) {
+					videoOptions.videoFormat = demuxer.videoFormat;
+				}
+				videoDecoder = new videoCodecClass(videoOptions);
+				videoDecoder.init(function() {
+					loadedVideoMetadata = videoDecoder.loadedMetadata;
+					processing = false;
+					callback();
+				});
 			}, {
 				worker: options.worker
 			});

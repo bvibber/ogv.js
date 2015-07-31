@@ -19,12 +19,12 @@ function reallocInputBuffer(size) {
 /**
  * @property boolean
  */
-Module.loadedMetadata = false;
+Module.loadedMetadata = !!options.videoFormat;
 
 /**
  * @property object
  */
-Module.videoFormat = null;
+Module.videoFormat = options.videoFormat || null;
 
 /**
  * Last-decoded video packet
@@ -43,6 +43,11 @@ Object.defineProperty(Module, 'processing', {
 });
 
 // - public methods
+
+Module.init = function(callback) {
+	Module._ogv_video_decoder_init();
+	callback();
+};
 
 /**
  * Process a header packet
@@ -77,5 +82,3 @@ Module.processFrame = function(data, callback) {
 
 	callback(ret);
 };
-
-Module._ogv_video_decoder_init();

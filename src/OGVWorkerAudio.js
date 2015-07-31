@@ -3,6 +3,10 @@ proxy = new OGVWorkerSupport([
 	'audioFormat',
 	'audioBuffer'
 ], {
+	init: function(args, callback) {
+		this.target.init(callback);
+	},
+
 	processHeader: function(args, callback) {
 		this.target.processHeader(args[0], function(ok) {
 			callback([ok]);

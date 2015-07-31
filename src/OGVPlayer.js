@@ -124,11 +124,14 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	var then = getTimestamp();
 	function log(msg) {
 		if (options.debug) {
+			/*
 			var now = getTimestamp(),
 				delta = now - then;
 
 			console.log('+' + delta + 'ms proc: ' + msg);
 			then = now;
+			*/
+			console.log('OGVPlayer: ' + msg);
 		}
 	}
 
@@ -833,7 +836,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 								if (ok) {
 									// Save the buffer until it's time to draw
 									yCbCrBuffer = codec.frameBuffer;
-									if (videoInfo.fps == 0) {
+									if (videoInfo.fps == 0 && (yCbCrBuffer.timestamp - frameEndTimestamp) > 0) {
 										// WebM doesn't encode a frame rate
 										targetPerFrameTime = (yCbCrBuffer.timestamp - frameEndTimestamp) * 1000;
 									}
@@ -932,16 +935,16 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			throw new Error('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
 		}
 		if (nextProcessingTimer) {
-			log('canceling old processing timer');
+			//log('canceling old processing timer');
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
 		var fudge = -1 / 256;
 		if (delay > fudge || !useTailCalls) {
-			log('pingProcessing delay: ' + delay);
+			//log('pingProcessing delay: ' + delay);
 			nextProcessingTimer = setTimeout(doProcessing, delay);
 		} else {
-			log('pingProcessing tail call (' + delay + ')');
+			//log('pingProcessing tail call (' + delay + ')');
 			doProcessing(); // warning: tail recursion is possible
 		}
 	}

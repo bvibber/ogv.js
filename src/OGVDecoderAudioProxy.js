@@ -3,6 +3,10 @@ OGVDecoderAudioProxy = OGVProxyClass({
 	audioFormat: null,
 	audioBuffer: null
 }, {
+	init: function(callback) {
+		this.proxy('init', [], callback);
+	},
+
 	processHeader: function(data, callback) {
 		this.proxy('processHeader', [data], callback, [data]);
 	},

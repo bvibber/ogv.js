@@ -1,5 +1,33 @@
 mergeInto(LibraryManager.library, {
-	
+
+	ogvjs_callback_init_video: function(frameWidth, frameHeight,
+	                                    hdec, vdec,
+                                        fps,
+                                        picWidth, picHeight,
+                                        picX, picY,
+                                        displayWidth, displayHeight) {
+		Module.videoFormat = {
+			frameWidth: frameWidth,
+			frameHeight: frameHeight,
+			hdec: hdec,
+			vdec: vdec,
+			fps: fps,
+			picWidth: picWidth,
+			picHeight: picHeight,
+			picX: picX,
+			picY: picY,
+			displayWidth: displayWidth,
+			displayHeight: displayHeight
+		};
+	},
+
+	ogvjs_callback_init_audio: function(channels, rate) {
+		Module.audioFormat = {
+			channels: channels,
+			rate: rate
+		};
+	},
+
 	ogvjs_callback_loaded_metadata: function(videoCodecStr, audioCodecStr) {
 		console.log('ogvjs_callback_loaded_metadata');
 

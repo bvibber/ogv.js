@@ -19,12 +19,12 @@ function reallocInputBuffer(size) {
 /**
  * @property boolean
  */
-Module.loadedMetadata = false;
+Module.loadedMetadata = !!options.audioFormat;
 
 /**
  * @property object
  */
-Module.audioFormat = null;
+Module.audioFormat = options.audioFormat || null;
 
 /**
  * Last-decoded audio packet
@@ -43,6 +43,11 @@ Object.defineProperty(Module, 'processing', {
 });
 
 // - public methods
+
+Module.init = function(callback) {
+	Module._ogv_audio_decoder_init();
+	callback();
+};
 
 /**
  * Process a header packet
@@ -77,5 +82,3 @@ Module.processAudio = function(data, callback) {
 
 	callback(ret);
 };
-
-Module._ogv_audio_decoder_init();

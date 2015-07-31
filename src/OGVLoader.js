@@ -8,15 +8,18 @@
 
 		// new modules
 		OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
+		OGVDemuxerWebM: 'ogv-demuxer-webm.js',
 		OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',
 		OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
-		OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js'
+		OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',
+		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js'
 	};
 
 	var proxyMap = {
 		OGVDecoderAudioOpus: 'OGVDecoderAudioProxy',
 		OGVDecoderAudioVorbis: 'OGVDecoderAudioProxy',
-		OGVDecoderVideoTheora: 'OGVDecoderVideoProxy'
+		OGVDecoderVideoTheora: 'OGVDecoderVideoProxy',
+		OGVDecoderVideoVP8: 'OGVDecoderVideoProxy'
 	};
 	var workerMap = {
 		OGVDecoderAudioProxy: 'ogv-worker-audio.js',

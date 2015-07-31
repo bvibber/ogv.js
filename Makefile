@@ -38,9 +38,11 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	      build/ogv-codec.js \
 	      build/webm-codec.js \
 	      build/ogv-demuxer-ogg.js \
+	      build/ogv-demuxer-webm.js \
 	      build/ogv-decoder-audio-opus.js \
 	      build/ogv-decoder-audio-vorbis.js \
 	      build/ogv-decoder-video-theora.js \
+	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
 	      src/ogv-worker.js \
@@ -147,6 +149,17 @@ build/ogv-demuxer-ogg.js : src/ogv-demuxer-ogg.c \
 	test -d build || mkdir build
 	./compileOgvDemuxerOgg.sh
 
+build/ogv-demuxer-webm.js : src/ogv-demuxer-webm.c \
+                            src/ogv-demuxer.h \
+                            src/ogv-demuxer.js \
+                            src/ogv-demuxer-callbacks.js \
+                            src/ogv-demuxer-exports.json \
+                            src/ogv-module-pre.js \
+                            build/js/root/lib/libnestegg.a \
+                            compileOgvDemuxerWebM.sh
+	test -d build || mkdir build
+	./compileOgvDemuxerWebM.sh
+
 build/ogv-decoder-audio-vorbis.js : src/ogv-decoder-audio-vorbis.c \
                                     src/ogv-decoder-audio.h \
                                     src/ogv-decoder-audio.js \
@@ -183,6 +196,18 @@ build/ogv-decoder-video-theora.js : src/ogv-decoder-video-theora.c \
 	test -d build || mkdir build
 	./compileOgvDecoderVideoTheora.sh
 
+build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
+                                 src/ogv-decoder-video.h \
+                                 src/ogv-decoder-video.js \
+                                 src/ogv-decoder-video-callbacks.js \
+                                 src/ogv-decoder-video-exports.json \
+                                 src/ogv-module-pre.js \
+                                 build/js/root/lib/libogg.a \
+                                 build/js/root/lib/libvpx.a \
+                                 compileOgvDecoderVideoVP8.sh
+	test -d build || mkdir build
+	./compileOgvDecoderVideoVP8.sh
+
 build/YCbCr-shaders.h : src/YCbCr.vsh src/YCbCr.fsh src/YCbCr-stripe.fsh file2def.js
 	test -d build || mkdir build
 	node file2def.js src/YCbCr.vsh YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
@@ -213,9 +238,11 @@ build/ogv.js : src/ogv.js.in \
                build/ogv-codec.js \
                build/ogv-codec.js.gz \
                build/ogv-demuxer-ogg.js \
+               build/ogv-demuxer-webm.js \
                build/ogv-decoder-audio-opus.js \
                build/ogv-decoder-audio-vorbis.js \
                build/ogv-decoder-video-theora.js \
+               build/ogv-decoder-video-vp8.js \
                build/webm-codec.js \
                build/webm-codec.js.gz \
                src/dynamicaudio.swf \

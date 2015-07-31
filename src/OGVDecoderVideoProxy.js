@@ -3,6 +3,10 @@ OGVDecoderVideoProxy = OGVProxyClass({
 	videoFormat: null,
 	frameBuffer: null
 }, {
+	init: function(callback) {
+		this.proxy('init', [], callback);
+	},
+
 	processHeader: function(data, callback) {
 		this.proxy('processHeader', [data], callback, [data]);
 	},
