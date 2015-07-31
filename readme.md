@@ -126,7 +126,7 @@ Accelerated YCbCr->RGB conversion and drawing can be done in WebGL on supporting
 
 WebGL noticeably improves playback performance at HD and SD resolutions.
 
-Early versions of IE 11 do not support luminance or alpha textures, and in IE 11 update 1 and Edge they are still unexpectedly slow. As a workaround, on IE and Edge the data is packed into RGBA textures for faster texture upload and unpacked in the shader. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
+Early versions of IE 11 do not support luminance or alpha textures, and in IE 11 update 1 and Edge they are still unexpectedly slow on Windows (in all browsers so far). As a workaround, on Windows the data is packed into RGBA textures for faster texture upload and unpacked in the shader. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
 
 
 ## Difficulties
