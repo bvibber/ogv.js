@@ -11,6 +11,8 @@
 
 <script language="JavaScript">
 
+OGVLoader.base = 'lib';
+
 var player = null;
 var paused = false;
 var sampleFile = 'media/curiosity.ogv';
@@ -20,9 +22,7 @@ function play(src) {
 		player.stop();
 		player.parentNode.removeChild(player);
 	}
-	player = new OGVPlayer({
-		base: 'lib'
-	});
+	player = new OGVPlayer();
 	//player = new OgvSwfPlayer();
 	//player = document.createElement('video');
 	player.src = src;
