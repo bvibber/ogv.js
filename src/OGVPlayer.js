@@ -750,8 +750,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							droppedAudio = audioState.dropped;
 							delayedAudio = audioState.delayed;
 							//readyForAudioDecode = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
-							var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate);
-							readyForAudioDecode = codec.audioReady && (audioBufferedDuration <= (bufferDuration * 2));
+							var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 2;
+							readyForAudioDecode = codec.audioReady && (audioBufferedDuration <= bufferDuration);
 
 							// Check in when all audio runs out
 							if (pendingAudio) {
@@ -759,10 +759,13 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
 								nextDelays.push(-1);
+							} else if (codec.hasVideo && (playbackPosition - frameEndTimestamp) > bufferDuration) {
+								// don't get too far ahead of the video if it's slow!
+								readyForAudioDecode = false;
+								nextDelays.push((playbackPosition - frameEndTimestamp) * 1000);
 							} else {
 								// Check in when the audio buffer runs low again...
-								nextDelays.push((audioBufferedDuration - bufferDuration * 2) * 1000);
-								//nextDelays.push(bufferDuration * 1000 / 4);
+								nextDelays.push((audioBufferedDuration - bufferDuration) * 1000);
 							}
 						} else {
 							// No audio; drive on the general clock.
