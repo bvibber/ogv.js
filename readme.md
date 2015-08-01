@@ -71,19 +71,31 @@ Testing browsers (these support .ogv natively):
 
 ## Usage
 
+Currently, ogv.js must be informed if its resources are not in the same path as the master document:
+
+```
+  // If ogv-demuxer-ogg.js, dynamicaudio.swf etc are in another dir, tell us!
+  OGVLoader.base = '/path/to/resources';
+```
+
 The `OGVPlayer` class implements a player, and supports a subset of the events, properties and methods from [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) and [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement).
 
 ```
   // Create a new player with the constructor
+  var player = new OGVPlayer();
+
+  // Or with options
   var player = new OGVPlayer({
-    // If ogv-codec.js, dynamicaudio.swf etc are in another dir, tell us!
-    base: '/path/to/resources'
+    enableWebM: true
   });
 
   // Now treat it just like a video or audio element
   containerElement.appendChild(player);
   player.src = 'path/to/media.ogv';
   player.play();
+  player.addEventListener('ended', function() {
+    // ta-da!
+  });
 ```
 
 To check for compatibility before creating a player, include `ogv-support.js` and use the `OGVCompat` API:
@@ -96,11 +108,12 @@ To check for compatibility before creating a player, include `ogv-support.js` an
 
 This will check for typed arrays, audio/Flash, blacklisted iOS versions, and super-slow/broken JIT compilers.
 
-If you need a URL versioning/cache-buster parameter for `ogv.js`, you can use the `OGVVersion` symbol provided by `ogv-support.js` or the even tinier `ogv-version.js`:
+If you need a URL versioning/cache-buster parameter for dynamic loading of `ogv.js`, you can use the `OGVVersion` symbol provided by `ogv-support.js` or the even tinier `ogv-version.js`:
 
 ```
   var script = document.createElement('script');
   script.src = 'ogv.js?version=' + encodeURIComponent(OGVVersion);
+  document.querySelector('head').appendChild(script);
 ```
 
 
