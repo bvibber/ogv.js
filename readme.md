@@ -180,7 +180,7 @@ Seeking is implemented via the HTTP Range: header.
 
 For Ogg files with keyframe indices in a skeleton index, seeking is very fast. Otherwise,  a bisection search is used to locate the target frame or audio position, which is very slow over the internet as it creates a lot of short-lived HTTP requests.
 
-For WebM files, seeking is not yet supported; this will require either refactoring the demuxer modules to present a synchronous i/o abstraction to the demuxer library.
+For WebM files, seeking is not yet supported; this will require refactoring the demuxer modules to present a synchronous i/o abstraction to the demuxer library.
 
 As with chunked streaming, cross-site playback requires CORS support for the Range header.
 
