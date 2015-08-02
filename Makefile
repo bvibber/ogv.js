@@ -53,6 +53,9 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	cp -p libvorbis/COPYING dist/ogvjs-$(VERSION)/COPYING-vorbis.txt
 	cp -p libtheora/COPYING dist/ogvjs-$(VERSION)/COPYING-theora.txt
 	cp -p libopus/COPYING dist/ogvjs-$(VERSION)/COPYING-opus.txt
+	cp -p libnestegg/LICENSE dist/ogvjs-$(VERSION)/LICENSE-nestegg.txt
+	cp -p libvpx/LICENSE dist/ogvjs-$(VERSION)/LICENSE-vpx.txt
+	cp -p libvpx/PATENTS dist/ogvjs-$(VERSION)/PATENTS-vpx.txt
 	(cd dist && zip -r ogvjs-$(VERSION).zip ogvjs-$(VERSION))
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
