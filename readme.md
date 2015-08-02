@@ -10,6 +10,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * 0.9.3
  * internal partial async retooling
  * web worker threading, enabled by default
+ * note the dist files have changed!
 * 0.9.2
  * fix for time reporting issue
 * 0.9.1
