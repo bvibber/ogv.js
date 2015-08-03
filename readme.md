@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 0.9.6
+ * fixes for IE 10
 * 0.9.5
  * fix pause/play regression
 * 0.9.4
