@@ -6,15 +6,19 @@ function OGVWorkerSupport(propList, handlers) {
 	var transferables = (function() {
 		var buffer = new ArrayBuffer(1024),
 			bytes = new Uint8Array(buffer);
-		postMessage({
-			action: 'transferTest',
-			bytes: bytes
-		}, [buffer]);
-		if (buffer.byteLength) {
-			// No transferable support
+		try {
+			postMessage({
+				action: 'transferTest',
+				bytes: bytes
+			}, [buffer]);
+			if (buffer.byteLength) {
+				// No transferable support
+				return false;
+			} else {
+				return true;
+			}
+		} catch (e) {
 			return false;
-		} else {
-			return true;
 		}
 	})();
 
@@ -47,14 +51,15 @@ function OGVWorkerSupport(propList, handlers) {
 	}
 
 	function copyByteArray(bytes) {
-		// Hella slow in IE 10/11!
-		//return new Uint8Array(bytes);
-
-		// This claims to be faster in profiling but I don't see it in counters...
-		var heap = bytes.buffer,
-			extract = heap.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
-			copy = new Uint8Array(extract);
-		return copy;
+		var heap = bytes.buffer;
+		if (typeof heap.slice === 'function') {
+			var extract = heap.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+			return new Uint8Array(extract);
+		} else {
+			// Hella slow in IE 10/11!
+			// But only game in town on IE 10.
+			return new Uint8Array(bytes);
+		}
 	}
 
 	function copyFrameBuffer(buffer) {

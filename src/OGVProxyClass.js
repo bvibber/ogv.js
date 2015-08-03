@@ -15,17 +15,21 @@ function OGVProxyClass(initialProps, methods) {
 		var transferables = (function() {
 			var buffer = new ArrayBuffer(1024),
 				bytes = new Uint8Array(buffer);
-			worker.postMessage({
-				action: 'transferTest',
-				bytes: bytes
-			}, [buffer]);
-			if (buffer.byteLength) {
-				// No transferable support
-				console.log('no transferable?');
+			try {
+				worker.postMessage({
+					action: 'transferTest',
+					bytes: bytes
+				}, [buffer]);
+				if (buffer.byteLength) {
+					// No transferable support
+					console.log('no transferable?');
+					return false;
+				} else {
+					console.log('buffers can be transferred');
+					return true;
+				}
+			} catch (e) {
 				return false;
-			} else {
-				console.log('buffers can be transferred');
-				return true;
 			}
 		})();
 
