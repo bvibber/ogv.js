@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 0.9.4
+ * fix regressions
 * 0.9.3
  * internal partial async retooling
  * web worker threading, enabled by default
