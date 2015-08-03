@@ -220,6 +220,11 @@ OGVWrapperCodec = (function(options) {
 		if (processing) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
+		processing = true;
+		function finish(result) {
+			processing = false;
+			callback(result);
+		}
 
 		//console.log('process check...', self.hasAudio, demuxer.audioReady, demuxer.audioTimestamp, self.hasVideo, demuxer.frameReady, demuxer.frameTimestamp);
 
@@ -231,11 +236,11 @@ OGVWrapperCodec = (function(options) {
 						// we've got more to process already
 						more = true;
 					}
-					callback(more);
+					finish(more);
 				});
 			} else {
 				// out of data! ask for more
-				callback(false);
+				finish(false);
 			}
 		}
 
@@ -249,7 +254,7 @@ OGVWrapperCodec = (function(options) {
 					loadedAudioMetadata = !audioDecoder;
 					loadedVideoMetadata = !videoDecoder;
 					loadedAllMetadata = loadedAudioMetadata && loadedVideoMetadata;
-					callback(true);
+					finish(true);
 				});
 			});
 
@@ -260,7 +265,7 @@ OGVWrapperCodec = (function(options) {
 				console.log('processing: loaded audio metadata');
 				loadedAudioMetadata = true;
 				loadedAllMetadata = loadedAudioMetadata && loadedVideoMetadata;
-				callback(true);
+				finish(true);
 
 			} else if (demuxer.audioReady) {
 
@@ -268,7 +273,7 @@ OGVWrapperCodec = (function(options) {
 				demuxer.dequeueAudioPacket(function(packet) {
 					audioDecoder.processHeader(packet, function(ret) {
 						console.log('audioDecoder.processHeader', ret);
-						callback(true);
+						finish(true);
 					});
 				});
 
@@ -286,14 +291,15 @@ OGVWrapperCodec = (function(options) {
 				console.log('processing: loaded video metadata');
 				loadedVideoMetadata = true;
 				loadedAllMetadata = loadedAudioMetadata && loadedVideoMetadata;
-				callback(true);
+				finish(true);
 
 			} else if (demuxer.frameReady) {
 
 				console.log('processing: found video header');
+				processing = true;
 				demuxer.dequeueVideoPacket(function(packet) {
 					videoDecoder.processHeader(packet, function() {
-						callback(true);
+						finish(true);
 					});
 				});
 
@@ -309,12 +315,12 @@ OGVWrapperCodec = (function(options) {
 			// Ok we've found all the metadata there is. Enjoy.
 			console.log('processing: found all metadata');
 			loadedMetadata = true;
-			callback(true);
+			finish(true);
 
 		} else if (self.loadedMetadata && (!self.hasAudio || demuxer.audioReady) && (!self.hasVideo || demuxer.frameReady)) {
 
 			// Already queued up some packets. Go read them!
-			callback(true);
+			finish(true);
 
 		} else {
 
