@@ -702,16 +702,18 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						// Ran out of stream!
 						var finalDelay = 0;
 						if (codec.hasAudio) {
-							// This doesn't seem to be enough with Flash audio shim.
-							// Not quite sure why.
-							finalDelay = audioBufferedDuration;
+							audioState = audioFeeder.getPlaybackState();
+							audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate);
+							finalDelay = audioBufferedDuration * 1000;
 						}
-						setTimeout(function() {
-							console.log("ENDING ALREADY");
+						if (pendingAudio || pendingFrame || finalDelay > 0) {
+							pingProcessing(Math.max(0, finalDelay));
+						} else {
+							console.log("ENDING NOW");
 							stopVideo();
 							ended = true;
 							fireEvent('ended');
-						}, finalDelay);
+						}
 					}
 				} else if (paused) {
 
@@ -1034,6 +1036,8 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				}
 			},
 			ondone: function() {
+				waitingOnInput = false;
+
 				if (state == State.SEEKING) {
 					pingProcessing();
 				} else if (state == State.SEEKING_END) {
