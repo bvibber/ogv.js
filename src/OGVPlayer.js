@@ -188,6 +188,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (offset !== undefined) {
 			initialPlaybackOffset = offset;
 		}
+		log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 	}
 	
 	function stopPlayback() {
@@ -195,6 +196,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			audioFeeder.stop();
 		}
 		initialPlaybackOffset = getPlaybackTime();
+		log('pausing at ' + initialPlaybackOffset);
 	}
 	
 	/**
@@ -1109,14 +1111,14 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (paused) {
 			startedPlaybackInDocument = document.body.contains(self);
 			paused = false;
+			actionQueue.push(function() {
+				startPlayback();
+				fireEvent('play');
+				pingProcessing(0);
+			});
 			if (continueVideo) {
 				continueVideo();
 			} else {
-				actionQueue.push(function() {
-					startPlayback();
-					fireEvent('play');
-					pingProcessing(0);
-				});
 				continueVideo = function() {
 					if (isProcessing()) {
 						// waiting on the codec already

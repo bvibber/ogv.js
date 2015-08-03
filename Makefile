@@ -1,4 +1,4 @@
-VERSION:=0.9.4
+VERSION:=0.9.5
 BUILDDATE:=$(shell date -u "+%Y%m%d%H%M%S")
 HASH:=$(shell git rev-parse --short HEAD)
 FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
