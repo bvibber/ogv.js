@@ -1108,12 +1108,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			if (continueVideo) {
 				continueVideo();
 			} else {
+				actionQueue.push(function() {
+					startPlayback();
+					fireEvent('play');
+					pingProcessing(0);
+				});
 				continueVideo = function() {
-					actionQueue.push(function() {
-						startPlayback();
-						fireEvent('play');
-						pingProcessing(0);
-					});
 					if (isProcessing()) {
 						// waiting on the codec already
 					} else {
