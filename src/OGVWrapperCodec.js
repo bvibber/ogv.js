@@ -368,6 +368,7 @@ OGVWrapperCodec = (function(options) {
 	};
 
 	self.flush = function(callback) {
+		inputQueue.splice(0, inputQueue.length);
 		demuxer.flush(callback);
 	};
 
