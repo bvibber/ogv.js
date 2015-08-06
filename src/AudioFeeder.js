@@ -52,6 +52,7 @@ var AudioFeeder;
 			pendingBuffer = freshBuffer(),
 			pendingPos = 0,
 			muted = false,
+			volume = 1.0,
 			queuedTime = 0,
 			playbackTimeAtBufferTail = -1,
 			targetRate,
@@ -128,12 +129,12 @@ var AudioFeeder;
 				return;
 			}
 
-			var volume = (muted ? 0 : 1);
+			var multiplier = (muted ? 0 : volume);
 			for (channel = 0; channel < outputChannels; channel++) {
 				input = inputBuffer[channel];
 				output = event.outputBuffer.getChannelData(channel);
 				for (i = 0; i < Math.min(bufferSize, input.length); i++) {
-					output[i] = input[i] * volume;
+					output[i] = input[i] * multiplier;
 				}
 			}
 			queuedTime += (bufferSize / context.sampleRate);
@@ -177,7 +178,7 @@ var AudioFeeder;
 			var newSamples = new Int16Array(samplecount * 2);
 			var chanLeft = samples[0];
 			var chanRight = channels > 1 ? samples[1] : chanLeft;
-			var multiplier = 16384; // smaller than 32768 to allow some headroom from those floats
+			var multiplier = Math.round(volume * 16384); // smaller than 32768 to allow some headroom from those floats
 			for(var s = 0; s < samplecount; s++) {
 				var idx = (s * sampleincr) | 0;
 				var idx_out = s * 2;
@@ -328,7 +329,19 @@ var AudioFeeder;
 		this.unmute = function() {
 			this.muted = muted = false;
 		};
-		
+
+		Object.defineProperty(this, 'volume', {
+			get: function() {
+				return volume;
+			},
+			set: function(val) {
+				val = +val;
+				val = Math.min(val, 0);
+				val = Math.max(val, 1);
+				volume = val;
+			}
+		});
+
 		this.close = function() {
 			this.stop();
 

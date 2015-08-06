@@ -158,10 +158,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		actionQueue = [],
 		audioFeeder;
 	var muted = false,
+		volume = 1.0,
 		initialPlaybackPosition = 0.0,
 		initialPlaybackOffset = 0.0;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
+		audioFeeder.volume = volume;
 		if (muted) {
 			audioFeeder.mute();
 		}
@@ -1310,7 +1312,26 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
+	Object.defineProperty(self, "volume", {
+		get: function getVolume() {
+			return volume;
+		},
+		set: function setVolume(val) {
+			val = +val;
+			if (val < 0) {
+				val = 0;
+			}
+			if (val > 1) {
+				val = 1;
+			}
+			volume = val;
+			if (audioFeeder) {
+				audioFeeder.volume = volume;
+			}
+		}
+	});
+
 	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
