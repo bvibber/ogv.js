@@ -288,8 +288,11 @@ WebGLFrameSink.isAvailable = function() {
 		gl;
 	canvas.width = 1;
 	canvas.height = 1;
+	var options = {
+		failIfMajorPerformanceCaveat: true
+	};
 	try {
-		gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+		gl = canvas.getContext('webgl', options) || canvas.getContext('experimental-webgl', options);
 	} catch (e) {
 		return false;
 	}

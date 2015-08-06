@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 0.9.7beta
+ * disable WebGL if using software rendering
 * 0.9.6
  * fixes for IE 10
 * 0.9.5
