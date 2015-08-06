@@ -236,31 +236,18 @@ var AudioFeeder;
 			return digits;
 		}
 
-		var flashBuffer = '',
-			flushTimeout = null;
-		function flushFlashBuffer() {
-			var chunk = flashBuffer;
-			if (self.flashaudio.flashElement.write) {
-				self.flashaudio.flashElement.write(chunk);
-			} else {
-				self.waitUntilReady(function() {
-					self.flashaudio.flashElement.write(chunk);
-				});
-			}
-			flashBuffer = '';
-			flushTimeout = null;
-		}
 		this.bufferData = function(samplesPerChannel) {
 			if(this.flashaudio) {
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
 				var flashElement = this.flashaudio.flashElement;
 				if(resamples.length > 0) {
 					var str = hexString(resamples.buffer);
-					flashBuffer += str;
-					if (!flushTimeout) {
-						// consolidate multiple consecutive tiny buffers in one pass;
-						// pushing data to Flash is relatively expensive on slow machines
-						flushTimeout = setTimeout(flushFlashBuffer, 0);
+					if (self.flashaudio.flashElement.write) {
+						self.flashaudio.flashElement.write(str);
+					} else {
+						self.waitUntilReady(function() {
+							self.flashaudio.flashElement.write(str);
+						});
 					}
 				}
 			} else if (buffers) {
@@ -299,9 +286,7 @@ var AudioFeeder;
 			if (this.flashaudio) {
 				var flashElement = this.flashaudio.flashElement;
 				if (flashElement.write) {
-					var state = flashElement.getPlaybackState();
-					state.samplesQueued += flashBuffer.length / 2;
-					return state;
+					return flashElement.getPlaybackState();
 				} else {
 					//console.log('getPlaybackState USED TOO EARLY');
 					return {
