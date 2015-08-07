@@ -1,15 +1,15 @@
 [submodule "libogg"]
 	path = libogg
-	url = git://git.xiph.org/mirrors/ogg.git
+	url = https://github.com/xiph/ogg.git
 [submodule "libvorbis"]
 	path = libvorbis
-	url = git://git.xiph.org/mirrors/vorbis.git
+	url = https://github.com/xiph/vorbis.git
 [submodule "libtheora"]
 	path = libtheora
 	url = https://github.com/brion/theora.git
 [submodule "libopus"]
 	path = libopus
-	url = git://git.xiph.org/opus.git
+	url = https://github.com/xiph/opus.git
 [submodule "glsl2agal"]
 	path = glsl2agal
 	url = https://github.com/adobe/glsl2agal.git
@@ -18,7 +18,7 @@
 	url = https://github.com/brion/libskeleton.git
 [submodule "libvpx"]
 	path = libvpx
-	url = https://chromium.googlesource.com/webm/libvpx
+	url = https://github.com/webmproject/libvpx.git
 [submodule "libnestegg"]
 	path = libnestegg
 	url = https://github.com/kinetiknz/nestegg.git
