@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 0.9.7beta
+* 0.9.7
  * disable WebGL if using software rendering
  * reduce Flash comms overhead in IE
 * 0.9.6
@@ -31,9 +31,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Current status
 
-See a web copy of the demo at https://brionv.com/misc/ogv.js/demo/
+As of August 2015, ogv.js can be seen in action [on Wikipedia and Wikimedia Commons](https://commons.wikimedia.org/wiki/Commons:Video) in Safari and IE/Edge where native Ogg and WebM playback is not available. (See [technical details on MediaWiki integration](https://www.mediawiki.org/wiki/Extension:TimedMediaHandler/ogv.js).)
 
-See a sample of MediaWiki with seamless ogv.js playback mode for Safari/IE/Edge at https://ogvjs-testing.wmflabs.org/
+See also a standalone demo with performance metrics at https://brionv.com/misc/ogv.js/demo/
 
 * streaming: yes (with Range header)
 * seeking: yes for Ogg (with Range header), no for WebM
