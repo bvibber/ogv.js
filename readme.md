@@ -9,6 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 * 0.9.7beta
  * disable WebGL if using software rendering
+ * reduce Flash comms overhead in IE
 * 0.9.6
  * fixes for IE 10
 * 0.9.5

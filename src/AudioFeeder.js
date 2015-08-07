@@ -287,7 +287,11 @@ var AudioFeeder;
 				return 0;
 			}
 		}
-	
+
+		var cachedFlashState = null,
+			cachedFlashTime = 0,
+			cachedFlashInterval = 40; // resync state no more often than every X ms
+
 		/**
 		 * @return {
 		 *   playbackPosition: {number} seconds, with a system-provided base time
@@ -299,7 +303,21 @@ var AudioFeeder;
 			if (this.flashaudio) {
 				var flashElement = this.flashaudio.flashElement;
 				if (flashElement.write) {
-					var state = flashElement.getPlaybackState();
+					var now = Date.now(),
+						delta = now - cachedFlashTime,
+						state;
+					if (cachedFlashState && delta < cachedFlashInterval) {
+						state = {
+							playbackPosition: cachedFlashState.playbackPosition + delta / 1000,
+							samplesQueued: cachedFlashState.samplesQueued - delta * targetRate / 1000,
+							dropped: cachedFlashState.dropped,
+							delayed: cachedFlashState.delayed
+						};
+					} else {
+						state = flashElement.getPlaybackState();
+						cachedFlashState = state;
+						cachedFlashTime = now;
+					}
 					state.samplesQueued += flashBuffer.length / 2;
 					return state;
 				} else {
