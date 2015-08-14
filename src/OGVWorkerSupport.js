@@ -84,7 +84,7 @@ function OGVWorkerSupport(propList, handlers) {
 		});
 	};
 
-	addEventListener('message', function(event) {
+	addEventListener('message', function workerOnMessage(event) {
 		var data = event.data;
 	
 		if (data && data.action == 'transferTest') {

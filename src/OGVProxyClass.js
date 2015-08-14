@@ -84,7 +84,7 @@ function OGVProxyClass(initialProps, methods) {
 			}
 		};
 
-		worker.addEventListener('message', function(event) {
+		worker.addEventListener('message', function proxyOnMessage(event) {
 			processingQueue--;
 			if (event.data.action !== 'callback') {
 				// ignore
