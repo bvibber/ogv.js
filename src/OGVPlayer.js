@@ -539,19 +539,34 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 
 	var depth = 0,
-		useTailCalls = true,
+		useImmediate = !!window.setImmediate,
+		useTailCalls = !useImmediate,
 		pendingFrame = 0,
 		pendingAudio = 0;
 
+	function tailCall(func) {
+		if (useImmediate) {
+			setImmediate(func);
+		} else if (!useTailCalls) {
+			setTimeout(func, 0);
+		} else {
+			func();
+		}
+	}
+
 	function doProcessing() {
 		nextProcessingTimer = null;
-		depth++;
-		if (depth > 1 && !useTailCalls) {
+
+		if (isProcessing()) {
+			// Called async while waiting for something else to complete...
+			// let it finish, then we'll get called again to continue.
+			return;
+		}
+
+		if (depth > 0 && !useTailCalls) {
 			throw new Error('REENTRANCY FAIL: doProcessing recursing unexpectedly');
 		}
-		if (isProcessing()) {
-			throw new Error('REENTRANCY FAIL: doProcessing called while waiting on codec or input');
-		}
+		depth++;
 
 		if (actionQueue.length) {
 			// data or user i/o to process in our serialized event stream
@@ -951,12 +966,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			nextProcessingTimer = null;
 		}
 		var fudge = -1 / 256;
-		if (delay > fudge || !useTailCalls) {
+		if (delay > fudge) {
 			//log('pingProcessing delay: ' + delay);
 			nextProcessingTimer = setTimeout(doProcessing, delay);
 		} else {
 			//log('pingProcessing tail call (' + delay + ')');
-			doProcessing(); // warning: tail recursion is possible
+			tailCall(doProcessing);
 		}
 	}
 
@@ -1029,7 +1044,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				waitingOnInput = false;
 
 				// Save chunk to pass into the codec's buffer
-				actionQueue.push(function() {
+				actionQueue.push(function doReceiveInput() {
 					codec.receiveInput(data, function() {
 						pingProcessing();
 					});
