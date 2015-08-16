@@ -539,7 +539,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	}
 
 	var depth = 0,
-		useImmediate = !!window.setImmediate,
+		useImmediate = options.useImmediate && !!window.setImmediate,
 		useTailCalls = !useImmediate,
 		pendingFrame = 0,
 		pendingAudio = 0;
