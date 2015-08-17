@@ -21,7 +21,6 @@ var AudioFeeder;
 		// Look for W3C Audio API
 		if (!AudioContext) {
 			// use Flash fallback
-			console.log("No W3C Web Audio API available");
 			var flashOptions = {};
 			if (typeof options.base === 'string') {
 				flashOptions.swf = options.base + '/dynamicaudio.swf?version=' + OGVVersion;
