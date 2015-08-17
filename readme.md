@@ -66,7 +66,7 @@ The API isn't quite complete, but works pretty well.
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
 The primary target browsers are (testing 360p/30fps):
-* Safari 6.1/7/8 on Mac OS X 10.7/10.8/10.9
+* Safari 6.1/7/8 on Mac OS X 10.7-10.10
 * Safari on iOS 8 64-bit
 * Edge on Windows 10 desktop/tablet
 * Internet Explorer 10/11 on Windows 7/8/8.1 (desktop/tablet)
@@ -81,8 +81,8 @@ Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arr
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS, Windows RT, or Windows 10 Mobile.)
 
 Testing browsers (these support .ogv natively):
-* Firefox 39
-* Chrome 43
+* Firefox 40
+* Chrome 44
 
 
 ## Usage
