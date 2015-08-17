@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 0.9.9
+ * console cleanup
+ * misc fixes
 * 0.9.8
  * quick fix for IE audio stuttering
 * 0.9.7
