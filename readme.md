@@ -8,6 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 ## Updates
 
 * 0.9.9
+ * auto-detect resource base dir
  * console cleanup
  * misc fixes
 * 0.9.8
@@ -86,13 +87,6 @@ Testing browsers (these support .ogv natively):
 
 ## Usage
 
-Currently, ogv.js must be informed if its resources are not in the same path as the master document:
-
-```
-  // If ogv-demuxer-ogg.js, dynamicaudio.swf etc are in another dir, tell us!
-  OGVLoader.base = '/path/to/resources';
-```
-
 The `OGVPlayer` class implements a player, and supports a subset of the events, properties and methods from [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) and [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement).
 
 ```
@@ -129,6 +123,13 @@ If you need a URL versioning/cache-buster parameter for dynamic loading of `ogv.
   var script = document.createElement('script');
   script.src = 'ogv.js?version=' + encodeURIComponent(OGVVersion);
   document.querySelector('head').appendChild(script);
+```
+
+Usually, ogv.js will auto-detect the path to its resources based on the script element that loads ogv.js or ogv-support.js. If you load ogv.js through a non-customary bundler (such as MediaWiki's ResourceLoader) you may need to override this manually before instantiating players:
+
+```
+  // Path to ogv-demuxer-ogg.js, ogv-worker-audio.js, dynamicaudio.swf etc
+  OGVLoader.base = '/path/to/resources';
 ```
 
 

@@ -70,8 +70,34 @@
 		}
 	}
 
+	function defaultBase() {
+		if (typeof global.window === 'object') {
+
+			// for browser, try to autodetect
+			var scriptNodes = document.querySelectorAll('script'),
+				regex = /^(?:(.*)\/)ogv(?:-support)?\.js(?:\?|#|$)/,
+				path;
+			for (var i = 0; i < scriptNodes.length; i++) {
+				path = scriptNodes[i].getAttribute('src');
+				if (path) {
+					matches = path.match(regex);
+					if (matches) {
+						return matches[1];
+					}
+				}
+			}
+
+		} else {
+
+			// for workers, assume current directory
+			// if not a worker, too bad.
+			return '';
+
+		}
+	}
+
 	OGVLoader = {
-		base: '',
+		base: defaultBase(),
 
 		loadClass: function(className, callback, options) {
 			options = options || {};

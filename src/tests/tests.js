@@ -6,7 +6,6 @@ function nativePlayer() {
 	return document.createElement('video');
 }
 
-OGVLoader.base = 'lib';
 function ogvPlayer() {
 	return new OGVPlayer();
 }

@@ -738,7 +738,6 @@
 				// this should not happen
 				stopVideo();
 			}
-			OGVLoader.base = 'lib'; // @fixme autodetect this
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					enableWebM: true // experimental
