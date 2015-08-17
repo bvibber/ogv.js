@@ -251,7 +251,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		started = false;
 		paused = true;
 		ended = true;
-		continueVideo = null;
 		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
@@ -273,8 +272,6 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			nextProcessingTimer = null;
 		}
 	}
-	
-	var continueVideo = null;
 	
 	var lastFrameTime = getTimestamp(),
 		frameEndTimestamp = 0.0,
@@ -662,27 +659,42 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		} else if (state == State.LOADED) {
 
 			state = State.READY;
-			fireEvent('loadedmetadata');
 			if (paused) {
 				// Paused? stop here.
+				log('pausing stopping at loaded');
 			} else {
 				// Not paused? Continue on to play processing.
-				pingProcessing();
+				log('not paused so continuing');
+				pingProcessing(0);
 			}
+			fireEvent('loadedmetadata');
 
 		} else if (state == State.READY) {
 
-			state = State.PLAYING;
-			lastFrameTimestamp = getTimestamp();
-			if (codec.hasAudio) {
-				initAudioFeeder();
-				audioFeeder.waitUntilReady(function() {
+			if (paused) {
+
+				// Paused? stop here.
+				log('paused while in ready');
+
+			} else {
+
+				function finishStartPlaying() {
+					log('finishStartPlaying');
+
+					state = State.PLAYING;
+					lastFrameTimestamp = getTimestamp();
+
 					startPlayback(0.0);
 					pingProcessing(0);
-				});
-			} else {
-				startPlayback(0.0);
-				pingProcessing(0);
+					fireEvent('play');
+				}
+
+				if (codec.hasAudio) {
+					initAudioFeeder();
+					audioFeeder.waitUntilReady(finishStartPlaying);
+				} else {
+					finishStartPlaying();
+				}
 			}
 
 		} else if (state == State.SEEKING) {
@@ -1122,38 +1134,40 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (!audioOptions.audioContext) {
 			OGVPlayer.initSharedAudioContext();
 		}
-		
-		if (!stream) {
-			self.load();
-		}
-		
+
 		if (paused) {
 			startedPlaybackInDocument = document.body.contains(self);
+
 			paused = false;
-			actionQueue.push(function() {
-				startPlayback();
-				fireEvent('play');
-				pingProcessing(0);
-			});
-			if (continueVideo) {
-				continueVideo();
-			} else {
-				continueVideo = function() {
-					if (isProcessing()) {
-						// waiting on the codec already
-					} else {
-						pingProcessing();
-					}
-				};
-				if (!started) {
-					loadCodec(startProcessingVideo);
+
+			if (started) {
+
+				log('.play() while already started');
+
+				actionQueue.push(function() {
+					startPlayback();
+					fireEvent('play');
+					pingProcessing(0);
+				});
+				if (isProcessing()) {
+					// waiting on the codec already
 				} else {
-					continueVideo();
+					pingProcessing();
 				}
+
+			} else {
+
+				log('.play() before started');
+
+				// Let playback begin when metadata loading is complete
+				if (!stream) {
+					self.load();
+				}
+
 			}
 		}
 	};
-	
+
 	/**
 	 * custom getPlaybackStats method
 	 */
