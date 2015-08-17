@@ -71,7 +71,7 @@ int ogv_audio_decoder_process_audio(const char *data, size_t data_len) {
 	int sampleCount = opus_multistream_decode_float(opusDecoder, (unsigned char*) data, data_len, output, OPUS_MAX_FRAME_SIZE, 0);
 	if (sampleCount < 0) {
 		printf("Opus decoding error, code %d\n", sampleCount);
-		ret = -1;
+		ret = 0;
 	} else {
 		int skip = opusPreskip;
 		if (skip >= sampleCount) {
@@ -91,7 +91,7 @@ int ogv_audio_decoder_process_audio(const char *data, size_t data_len) {
 			free(pcm);
 		}
 		opusPreskip -= skip;
-		ret = 0;
+		ret = 1;
 	}
 	free(output);
 
