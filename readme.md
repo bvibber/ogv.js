@@ -9,6 +9,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 * 0.9.9
  * auto-detect resource base dir
+ * fixes for calling play() immediately
+ * fixes for opus
  * console cleanup
  * misc fixes
 * 0.9.8
