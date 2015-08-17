@@ -29,8 +29,6 @@ mergeInto(LibraryManager.library, {
 	},
 
 	ogvjs_callback_loaded_metadata: function(videoCodecStr, audioCodecStr) {
-		console.log('ogvjs_callback_loaded_metadata');
-
 		if (videoCodecStr) {
 			Module.videoCodec = Module.Pointer_stringify(videoCodecStr);
 		}

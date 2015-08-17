@@ -77,7 +77,7 @@ function OGVWorkerSupport(propList, handlers) {
 	handlers.construct = function(args, callback) {
 		var className = args[0],
 			options = args[1];
-		console.log('construct', args);
+
 		OGVLoader.loadClass(className, function(classObj) {
 			self.target = new classObj(options);
 			callback();

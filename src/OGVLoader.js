@@ -45,7 +45,6 @@
 	var scriptStatus = {},
 		scriptCallbacks = {};
 	function loadWebScript(src, callback) {
-		console.log('loading web js', src);
 		if (scriptStatus[src] == 'done') {
 			callback();
 		} else if (scriptStatus[src] == 'loading') {

@@ -245,7 +245,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	var poster = '', thumbnail;
 
 	function stopVideo() {
-		console.log("STOPPING");
+		log("STOPPING");
 		// kill the previous video if any
 		state = State.INITIAL;
 		started = false;
@@ -614,7 +614,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 					}
 				} else if (!more) {
 					// Read more data!
-					console.log('reading more cause we are out of data');
+					log('reading more cause we are out of data');
 					readBytesAndWait();
 				} else {
 					// Keep processing headers
@@ -726,7 +726,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						if (pendingAudio || pendingFrame || finalDelay > 0) {
 							pingProcessing(Math.max(0, finalDelay));
 						} else {
-							console.log("ENDING NOW");
+							log("ENDING NOW");
 							stopVideo();
 							ended = true;
 							fireEvent('ended');
@@ -868,7 +868,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 									yCbCrBuffer = codec.frameBuffer;
 								} else {
 									// Bad packet or something.
-									console.log('Bad video packet or something');
+									log('Bad video packet or something');
 								}
 								pendingFrame--;
 								if (!isProcessing()) {
@@ -925,7 +925,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 							} else if (pendingFrame || pendingAudio) {
 								log('waiting on pending events');
 							} else {
-								console.log('we may be lost');
+								log('we may be lost');
 							}
 						}
 					}
@@ -1064,7 +1064,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				} else if (state == State.SEEKING_END) {
 					pingProcessing();
 				} else {
-					console.log('closing stream (done)');
+					log('closing stream (done)');
 					stream = null;
 
 					if (isProcessing()) {

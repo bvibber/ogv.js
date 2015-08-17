@@ -22,10 +22,8 @@ function OGVProxyClass(initialProps, methods) {
 				}, [buffer]);
 				if (buffer.byteLength) {
 					// No transferable support
-					console.log('no transferable?');
 					return false;
 				} else {
-					console.log('buffers can be transferred');
 					return true;
 				}
 			} catch (e) {

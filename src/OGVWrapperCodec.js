@@ -226,8 +226,6 @@ OGVWrapperCodec = (function(options) {
 			callback(result);
 		}
 
-		//console.log('process check...', self.hasAudio, demuxer.audioReady, demuxer.audioTimestamp, self.hasVideo, demuxer.frameReady, demuxer.frameTimestamp);
-
 		function doProcessData() {
 			if (inputQueue.length) {
 				var data = inputQueue.shift();
@@ -247,7 +245,6 @@ OGVWrapperCodec = (function(options) {
 		if (demuxer.loadedMetadata && !loadedDemuxerMetadata) {
 
 			// Demuxer just reached its metadata. Load the relevant codecs!
-			console.log('processing: loading codecs');
 			loadAudioCodec(function() {
 				loadVideoCodec(function() {
 					loadedDemuxerMetadata = true;
@@ -262,24 +259,20 @@ OGVWrapperCodec = (function(options) {
 
 			if (audioDecoder.loadedMetadata) {
 
-				console.log('processing: loaded audio metadata');
 				loadedAudioMetadata = true;
 				loadedAllMetadata = loadedAudioMetadata && loadedVideoMetadata;
 				finish(true);
 
 			} else if (demuxer.audioReady) {
 
-				console.log('processing: found audio header');
 				demuxer.dequeueAudioPacket(function(packet) {
 					audioDecoder.processHeader(packet, function(ret) {
-						console.log('audioDecoder.processHeader', ret);
 						finish(true);
 					});
 				});
 
 			} else {
 
-				console.log('processing: need more audio headers');
 				doProcessData();
 
 			}
@@ -288,14 +281,12 @@ OGVWrapperCodec = (function(options) {
 
 			if (videoDecoder.loadedMetadata) {
 
-				console.log('processing: loaded video metadata');
 				loadedVideoMetadata = true;
 				loadedAllMetadata = loadedAudioMetadata && loadedVideoMetadata;
 				finish(true);
 
 			} else if (demuxer.frameReady) {
 
-				console.log('processing: found video header');
 				processing = true;
 				demuxer.dequeueVideoPacket(function(packet) {
 					videoDecoder.processHeader(packet, function() {
@@ -305,7 +296,6 @@ OGVWrapperCodec = (function(options) {
 
 			} else {
 
-				console.log('processing: need more video headers');
 				doProcessData();
 
 			}
@@ -313,7 +303,6 @@ OGVWrapperCodec = (function(options) {
 		} else if (loadedVideoMetadata && !self.loadedMetadata && loadedAllMetadata) {
 
 			// Ok we've found all the metadata there is. Enjoy.
-			console.log('processing: found all metadata');
 			loadedMetadata = true;
 			finish(true);
 
