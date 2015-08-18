@@ -14,7 +14,6 @@
 #include "ogv-ogg-support.h"
 
 /* Video decode state */
-ogg_stream_state  theoraStreamState;
 th_info           theoraInfo;
 th_comment        theoraComment;
 th_setup_info    *theoraSetupInfo;
