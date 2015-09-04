@@ -7,35 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 0.9.9
- * auto-detect resource base dir
- * fixes for calling play() immediately
- * fixes for opus
- * console cleanup
- * misc fixes
-* 0.9.8
- * quick fix for IE audio stuttering
-* 0.9.7
- * disable WebGL if using software rendering
- * reduce Flash comms overhead in IE
-* 0.9.6
- * fixes for IE 10
-* 0.9.5
- * fix pause/play regression
-* 0.9.4
- * fix regressions
-* 0.9.3
- * internal partial async retooling
- * web worker threading, enabled by default
- * note the dist files have changed!
-* 0.9.2
- * fix for time reporting issue
-* 0.9.1
- * more sound sync fixes
- * IE 11/Edge WebGL perf improvements
-* 0.9 - almost there!
- * controls attribute not yet supported
- * WebM is still experimental
+* 1.0 - 2015-09-04
+ * initial stable release, as used on Wikipedia
 
 ## Current status
 
