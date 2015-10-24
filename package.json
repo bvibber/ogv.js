@@ -1,0 +1,38 @@
+{
+  "name": "ogv.js",
+  "version": "1.0.0",
+  "description": "JavaScript media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --optimize-dedupe",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brion/ogv.js.git"
+  },
+  "keywords": [
+    "Multimedia",
+    "Audio",
+    "Video",
+    "Decoder",
+    "Player",
+    "OGG",
+    "Vorbis",
+    "Theora",
+    "VP8",
+    "OPUS",
+    "WEBM",
+    "WebAudio",
+    "Emscripten"
+  ],
+  "author": "Brion Vibber <brion@pobox.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brion/ogv.js/issues"
+  },
+  "homepage": "https://github.com/brion/ogv.js#readme",
+  "devDependencies": {
+    "webpack": "^1.12.2"
+  }
+}
