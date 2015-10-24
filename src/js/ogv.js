@@ -7,40 +7,40 @@
 (function() {
 
 // -- OGVLoader.js
-#include "OGVLoader.js"
+require("OGVLoader.js");
 
 // -- StreamFile.js
-#include "StreamFile.js"
+require("StreamFile.js");
 
 // -- AudioFeeder.js
-#include "AudioFeeder.js"
+require("AudioFeeder.js");
 
 // -- FrameSink.js
-#include "FrameSink.js"
+require("FrameSink.js");
 
 // -- WebGLFrameSink.js
-#include "WebGLFrameSink.js"
+require("WebGLFrameSink.js");
 
 // -- Bisector.js
-#include "Bisector.js"
+require("Bisector.js");
 
 // -- OGVMediaType.js
-#include "OGVMediaType.js"
+require("OGVMediaType.js");
 
 // -- OGVWrapperCodec.js
-#include "OGVWrapperCodec.js"
+require("OGVWrapperCodec.js");
 
 // -- OGVProxyClass.js
-#include "OGVProxyClass.js"
+require("OGVProxyClass.js");
 
 // -- OGVDecoderAudioProxy.js
-#include "OGVDecoderAudioProxy.js"
+require("OGVDecoderAudioProxy.js");
 
 // -- OGVDecoderVideoProxy.js
-#include "OGVDecoderVideoProxy.js"
+require("OGVDecoderVideoProxy.js");
 
 // -- OGVPlayer.js
-#include "OGVPlayer.js"
+require("OGVPlayer.js");
 
 // exports
 this.OGVLoader = OGVLoader;

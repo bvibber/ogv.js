@@ -6,9 +6,9 @@
 
 (function() {
 
-	#include "BogoSlow.js"
+	require("BogoSlow.js");
 
-	#include "OGVCompat.js"
+	require("OGVCompat.js");
 
 	this.OGVCompat = OGVCompat;
 
