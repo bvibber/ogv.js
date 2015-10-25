@@ -9,7 +9,7 @@ module.exports = [
       path: __dirname + BUILD_DIR,
       filename: 'ogv.js',
       libraryTarget: 'this',
-      library: 'multimedia'
+      library: 'ogv'
     }
   },
 	{
@@ -18,7 +18,7 @@ module.exports = [
 	    path: __dirname + BUILD_DIR,
 	    filename: 'ogv-worker-audio.js',
 	    libraryTarget: 'this',
-	    library: 'multimedia'
+	    library: 'ogv-worker-audio'
 	  }
 	},
   {
@@ -27,7 +27,7 @@ module.exports = [
       path: __dirname + BUILD_DIR,
       filename: 'ogv-worker-video.js',
       libraryTarget: 'this',
-      library: 'multimedia'
+      library: 'ogv-worker-video'
     }
   },
 ];

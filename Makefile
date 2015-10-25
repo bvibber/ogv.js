@@ -182,9 +182,14 @@ build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
 #	node tools/file2def.js src/shaders/YCbCr.fsh YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 #	node tools/file2def.js src/shaders/YCbCr-stripe.fsh YCBCR_STRIPE_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
+# Install dev dependencies
+
+package.json :
+	npm install
+
 # Build the main JS bundle and the worker files
 
-build/ogv.js :
+build/ogv.js : webpack.config.js package.json
 	npm run build
 
 #FIXME: use some webpack way to hardcode package version into distro
