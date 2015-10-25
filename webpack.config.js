@@ -1,11 +1,42 @@
 var webpack = require('webpack');
 
-module.exports = [{
-  entry: './index',
-  output: {
-    path: __dirname,
-    filename: 'ogv_debug.js',
-    libraryTarget: 'this',
-    library: 'multimedia'
-  }
-}];
+const BUILD_DIR = '/build';
+
+module.exports = [
+	{
+	  entry: './index',
+	  output: {
+	    path: __dirname,
+	    filename: 'ogv_debug.js',
+	    libraryTarget: 'this',
+	    library: 'multimedia'
+	  }
+	},
+  {
+    entry: './index',
+    output: {
+      path: __dirname + BUILD_DIR,
+      filename: 'ogv.js',
+      libraryTarget: 'this',
+      library: 'multimedia'
+    }
+  },
+	{
+	  entry: './src/js/workers/ogv-worker-audio.js',
+	  output: {
+	    path: __dirname + BUILD_DIR,
+	    filename: 'ogv-worker-audio.js',
+	    libraryTarget: 'this',
+	    library: 'multimedia'
+	  }
+	},
+  {
+    entry: './src/js/workers/ogv-worker-video.js',
+    output: {
+      path: __dirname + BUILD_DIR,
+      filename: 'ogv-worker-video.js',
+      libraryTarget: 'this',
+      library: 'multimedia'
+    }
+  },
+];

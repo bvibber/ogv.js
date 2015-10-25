@@ -13,9 +13,7 @@ all : js \
       demo \
       tests
 
-js : build/ogv.js \
-     build/ogv-version.js \
-     build/ogv-support.js
+js : build/ogv.js
 
 demo : build/demo/index.html
 
@@ -34,6 +32,8 @@ clean:
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
 
+# Build everything and copy the result into distro folder
+
 dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	rm -rf dist
 	mkdir dist
@@ -45,8 +45,7 @@ dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	      build/ogv-decoder-audio-vorbis.js \
 	      build/ogv-decoder-video-theora.js \
 	      build/ogv-decoder-video-vp8.js \
-	      build/ogv-support.js \
-	      build/ogv-version.js \
+	      #build/ogv-version.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      $(DYNAMIC_AUDIO_SWF) \
@@ -61,6 +60,8 @@ dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	cp -p libvpx/LICENSE dist/ogvjs-$(VERSION)/LICENSE-vpx.txt
 	cp -p libvpx/PATENTS dist/ogvjs-$(VERSION)/PATENTS-vpx.txt
 	(cd dist && zip -r ogvjs-$(VERSION).zip ogvjs-$(VERSION))
+
+# Generators for modules ######################
 
 build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
 	test -d build || mkdir build
@@ -175,73 +176,19 @@ build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
 	test -d build || mkdir build
 	./compileOgvDecoderVideoVP8.sh
 
-build/YCbCr-shaders.h : src/shaders/YCbCr.vsh src/shaders/YCbCr.fsh src/shaders/YCbCr-stripe.fsh tools/file2def.js
-	test -d build || mkdir build
-	node tools/file2def.js src/shaders/YCbCr.vsh YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
-	node tools/file2def.js src/shaders/YCbCr.fsh YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
-	node tools/file2def.js src/shaders/YCbCr-stripe.fsh YCBCR_STRIPE_FRAGMENT_SHADER >> build/YCbCr-shaders.h
+# TODO: See WebGLFrameSink.js
+#build/YCbCr-shaders.h : src/shaders/YCbCr.vsh src/shaders/YCbCr.fsh src/shaders/YCbCr-stripe.fsh tools/file2def.js
+#	test -d build || mkdir build
+#	node tools/file2def.js src/shaders/YCbCr.vsh YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
+#	node tools/file2def.js src/shaders/YCbCr.fsh YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
+#	node tools/file2def.js src/shaders/YCbCr-stripe.fsh YCBCR_STRIPE_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
-build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
-	test -d build || mkdir build
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/FrameSink.js.in > build/FrameSink.js
+# Build the main JS bundle and the worker files
 
-build/WebGLFrameSink.js : src/WebGLFrameSink.js.in build/YCbCr-shaders.h
-	 cpp -E -w -P -CC -nostdinc -Ibuild src/WebGLFrameSink.js.in > build/WebGLFrameSink.js
+build/ogv.js :
+	npm run build
 
-build/ogv.js : src/ogv.js.in \
-               src/OGVLoader.js \
-               src/StreamFile.js \
-               src/AudioFeeder.js \
-               build/FrameSink.js \
-               build/WebGLFrameSink.js \
-               src/Bisector.js \
-               src/OGVMediaType.js \
-               src/OGVWrapperCodec.js \
-               src/OGVProxyClass.js \
-               src/OGVDecoderAudioProxy.js \
-               src/OGVDecoderVideoProxy.js \
-               src/OGVPlayer.js \
-               build/ogv-demuxer-ogg.js \
-               build/ogv-demuxer-webm.js \
-               build/ogv-decoder-audio-opus.js \
-               build/ogv-decoder-audio-vorbis.js \
-               build/ogv-decoder-video-theora.js \
-               build/ogv-decoder-video-vp8.js \
-               $(DYNAMIC_AUDIO_SWF) \
-               build/ogv-worker-audio.js \
-               build/ogv-worker-video.js
-	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
-	echo 'this.OGVVersion = "$(FULLVER)";' >> build/ogv.js
-
-build/ogv-support.js : src/ogv-support.js.in \
-                       src/BogoSlow.js \
-                       src/OGVCompat.js \
-                       build/ogv.js
-	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv-support.js.in > build/ogv-support.js
-	echo 'this.OGVVersion = "$(FULLVER)";' >> build/ogv-support.js
-
-build/ogv-version.js : build/ogv.js
-	echo 'this.OGVVersion = "$(FULLVER)";' > build/ogv-version.js
-
-build/ogv-worker-audio.js : src/OGVLoader.js \
-                            src/OGVWorkerSupport.js \
-                            src/OGVWorkerAudio.js \
-                            build/ogv-version.js
-	cat src/OGVLoader.js \
-	    src/OGVWorkerSupport.js \
-	    src/OGVWorkerAudio.js \
-	    build/ogv-version.js \
-	    > build/ogv-worker-audio.js
-
-build/ogv-worker-video.js : src/OGVLoader.js \
-                            src/OGVWorkerSupport.js \
-                            src/OGVWorkerVideo.js \
-                            build/ogv-version.js
-	cat src/OGVLoader.js \
-	    src/OGVWorkerSupport.js \
-	    src/OGVWorkerVideo.js \
-	    build/ogv-version.js \
-	    > build/ogv-worker-video.js
+#FIXME: use some webpack way to hardcode package version into distro
 
 # The player demo, with the JS build
 build/demo/index.html : $(DEMO_DIR)/index.html.in \
@@ -370,8 +317,8 @@ swf : $(DYNAMIC_AUDIO_SWF)
 cleanswf:
 	rm -f $(DYNAMIC_AUDIO_SWF)
 
-$(DYNAMIC_AUDIO_SWF) : src/dynamicaudio.as
-	mxmlc -o $(DYNAMIC_AUDIO_SWF) -file-specs src/dynamicaudio.as
+$(DYNAMIC_AUDIO_SWF) : src/flex/dynamicaudio.as
+	mxmlc -o $(DYNAMIC_AUDIO_SWF) -file-specs src/flex/dynamicaudio.as
 
 
 # fixme move all this to grunt and modules
