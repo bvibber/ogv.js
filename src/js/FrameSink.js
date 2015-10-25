@@ -9,7 +9,7 @@ function FrameSink(canvas, videoInfo) {
 		resampleCanvas = null,
 		resampleContext = null;
 
-	require("YCbCr.js");
+	require("./YCbCr.js");
 
 	function initImageData(width, height) {
 		imageData = ctx.createImageData(width, height);

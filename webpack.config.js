@@ -1,7 +1,7 @@
 var webpack = require('webpack');
 
 module.exports = [{
-  entry: './index.js',
+  entry: './index',
   output: {
     path: __dirname,
     filename: 'ogv_debug.js',
