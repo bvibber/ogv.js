@@ -7,6 +7,10 @@ var OGV;
 
 module.exports = OGV = {};
 
+require("BogoSlow.js");
+
+require("OGVCompat.js");
+
 // -- OGVLoader.js
 require("./OGVLoader.js");
 
