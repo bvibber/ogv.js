@@ -5,8 +5,10 @@ FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
 
 DEMO_DIR:=demo
 TESTS_DIR:=tests
-DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
 BUILDSCRIPTS_DIR:=buildscripts
+
+DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
+CORTADO_JAR:=assets/cortado.jar
 
 .FAKE : all clean cleanswf swf js demo democlean tests dist lint
 
@@ -255,9 +257,9 @@ build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp -pr dist/ogvjs-$(VERSION)/* build/demo/lib/
 
-build/demo/lib/cortado.jar : assets/cortado.jar
+build/demo/lib/cortado.jar : $(CORTADO_JAR)
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp assets/cortado.jar build/demo/lib/cortado.jar
+	cp $(CORTADO_JAR) build/demo/lib/cortado.jar
 
 build/demo/lib/CortadoPlayer.js : src/js/CortadoPlayer.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
