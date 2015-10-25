@@ -3,5 +3,6 @@ build
 .libs
 
 node_modules
+npm-debug.log
 
 ogv_debug.js
