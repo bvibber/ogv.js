@@ -3,6 +3,10 @@ BUILDDATE:=$(shell date -u "+%Y%m%d%H%M%S")
 HASH:=$(shell git rev-parse --short HEAD)
 FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
 
+DEMO_DIR:=demo
+TESTS_DIR:=tests
+DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
+
 .FAKE : all clean cleanswf swf js demo democlean tests dist jshint
 
 all : js \
@@ -30,7 +34,7 @@ clean:
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
 
-dist: js src/dynamicaudio.swf readme.md COPYING
+dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	rm -rf dist
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
@@ -45,8 +49,8 @@ dist: js src/dynamicaudio.swf readme.md COPYING
 	      build/ogv-version.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
-	      src/dynamicaudio.swf \
-	      readme.md \
+	      $(DYNAMIC_AUDIO_SWF) \
+	      README.md \
 	      COPYING \
 	      dist/ogvjs-$(VERSION)/
 	cp -p libogg/COPYING dist/ogvjs-$(VERSION)/COPYING-ogg.txt
@@ -203,7 +207,7 @@ build/ogv.js : src/ogv.js.in \
                build/ogv-decoder-audio-vorbis.js \
                build/ogv-decoder-video-theora.js \
                build/ogv-decoder-video-vp8.js \
-               src/dynamicaudio.swf \
+               $(DYNAMIC_AUDIO_SWF) \
                build/ogv-worker-audio.js \
                build/ogv-worker-video.js
 	cpp -E -w -P -CC -nostdinc -Ibuild src/ogv.js.in > build/ogv.js
@@ -240,7 +244,7 @@ build/ogv-worker-video.js : src/OGVLoader.js \
 	    > build/ogv-worker-video.js
 
 # The player demo, with the JS build
-build/demo/index.html : src/demo/index.html.in \
+build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/demo.css \
                         build/demo/demo.js \
                         build/demo/iconfont.css \
@@ -254,43 +258,43 @@ build/demo/index.html : src/demo/index.html.in \
                         build/demo/lib/cortado.jar \
                         build/demo/lib/CortadoPlayer.js
 	test -d build/demo || mkdir -p build/demo
-	cpp -E -w -P -CC -nostdinc -DWITH_JS src/demo/index.html.in > build/demo/index.html
+	cpp -E -w -P -CC -nostdinc -DWITH_JS $(DEMO_DIR)/index.html.in > build/demo/index.html
 
-build/demo/demo.css : src/demo/demo.css
+build/demo/demo.css : $(DEMO_DIR)/demo.css
 	test -d build/demo || mkdir -p build/demo
-	cp src/demo/demo.css build/demo/demo.css
+	cp $(DEMO_DIR)/demo.css build/demo/demo.css
 
-build/demo/demo.js : src/demo/demo.js
+build/demo/demo.js : $(DEMO_DIR)/demo.js
 	test -d build/demo || mkdir -p build/demo
-	cp src/demo/demo.js build/demo/demo.js
+	cp $(DEMO_DIR)/demo.js build/demo/demo.js
 
-build/demo/iconfont.css : src/demo/iconfont.css
+build/demo/iconfont.css : $(DEMO_DIR)/iconfont.css
 	test -d build/demo || mkdir -p build/demo
-	cp src/demo/iconfont.css build/demo/iconfont.css
+	cp $(DEMO_DIR)/iconfont.css build/demo/iconfont.css
 
-build/demo/motd.js : src/demo/motd.js
+build/demo/motd.js : $(DEMO_DIR)/motd.js
 	test -d build/demo || mkdir -p build/demo
-	cp src/demo/motd.js build/demo/motd.js
+	cp $(DEMO_DIR)/motd.js build/demo/motd.js
 
-build/demo/benchmark.html : src/demo/benchmark.html
+build/demo/benchmark.html : $(DEMO_DIR)/benchmark.html
 	test -d build/demo || mkdir -p build/demo
-	cp src/demo/benchmark.html build/demo/benchmark.html
+	cp $(DEMO_DIR)/benchmark.html build/demo/benchmark.html
 
-build/demo/minimal.html : src/demo/minimal.html
+build/demo/minimal.html : $(DEMO_DIR)/minimal.html
 	test -d build/demo || mkdir -p build/demo
-	cp src/demo/minimal.html build/demo/minimal.html
+	cp $(DEMO_DIR)/minimal.html build/demo/minimal.html
 
-build/demo/media/ehren-paper_lights-96.opus : src/demo/media/ehren-paper_lights-96.opus
+build/demo/media/ehren-paper_lights-96.opus : $(DEMO_DIR)/media/ehren-paper_lights-96.opus
 	test -d build/demo/media || mkdir -p build/demo/media
-	cp src/demo/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
+	cp $(DEMO_DIR)/media/ehren-paper_lights-96.opus build/demo/media/ehren-paper_lights-96.opus
 
-build/demo/media/pixel_aspect_ratio.ogg : src/demo/media/pixel_aspect_ratio.ogg
+build/demo/media/pixel_aspect_ratio.ogg : $(DEMO_DIR)/media/pixel_aspect_ratio.ogg
 	test -d build/demo/media || mkdir -p build/demo/media
-	cp src/demo/media/pixel_aspect_ratio.ogg build/demo/media/pixel_aspect_ratio.ogg
+	cp $(DEMO_DIR)/media/pixel_aspect_ratio.ogg build/demo/media/pixel_aspect_ratio.ogg
 
-build/demo/media/curiosity.ogv : src/demo/media/curiosity.ogv
+build/demo/media/curiosity.ogv : $(DEMO_DIR)/media/curiosity.ogv
 	test -d build/demo/media || mkdir -p build/demo/media
-	cp src/demo/media/curiosity.ogv build/demo/media/curiosity.ogv
+	cp $(DEMO_DIR)/media/curiosity.ogv build/demo/media/curiosity.ogv
 
 build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
@@ -313,41 +317,41 @@ build/tests/index.html : build/tests/tests.js \
                          build/tests/media/3seconds.ogv \
                          build/tests/media/3seconds-noskeleton.ogv \
                          build/tests/media/320x240.ogv \
-                         src/tests/index.html
+                         $(TESTS_DIR)/index.html
 	test -d build/tests || mkdir -p build/tests
-	cp src/tests/index.html build/tests/index.html
+	cp $(TESTS_DIR)/index.html build/tests/index.html
 
-build/tests/tests.js : src/tests/tests.js
+build/tests/tests.js : $(TESTS_DIR)/tests.js
 	test -d build/tests || mkdir -p build/tests
-	cp src/tests/tests.js build/tests/tests.js
+	cp $(TESTS_DIR)/tests.js build/tests/tests.js
 
 build/tests/lib/ogv.js : dist
 	test -d build/tests/lib || mkdir -p build/tests/lib
 	cp -pr dist/ogvjs-$(VERSION)/* build/tests/lib/
 
-build/tests/media/1frame.ogv : src/tests/media/1frame.ogv
+build/tests/media/1frame.ogv : $(TESTS_DIR)/media/1frame.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
-	cp src/tests/media/1frame.ogv build/tests/media/1frame.ogv
+	cp $(TESTS_DIR)/media/1frame.ogv build/tests/media/1frame.ogv
 
-build/tests/media/3frames.ogv : src/tests/media/3frames.ogv
+build/tests/media/3frames.ogv : $(TESTS_DIR)/media/3frames.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
-	cp src/tests/media/3frames.ogv build/tests/media/3frames.ogv
+	cp $(TESTS_DIR)/media/3frames.ogv build/tests/media/3frames.ogv
 
-build/tests/media/1second.ogv : src/tests/media/1second.ogv
+build/tests/media/1second.ogv : $(TESTS_DIR)/media/1second.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
-	cp src/tests/media/1second.ogv build/tests/media/1second.ogv
+	cp $(TESTS_DIR)/media/1second.ogv build/tests/media/1second.ogv
 
-build/tests/media/3seconds.ogv : src/tests/media/3seconds.ogv
+build/tests/media/3seconds.ogv : $(TESTS_DIR)/media/3seconds.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
-	cp src/tests/media/3seconds.ogv build/tests/media/3seconds.ogv
+	cp $(TESTS_DIR)/media/3seconds.ogv build/tests/media/3seconds.ogv
 
-build/tests/media/3seconds-noskeleton.ogv : src/tests/media/3seconds-noskeleton.ogv
+build/tests/media/3seconds-noskeleton.ogv : $(TESTS_DIR)/media/3seconds-noskeleton.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
-	cp src/tests/media/3seconds-noskeleton.ogv build/tests/media/3seconds-noskeleton.ogv
+	cp $(TESTS_DIR)/media/3seconds-noskeleton.ogv build/tests/media/3seconds-noskeleton.ogv
 
-build/tests/media/320x240.ogv : src/tests/media/320x240.ogv
+build/tests/media/320x240.ogv : $(TESTS_DIR)/media/320x240.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
-	cp src/tests/media/320x240.ogv build/tests/media/320x240.ogv
+	cp $(TESTS_DIR)/media/320x240.ogv build/tests/media/320x240.ogv
 
 # There is a Flash shim for audio on Internet Explorer which doesn't
 # have Web Audio API.
@@ -361,13 +365,13 @@ build/tests/media/320x240.ogv : src/tests/media/320x240.ogv
 #
 # To rebuild the .swf, run 'make cleanswf' then 'make swf'
 #
-swf : src/dynamicaudio.swf
+swf : $(DYNAMIC_AUDIO_SWF)
 
 cleanswf:
-	rm -f src/dynamicaudio.swf
+	rm -f $(DYNAMIC_AUDIO_SWF)
 
-src/dynamicaudio.swf : src/dynamicaudio.as
-	mxmlc -o src/dynamicaudio.swf -file-specs src/dynamicaudio.as
+$(DYNAMIC_AUDIO_SWF) : src/dynamicaudio.as
+	mxmlc -o $(DYNAMIC_AUDIO_SWF) -file-specs src/dynamicaudio.as
 
 
 # fixme move all this to grunt and modules
