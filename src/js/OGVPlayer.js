@@ -1,10 +1,38 @@
+var WebGLFrameSink = require('./WebGLFrameSink.js');
+var FrameSink = require('./FrameSink.js');
+
+// -- OGVLoader.js
+var OGVLoader = require("./OGVLoader.js");
+
+// -- StreamFile.js
+var StreamFile = require("./StreamFile.js");
+
+// -- AudioFeeder.js
+var AudioFeeder = require("./AudioFeeder.js");
+
+// -- Bisector.js
+var Bisector = require("./Bisector.js");
+
+// -- OGVMediaType.js
+var OGVMediaType = require("./OGVMediaType.js");
+
+// -- OGVWrapperCodec.js
+var OGVWrapperCodec = require("./OGVWrapperCodec.js");
+
+// -- OGVDecoderAudioProxy.js
+var OGVDecoderAudioProxy = require("./OGVDecoderAudioProxy.js");
+
+// -- OGVDecoderVideoProxy.js
+var OGVDecoderVideoProxy = require("./OGVDecoderVideoProxy.js");
+
 /**
  * Constructor for an analogue of the TimeRanges class
  * returned by various HTMLMediaElement properties
  *
  * Pass an array of two-element arrays, each containing a start and end time.
  */
-OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
+// FIXME: not use window scope if possible here
+var OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
 	Object.defineProperty(this, 'length', {
 		get: function getLength() {
 			return ranges.length;
@@ -28,7 +56,7 @@ OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
  *                 'webGL': bool; pass true to use WebGL acceleration if available
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
  */
-OGVPlayer = window.OGVPlayer = function(options) {
+var OGVPlayer = function(options) {
 	options = options || {};
 
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
@@ -64,14 +92,14 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		SEEKING: 'SEEKING',
 		ENDED: 'ENDED'
 	}, state = State.INITIAL;
-	
+
 	var SeekState = {
 		NOT_SEEKING: 'NOT_SEEKING',
 		BISECT_TO_TARGET: 'BISECT_TO_TARGET',
 		BISECT_TO_KEYPOINT: 'BISECT_TO_KEYPOINT',
 		LINEAR_TO_TARGET: 'LINEAR_TO_TARGET'
 	}, seekState = SeekState.NOT_SEEKING;
-	
+
 	var audioOptions = {},
 		codecOptions = {};
 	options.base = options.base || OGVLoader.base;
@@ -87,10 +115,10 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		audioOptions.audioContext = options.audioContext;
 	}
 	codecOptions.worker = enableWorker;
-	
+
 	var canvas = document.createElement('canvas');
 	var frameSink;
-	
+
 	// Return a magical custom element!
 	var self = document.createElement('ogvjs');
 	self.className = instanceId;
@@ -104,6 +132,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	self.appendChild(canvas);
 
 	var getTimestamp;
+	// FIXME: don't use window scope, see BogoSlow.js
 	if (window.performance === undefined || window.performance.now === undefined) {
 		getTimestamp = Date.now;
 	} else {
@@ -176,7 +205,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		};
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
 	}
-	
+
 	function startPlayback(offset) {
 		if (audioFeeder) {
 			audioFeeder.start();
@@ -190,7 +219,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		}
 		log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 	}
-	
+
 	function stopPlayback() {
 		if (audioFeeder) {
 			audioFeeder.stop();
@@ -198,7 +227,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		initialPlaybackOffset = getPlaybackTime();
 		log('pausing at ' + initialPlaybackOffset);
 	}
-	
+
 	/**
 	 * Get audio playback time position in file's units
 	 *
@@ -225,7 +254,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		ended = false,
 		startedPlaybackInDocument = false,
 		waitingOnInput = false;
-	
+
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
 	var framesProcessed = 0, // frames
@@ -254,7 +283,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
-		
+
 		if (stream) {
 			stream.abort();
 			stream = null;
@@ -272,12 +301,12 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			nextProcessingTimer = null;
 		}
 	}
-	
+
 	var lastFrameTime = getTimestamp(),
 		frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
 		yCbCrBuffer = null;
-	var lastFrameDecodeTime = 0.0;		
+	var lastFrameDecodeTime = 0.0;
 	var lastFrameTimestamp = 0.0;
 
 	function doFrameComplete() {
@@ -371,7 +400,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			});
 		});
 	}
-	
+
 	function continueSeekedPlayback() {
 		seekState = SeekState.NOT_SEEKING;
 		state = State.PLAYING;
@@ -393,7 +422,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	}
-	
+
 	/**
 	 * @return {boolean} true to continue processing, false to wait for input data
 	 */
@@ -418,7 +447,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 				});
 				return;
 			} else {
-				// Reached or surpassed the target time. 
+				// Reached or surpassed the target time.
 				if (codec.hasAudio) {
 					// Keep processing the audio track
 					// fall through...
@@ -447,7 +476,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	}
-	
+
 	function doProcessBisectionSeek() {
 		var frameDuration,
 			timestamp;
@@ -512,7 +541,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	}
-	
+
 	function setupVideo() {
 		if (videoInfo.fps > 0) {
 			targetPerFrameTime = 1000 / videoInfo.fps;
@@ -758,7 +787,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 						pingProcessing();
 
 					} else {
-		
+
 						var audioBufferedDuration = 0,
 							audioDecodingDuration = 0,
 							audioState = null,
@@ -994,7 +1023,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		if (started || codec) {
 			return;
 		}
-		
+
 		framesProcessed = 0;
 		demuxingTime = 0;
 		videoDecodingTime = 0;
@@ -1009,7 +1038,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			readBytesAndWait();
 		});
 	}
-	
+
 	function loadCodec(callback) {
 		// @todo use the demuxer and codec interfaces directly
 		codecClassName = 'OGVWrapperCodec';
@@ -1035,7 +1064,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			// already loaded.
 			return;
 		}
-	
+
 		started = false;
 		stream = new StreamFile({
 			url: self.src,
@@ -1043,7 +1072,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
 				byteLength = stream.bytesTotal;
-			
+
 				// If we get X-Content-Duration, that's as good as an explicit hint
 				var durationHeader = stream.getResponseHeader('X-Content-Duration');
 				if (typeof durationHeader === 'string') {
@@ -1092,7 +1121,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		});
 	};
-	
+
 	/**
 	 * HTMLMediaElement canPlayType method
 	 */
@@ -1126,7 +1155,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			return '';
 		}
 	};
-	
+
 	/**
 	 * HTMLMediaElement play method
 	 */
@@ -1198,7 +1227,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 		totalFrameTime = 0;
 		totalFrameCount = 0;
 	};
-	
+
 	/**
 	 * HTMLMediaElement pause method
 	 */
@@ -1214,7 +1243,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			fireEvent('pause');
 		}
 	};
-	
+
 	/**
 	 * custom 'stop' method
 	 */
@@ -1226,7 +1255,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	 * HTMLMediaElement src property
 	 */
 	self.src = "";
-	
+
 	/**
 	 * HTMLMediaElement buffered property
 	 */
@@ -1241,7 +1270,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			return new OGVTimeRanges([[0, estimatedBufferTime]]);
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement seekable property
 	 */
@@ -1254,7 +1283,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement currentTime property
 	 */
@@ -1280,7 +1309,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement duration property
 	 */
@@ -1297,7 +1326,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement paused property
 	 */
@@ -1306,7 +1335,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			return paused;
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement ended property
 	 */
@@ -1315,7 +1344,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			return ended;
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement ended property
 	 */
@@ -1324,7 +1353,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			return (state == State.SEEKING);
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement muted property
 	 */
@@ -1343,7 +1372,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	Object.defineProperty(self, "poster", {
 		get: function getPoster() {
 			return poster;
@@ -1374,7 +1403,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	// Video metadata properties...
 	Object.defineProperty(self, "videoWidth", {
 		get: function getVideoWidth() {
@@ -1407,7 +1436,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	// Audio metadata properties...
 	Object.defineProperty(self, "ogvjsAudioChannels", {
 		get: function getOgvJsAudioChannels() {
@@ -1427,7 +1456,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			}
 		}
 	});
-	
+
 	// Display size...
 	var width = 0, height = 0;
 	Object.defineProperty(self, "width", {
@@ -1439,7 +1468,7 @@ OGVPlayer = window.OGVPlayer = function(options) {
 			self.style.width = width + 'px';
 		}
 	});
-	
+
 	Object.defineProperty(self, "height", {
 		get: function getHeight() {
 			return height;
@@ -1456,28 +1485,28 @@ OGVPlayer = window.OGVPlayer = function(options) {
 	 * custom onframecallback, takes frame decode time in ms
 	 */
 	self.onframecallback = null;
-	
+
 	/**
 	 * Called when all metadata is available.
 	 * Note in theory we must know 'duration' at this point.
 	 */
 	self.onloadedmetadata = null;
-	
+
 	/**
 	 * Called when we start playback
 	 */
 	self.onplay = null;
-	
+
 	/**
 	 * Called when we get paused
 	 */
 	self.onpause = null;
-	
+
 	/**
 	 * Called when playback ends
 	 */
 	self.onended = null;
-	
+
 	return self;
 };
 
@@ -1571,3 +1600,5 @@ if (OGVPlayer.supportsObjectFit) {
 	document.addEventListener('webkitfullscreenchange', fullResizeVideo);
 	document.addEventListener('MSFullscreenChange', fullResizeVideo);
 }
+
+module.exports = OGVPlayer;

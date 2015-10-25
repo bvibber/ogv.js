@@ -1,4 +1,6 @@
-OGVDecoderAudioProxy = OGVProxyClass({
+var OGVProxyClass = require('./OGVProxyClass.js');
+
+var OGVDecoderAudioProxy = OGVProxyClass({
 	loadedMetadata: false,
 	audioFormat: null,
 	audioBuffer: null
@@ -15,3 +17,5 @@ OGVDecoderAudioProxy = OGVProxyClass({
 		this.proxy('processAudio', [data], callback, [data]);
 	}
 });
+
+module.exports = OGVDecoderAudioProxy;

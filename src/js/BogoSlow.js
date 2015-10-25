@@ -6,6 +6,7 @@ function BogoSlow() {
 	var self = this;
 
 	var timer;
+	// FIXME: avoid to use window scope here
 	if (window.performance && window.performance.now) {
 		timer = function() {
 			return window.performance.now();
@@ -15,7 +16,7 @@ function BogoSlow() {
 			return Date.now();
 		};
 	}
-	
+
 	var savedSpeed = null;
 	function run() {
 		var ops = 0;
@@ -115,3 +116,5 @@ function BogoSlow() {
 		}
 	});
 }
+
+module.exports = BogoSlow;

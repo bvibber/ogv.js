@@ -338,3 +338,5 @@ WebGLFrameSink.isAvailable = function() {
 		return false;
 	}
 };
+
+module.exports = WebGLFrameSink;

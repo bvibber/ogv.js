@@ -1,4 +1,6 @@
-proxy = new OGVWorkerSupport([
+var OGVWorkerSupport = require('./OGVWorkerSupport.js');
+
+var proxy = new OGVWorkerSupport([
 	'loadedMetadata',
 	'videoFormat',
 	'frameBuffer'
@@ -19,3 +21,5 @@ proxy = new OGVWorkerSupport([
 		});
 	}
 });
+
+module.exports = proxy;

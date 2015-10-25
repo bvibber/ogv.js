@@ -10,15 +10,21 @@ BUILDSCRIPTS_DIR:=buildscripts
 DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
 CORTADO_JAR:=assets/cortado.jar
 
+JS_FILES := $(shell find src/js -type f -name "*.js")
+
 .FAKE : all clean cleanswf swf js demo democlean tests dist lint
 
 all : js \
       demo \
       tests
 
+# FIXME: add workers targets here as deps
 js : build/ogv.js
 
 demo : build/demo/index.html
+
+run-demo : demo
+	npm run demo
 
 tests : build/tests/index.html
 
@@ -192,8 +198,10 @@ package.json :
 
 # Build the main JS bundle and the worker files
 
-build/ogv.js : webpack.config.js package.json
+build/ogv.js : webpack.config.js package.json $(JS_FILES)
 	npm run build
+
+#FIXME: add workers targets
 
 #FIXME: use some webpack way to hardcode package version into distro
 

@@ -1,3 +1,5 @@
+var OGVLoader = require('./OGVLoader.js');
+
 /**
  * Web Worker wrapper for codec fun
  */
@@ -86,7 +88,7 @@ function OGVWorkerSupport(propList, handlers) {
 
 	addEventListener('message', function workerOnMessage(event) {
 		var data = event.data;
-	
+
 		if (data && data.action == 'transferTest') {
 			// ignore
 			return;
@@ -153,3 +155,5 @@ function OGVWorkerSupport(propList, handlers) {
 	});
 
 }
+
+module.exports = OGVWorkerSupport;

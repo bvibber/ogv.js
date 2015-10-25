@@ -3,53 +3,24 @@
 // https://github.com/brion/ogv.js
 // Copyright (c) 2013-2015 Brion Vibber
 //
-var OGV;
-
-module.exports = OGV = {};
 
 require("./BogoSlow.js");
 
-require("./OGVCompat.js");
-
-// -- OGVLoader.js
-require("./OGVLoader.js");
-
-// -- StreamFile.js
-require("./StreamFile.js");
-
-// -- AudioFeeder.js
-require("./AudioFeeder.js");
-
-// -- FrameSink.js
-require("./FrameSink.js");
-
-// -- WebGLFrameSink.js
-require("./WebGLFrameSink.js");
-
-// -- Bisector.js
-require("./Bisector.js");
-
-// -- OGVMediaType.js
-require("./OGVMediaType.js");
-
-// -- OGVWrapperCodec.js
-require("./OGVWrapperCodec.js");
-
-// -- OGVProxyClass.js
-require("./OGVProxyClass.js");
-
-// -- OGVDecoderAudioProxy.js
-require("./OGVDecoderAudioProxy.js");
-
-// -- OGVDecoderVideoProxy.js
-require("./OGVDecoderVideoProxy.js");
+var OGVCompat = require("./OGVCompat.js");
 
 // -- OGVPlayer.js
-require("./OGVPlayer.js");
+var OGVPlayer = require("./OGVPlayer.js");
 
-// exports
-OGV.Loader = OGVLoader;
-OGV.MediaType = OGVMediaType;
-OGV.TimeRanges = OGVTimeRanges;
-OGV.Player = OGVPlayer;
+var OGVWrapperCodec = require("./OGVWrapperCodec.js");
 
+var OGVDecoderVideoProxy = require("./OGVDecoderVideoProxy.js");
+
+var OGVDecoderAudioProxy = require("./OGVDecoderAudioProxy.js");
+
+module.exports = {
+	DecoderVideoProxy: OGVDecoderVideoProxy,
+	DecoderAudioProxy: OGVDecoderAudioProxy,
+	WrapperCodec: OGVWrapperCodec,
+	Compat: OGVCompat,
+	Player: OGVPlayer
+};

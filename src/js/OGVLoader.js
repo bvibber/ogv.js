@@ -1,3 +1,6 @@
+// FIXME: should be defined as placeholder
+var OGVVersion = "1.0.0";
+
 (function() {
 	var global = this;
 
@@ -96,7 +99,7 @@
 		}
 	}
 
-	OGVLoader = {
+	var OGVLoader = {
 		base: defaultBase(),
 
 		loadClass: function(className, callback, options) {
@@ -137,4 +140,7 @@
 			});
 		}
 	};
+
+	module.exports = OGVLoader;
+
 })();

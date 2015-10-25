@@ -1,4 +1,6 @@
-OGVCompat = {
+var BogoSlow = require('./BogoSlow.js');
+
+var OGVCompat = {
 	benchmark: new BogoSlow(),
 
 	hasTypedArrays: function() {
@@ -44,7 +46,7 @@ OGVCompat = {
 		});
 		return blacklisted;
 	},
-	
+
 	isSlow: function() {
 		return this.benchmark.slow;
 	},
@@ -63,3 +65,5 @@ OGVCompat = {
 		return false;
 	}
 };
+
+module.exports = OGVCompat;

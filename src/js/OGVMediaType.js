@@ -39,3 +39,5 @@ function OGVMediaType(contentType) {
 		});
 	}
 }
+
+module.exports = OGVMediaType;

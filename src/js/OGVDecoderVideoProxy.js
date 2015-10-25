@@ -1,4 +1,6 @@
-OGVDecoderVideoProxy = OGVProxyClass({
+var OGVProxyClass = require('./OGVProxyClass.js');
+
+var OGVDecoderVideoProxy = OGVProxyClass({
 	loadedMetadata: false,
 	videoFormat: null,
 	frameBuffer: null
@@ -15,3 +17,5 @@ OGVDecoderVideoProxy = OGVProxyClass({
 		this.proxy('processFrame', [data], callback, [data]);
 	}
 });
+
+module.exports = OGVDecoderVideoProxy;

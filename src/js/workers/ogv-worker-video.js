@@ -1,3 +1,1 @@
-require("../OGVLoader.js");
-require("../OGVWorkerSupport.js");
-require("../OGVWorkerVideo.js");
+module.exports = require("../OGVWorkerVideo.js");

@@ -107,3 +107,7 @@ function convertYCbCr(ybcbr, output) {
 		}
 	}
 }
+
+module.exports = {
+	convertYCbCr: convertYCbCr
+};

@@ -2,6 +2,8 @@
  * @param HTMLCanvasElement canvas
  * @constructor
  */
+var YCbCr = require("./YCbCr.js");
+
 function FrameSink(canvas, videoInfo) {
 	var self = this,
 		ctx = canvas.getContext('2d'),
@@ -9,7 +11,7 @@ function FrameSink(canvas, videoInfo) {
 		resampleCanvas = null,
 		resampleContext = null;
 
-	require("./YCbCr.js");
+
 
 	function initImageData(width, height) {
 		imageData = ctx.createImageData(width, height);
@@ -38,7 +40,7 @@ function FrameSink(canvas, videoInfo) {
 				imageData.height != yCbCrBuffer.height) {
 			initImageData(yCbCrBuffer.width, yCbCrBuffer.height);
 		}
-		convertYCbCr(yCbCrBuffer, imageData.data);
+		YCbCr.convertYCbCr(yCbCrBuffer, imageData.data);
 
 		var resample = (videoInfo.picWidth != videoInfo.displayWidth || videoInfo.picHeight != videoInfo.displayHeight);
 		if (resample) {
@@ -64,3 +66,5 @@ function FrameSink(canvas, videoInfo) {
 
 	return self;
 }
+
+module.exports = FrameSink;

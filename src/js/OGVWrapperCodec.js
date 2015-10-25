@@ -7,7 +7,9 @@
  * @copyright 2015
  * @license MIT-style
  */
-OGVWrapperCodec = (function(options) {
+var OGVLoader = require("./OGVLoader.js");
+
+var OGVWrapperCodec = (function(options) {
 	options = options || {};
 	var self = this,
 		suffix = '?version=' + encodeURIComponent(OGVVersion),
@@ -367,3 +369,5 @@ OGVWrapperCodec = (function(options) {
 
 	return self;
 });
+
+module.exports = OGVWrapperCodec;

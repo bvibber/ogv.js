@@ -23,7 +23,7 @@ function Bisector(options) {
 		position = Math.floor((start + end) / 2);
 		return options.process(start, end, position);
 	}
-	
+
 	self.start = function() {
 		iterate();
 		return self;
@@ -39,3 +39,5 @@ function Bisector(options) {
 		return iterate();
 	};
 }
+
+module.exports = Bisector;

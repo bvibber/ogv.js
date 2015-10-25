@@ -8,7 +8,7 @@ module.exports = [
     output: {
       path: __dirname + BUILD_DIR,
       filename: 'ogv.js',
-      libraryTarget: 'this',
+      libraryTarget: 'var',
       library: 'ogv'
     }
   },

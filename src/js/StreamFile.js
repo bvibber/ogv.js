@@ -33,9 +33,9 @@ function StreamFile(options) {
 		buffers = [],
 		cachever = 0,
 		responseHeaders = {};
-		
 
-	
+
+
 	// -- internal private methods
 	var internal = {
 		/**
@@ -76,7 +76,7 @@ function StreamFile(options) {
 				}
 			}
 		},
-		
+
 		// Save HTTP response headers from the HEAD request for later
 		processResponseHeaders: function(xhr) {
 			responseHeaders = {};
@@ -91,7 +91,7 @@ function StreamFile(options) {
 				}
 			});
 		},
-		
+
 		openXHR: function() {
 			var getUrl = url;
 			if (cachever) {
@@ -127,7 +127,7 @@ function StreamFile(options) {
 			if (range !== null) {
 				xhr.setRequestHeader('Range', range);
 			}
-		
+
 			bytesRead = 0;
 
 			xhr.onreadystatechange = function(event) {
@@ -172,13 +172,13 @@ function StreamFile(options) {
 
 			xhr.send();
 		},
-		
+
 		getXHRRangeMatches: function(xhr) {
 			// Note Content-Range must be whitelisted for CORS requests
 			var contentRange = xhr.getResponseHeader('Content-Range');
 			return contentRange && contentRange.match(/^bytes (\d+)-(\d+)\/(\d+)/);
 		},
-		
+
 		getXHRRangeStart: function(xhr) {
 			var matches = internal.getXHRRangeMatches(xhr);
 			if (matches) {
@@ -187,7 +187,7 @@ function StreamFile(options) {
 				return 0;
 			}
 		},
-		
+
 		getXHRRangeTotal: function(xhr) {
 			var matches = internal.getXHRRangeMatches(xhr);
 			if (matches) {
@@ -196,7 +196,7 @@ function StreamFile(options) {
 				return 0;
 			}
 		},
-		
+
 		setXHROptions: function(xhr) {
 			throw new Error('abstract function');
 		},
@@ -216,29 +216,29 @@ function StreamFile(options) {
 			}
 		},
 		*/
-		
+
 		onXHRLoading: function(xhr) {
 			throw new Error('abstract function');
 		},
-		
+
 		onXHRDone: function(xhr) {
 			doneBuffering = true;
 		},
-		
+
 		abortXHR: function(xhr) {
 			xhr.onreadystatechange = null;
 			xhr.abort();
 		},
-		
+
 		bufferData: function(buffer) {
 			if (buffer) {
 				buffers.push(buffer);
 				onbuffer();
-			
+
 				internal.readNextChunk();
 			}
 		},
-		
+
 		bytesBuffered: function() {
 			var bytes = 0;
 			buffers.forEach(function(buffer) {
@@ -246,22 +246,22 @@ function StreamFile(options) {
 			});
 			return bytes;
 		},
-		
+
 		dataToRead: function() {
 			return internal.bytesBuffered() > 0;
 		},
-		
+
 		popBuffer: function() {
 			var bufferOut = new ArrayBuffer(bufferSize),
 				bytesOut = new Uint8Array(bufferOut),
 				byteLength = 0;
-			
+
 			function stuff(bufferIn) {
 				var bytesIn = new Uint8Array(bufferIn);
 				bytesOut.set(bytesIn, byteLength);
 				byteLength += bufferIn.byteLength;
 			}
-			
+
 			while (byteLength < minBufferSize) {
 				var needBytes = minBufferSize - byteLength,
 					nextBuffer = buffers.shift();
@@ -281,18 +281,18 @@ function StreamFile(options) {
 					break;
 				}
 			}
-			
+
 			bytesRead += byteLength;
 			bufferPosition += byteLength;
 			return bufferOut.slice(0, byteLength);
 		},
-		
+
 		clearReadState: function() {
 			bytesRead = 0;
 			doneBuffering = false;
 			waitingForInput = true;
 		},
-		
+
 		clearBuffers: function() {
 			internal.clearReadState();
 			buffers.splice(0, buffers.length);
@@ -309,11 +309,11 @@ function StreamFile(options) {
 				}
 			}
 		},
-		
+
 		onReadDone: function() {
 			ondone();
 		},
-		
+
 		// See if we can seek within already-buffered data
 		quickSeek: function(pos) {
 			return false;
@@ -347,7 +347,7 @@ function StreamFile(options) {
 			internal.clearBuffers();
 		}
 	};
-	
+
 	self.seek = function(bytePosition) {
 		if (internal.quickSeek(bytePosition)) {
 			//console.log('quick seek successful');
@@ -358,7 +358,7 @@ function StreamFile(options) {
 			internal.openXHR();
 		}
 	};
-	
+
 	self.getResponseHeader = function(headerName) {
 		var lowerName = headerName.toLowerCase(),
 			value = responseHeaders[lowerName];
@@ -375,7 +375,7 @@ function StreamFile(options) {
 			return bytesTotal;
 		}
 	});
-	
+
 	Object.defineProperty(self, 'bytesBuffered', {
 		get: function() {
 			return bufferPosition + internal.bytesBuffered();
@@ -387,7 +387,7 @@ function StreamFile(options) {
 			return seekPosition + bytesRead;
 		}
 	});
-	
+
 	Object.defineProperty(self, 'seekable', {
 		get: function() {
 			return (self.bytesTotal > 0);
@@ -410,25 +410,25 @@ function StreamFile(options) {
 				internal.bufferData(xhr.response);
 			};
 		};
-		
+
 		internal.abortXHR = function(xhr) {
 			xhr.onprogress = null;
 			orig.abortXHR(xhr);
 		};
-		
+
 		internal.onXHRLoading = function(xhr) {
 			// we have to get from the 'progress' event
 		};
-		
+
 	} else if (internal.tryMethod('ms-stream')) {
 		// IE 10 supports returning a Stream from XHR.
 
 		// Don't bother reading in chunks, MSStream handles it for us
 		chunkSize = 0;
-		
+
 		var stream, streamReader;
 		var restarted = false;
-		
+
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = 'ms-stream';
 		};
@@ -445,7 +445,7 @@ function StreamFile(options) {
 			}
 			orig.abortXHR(xhr);
 		};
-		
+
 		internal.onXHRLoading = function(xhr) {
 			// Transfer us over to the StreamReader...
 			stream = xhr.response;
@@ -455,7 +455,7 @@ function StreamFile(options) {
 				self.readBytes();
 			}
 		};
-		
+
 		internal.bytesBuffered = function() {
 			// We don't know how much ahead is buffered, it's opaque.
 			// Just return what we've read.
@@ -490,14 +490,14 @@ function StreamFile(options) {
 
 		// Use old binary string method since we can read reponseText
 		// progressively and extract ArrayBuffers from that.
-		
+
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = "text";
 			xhr.overrideMimeType('text/plain; charset=x-user-defined');
 		};
-	
+
 		var lastPosition = 0;
-		
+
 		// Is there a better way to do this conversion? :(
 		var stringToArrayBuffer = function(chunk) {
 			var len = chunk.length,
@@ -508,12 +508,12 @@ function StreamFile(options) {
 			}
 			return buffer;
 		};
-		
+
 		internal.clearReadState = function() {
 			orig.clearReadState();
 			lastPosition = 0;
 		};
-		
+
 		internal.onXHRLoading = function(xhr) {
 			// xhr.responseText is a binary string of entire file so far
 			var str = xhr.responseText;
@@ -524,7 +524,7 @@ function StreamFile(options) {
 				internal.bufferData(buffer);
 			}
 		};
-		
+
 		/*
 		internal.quickSeek = function(pos) {
 			var bufferedPos = pos - seekPosition;
@@ -545,6 +545,8 @@ function StreamFile(options) {
 	} else {
 		throw new Error("No streaming HTTP input method found.");
 	}
-	
+
 	internal.openXHR();
 }
+
+module.exports = StreamFile;

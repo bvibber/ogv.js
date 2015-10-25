@@ -20,14 +20,14 @@ function CortadoPlayer() {
 	var self = document.createElement('cortado');
 	self.style.display = 'inline-block';
 	self.style.position = 'relative';
-	
+
 	function param(name, value) {
 		var el = document.createElement('param');
 		el.name = name;
 		el.value = value;
 		return el;
 	}
-	
+
 	var applet;
 	function createApplet(playImmediately) {
 		applet = document.createElement('applet');
@@ -52,8 +52,8 @@ function CortadoPlayer() {
 
 		self.appendChild(applet);
 	}
-	
-	
+
+
 	/**
 	 * HTMLMediaElement load method
 	 */
@@ -64,7 +64,7 @@ function CortadoPlayer() {
 			applet = createApplet(false);
 		}
 	};
-	
+
 	/**
 	 * HTMLMediaElement canPlayType method
 	 */
@@ -84,7 +84,7 @@ function CortadoPlayer() {
 			return '';
 		}
 	};
-	
+
 	/**
 	 * HTMLMediaElement play method
 	 */
@@ -96,7 +96,7 @@ function CortadoPlayer() {
 			createApplet(true);
 		}
 	};
-	
+
 	/**
 	 * HTMLMediaElement pause method
 	 */
@@ -123,7 +123,7 @@ function CortadoPlayer() {
 			}
 		}
 	});
-	
+
 	/**
 	 */
 	Object.defineProperty(self, "buffered", {
@@ -132,7 +132,7 @@ function CortadoPlayer() {
 			return new CortadoTimeRanges([]);
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement currentTime property
 	 */
@@ -145,7 +145,7 @@ function CortadoPlayer() {
 			}
 		}
 	});
-	
+
 	/**
 	 * custom durationHint property
 	 */
@@ -158,7 +158,7 @@ function CortadoPlayer() {
 			durationHint = val;
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement duration property
 	 */
@@ -167,7 +167,7 @@ function CortadoPlayer() {
 			return durationHint;
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement paused property
 	 */
@@ -177,7 +177,7 @@ function CortadoPlayer() {
 			return paused;
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement ended property
 	 */
@@ -187,7 +187,7 @@ function CortadoPlayer() {
 			return false;
 		}
 	});
-	
+
 	/**
 	 * HTMLMediaElement muted property
 	 */
@@ -201,7 +201,7 @@ function CortadoPlayer() {
 			// todo: is this possible?
 		}
 	});
-	
+
 	/**
 	 * HTMLVideoElement poster property
 	 */
@@ -215,7 +215,7 @@ function CortadoPlayer() {
 			// todo: implement
 		}
 	});
-	
+
 	// Video metadata properties...
 	var videoWidthHint = 0;
 	Object.defineProperty(self, "videoWidth", {
@@ -243,7 +243,7 @@ function CortadoPlayer() {
 			}
 		}
 	});
-	
+
 	Object.defineProperty(self, "height", {
 		get: function getHeight() {
 			return height;
@@ -264,21 +264,22 @@ function CortadoPlayer() {
 	 * Note in theory we must know 'duration' at this point.
 	 */
 	self.onloadedmetadata = null;
-	
+
 	/**
 	 * Called when we start playback
 	 */
 	self.onplay = null;
-	
+
 	/**
 	 * Called when we get paused
 	 */
 	self.onpause = null;
-	
+
 	/**
 	 * Called when playback ends
 	 */
 	self.onended = null;
-	
+
 	return self;
 }
+

@@ -115,3 +115,5 @@ function OGVProxyClass(initialProps, methods) {
 		return self;
 	};
 }
+
+module.exports = OGVProxyClass;

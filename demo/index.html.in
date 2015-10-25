@@ -17,7 +17,7 @@
 			<input id=filter placeholder="Search media">
 		</form>
 	</div>
-	
+
 	<div id="main-player">
 		<div id="player" class="ogvjs-player">
 			<div id="control-panel">
@@ -80,7 +80,7 @@
 									<option value="360p.webm">360p WebM</option>
 								</optgroup>
 							</select>
-							
+
 							Player:
 							<select height=1 id="player-backend">
 								<option value="js">JavaScript (auto)</option>
@@ -145,7 +145,7 @@
 			</table>
 		</div>
 	</div>
-	
+
 	<div id="media-chooser-stub">
 		<!-- lightbox-style click-to-dismiss background -->
 	</div>
@@ -156,7 +156,6 @@
 		</div>
 	</div>
 
-	<script src="lib/ogv-support.js"></script>
 	<script src="lib/ogv.js"></script>
 	<script src="lib/CortadoPlayer.js"></script>
 	<script src="motd.js"></script>
