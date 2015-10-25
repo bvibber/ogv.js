@@ -20,7 +20,7 @@ require("./AudioFeeder.js");
 require("./FrameSink.js");
 
 // -- WebGLFrameSink.js
-//require("./WebGLFrameSink.js");
+require("./WebGLFrameSink.js");
 
 // -- Bisector.js
 require("./Bisector.js");

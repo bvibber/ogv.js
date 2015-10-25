@@ -175,11 +175,11 @@ build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
 	test -d build || mkdir build
 	./compileOgvDecoderVideoVP8.sh
 
-build/YCbCr-shaders.h : src/YCbCr.vsh src/YCbCr.fsh src/YCbCr-stripe.fsh file2def.js
+build/YCbCr-shaders.h : src/shaders/YCbCr.vsh src/shaders/YCbCr.fsh src/shaders/YCbCr-stripe.fsh tools/file2def.js
 	test -d build || mkdir build
-	node file2def.js src/YCbCr.vsh YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
-	node file2def.js src/YCbCr.fsh YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
-	node file2def.js src/YCbCr-stripe.fsh YCBCR_STRIPE_FRAGMENT_SHADER >> build/YCbCr-shaders.h
+	node tools/file2def.js src/shaders/YCbCr.vsh YCBCR_VERTEX_SHADER > build/YCbCr-shaders.h
+	node tools/file2def.js src/shaders/YCbCr.fsh YCBCR_FRAGMENT_SHADER >> build/YCbCr-shaders.h
+	node tools/file2def.js src/shaders/YCbCr-stripe.fsh YCBCR_STRIPE_FRAGMENT_SHADER >> build/YCbCr-shaders.h
 
 build/FrameSink.js : src/FrameSink.js.in src/YCbCr.js
 	test -d build || mkdir build
