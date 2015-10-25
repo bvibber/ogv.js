@@ -6,6 +6,7 @@ FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
 DEMO_DIR:=demo
 TESTS_DIR:=tests
 DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
+BUILDSCRIPTS_DIR:=buildscripts
 
 .FAKE : all clean cleanswf swf js demo democlean tests dist lint
 
@@ -25,12 +26,12 @@ democlean:
 clean:
 	rm -rf build
 	rm -rf dist
-	rm -f libogg/configure
-	rm -f libvorbis/configure
-	rm -f libtheora/configure
-	rm -f libopus/configure
-	rm -f libskeleton/configure
-	rm -f libnestegg/configure
+	rm -f libogg/$(BUILDSCRIPTS_DIR)/configure
+	rm -f libvorbis/$(BUILDSCRIPTS_DIR)/configure
+	rm -f libtheora/$(BUILDSCRIPTS_DIR)/configure
+	rm -f libopus/$(BUILDSCRIPTS_DIR)/configure
+	rm -f libskeleton/$(BUILDSCRIPTS_DIR)/configure
+	rm -f libnestegg/$(BUILDSCRIPTS_DIR)/configure
 
 # Build everything and copy the result into distro folder and zip that
 
@@ -62,59 +63,59 @@ dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 
 # Generators for modules ######################
 
-build/js/root/lib/libogg.a : configureOgg.sh compileOggJs.sh
+build/js/root/lib/libogg.a : $(BUILDSCRIPTS_DIR)/configureOgg.sh $(BUILDSCRIPTS_DIR)/compileOggJs.sh
 	test -d build || mkdir build
-	./configureOgg.sh
-	./compileOggJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureOgg.sh
+	./$(BUILDSCRIPTS_DIR)/compileOggJs.sh
 
-build/js/root/lib/liboggz.a : build/js/root/lib/libogg.a configureOggz.sh compileOggzJs.sh
+build/js/root/lib/liboggz.a : build/js/root/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOggz.sh $(BUILDSCRIPTS_DIR)/compileOggzJs.sh
 	test -d build || mkdir build
-	./configureOggz.sh
-	./compileOggzJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureOggz.sh
+	./$(BUILDSCRIPTS_DIR)/compileOggzJs.sh
 
-build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a configureVorbis.sh compileVorbisJs.sh
+build/js/root/lib/libvorbis.a : build/js/root/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureVorbis.sh $(BUILDSCRIPTS_DIR)/compileVorbisJs.sh
 	test -d build || mkdir build
-	./configureVorbis.sh
-	./compileVorbisJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureVorbis.sh
+	./$(BUILDSCRIPTS_DIR)/compileVorbisJs.sh
 
-build/js/root/lib/libopus.a : build/js/root/lib/libogg.a configureOpus.sh compileOpusJs.sh
+build/js/root/lib/libopus.a : build/js/root/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOpus.sh $(BUILDSCRIPTS_DIR)/compileOpusJs.sh
 	test -d build || mkdir build
-	./configureOpus.sh
-	./compileOpusJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureOpus.sh
+	./$(BUILDSCRIPTS_DIR)/compileOpusJs.sh
 
-build/js/root/lib/libskeleton.a : build/js/root/lib/libogg.a configureSkeleton.sh compileSkeletonJs.sh
+build/js/root/lib/libskeleton.a : build/js/root/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureSkeleton.sh $(BUILDSCRIPTS_DIR)/compileSkeletonJs.sh
 	test -d build || mkdir build
-	./configureSkeleton.sh
-	./compileSkeletonJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureSkeleton.sh
+	./$(BUILDSCRIPTS_DIR)/compileSkeletonJs.sh
 
 
-build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a configureTheora.sh compileTheoraJs.sh
+build/js/root/lib/libtheoradec.a : build/js/root/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureTheora.sh $(BUILDSCRIPTS_DIR)/compileTheoraJs.sh
 	test -d build || mkdir build
-	./configureTheora.sh
-	./compileTheoraJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureTheora.sh
+	./$(BUILDSCRIPTS_DIR)/compileTheoraJs.sh
 
-build/js/root/lib/libnestegg.a : configureNestEgg.sh compileNestEggJs.sh
+build/js/root/lib/libnestegg.a : $(BUILDSCRIPTS_DIR)/configureNestEgg.sh $(BUILDSCRIPTS_DIR)/compileNestEggJs.sh
 	test -d build || mkdir build
-	./configureNestEgg.sh
-	./compileNestEggJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureNestEgg.sh
+	./$(BUILDSCRIPTS_DIR)/compileNestEggJs.sh
 
-build/js/root/lib/libvpx.a : configureVpx.sh compileVpxJs.sh
+build/js/root/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/configureVpx.sh $(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 	test -d build || mkdir build
-	./configureVpx.sh
-	./compileVpxJs.sh
+	./$(BUILDSCRIPTS_DIR)/configureVpx.sh
+	./$(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 
-build/ogv-demuxer-ogg.js : src/ogv-demuxer-ogg.c \
-                           src/ogv-demuxer.h \
-                           src/ogv-demuxer.js \
-                           src/ogv-demuxer-callbacks.js \
-                           src/ogv-demuxer-exports.json \
-                           src/ogv-module-pre.js \
+build/ogv-demuxer-ogg.js : src/c/ogv-demuxer-ogg.c \
+                           src/c/ogv-demuxer.h \
+                           src/js/modules/ogv-demuxer.js \
+                           src/js/modules/ogv-demuxer-callbacks.js \
+                           src/js/modules/ogv-demuxer-exports.json \
+                           src/js/modules/ogv-module-pre.js \
                            build/js/root/lib/libogg.a \
                            build/js/root/lib/liboggz.a \
                            build/js/root/lib/libskeleton.a \
-                           compileOgvDemuxerOgg.sh
+                           $(BUILDSCRIPTS_DIR)/compileOgvDemuxerOgg.sh
 	test -d build || mkdir build
-	./compileOgvDemuxerOgg.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerOgg.sh
 
 build/ogv-demuxer-webm.js : src/ogv-demuxer-webm.c \
                             src/ogv-demuxer.h \
@@ -123,9 +124,9 @@ build/ogv-demuxer-webm.js : src/ogv-demuxer-webm.c \
                             src/ogv-demuxer-exports.json \
                             src/ogv-module-pre.js \
                             build/js/root/lib/libnestegg.a \
-                            compileOgvDemuxerWebM.sh
+                            $(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
 	test -d build || mkdir build
-	./compileOgvDemuxerWebM.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
 
 build/ogv-decoder-audio-vorbis.js : src/ogv-decoder-audio-vorbis.c \
                                     src/ogv-decoder-audio.h \
@@ -135,9 +136,9 @@ build/ogv-decoder-audio-vorbis.js : src/ogv-decoder-audio-vorbis.c \
                                     src/ogv-module-pre.js \
                                     build/js/root/lib/libogg.a \
                                     build/js/root/lib/libvorbis.a \
-                                    compileOgvDecoderAudioVorbis.sh
+                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
 	test -d build || mkdir build
-	./compileOgvDecoderAudioVorbis.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
 
 build/ogv-decoder-audio-opus.js : src/ogv-decoder-audio-opus.c \
                                   src/ogv-decoder-audio.h \
@@ -147,9 +148,9 @@ build/ogv-decoder-audio-opus.js : src/ogv-decoder-audio-opus.c \
                                   src/ogv-module-pre.js \
                                   build/js/root/lib/libogg.a \
                                   build/js/root/lib/libopus.a \
-                                  compileOgvDecoderAudioOpus.sh
+                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
 	test -d build || mkdir build
-	./compileOgvDecoderAudioOpus.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
 
 build/ogv-decoder-video-theora.js : src/ogv-decoder-video-theora.c \
                                     src/ogv-decoder-video.h \
@@ -159,9 +160,9 @@ build/ogv-decoder-video-theora.js : src/ogv-decoder-video-theora.c \
                                     src/ogv-module-pre.js \
                                     build/js/root/lib/libogg.a \
                                     build/js/root/lib/libtheoradec.a \
-                                    compileOgvDecoderVideoTheora.sh
+                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
 	test -d build || mkdir build
-	./compileOgvDecoderVideoTheora.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
 
 build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
                                  src/ogv-decoder-video.h \
@@ -171,9 +172,9 @@ build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
                                  src/ogv-module-pre.js \
                                  build/js/root/lib/libogg.a \
                                  build/js/root/lib/libvpx.a \
-                                 compileOgvDecoderVideoVP8.sh
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 	test -d build || mkdir build
-	./compileOgvDecoderVideoVP8.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 
 # TODO: See WebGLFrameSink.js
 #build/YCbCr-shaders.h : src/shaders/YCbCr.vsh src/shaders/YCbCr.fsh src/shaders/YCbCr-stripe.fsh tools/file2def.js
