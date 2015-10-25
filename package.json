@@ -6,7 +6,8 @@
   "scripts": {
     "build": "webpack --optimize-dedupe",
     "lint": "eslint src/js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make tests && static build/tests",
+    "demo": "static build/demo"
   },
   "repository": {
     "type": "git",
@@ -35,6 +36,7 @@
   "homepage": "https://github.com/brion/ogv.js#readme",
   "devDependencies": {
     "eslint": "^1.7.3",
+    "node-static": "^0.7.7",
     "webpack": "^1.12.2"
   }
 }

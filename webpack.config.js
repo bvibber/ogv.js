@@ -3,15 +3,6 @@ var webpack = require('webpack');
 const BUILD_DIR = '/build';
 
 module.exports = [
-	{
-	  entry: './index',
-	  output: {
-	    path: __dirname,
-	    filename: 'ogv_debug.js',
-	    libraryTarget: 'this',
-	    library: 'multimedia'
-	  }
-	},
   {
     entry: './index',
     output: {

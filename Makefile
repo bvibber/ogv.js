@@ -32,7 +32,7 @@ clean:
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
 
-# Build everything and copy the result into distro folder
+# Build everything and copy the result into distro folder and zip that
 
 dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	rm -rf dist
@@ -45,7 +45,6 @@ dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	      build/ogv-decoder-audio-vorbis.js \
 	      build/ogv-decoder-video-theora.js \
 	      build/ogv-decoder-video-vp8.js \
-	      #build/ogv-version.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      $(DYNAMIC_AUDIO_SWF) \
@@ -191,6 +190,9 @@ build/ogv.js :
 #FIXME: use some webpack way to hardcode package version into distro
 
 # The player demo, with the JS build
+# NOTE: This is pretty much only about copying files around
+#		Might be possible to simplify, but not clear yet why index.html needs to be a template
+
 build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/demo.css \
                         build/demo/demo.js \
@@ -247,14 +249,16 @@ build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp -pr dist/ogvjs-$(VERSION)/* build/demo/lib/
 
-build/demo/lib/cortado.jar : src/cortado.jar
+build/demo/lib/cortado.jar : assets/cortado.jar
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp src/cortado.jar build/demo/lib/cortado.jar
+	cp assets/cortado.jar build/demo/lib/cortado.jar
 
-build/demo/lib/CortadoPlayer.js : src/CortadoPlayer.js
+build/demo/lib/CortadoPlayer.js : src/js/CortadoPlayer.js
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp src/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
+	cp src/js/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
+# TODO: Use Karma with this instead: https://github.com/karma-runner/karma-qunit
+#       which will replace this stuff here by a one-liner
 # QUnit test cases
 build/tests/index.html : build/tests/tests.js \
                          build/tests/lib/ogv.js \
