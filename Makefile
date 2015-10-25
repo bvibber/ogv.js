@@ -7,7 +7,7 @@ DEMO_DIR:=demo
 TESTS_DIR:=tests
 DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
 
-.FAKE : all clean cleanswf swf js demo democlean tests dist jshint
+.FAKE : all clean cleanswf swf js demo democlean tests dist lint
 
 all : js \
       demo \
@@ -322,5 +322,5 @@ $(DYNAMIC_AUDIO_SWF) : src/flex/dynamicaudio.as
 
 
 # fixme move all this to grunt and modules
-jshint : js
-	jshint src/*.js build/FrameSink.js build/WebGLFrameSink.js
+lint : js
+	npm run lint
