@@ -1,10 +1,8 @@
 (function() {
 
-	var OGVWrapperCodec;
-	var OGVPlayer = ogv.Player;
-
 	// FIXME: All this is a bit of a hack right now
 	window.OGVVersion = "1.0.0";
+	window.OGVPlayer = ogv.Player;
 	window.OGVWrapperCodec = ogv.WrapperCodec;
 	window.OGVDecoderVideoProxy = ogv.DecoderVideoProxy;
 	window.OGVDecoderAudioProxy = ogv.DecoderAudioProxy;
