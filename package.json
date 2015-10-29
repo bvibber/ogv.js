@@ -7,7 +7,8 @@
     "build": "webpack --optimize-dedupe",
     "lint": "eslint src/js",
     "test": "make tests && static build/tests",
-    "demo": "static build/demo"
+    "demo": "static build/demo",
+    "examples": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "eslint": "^1.7.3",
     "node-static": "^0.7.7",
-    "webpack": "^1.12.2"
+    "webpack": "^1.12.2",
+    "webpack-dev-server": "^1.12.1"
   }
 }
