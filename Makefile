@@ -12,7 +12,18 @@ CORTADO_JAR:=assets/cortado.jar
 
 JS_FILES := $(shell find src/js -type f -name "*.js")
 
-.FAKE : all clean cleanswf swf js demo democlean tests dist lint
+.FAKE : all clean cleanswf swf js demo democlean tests dist lint run-demo run-examples
+
+# Runners
+
+run-demo : package.json demo
+	npm run demo
+
+# This uses webpack dev server so we don't need to
+run-examples : package.json
+	npm run examples
+
+# Build all
 
 all : js \
       demo \
@@ -23,10 +34,22 @@ js : build/ogv.js
 
 demo : build/demo/index.html
 
-run-demo : demo
-	npm run demo
-
 tests : build/tests/index.html
+
+lint : js
+	npm run lint
+
+package.json :
+	npm install
+
+# Build the main JS bundle and the worker files
+
+build/ogv.js : webpack.config.js package.json $(JS_FILES)
+	npm run build
+
+#FIXME: add workers targets
+
+#FIXME: use some webpack way to hardcode package version into distro
 
 democlean:
 	rm -rf build/demo
@@ -193,18 +216,6 @@ build/ogv-decoder-video-vp8.js : src/ogv-decoder-video-vp8.c \
 
 # Install dev dependencies
 
-package.json :
-	npm install
-
-# Build the main JS bundle and the worker files
-
-build/ogv.js : webpack.config.js package.json $(JS_FILES)
-	npm run build
-
-#FIXME: add workers targets
-
-#FIXME: use some webpack way to hardcode package version into distro
-
 # The player demo, with the JS build
 # NOTE: This is pretty much only about copying files around
 #		Might be possible to simplify, but not clear yet why index.html needs to be a template
@@ -340,7 +351,3 @@ cleanswf:
 $(DYNAMIC_AUDIO_SWF) : src/flex/dynamicaudio.as
 	mxmlc -o $(DYNAMIC_AUDIO_SWF) -file-specs src/flex/dynamicaudio.as
 
-
-# fixme move all this to grunt and modules
-lint : js
-	npm run lint
