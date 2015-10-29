@@ -12,16 +12,19 @@ CORTADO_JAR:=assets/cortado.jar
 
 JS_FILES := $(shell find src/js -type f -name "*.js")
 
-.FAKE : all clean cleanswf swf js demo democlean tests dist lint run-demo run-examples
+.FAKE : all clean cleanswf swf js demo democlean tests dist lint run-demo run-dev-server
 
 # Runners
 
 run-demo : package.json demo
 	npm run demo
 
-# This uses webpack dev server so we don't need to
-run-examples : package.json
-	npm run examples
+# This uses webpack dev server so we don't need to re-compile anything upon change - just reload the page
+#
+# 1. Run ``make run-dev-server
+# 2. Go to http://localhost:8080/examples/simple/ in your browser to look at a simple example player
+run-dev-server : package.json
+	npm run server
 
 # Build all
 

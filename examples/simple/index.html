@@ -24,40 +24,13 @@
 
 	document.body.appendChild(container);
 
-	player.src = '/demo/media/Kuss.webm';
+	player.src = '/demo/media/curiosity.ogv';
 
 	player.play();
 
 	player.addEventListener('ended', function() {
 		setupFrameByFrameSwipe();
 	});
-
-	var setupFrameByFrameSwipe = function() {
-		var deepFrameSink = player.getVideoFrameSink();
-
-		var buffer = deepFrameSink.getBuffer(25);
-
-		deepFrameSink.drawPresentFrame(buffer);
-
-		var canvas = player.getCanvas();
-
-		canvas.addEventListener('mousemove', function(e) {
-
-			window.console.log('Buffer depth: ' + deepFrameSink.getBufferDepth());
-
-			var displayFrame = Math.floor((e.offsetX / canvas.width)*deepFrameSink.getBufferDepth());
-
-			window.console.log(displayFrame);
-
-			var buffer = deepFrameSink.getBuffer(displayFrame);
-
-			if (!buffer) {
-				return;
-			}
-
-			deepFrameSink.drawPresentFrame(buffer);
-		});
-	};
 
   </script>
 </body>
