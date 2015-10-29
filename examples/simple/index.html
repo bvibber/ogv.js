@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Player Example</title>
+</head>
+<body>
+  <script src="/build/ogv.js"></script>
+  <script type="text/javascript">
+
+	window.OGVVersion = "1.0.0";
+	window.OGVPlayer = ogv.Player;
+	window.OGVWrapperCodec = ogv.WrapperCodec;
+	window.OGVDecoderVideoProxy = ogv.DecoderVideoProxy;
+	window.OGVDecoderAudioProxy = ogv.DecoderAudioProxy;
+
+	var player = new OGVPlayer({
+					forceWebGL: true,
+					enableWebM: true // experimental
+				});
+
+	var container = document.createElement('div');
+
+	container.appendChild(player);
+
+	document.body.appendChild(container);
+
+	player.src = '/demo/media/Kuss.webm';
+
+	player.play();
+
+	player.addEventListener('ended', function() {
+		setupFrameByFrameSwipe();
+	});
+
+	var setupFrameByFrameSwipe = function() {
+		var deepFrameSink = player.getVideoFrameSink();
+
+		var buffer = deepFrameSink.getBuffer(25);
+
+		deepFrameSink.drawPresentFrame(buffer);
+
+		var canvas = player.getCanvas();
+
+		canvas.addEventListener('mousemove', function(e) {
+
+			window.console.log('Buffer depth: ' + deepFrameSink.getBufferDepth());
+
+			var displayFrame = Math.floor((e.offsetX / canvas.width)*deepFrameSink.getBufferDepth());
+
+			window.console.log(displayFrame);
+
+			var buffer = deepFrameSink.getBuffer(displayFrame);
+
+			if (!buffer) {
+				return;
+			}
+
+			deepFrameSink.drawPresentFrame(buffer);
+		});
+	};
+
+  </script>
+</body>
+</html>
