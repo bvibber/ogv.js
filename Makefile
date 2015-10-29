@@ -23,6 +23,7 @@ run-demo : package.json demo
 #
 # 1. Run ``make run-dev-server
 # 2. Go to http://localhost:8080/examples/simple/ in your browser to look at a simple example player
+# 3. Reload the page to get the latest re-build
 run-dev-server : package.json
 	npm run server
 
