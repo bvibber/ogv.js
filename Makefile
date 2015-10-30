@@ -30,7 +30,7 @@ C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
 
-.FAKE : all clean cleanswf swf js demo democlean tests dist lint shaders run-demo run-dev-server
+.FAKE : all clean cleanswf swf js demo democlean tests dist lint cleanshaders shaders run-demo run-dev-server
 
 # Runners
 
@@ -51,20 +51,19 @@ all : js \
       demo \
       tests
 
-js : build/ogv.js
+js : build/ogv.js shaders
 
 demo : build/demo/index.html
 
 tests : build/tests/index.html
 
-lint : js
+lint :
 	npm run lint
 
 package.json :
 	npm install
 
-# Build the main JS bundle and the worker files
-build/ogv.js : webpack.config.js package.json $(JS_FILES) $(EMSCRIPTEN_MODULE_TARGETS) shaders
+build/ogv.js : webpack.config.js package.json $(JS_FILES)
 	npm run build
 
 #FIXME: use some webpack way to hardcode package version into distro
@@ -227,11 +226,19 @@ build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vp8.c \
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 
 # Build shader modules
-shaders : src/shaders/YCbCr.vsh src/shaders/YCbCr.fsh src/shaders/YCbCr-stripe.fsh tools/file2def.js
-	test -d build || mkdir build
+shaders : tools/file2def.js \
+		  src/js/generated/YCbCr-vertex-shader.js \
+		  src/js/generated/YCbCr-fragment-shader.js \
+		  src/js/generated/YCbCr-stripe-fragment-shader.js
+
+src/js/generated/YCbCr-vertex-shader.js : src/shaders/YCbCr.vsh
 	mkdir -p src/js/generated
 	node tools/file2def.js src/shaders/YCbCr.vsh > src/js/generated/YCbCr-vertex-shader.js
+src/js/generated/YCbCr-fragment-shader.js : src/shaders/YCbCr.fsh
+	mkdir -p src/js/generated
 	node tools/file2def.js src/shaders/YCbCr.fsh > src/js/generated/YCbCr-fragment-shader.js
+src/js/generated/YCbCr-stripe-fragment-shader.js : src/shaders/YCbCr-stripe.fsh
+	mkdir -p src/js/generated
 	node tools/file2def.js src/shaders/YCbCr-stripe.fsh > src/js/generated/YCbCr-stripe-fragment-shader.js
 
 cleanshaders:
