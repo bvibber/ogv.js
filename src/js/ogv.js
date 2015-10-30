@@ -15,5 +15,6 @@ module.exports = {
 	DecoderAudioProxy: OGVDecoderAudioProxy,
 	WrapperCodec: OGVWrapperCodec,
 	Compat: OGVCompat,
-	Player: OGVPlayer
+	Player: OGVPlayer,
+	Version: __OGV_FULL_VERSION__
 };

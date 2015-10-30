@@ -16,7 +16,12 @@ module.exports = [
       filename: 'ogv.js',
       libraryTarget: 'var',
       library: 'ogv'
-    }
+    },
+    plugins: [
+      new webpack.DefinePlugin({
+        '__OGV_FULL_VERSION__': JSON.stringify(process.env.OGV_FULL_VERSION)
+      }),
+    ]
   },
 	{
 	  entry: './src/js/workers/ogv-worker-audio.js',

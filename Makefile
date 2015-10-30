@@ -1,4 +1,4 @@
-VERSION:=1.0
+VERSION:=$(shell node tools/getversion.js ..)
 BUILDDATE:=$(shell date -u "+%Y%m%d%H%M%S")
 HASH:=$(shell git rev-parse --short HEAD)
 FULLVER:=$(VERSION)-$(BUILDDATE)-$(HASH)
@@ -64,9 +64,7 @@ package.json :
 	npm install
 
 build/ogv.js : webpack.config.js package.json $(JS_FILES)
-	npm run build
-
-#FIXME: use some webpack way to hardcode package version into distro
+	OGV_FULL_VERSION=$(FULLVER) npm run build
 
 democlean:
 	rm -rf build/demo
