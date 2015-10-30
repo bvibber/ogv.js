@@ -234,15 +234,17 @@ shaders : tools/file2def.js \
 src/js/generated/YCbCr-vertex-shader.js : src/shaders/YCbCr.vsh
 	mkdir -p src/js/generated
 	node tools/file2def.js src/shaders/YCbCr.vsh > src/js/generated/YCbCr-vertex-shader.js
+
 src/js/generated/YCbCr-fragment-shader.js : src/shaders/YCbCr.fsh
 	mkdir -p src/js/generated
 	node tools/file2def.js src/shaders/YCbCr.fsh > src/js/generated/YCbCr-fragment-shader.js
+
 src/js/generated/YCbCr-stripe-fragment-shader.js : src/shaders/YCbCr-stripe.fsh
 	mkdir -p src/js/generated
 	node tools/file2def.js src/shaders/YCbCr-stripe.fsh > src/js/generated/YCbCr-stripe-fragment-shader.js
 
 cleanshaders:
-	rm -rf src/js/generated
+	rm -f src/js/generated/*
 
 # Install dev dependencies
 
