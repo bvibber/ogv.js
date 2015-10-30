@@ -1,5 +1,6 @@
 var WebGLFrameSink = require('./WebGLFrameSink.js');
 var FrameSink = require('./FrameSink.js');
+var WebGLDeepFrameSink = require('./WebGLDeepFrameSink.js');
 
 // -- OGVLoader.js
 var OGVLoader = require("./OGVLoader.js");
@@ -558,7 +559,7 @@ var OGVPlayer = function(options) {
 		OGVPlayer.updatePositionOnResize();
 
 		if (useWebGL) {
-			frameSink = new WebGLFrameSink(canvas, videoInfo);
+			frameSink = new WebGLDeepFrameSink(canvas, videoInfo);
 		} else {
 			frameSink = new FrameSink(canvas, videoInfo);
 		}
@@ -1226,6 +1227,14 @@ var OGVPlayer = function(options) {
 		totalJitter = 0;
 		totalFrameTime = 0;
 		totalFrameCount = 0;
+	};
+
+	self.getVideoFrameSink = function() {
+		return frameSink;
+	};
+
+	self.getCanvas = function() {
+		return canvas;
 	};
 
 	/**
