@@ -18,14 +18,14 @@ EMCC_FAST_COMPILER=1 emcc \
   -s NO_EXIT_RUNTIME=1 \
   -s EXPORT_NAME="'OGVDemuxerOgg'" \
   -s MODULARIZE=1 \
-  -s EXPORTED_FUNCTIONS="`< src/ogv-demuxer-exports.json`" \
+  -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/liboggz.$suffix \
   build/js/root/lib/libskeleton.$suffix \
-  --js-library src/ogv-demuxer-callbacks.js \
-  --pre-js src/ogv-module-pre.js \
-  --post-js src/ogv-demuxer.js \
-  src/ogv-demuxer-ogg.c \
+  --js-library src/js/ogv-demuxer-callbacks.js \
+  --pre-js src/js/ogv-module-pre.js \
+  --post-js src/js/ogv-demuxer.js \
+  src/c/ogv-demuxer-ogg.c \
   -o build/ogv-demuxer-ogg.js

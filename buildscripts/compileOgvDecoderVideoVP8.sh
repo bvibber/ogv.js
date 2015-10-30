@@ -20,14 +20,14 @@ EMCC_FAST_COMPILER=1 emcc \
   -s TOTAL_MEMORY=33554432 \
   -s EXPORT_NAME="'OGVDecoderVideoVP8'" \
   -s MODULARIZE=1 \
-  -s EXPORTED_FUNCTIONS="`< src/ogv-decoder-video-exports.json`" \
+  -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/libvpx.so \
-  --js-library src/ogv-decoder-video-callbacks.js \
-  --pre-js src/ogv-module-pre.js \
-  --post-js src/ogv-decoder-video.js \
-  src/ogv-decoder-video-vp8.c \
-  src/ogv-ogg-support.c \
+  --js-library src/js/ogv-decoder-video-callbacks.js \
+  --pre-js src/js/ogv-module-pre.js \
+  --post-js src/js/ogv-decoder-video.js \
+  src/c/ogv-decoder-video-vp8.c \
+  src/c/ogv-ogg-support.c \
   -o build/ogv-decoder-video-vp8.js

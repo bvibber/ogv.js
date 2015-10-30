@@ -22,8 +22,8 @@ EMCC_FAST_COMPILER=1 emcc \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libnestegg.$suffix \
-  --js-library src/ogv-demuxer-callbacks.js \
-  --pre-js src/ogv-module-pre.js \
-  --post-js src/ogv-demuxer.js \
-  src/ogv-demuxer-webm.c \
+  --js-library src/js/ogv-demuxer-callbacks.js \
+  --pre-js src/js/ogv-module-pre.js \
+  --post-js src/js/ogv-demuxer.js \
+  src/c/ogv-demuxer-webm.c \
   -o build/ogv-demuxer-webm.js

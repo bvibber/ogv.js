@@ -18,14 +18,14 @@ EMCC_FAST_COMPILER=1 emcc \
   -s NO_EXIT_RUNTIME=1 \
   -s EXPORT_NAME="'OGVDecoderAudioVorbis'" \
   -s MODULARIZE=1 \
-  -s EXPORTED_FUNCTIONS="`< src/ogv-decoder-audio-exports.json`" \
+  -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/libvorbis.$suffix \
-  --js-library src/ogv-decoder-audio-callbacks.js \
-  --pre-js src/ogv-module-pre.js \
-  --post-js src/ogv-decoder-audio.js \
-  src/ogv-decoder-audio-vorbis.c \
-  src/ogv-ogg-support.c \
+  --js-library src/js/ogv-decoder-audio-callbacks.js \
+  --pre-js src/js/ogv-module-pre.js \
+  --post-js src/js/ogv-decoder-audio.js \
+  src/c/ogv-decoder-audio-vorbis.c \
+  src/c/ogv-ogg-support.c \
   -o build/ogv-decoder-audio-vorbis.js
