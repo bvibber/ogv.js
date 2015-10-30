@@ -12,20 +12,21 @@ CORTADO_JAR:=assets/cortado.jar
 
 JS_SRC_DIR:=src/js
 JS_FILES:=$(shell find $(JS_SRC_DIR) -type f -name "*.js")
+JS_FILES+= $(shell find $(JS_SRC_DIR)/workers -type f -name "*.js")
 
 EMSCRIPTEN_MODULE_TARGETS:=build/ogv-demuxer-ogg.js
-EMSCRIPTEN_MODULE_TARGETS+=build/ogv-demuxer-webm.js
-EMSCRIPTEN_MODULE_TARGETS+=build/ogv-decoder-audio-vorbis.js
-EMSCRIPTEN_MODULE_TARGETS+=build/ogv-decoder-audio-opus.js
-EMSCRIPTEN_MODULE_TARGETS+=build/ogv-decoder-video-theora.js
-EMSCRIPTEN_MODULE_TARGETS+=build/ogv-decoder-video-vp8.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-demuxer-webm.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-vorbis.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
 EMSCRIPTEN_MODULE_FILES:=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.js")
-EMSCRIPTEN_MODULE_FILES+=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.json")
+EMSCRIPTEN_MODULE_FILES+= $(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.json")
 
 C_SRC_DIR:=src/c
 C_FILES:=$(shell find $(C_SRC_DIR) -type f -name "*.c")
-C_FILES+=$(shell find $(C_SRC_DIR) -type f -name "*.h")
+C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
 
@@ -50,7 +51,6 @@ all : js \
       demo \
       tests
 
-# FIXME: add workers targets here as deps
 js : build/ogv.js
 
 demo : build/demo/index.html
@@ -64,11 +64,8 @@ package.json :
 	npm install
 
 # Build the main JS bundle and the worker files
-
 build/ogv.js : webpack.config.js package.json $(JS_FILES) $(EMSCRIPTEN_MODULE_TARGETS)
 	npm run build
-
-#FIXME: add workers targets
 
 #FIXME: use some webpack way to hardcode package version into distro
 
