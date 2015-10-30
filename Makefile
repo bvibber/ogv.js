@@ -64,7 +64,7 @@ package.json :
 	npm install
 
 # Build the main JS bundle and the worker files
-build/ogv.js : webpack.config.js package.json $(JS_FILES) shaders
+build/ogv.js : webpack.config.js package.json $(JS_FILES) $(EMSCRIPTEN_MODULE_TARGETS) shaders
 	npm run build
 
 #FIXME: use some webpack way to hardcode package version into distro
