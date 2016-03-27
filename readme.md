@@ -18,15 +18,46 @@ is suitable for use in custom audio and video playback.
 * 0.0.1 - 2016-03-27
  * Broken out from ogv.js, cleaning up to publish as npm module
 
-## Browserify
+## Installing with Bower
 
-If bundling via Browserify, set up the class like so:
+If bundling via Bower, add to your bower dependencies:
+
+```
+bower install audio-feeder
+```
+
+By default, files will go into the bower_components/audio-feeder directory.
+You will need to manually load the AudioFeeder.js file, such as:
+
+```
+<script src="bower_components/audio-feeder/AudioFeeder.js"></script>
+```
+
+or else load it through some other bundling process.
+
+Then follow the instructions in the 'Usage' section below. You will need
+to ensure that dynamicaudio.swf is also packaged along with your bundled
+JS output from browserify to support IE 10/11, and may need to manually
+set the base path in the options to the AudioFeeder constructor.
+
+## Installing with Browserify
+
+If bundling via Browserify, add to your npm dependencies:
+
+```
+npm install audio-feeder
+```
+
+and in your using code, set up the class like so:
 
 ```
 var AudioFeeder = require('audio-feeder');
 ```
 
-Then follow the instructions in the 'Usage' section below.
+Then follow the instructions in the 'Usage' section below. You will need
+to ensure that dynamicaudio.swf is also packaged along with your bundled
+JS output from browserify to support IE 10/11, and may need to manually
+set the base path in the options to the AudioFeeder constructor.
 
 ## Usage
 
