@@ -520,3 +520,8 @@ var AudioFeeder;
 	};
 
 })();
+
+// For browserify
+if (typeof module === 'object' && module === this) {
+	module.exports = AudioFeeder;
+}
