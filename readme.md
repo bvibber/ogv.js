@@ -77,6 +77,8 @@ feeder.waitUntilReady(function() {
 });
 ```
 
+See also the included demo.html file for a live sample web page.
+
 ## Options  
 
 * audioContext: an AudioContext object to be use instead of creating a new one
@@ -86,6 +88,36 @@ feeder.waitUntilReady(function() {
 
 AudioFeeder works with 32-bit floating point PCM audio. Data packets are
 represented as an array containing a separate Float32Array for each channel.
+
+## Status and audio/video synchronization
+
+Playback state including the current playback position in seconds can be
+retrieved from the getPlaybackState() method:
+
+```
+{
+  playbackPosition: Float /* seconds */,
+  samplesQueued: Float /* samples, approx */,
+  dropped: Integer /* count of buffer underrun events */,
+  delayed: Float /* seconds */
+}
+```
+
+Warning: this structure may change before 1.0.
+
+playbackPosition tracks the time via actual samples output, so will correct for
+drops and underruns and is suitable for use in scheduling output of synchronized
+video frames.
+
+## Events
+
+There is currently only one supported event, the 'onstarved' property.
+This is called if available buffered data runs out during playback.
+
+Todo:
+* add events for beginning of playback?
+* add event for reaching a threshold near starvation
+* add event for scheduled end of playback
 
 ## Flash and Internet Explorer 10/11
 
