@@ -66,7 +66,7 @@ feeder.waitUntilReady(function() {
   });
 
   // Optional callback when the buffered data runs out!
-  feeder.onstarve = function() {
+  feeder.onstarved = function() {
     // We don't have more data, so we'll just close out here.
     feeder.close();
 
