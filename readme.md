@@ -15,7 +15,7 @@ is suitable for use in custom audio and video playback.
 
 ## Updates
 
-* 0.0.1 - 2016-03-27
+* 0.0.2 - 2016-03-27
  * Broken out from ogv.js, cleaning up to publish as npm module
 
 ## Installing with Bower

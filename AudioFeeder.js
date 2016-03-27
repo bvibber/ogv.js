@@ -522,6 +522,6 @@ var AudioFeeder;
 })();
 
 // For browserify
-if (typeof module === 'object' && module === this) {
+if (typeof module === 'object' && typeof module.exports === 'object') {
 	module.exports = AudioFeeder;
 }
