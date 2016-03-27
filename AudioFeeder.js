@@ -1,31 +1,65 @@
 var AudioFeeder;
 
 (function() {
-	var global = this,
-		AudioContext = global.AudioContext || global.webkitAudioContext;
+	var AudioContext = window.AudioContext || window.webkitAudioContext;
+
+	function hasTypedArrays() {
+		return !!window.Float32Array;
+	}
+
+	function hasWebAudio() {
+		return !!AudioContext;
+	}
+
+	function hasFlash() {
+		if (navigator.userAgent.indexOf('Trident') !== -1) {
+			// We only do the ActiveX test because we only need Flash in
+			// Internet Explorer 10/11. Other browsers use Web Audio directly
+			// (Edge, Safari) or native playback, so there's no need to test
+			// other ways of loading Flash.
+			try {
+				var obj = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+				return true;
+			} catch(e) {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	function hasAudio() {
+		return hasWebAudio() || hasFlash();
+	}
 
 	/**
 	 * Object that we can throw audio data into and have it drain out.
 	 *
-	 * Because changing the number of channels on the fly is hard, hardcoding
-	 * to 2 output channels. That's also all we can do on IE with Flash output.
-	 *
 	 * @param options: dictionary of config settings:
 	 *                 'base' - Base URL to find additional resources in,
 	 *                          such as the Flash audio output shim
+	 *                 'audioContext' - AudioContext instance to use in
+	 *                          place of creating a default one
+	 *
+	 * @throws Error if browser is missing required support
 	 */
 	AudioFeeder = function(options) {
 		var self = this;
 		options = options || {};
 
-		// Look for W3C Audio API
-		if (!AudioContext) {
-			// use Flash fallback
+		if (!hasTypedArrays()) {
+			throw new Error("Missing Float32Array support required for audio output");
+		}
+		if (hasWebAudio()) {
+			// W3C Web Audio API
+		} else if (hasFlash()) {
+			// IE 10/11? use Flash fallback
 			var flashOptions = {};
 			if (typeof options.base === 'string') {
 				flashOptions.swf = options.base + '/dynamicaudio.swf?version=' + OGVVersion;
 			}
 			this.flashaudio = new DynamicAudio( flashOptions );
+		} else {
+			throw new Error("Missing both Web Audio API and IE Flash plugin; no audio output available");
 		}
 
 		var bufferSize = this.bufferSize = 4096,
@@ -89,6 +123,9 @@ var AudioFeeder;
 			}
 		}
 
+		/**
+		 * onaudioprocess event handler for the ScriptProcessorNode
+		 */
 		function audioProcess(event) {
 			var channel, input, output, i, playbackTime;
 			if (typeof event.playbackTime === 'number') {
@@ -108,14 +145,15 @@ var AudioFeeder;
 			if (!inputBuffer) {
 				// We might be in a throttled background tab; go ping the decoder
 				// and let it know we need more data now!
+				// @todo use standard event firing?
 				if (self.onstarved) {
 					self.onstarved();
 					inputBuffer = popNextBuffer(bufferSize);
 				}
 			}
 
-            // If we haven't got enough data, write a buffer of of silence to
-            // both channels
+			// If we haven't got enough data, write a buffer of of silence to
+			// both channels
 			if (!inputBuffer) {
 				for (channel = 0; channel < outputChannels; channel++) {
 					output = event.outputBuffer.getChannelData(channel);
@@ -209,8 +247,15 @@ var AudioFeeder;
 			}
 		}
 
+		/**
+		 * Start setting up output with the given channel count and sample rate.
+		 *
+		 * @param numChannels: Integer
+		 * @param sampleRate: Integer
+		 *
+		 * @todo merge into constructor?
+		 */
 		this.init = function(numChannels, sampleRate) {
-			// warning: can't change channels here reliably
 			rate = sampleRate;
 			channels = numChannels;
 			pendingBuffer = freshBuffer();
@@ -249,6 +294,13 @@ var AudioFeeder;
 			flashBuffer = '';
 			flushTimeout = null;
 		}
+
+		/**
+		 * Buffer data
+		 * @param samplesPerChannel: Array of Float32Arrays
+		 *
+		 * @todo throw if data invalid or uneven
+		 */
 		this.bufferData = function(samplesPerChannel) {
 			if(this.flashaudio) {
 				var resamples = !muted ? resampleFlash(samplesPerChannel) : resampleFlashMuted(samplesPerChannel);
@@ -292,6 +344,10 @@ var AudioFeeder;
 			cachedFlashInterval = 40; // resync state no more often than every X ms
 
 		/**
+		 * Get an object with information about the current playback state.
+		 *
+		 * @todo cleanup names and units
+		 *
 		 * @return {
 		 *   playbackPosition: {number} seconds, with a system-provided base time
 		 *   samplesQueued: {int}
@@ -338,14 +394,27 @@ var AudioFeeder;
 			}
 		};
 
+		/**
+		 * @todo replace with volume property
+		 */
 		this.mute = function() {
 			this.muted = muted = true;
 		};
 
+		/**
+		 * @todo replace with volume property
+		 */
 		this.unmute = function() {
 			this.muted = muted = false;
 		};
 
+		/**
+		 * Close out the audio channel. The AudioFeeder instance will no
+		 * longer be usable after closing.
+		 *
+		 * @todo close out the AudioContext if no longer needed
+		 * @todo make the instance respond more consistently once closed
+		 */
 		this.close = function() {
 			this.stop();
 
@@ -359,6 +428,14 @@ var AudioFeeder;
 			buffers = null;
 		};
 
+		/**
+		 * Checks if audio system is ready and calls the callback when ready
+		 * to begin playback.
+		 *
+		 * This will wait for the Flash shim to load on IE 10/11; waiting
+		 * is not required when using native Web Audio but you should use
+		 * this callback to support older browsers.
+		 */
 		this.waitUntilReady = function(callback) {
 			var times = 0,
 				maxTimes = 100;
@@ -383,6 +460,12 @@ var AudioFeeder;
 			}
 		};
 
+		/**
+		 * Start/continue playback as soon as possible.
+		 *
+		 * You should buffer some audio ahead of time to avoid immediately
+		 * running into starvation.
+		 */
 		this.start = function() {
 			if (this.flashaudio) {
 				this.flashaudio.flashElement.start();
@@ -393,6 +476,12 @@ var AudioFeeder;
 			}
 		};
 
+		/**
+		 * Stop/pause playback as soon as possible.
+		 *
+		 * Audio that has been buffered but not yet sent to the device will
+		 * remain buffered, and can be continued with another call to start().
+		 */
 		this.stop = function() {
 			if (this.flashaudio) {
 				this.flashaudio.flashElement.stop();
@@ -410,7 +499,32 @@ var AudioFeeder;
 		this.onstarved = null;
 	};
 
+	/**
+	 * Is the AudioFeeder class supported in this browser?
+	 *
+	 * Note that it's still possible to be supported but not work, for instance
+	 * if there are no audio output devices but the APIs are available.
+	 *
+	 * @return boolean
+	 */
+	AudioFeeder.isSupported = function() {
+		return hasTypedArrays() && hasAudio();
+	};
+
+	/**
+	 * The AudioContext instance managed by AudioFeeder class, if any.
+	 * @property AudioContext
+	 */
 	AudioFeeder.sharedAudioContext = null;
+
+	/**
+	 * Force initialization of AudioFeeder.sharedAudioContext.
+	 *
+	 * Some browser (such as mobile Safari) disable audio output unless
+	 * first triggered from a UI event handler; call this method as a hint
+	 * that you will be starting up an AudioFeeder soon but won't have data
+	 * for it until a later callback.
+	 */
 	AudioFeeder.initSharedAudioContext = function() {
 		if (AudioFeeder.sharedAudioContext === null) {
 			if ( AudioContext ) {
