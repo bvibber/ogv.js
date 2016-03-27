@@ -1,0 +1,29 @@
+{
+  "name": "audio-feeder",
+  "description": "Abstraction for streaming raw PCM audio in browser via Web Audio API.",
+  "main": "AudioFeeder.js",
+  "authors": [
+    "Brion Vibber <brion@pobox.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "audio",
+    "webaudio",
+    "pcm"
+  ],
+  "homepage": "https://github.com/brion/audio-feeder",
+  "moduleType": [
+    "globals"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/brion/audio-feeder.git"
+  }
+}
