@@ -30,9 +30,9 @@ C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
 
-.PHONY : all
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist lint cleanshaders shaders run-demo run-dev-server
 
-.FAKE : all clean cleanswf swf js demo democlean tests dist lint cleanshaders shaders run-demo run-dev-server
+DEFAULT : all
 
 # Runners
 
