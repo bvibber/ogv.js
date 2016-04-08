@@ -51,7 +51,7 @@ all : js \
       demo \
       tests
 
-js : build/ogv.js shaders
+js : build/ogv.js shaders $(EMSCRIPTEN_MODULE_TARGETS)
 
 demo : build/demo/index.html
 
@@ -380,4 +380,3 @@ cleanswf:
 
 $(DYNAMIC_AUDIO_SWF) : src/flex/dynamicaudio.as
 	mxmlc -o $(DYNAMIC_AUDIO_SWF) -file-specs src/flex/dynamicaudio.as
-
