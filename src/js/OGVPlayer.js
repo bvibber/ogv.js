@@ -1,6 +1,5 @@
 var WebGLFrameSink = require('./WebGLFrameSink.js');
 var FrameSink = require('./FrameSink.js');
-var WebGLDeepFrameSink = require('./WebGLDeepFrameSink.js');
 
 // -- OGVLoader.js
 var OGVLoader = require("./OGVLoader.js");
