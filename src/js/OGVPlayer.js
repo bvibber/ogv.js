@@ -61,8 +61,7 @@ var OGVPlayer = function(options) {
 
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
 
-	var codecClassName = null,
-		codecClass = null,
+	var codecClass = null,
 		codecType = null;
 
 	var webGLdetected = WebGLFrameSink.isAvailable();
@@ -1041,7 +1040,6 @@ var OGVPlayer = function(options) {
 
 	function loadCodec(callback) {
 		// @todo use the demuxer and codec interfaces directly
-		codecClassName = 'OGVWrapperCodec';
 
 		// @todo fix detection proper
 		if (enableWebM && self.src.match(/\.webm$/i)) {
@@ -1050,10 +1048,8 @@ var OGVPlayer = function(options) {
 			codecOptions.type = 'video/ogg';
 		}
 
-		OGVLoader.loadClass(codecClassName, function(classObj) {
-			codecClass = classObj;
-			callback();
-		});
+		codecClass = OGVWrapperCodec;
+		callback();
 	}
 
 	/**

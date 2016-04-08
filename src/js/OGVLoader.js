@@ -1,5 +1,4 @@
-// FIXME: should be defined as placeholder
-var OGVVersion = "1.0.0";
+var OGVVersion = __OGV_FULL_VERSION__;
 
 (function() {
 	var global = this;
@@ -13,16 +12,23 @@ var OGVVersion = "1.0.0";
 		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js'
 	};
 
-	var proxyMap = {
-		OGVDecoderAudioOpus: 'OGVDecoderAudioProxy',
-		OGVDecoderAudioVorbis: 'OGVDecoderAudioProxy',
-		OGVDecoderVideoTheora: 'OGVDecoderVideoProxy',
-		OGVDecoderVideoVP8: 'OGVDecoderVideoProxy'
+  // @fixme make this less awful
+	var proxyTypes = {
+		OGVDecoderAudioOpus: 'audio',
+		OGVDecoderAudioVorbis: 'audio',
+		OGVDecoderVideoTheora: 'video',
+		OGVDecoderVideoVP8: 'video'
 	};
-	var workerMap = {
-		OGVDecoderAudioProxy: 'ogv-worker-audio.js',
-		OGVDecoderVideoProxy: 'ogv-worker-video.js'
-	};
+	var proxyInfo = {
+		audio: {
+			proxy: require('./OGVDecoderAudioProxy.js'),
+			worker: 'ogv-worker-audio.js',
+		},
+		video: {
+			proxy: require('./OGVDecoderVideoProxy.js'),
+			worker: 'ogv-worker-video.js'
+		}
+	}
 
 	function urlForClass(className) {
 		var scriptName = scriptMap[className];
@@ -121,23 +127,21 @@ var OGVVersion = "1.0.0";
 		},
 
 		workerProxy: function(className, callback) {
-			var proxyClass = proxyMap[className],
-				workerScript = workerMap[proxyClass];
+			var proxyType = proxyTypes[className],
+				info = proxyInfo[proxyType];
 
-			if (!proxyClass) {
+			if (!info) {
 				throw new Error('Requested worker for class with no proxy: ' + className);
 			}
-			if (!workerScript) {
-				throw new Error('Requested worker for class with no worker: ' + className);
-			}
 
-			this.loadClass(proxyClass, function(classObj) {
-				var construct = function(options) {
-					var worker = new Worker(urlForScript(workerScript));
-					return new classObj(worker, className, options);
-				};
-				callback(construct);
-			});
+			var proxyClass = info.proxy,
+				workerScript = info.worker;
+
+			var construct = function(options) {
+				var worker = new Worker(urlForScript(workerScript));
+				return new proxyClass(worker, className, options);
+			};
+			callback(construct);
 		}
 	};
 

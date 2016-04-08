@@ -1,12 +1,5 @@
 (function() {
 
-	// FIXME: All this is a bit of a hack right now
-	window.OGVVersion = "1.0.0";
-	window.OGVPlayer = ogv.Player;
-	window.OGVWrapperCodec = ogv.WrapperCodec;
-	window.OGVDecoderVideoProxy = ogv.DecoderVideoProxy;
-	window.OGVDecoderAudioProxy = ogv.DecoderAudioProxy;
-
 	var getTimestamp;
 	if (window.performance === undefined || window.performance.now === undefined) {
 		console.log("window.performance.now is not available; using Date.now() for benchmarking");
@@ -660,7 +653,7 @@
 	}
 
 	var preferredKey = '360p.ogv';
-	if (ogv.Compat.isSlow()) {
+	if (OGVCompat.isSlow()) {
 		preferredKey = '160p.ogv';
 	}
 	var selector = document.getElementById('video-preferred-size');
