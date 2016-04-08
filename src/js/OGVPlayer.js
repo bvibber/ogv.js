@@ -558,7 +558,7 @@ var OGVPlayer = function(options) {
 		OGVPlayer.updatePositionOnResize();
 
 		if (useWebGL) {
-			frameSink = new WebGLDeepFrameSink(canvas, videoInfo);
+			frameSink = new WebGLFrameSink(canvas, videoInfo);
 		} else {
 			frameSink = new FrameSink(canvas, videoInfo);
 		}

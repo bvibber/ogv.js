@@ -24,8 +24,8 @@ EMCC_FAST_COMPILER=1 emcc \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/liboggz.$suffix \
   build/js/root/lib/libskeleton.$suffix \
-  --js-library src/js/ogv-demuxer-callbacks.js \
-  --pre-js src/js/ogv-module-pre.js \
-  --post-js src/js/ogv-demuxer.js \
+  --js-library src/js/modules/ogv-demuxer-callbacks.js \
+  --pre-js src/js/modules/ogv-module-pre.js \
+  --post-js src/js/modules/ogv-demuxer.js \
   src/c/ogv-demuxer-ogg.c \
   -o build/ogv-demuxer-ogg.js

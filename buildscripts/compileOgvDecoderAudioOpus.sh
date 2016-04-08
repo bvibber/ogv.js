@@ -23,9 +23,9 @@ EMCC_FAST_COMPILER=1 emcc \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/libopus.$suffix \
-  --js-library src/js/ogv-decoder-audio-callbacks.js \
-  --pre-js src/js/ogv-module-pre.js \
-  --post-js src/js/ogv-decoder-audio.js \
+  --js-library src/js/modules/ogv-decoder-audio-callbacks.js \
+  --pre-js src/js/modules/ogv-module-pre.js \
+  --post-js src/js/modules/ogv-decoder-audio.js \
   src/c/ogv-decoder-audio-opus.c \
   src/c/ogv-ogg-support.c \
   src/c/opus_header.c \

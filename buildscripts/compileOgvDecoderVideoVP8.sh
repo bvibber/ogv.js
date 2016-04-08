@@ -25,9 +25,9 @@ EMCC_FAST_COMPILER=1 emcc \
   -Lbuild/js/root/lib \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/libvpx.so \
-  --js-library src/js/ogv-decoder-video-callbacks.js \
-  --pre-js src/js/ogv-module-pre.js \
-  --post-js src/js/ogv-decoder-video.js \
+  --js-library src/js/modules/ogv-decoder-video-callbacks.js \
+  --pre-js src/js/modules/ogv-module-pre.js \
+  --post-js src/js/modules/ogv-decoder-video.js \
   src/c/ogv-decoder-video-vp8.c \
   src/c/ogv-ogg-support.c \
   -o build/ogv-decoder-video-vp8.js

@@ -30,6 +30,8 @@ C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
 
+.PHONY : all
+
 .FAKE : all clean cleanswf swf js demo democlean tests dist lint cleanshaders shaders run-demo run-dev-server
 
 # Runners
@@ -166,21 +168,21 @@ build/ogv-demuxer-ogg.js : $(C_SRC_DIR)/ogv-demuxer-ogg.c \
 
 build/ogv-demuxer-webm.js : $(C_SRC_DIR)/ogv-demuxer-webm.c \
                             $(C_SRC_DIR)/ogv-demuxer.h \
-                            $(JS_SRC_DIR)/ogv-demuxer.js \
-                            $(JS_SRC_DIR)/ogv-demuxer-callbacks.js \
-                            $(JS_SRC_DIR)/ogv-demuxer-exports.json \
-                            $(JS_SRC_DIR)/ogv-module-pre.js \
+                            $(JS_SRC_DIR)/modules/ogv-demuxer.js \
+                            $(JS_SRC_DIR)/modules/ogv-demuxer-callbacks.js \
+                            $(JS_SRC_DIR)/modules/ogv-demuxer-exports.json \
+                            $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                             $(JS_ROOT_BUILD_DIR)/lib/libnestegg.a \
                             $(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
 	test -d build || mkdir build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
 
 build/ogv-decoder-audio-vorbis.js : $(C_SRC_DIR)/ogv-decoder-audio-vorbis.c \
-                                    src/h/ogv-decoder-audio.h \
-                                    $(JS_SRC_DIR)/ogv-decoder-audio.js \
-                                    $(JS_SRC_DIR)/ogv-decoder-audio-callbacks.js \
-                                    $(JS_SRC_DIR)/ogv-decoder-audio-exports.json \
-                                    $(JS_SRC_DIR)/ogv-module-pre.js \
+                                    $(C_SRC_DIR)/ogv-decoder-audio.h \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-audio.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-audio-callbacks.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-audio-exports.json \
+                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                     $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                     $(JS_ROOT_BUILD_DIR)/lib/libvorbis.a \
                                     $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
@@ -189,10 +191,10 @@ build/ogv-decoder-audio-vorbis.js : $(C_SRC_DIR)/ogv-decoder-audio-vorbis.c \
 
 build/ogv-decoder-audio-opus.js : $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
                                   $(C_SRC_DIR)/ogv-decoder-audio.h \
-                                  $(JS_SRC_DIR)/ogv-decoder-audio.js \
-                                  $(JS_SRC_DIR)/ogv-decoder-audio-callbacks.js \
-                                  $(JS_SRC_DIR)/ogv-decoder-audio-exports.json \
-                                  $(JS_SRC_DIR)/ogv-module-pre.js \
+                                  $(JS_SRC_DIR)/modules/ogv-decoder-audio.js \
+                                  $(JS_SRC_DIR)/modules/ogv-decoder-audio-callbacks.js \
+                                  $(JS_SRC_DIR)/modules/ogv-decoder-audio-exports.json \
+                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                   $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                   $(JS_ROOT_BUILD_DIR)/lib/libopus.a \
                                   $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
@@ -201,10 +203,10 @@ build/ogv-decoder-audio-opus.js : $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
 
 build/ogv-decoder-video-theora.js : $(C_SRC_DIR)/ogv-decoder-video-theora.c \
                                     $(C_SRC_DIR)/ogv-decoder-video.h \
-                                    $(JS_SRC_DIR)/ogv-decoder-video.js \
-                                    $(JS_SRC_DIR)/ogv-decoder-video-callbacks.js \
-                                    $(JS_SRC_DIR)/ogv-decoder-video-exports.json \
-                                    $(JS_SRC_DIR)/ogv-module-pre.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                     $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                     $(JS_ROOT_BUILD_DIR)/lib/libtheoradec.a \
                                     $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
@@ -213,10 +215,10 @@ build/ogv-decoder-video-theora.js : $(C_SRC_DIR)/ogv-decoder-video-theora.c \
 
 build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vp8.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
-                                 $(JS_SRC_DIR)/ogv-decoder-video.js \
-                                 $(JS_SRC_DIR)/ogv-decoder-video-callbacks.js \
-                                 $(JS_SRC_DIR)/ogv-decoder-video-exports.json \
-                                 $(JS_SRC_DIR)/ogv-module-pre.js \
+                                 $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                 $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                 $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                 $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                  $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh

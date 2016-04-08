@@ -18,12 +18,12 @@ EMCC_FAST_COMPILER=1 emcc \
   -s NO_EXIT_RUNTIME=1 \
   -s EXPORT_NAME="'OGVDemuxerWebM'" \
   -s MODULARIZE=1 \
-  -s EXPORTED_FUNCTIONS="`< src/ogv-demuxer-exports.json`" \
+  -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
   build/js/root/lib/libnestegg.$suffix \
-  --js-library src/js/ogv-demuxer-callbacks.js \
-  --pre-js src/js/ogv-module-pre.js \
-  --post-js src/js/ogv-demuxer.js \
+  --js-library src/js/modules/ogv-demuxer-callbacks.js \
+  --pre-js src/js/modules/ogv-module-pre.js \
+  --post-js src/js/modules/ogv-demuxer.js \
   src/c/ogv-demuxer-webm.c \
   -o build/ogv-demuxer-webm.js
