@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.0alpha - 2016-04-??
+ * refactored parts of build using webpack
+ * reduction in unnecessary global symbols
+ * (bugfixes to come)
 * 1.0 - 2015-09-04
  * initial stable release, as used on Wikipedia
 
@@ -208,10 +212,11 @@ The Ogg Skeleton library (libskeleton) is a bit ... unfinished and is slightly m
 
 Building ogv.js is known to work on Mac OS X and Linux (tested Ubuntu 15.04).
 
-1. You will need autoconf, automake, libtool, and pkg-config. These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
+1. You will need autoconf, automake, libtool, pkg-config, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
 2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently using the 1.34.1 SDK release for distribution builds.
 3. `git submodule update --init`
-4. Run `make js` to configure and build the libraries and the C wrapper
+4. Run `npm install` to install build utilities
+5. Run `make js` to configure and build the libraries and the C wrapper
 
 
 ## Building Flash components
