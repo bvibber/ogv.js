@@ -166,6 +166,7 @@ function StreamFile(options) {
 					internal.onXHRLoading(xhr);
 				} else if (xhr.readyState == 4) {
 					// Complete.
+					internal.onXHRLoading(xhr);
 					internal.onXHRDone(xhr);
 				}
 			};
