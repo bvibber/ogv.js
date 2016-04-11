@@ -94,6 +94,7 @@ doubleTest("object has expected properties", function(assert, player) {
 	assert.equal(typeof player.playbackRate, 'number', 'playbackRate');
 	assert.equal(typeof player.played, 'object', 'played'); // ??
 	assert.equal(typeof player.poster, 'string', 'poster');
+	assert.equal(typeof player.readyState, 'number', 'readyState');
 	assert.equal(typeof player.seeking, 'boolean', 'seeking');
 	assert.equal(typeof player.src, 'string', 'src');
 	assert.equal(typeof player.videoWidth, 'number', 'videoWidth');
@@ -131,6 +132,17 @@ doubleTest("object has expected properties", function(assert, player) {
 	assert.equal(player.onratechange, null, 'onratechange');
 	assert.equal(player.onresize, null, 'onresize');
 	assert.equal(player.onvolumechange, null, 'onvolumechange');
+
+	assert.equal(player.NETWORK_EMPTY, 0, 'NETWORK_EMPTY');
+	assert.equal(player.NETWORK_IDLE, 1, 'NETWORK_IDLE');
+	assert.equal(player.NETWORK_LOADING, 2, 'NETWORK_LOADING');
+	assert.equal(player.NETWORK_NO_SOURCE, 3, 'NETWORK_NO_SOURCE');
+
+	assert.equal(player.HAVE_NOTHING, 0, 'HAVE_NOTHING');
+	assert.equal(player.HAVE_METADATA, 1, 'HAVE_METADATA');
+	assert.equal(player.HAVE_CURRENT_DATA, 2, 'HAVE_CURRENT_DATA');
+	assert.equal(player.HAVE_FUTURE_DATA, 3, 'HAVE_FUTURE_DATA');
+	assert.equal(player.HAVE_ENOUGH_DATA, 4, 'HAVE_ENOUGH_DATA');
 
 	// MSE-ish stuff, not yet implemented
 	//assert.equal(typeof player.audioTracks, 'object', 'audioTracks');
@@ -343,4 +355,14 @@ doubleAsyncTest('play yields timeupdate', function(assert, player) {
 		};
 	};
 	player.play();
+});
+
+doubleAsyncTest('readyState distinguishes nothing from something', function(assert, player) {
+	player.src = 'media/1second.ogv';
+	assert.ok( player.readyState == player.HAVE_NOTHING, 'readyState says have nothing' );
+	player.onloadedmetadata = function() {
+		assert.ok( player.readyState >= player.HAVE_METADATA, 'readyState says got metadata' );
+		QUnit.start();
+	};
+	player.load();
 });

@@ -1267,6 +1267,13 @@ var OGVPlayer = function(options) {
 	};
 
 	/**
+	 * @todo implement the fast part of the behavior!
+	 */
+	self.fastSeek = function(seekToTime) {
+		self.currentTime = +seekToTime;
+	};
+
+	/**
 	 * HTMLMediaElement src property
 	 */
 	self.src = "";
@@ -1591,12 +1598,40 @@ var OGVPlayer = function(options) {
 	});
 
 	/**
+	 * @property readyState {number}
+	 * @todo return more accurate info about availability of data
+	 */
+	Object.defineProperty(self, "readyState", {
+		get: function getReadyState() {
+			if (stream && codec && codec.loadedMetadata) {
+				// for now we don't really calc this stuff
+				// just pretend we have lots of data coming in already
+				return OGVPlayer.HAVE_ENOUGH_DATA;
+			} else {
+				return OGVPlayer.HAVE_NOTHING;
+			}
+		}
+	});
+
+	/**
 	 * @property networkState {number}
 	 * @todo implement
 	 */
 	Object.defineProperty(self, "networkState", {
 		get: function getNetworkState() {
-			return 1; // idle
+			if (stream) {
+				if (waitingOnInput) {
+					return OGVPlayer.NETWORK_LOADING;
+				} else {
+					return OGVPlayer.NETWORK_IDLE;
+				}
+			} else {
+				if (self.readyState == OGVPlayer.HAVE_NOTHING) {
+					return OGVPlayer.NETWORK_EMPTY;
+				} else {
+					return OGVPlayer.NETWORK_NO_SOURCE;
+				}
+			}
 		}
 	});
 
@@ -1748,12 +1783,51 @@ var OGVPlayer = function(options) {
 	 */
 	self.onvolumechange = null;
 
+	// Copy the various public state constants in
+	setupConstants(self);
+
 	return self;
 };
 
 OGVPlayer.initSharedAudioContext = function() {
 	AudioFeeder.initSharedAudioContext();
 };
+
+/**
+ * Set up constants on the class and instances
+ */
+var constants = {
+	/**
+	 * Constants for networkState
+	 */
+	NETWORK_EMPTY: 0,
+	NETWORK_IDLE: 1,
+	NETWORK_LOADING: 2,
+	NETWORK_NO_SOURCE: 3,
+
+	/**
+	 * Constants for readyState
+	 */
+	HAVE_NOTHING: 0,
+	HAVE_METADATA: 1,
+	HAVE_CURRENT_DATA: 2,
+	HAVE_FUTURE_DATA: 3,
+	HAVE_ENOUGH_DATA: 4
+};
+function setupConstants(obj) {
+	for (var constName in constants) {
+		if (constants.hasOwnProperty(constName)) {
+			(function(name, val) {
+				Object.defineProperty(obj, constName, {
+					get: function() {
+						return val;
+					}
+				});
+			})(constName, constants[constName]);
+		}
+	}
+}
+setupConstants(OGVPlayer);
 
 OGVPlayer.instanceCount = 0;
 
