@@ -286,6 +286,28 @@ doubleAsyncTest('metadata detects duration for file without skeleton', function(
 	player.load();
 });
 
+doubleAsyncTest('resize detects size', function(assert, player) {
+	player.src = 'media/320x240.ogv';
+	assert.equal(player.videoWidth, 0, "don't know width before");
+	assert.equal(player.videoHeight, 0, "don't know height before");
+	player.onresize = function() {
+		assert.equal(player.videoWidth, 320, "videoWidth");
+		assert.equal(player.videoHeight, 240, "videoHeight");
+		QUnit.start();
+	};
+	player.load();
+});
+
+doubleAsyncTest('durationchange detects duration for file with skeleton', function(assert, player) {
+	player.src = 'media/3seconds.ogv';
+	assert.ok(isNaN(player.duration), "don't know duration before");
+	player.ondurationchange = function() {
+		assert.equal(player.duration, 3, "duration");
+		QUnit.start();
+	};
+	player.load();
+});
+
 doubleAsyncTest('seekable matches duration', function(assert, player) {
 	player.src = 'media/3seconds.ogv';
 	var seekable = player.seekable;

@@ -163,7 +163,8 @@ var OGVPlayer = function(options) {
 		var event;
 		props = props || {};
 
-		if (typeof window.Event == 'function') {
+		var standard = (typeof window.Event == 'function');
+		if (standard) {
 			// standard event creation
 			event = new CustomEvent(eventName);
 		} else {
@@ -179,7 +180,13 @@ var OGVPlayer = function(options) {
 			}
 		}
 
-		self.dispatchEvent(event);
+		var allowDefault = self.dispatchEvent(event);
+		if (!standard && eventName === 'resize' && self.onresize && allowDefault) {
+			// resize demands special treatment!
+			// in IE 11 it doesn't fire through to the .onresize handler
+			// for some crazy reason
+			self.onresize.call(self, event);
+		}
 	}
 
 	var codec,
@@ -706,6 +713,10 @@ var OGVPlayer = function(options) {
 				pingProcessing(0);
 			}
 			fireEvent('loadedmetadata');
+			fireEvent('durationchange');
+			if (codec.hasVideo) {
+				fireEvent('resize');
+			}
 
 		} else if (state == State.READY) {
 
