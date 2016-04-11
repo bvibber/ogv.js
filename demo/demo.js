@@ -803,6 +803,10 @@
 				}
 			});
 
+			player.addEventListener('timeupdate', function() {
+				updateProgress();
+			});
+
 			clearBenchmark();
 			// There is a 'timeupdate' event on HTMLMediaElement, but it only
 			// seems to fire every quarter second. No per-frame callback for
@@ -1186,7 +1190,6 @@
 			showBenchmark();
 			showAverageRate();
 		}
-		updateProgress();
 	}, 1000);
 
 })();

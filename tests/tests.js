@@ -284,3 +284,17 @@ doubleAsyncTest('play yields onended', function(assert, player) {
 	};
 	player.play();
 });
+
+doubleAsyncTest('play yields timeupdate', function(assert, player) {
+	player.src = 'media/1second.ogv';
+	player.ontimeupdate = function() {
+		assert.ok( true, 'ontimeupdate event was fired once' );
+		player.ontimeupdate = function() {
+			assert.ok( true, 'ontimeupdate event was fired twice' );
+			player.ontimeupdate = null;
+			player.pause();
+			QUnit.start();
+		};
+	};
+	player.play();
+});

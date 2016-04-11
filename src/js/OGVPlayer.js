@@ -308,6 +308,9 @@ var OGVPlayer = function(options) {
 	var lastFrameDecodeTime = 0.0;
 	var lastFrameTimestamp = 0.0;
 
+	var lastTimeUpdate = 0, // ms
+		timeUpdateInterval = 250; // ms
+
 	function doFrameComplete() {
 		if (startedPlaybackInDocument && !document.body.contains(self)) {
 			// We've been de-parented since we last ran
@@ -327,8 +330,14 @@ var OGVPlayer = function(options) {
 			cpuTime: lastFrameDecodeTime,
 			clockTime: wallClockTime
 		});
+
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
+
+		if (!lastTimeUpdate || (newFrameTimestamp - lastTimeUpdate) >= timeUpdateInterval) {
+			lastTimeUpdate = newFrameTimestamp;
+			fireEvent('timeupdate');
+		}
 	}
 
 
@@ -1510,6 +1519,11 @@ var OGVPlayer = function(options) {
 	 * Called when playback ends
 	 */
 	self.onended = null;
+
+	/**
+	 * Called periodically during playback
+	 */
+	self.ontimeupdate = null;
 
 	return self;
 };
