@@ -8,7 +8,7 @@ var OGVLoader = require("./OGVLoader.js");
 var StreamFile = require("./StreamFile.js");
 
 // -- AudioFeeder.js
-var AudioFeeder = require("./AudioFeeder.js");
+var AudioFeeder = require("audio-feeder");
 
 // -- Bisector.js
 var Bisector = require("./Bisector.js");

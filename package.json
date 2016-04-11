@@ -35,6 +35,9 @@
     "url": "https://github.com/brion/ogv.js/issues"
   },
   "homepage": "https://github.com/brion/ogv.js#readme",
+  "dependencies": {
+    "audio-feeder": "0.0.2"
+  },
   "devDependencies": {
     "eslint": "^1.7.3",
     "node-static": "^0.7.7",

@@ -182,6 +182,8 @@ As with chunked streaming, cross-site playback requires CORS support for the Ran
 
 *Audio output*
 
+Audio output is handled through the [AudioFeeder](https://github.com/brion/audio-feeder) library, which encapsulates use of Web Audio API or Flash depending on browser support:
+
 Firefox, Safari, Chrome, and Edge support the W3C Web Audio API.
 
 IE doesn't support Web Audio, but does bundle the Flash player in Windows 8/8.1/RT. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
@@ -219,15 +221,6 @@ Building ogv.js is known to work on Mac OS X and Linux (tested Ubuntu 15.04).
 5. Run `make js` to configure and build the libraries and the C wrapper
 
 
-## Building Flash components
-
-Rebuilding dynamicaudio.swf shim for IE 10/11:
-
-1. Install [Apache Flex SDK](http://flex.apache.org/), and put it into PATH
-2. `make swf` to rebuild src/dynamicaudio.swf
-3. `make` to rebuild the demo and update its .swf
-
-
 ## Building the demo
 
 If you did all the setup above, just run `make demo` or `make`. Look in build/demo/ and enjoy!
@@ -239,4 +232,4 @@ libogg, libvorbis, libtheora, libopus, nestegg, and libvpx are available under t
 
 Based on build scripts from https://github.com/devongovett/ogg.js
 
-dynamicaudio.as and other Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman (see src/AudioFeeder.js flash fallback section).
+[AudioFeeder](https://github.com/brion/audio-feeder)'s dynamicaudio.as and other Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman.

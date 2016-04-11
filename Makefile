@@ -7,12 +7,16 @@ DEMO_DIR:=demo
 TESTS_DIR:=tests
 BUILDSCRIPTS_DIR:=buildscripts
 
-DYNAMIC_AUDIO_SWF:=assets/dynamicaudio.swf
+AUDIO_DIR:=node_modules/audio-feeder
+AUDIO_JS_FILES:=$(AUDIO_DIR)/AudioFeeder.js
+AUDIO_SWF:=$(AUDIO_DIR)/dynamicaudio.swf
+
 CORTADO_JAR:=assets/cortado.jar
 
 JS_SRC_DIR:=src/js
 JS_FILES:=$(shell find $(JS_SRC_DIR) -type f -name "*.js")
 JS_FILES+= $(shell find $(JS_SRC_DIR)/workers -type f -name "*.js")
+JS_FILES+= $(AUDIO_JS_FILES)
 
 EMSCRIPTEN_MODULE_TARGETS:=build/ogv-demuxer-ogg.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-demuxer-webm.js
@@ -83,7 +87,7 @@ clean:
 
 # Build everything and copy the result into distro folder and zip that
 
-dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
+dist: js $(AUDIO_SWF) README.md COPYING
 	rm -rf dist
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
@@ -96,7 +100,7 @@ dist: js $(DYNAMIC_AUDIO_SWF) README.md COPYING
 	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
-	      $(DYNAMIC_AUDIO_SWF) \
+	      $(AUDIO_SWF) \
 	      README.md \
 	      COPYING \
 	      dist/ogvjs-$(VERSION)/
@@ -362,23 +366,3 @@ build/tests/media/3seconds-noskeleton.ogv : $(TESTS_DIR)/media/3seconds-noskelet
 build/tests/media/320x240.ogv : $(TESTS_DIR)/media/320x240.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
 	cp $(TESTS_DIR)/media/320x240.ogv build/tests/media/320x240.ogv
-
-# There is a Flash shim for audio on Internet Explorer which doesn't
-# have Web Audio API.
-#
-# The .swf build artifact is in the source tree so you don't have to
-# figure out how to install the Apache Flex SDK when you've already
-# gone to the trouble of setting up emscripten.
-#
-# Get SDK binaries from http://flex.apache.org/ and install them somewhere
-# in your PATH.
-#
-# To rebuild the .swf, run 'make cleanswf' then 'make swf'
-#
-swf : $(DYNAMIC_AUDIO_SWF)
-
-cleanswf:
-	rm -f $(DYNAMIC_AUDIO_SWF)
-
-$(DYNAMIC_AUDIO_SWF) : src/flex/dynamicaudio.as
-	mxmlc -o $(DYNAMIC_AUDIO_SWF) -file-specs src/flex/dynamicaudio.as
