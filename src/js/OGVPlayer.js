@@ -412,6 +412,8 @@ var OGVPlayer = function(options) {
 						seekState = SeekState.BISECT_TO_TARGET;
 						startBisection(seekTargetTime);
 					}
+
+					fireEvent('seeking');
 				});
 			});
 		});
@@ -437,6 +439,7 @@ var OGVPlayer = function(options) {
 				pingProcessing(0);
 			}
 		}
+		fireEvent('seeked');
 	}
 
 	/**
@@ -1382,7 +1385,7 @@ var OGVPlayer = function(options) {
 	 * HTMLMediaElement ended property
 	 */
 	Object.defineProperty(self, "seeking", {
-		get: function getEnded() {
+		get: function getSeeking() {
 			return (state == State.SEEKING);
 		}
 	});

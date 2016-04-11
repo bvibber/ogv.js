@@ -388,3 +388,38 @@ doubleAsyncTest('readyState distinguishes nothing from something', function(asse
 	};
 	player.load();
 });
+
+doubleAsyncTest('seek while playing triggers seeking, seeked', function(assert, player) {
+	player.src = 'media/3seconds.ogv';
+	var seekTargetTime = 1.5,
+		didSeeking = false;
+
+	player.onloadedmetadata = function() {
+		// trigger a seek
+		player.currentTime = seekTargetTime;
+	};
+
+	player.onseeking = function() {
+		assert.ok( true, 'onseeking was fired' );
+		assert.ok( !player.playing, 'player still thinks it is not playing');
+		assert.ok( player.seeking, 'player thinks it is seeking');
+
+		didSeeking = true;
+	};
+
+	player.onseeked = function() {
+		assert.ok( true, 'onseeked was fired' );
+		assert.ok( didSeeking, 'onseeking fired before onseek');
+		assert.ok( !player.playing, 'player still thinks it is not playing');
+		assert.ok( !player.seeking, 'player no longer thinks it is seeking');
+
+		// @todo report updated time correctly after seeking on files with no audio
+		//assert.ok( player.currentTime >= seekTargetTime, 'target time is at least what is expected' );
+
+		QUnit.start();
+	};
+
+	player.play();
+});
+
+// @todo implement and test seeking while *not* playing
