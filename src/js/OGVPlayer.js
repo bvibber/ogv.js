@@ -243,7 +243,8 @@ var OGVPlayer = function(options) {
 		return (position - initialPlaybackPosition) + initialPlaybackOffset;
 	}
 
-	var stream,
+	var currentSrc = '',
+		stream,
 		byteLength = 0,
 		duration = null,
 		lastSeenTimestamp = null,
@@ -1051,7 +1052,7 @@ var OGVPlayer = function(options) {
 		// @todo use the demuxer and codec interfaces directly
 
 		// @todo fix detection proper
-		if (enableWebM && self.src.match(/\.webm$/i)) {
+		if (enableWebM && currentSrc.match(/\.webm$/i)) {
 			codecOptions.type = 'video/webm';
 		} else {
 			codecOptions.type = 'video/ogg';
@@ -1070,9 +1071,10 @@ var OGVPlayer = function(options) {
 			return;
 		}
 
+		currentSrc = '' + self.src;
 		started = false;
 		stream = new StreamFile({
-			url: self.src,
+			url: currentSrc,
 			bufferSize: 65536 * 4,
 			onstart: function() {
 				// Fire off the read/decode/draw loop...
@@ -1472,6 +1474,10 @@ var OGVPlayer = function(options) {
 
 	// Display size...
 	var width = 0, height = 0;
+	/**
+	 * @property width
+	 * @todo reflect to the width attribute?
+	 */
 	Object.defineProperty(self, "width", {
 		get: function getWidth() {
 			return width;
@@ -1482,6 +1488,10 @@ var OGVPlayer = function(options) {
 		}
 	});
 
+	/**
+	 * @property height
+	 * @todo reflect to the height attribute?
+	 */
 	Object.defineProperty(self, "height", {
 		get: function getHeight() {
 			return height;
@@ -1492,6 +1502,141 @@ var OGVPlayer = function(options) {
 		}
 	});
 
+	/**
+	 * @property autoplay {boolean} stub prop
+	 * @todo reflect to the autoplay attribute?
+	 * @todo implement actual autoplay behavior
+	 */
+	Object.defineProperty(self, "autoplay", {
+		get: function getAutoplay() {
+			return false;
+		},
+		set: function setAutoplay(val) {
+			// ignore
+		}
+	});
+
+	/**
+	 * @property controls {boolean} stub prop
+	 * @todo reflect to the controls attribute?
+	 * @todo implement actual control behavior
+	 */
+	Object.defineProperty(self, "controls", {
+		get: function getControls() {
+			return false;
+		},
+		set: function setControls(val) {
+			// ignore
+		}
+	});
+
+	/**
+	 * @property loop {boolean} stub prop
+	 * @todo reflect to the controls attribute?
+	 * @todo implement actual loop behavior
+	 */
+	Object.defineProperty(self, "loop", {
+		get: function getLoop() {
+			return false;
+		},
+		set: function setLoop(val) {
+			// ignore
+		}
+	});
+
+	/**
+	 * @property crossOrigin {string|null} stub prop
+	 * @todo reflect to the crossorigin attribute?
+	 * @todo implement actual behavior
+	 */
+	Object.defineProperty(self, "crossOrigin", {
+		get: function getCrossOrigin() {
+			return null;
+		},
+		set: function setCrossOrigin(val) {
+			// ignore
+		}
+	});
+
+	/**
+	 * Returns the URL to the currently-playing resource.
+	 * @property currentSrc {string|null}
+	 */
+	Object.defineProperty(self, "currentSrc", {
+		get: function getCurrentSrc() {
+			return currentSrc;
+		}
+	});
+
+	Object.defineProperty(self, "defaultMuted", {
+		get: function getDefaultMuted() {
+			return false;
+		}
+	});
+
+	Object.defineProperty(self, "defaultPlaybackRate", {
+		get: function getDefaultPlaybackRate() {
+			return 1;
+		}
+	});
+
+	/**
+	 * @property error {string|null}
+	 * @todo implement
+	 */
+	Object.defineProperty(self, "error", {
+		get: function getError() {
+			return null;
+		}
+	});
+
+	/**
+	 * @property networkState {number}
+	 * @todo implement
+	 */
+	Object.defineProperty(self, "networkState", {
+		get: function getNetworkState() {
+			return 1; // idle
+		}
+	});
+
+	/**
+	 * @property playbackRate {number}
+	 * @todo implement
+	 */
+	Object.defineProperty(self, "playbackRate", {
+		get: function getPlaybackRate() {
+			return 1;
+		},
+		set: function setPlaybackRate(val) {
+			// ignore
+		}
+	});
+
+	/**
+	 * @property played {OGVTimeRanges}
+	 * @todo implement correctly more or less
+	 */
+	Object.defineProperty(self, "played", {
+		get: function getPlayed() {
+			return new OGVTimeRanges([[0, self.currentTime]]);
+		}
+	});
+
+	/**
+	 * @property volume {number}
+	 * @todo implement
+	 */
+	Object.defineProperty(self, "volume", {
+		get: function getVolume() {
+			return 1;
+		},
+		set: function setVolume(val) {
+			// ignore
+		}
+	});
+
+
 	// Events!
 
 	/**
@@ -1500,10 +1645,80 @@ var OGVPlayer = function(options) {
 	self.onframecallback = null;
 
 	/**
+	 * Network state events
+	 * @todo implement
+	 */
+	self.onloadstate = null;
+	self.onprogress = null;
+	self.onsuspend = null;
+	self.onabort = null;
+	self.onemptied = null;
+	self.onstalled = null;
+
+	/**
 	 * Called when all metadata is available.
 	 * Note in theory we must know 'duration' at this point.
 	 */
 	self.onloadedmetadata = null;
+
+	/**
+	 * Called when enough data for first frame is ready.
+	 * @todo implement
+	 */
+	self.onloadeddata = null;
+
+	/**
+	 * Called when enough data is ready to start some playback.
+	 * @todo implement
+	 */
+	self.oncanplay = null;
+
+	/**
+	 * Called when enough data is ready to play through to the
+	 * end if no surprises in network download rate.
+	 * @todo implement
+	 */
+	self.oncanplaythrough = null;
+
+	/**
+	 * Called when playback continues after a stall
+	 * @todo implement
+	 */
+	self.onplaying = null;
+
+	/**
+	 * Called when playback is delayed waiting on data
+	 * @todo implement
+	 */
+	self.onwaiting = null;
+
+	/**
+	 * Called when seeking begins
+	 * @todo implement
+	 */
+	self.onseeking = null;
+
+	/**
+	 * Called when seeking ends
+	 * @todo implement
+	 */
+	self.onseeked = null;
+
+	/**
+	 * Called when playback ends
+	 */
+	self.onended = null;
+
+	/**
+	 * Called when duration becomes known
+	 * @todo implement
+	 */
+	self.ondurationchange = null;
+
+	/**
+	 * Called periodically during playback
+	 */
+	self.ontimeupdate = null;
 
 	/**
 	 * Called when we start playback
@@ -1516,14 +1731,22 @@ var OGVPlayer = function(options) {
 	self.onpause = null;
 
 	/**
-	 * Called when playback ends
+	 * Called when the playback rate changes
+	 * @todo implement
 	 */
-	self.onended = null;
+	self.onratechange = null;
 
 	/**
-	 * Called periodically during playback
+	 * Called when the size of the video stream changes
+	 * @todo implement
 	 */
-	self.ontimeupdate = null;
+	self.onresize = null;
+
+	/**
+	 * Called when the volume setting changes
+	 * @todo implement
+	 */
+	self.onvolumechange = null;
 
 	return self;
 };

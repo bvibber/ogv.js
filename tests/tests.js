@@ -74,28 +74,74 @@ doubleTest("instantiates", function(assert, player) {
 });
 
 doubleTest("object has expected properties", function(assert, player) {
-	assert.equal(typeof player.src, 'string', 'src');
+	// Core properties
+	assert.equal(typeof player.autoplay, 'boolean', 'autoplay');
 	assert.equal(typeof player.buffered, 'object', 'buffered');
+	assert.equal(typeof player.controls, 'boolean', 'controls');
+	assert.strictEqual(player.crossOrigin, null, 'crossOrigin'); // string but defaults to null/empty
+	assert.equal(typeof player.currentSrc, 'string', 'currentSrc');
 	assert.equal(typeof player.currentTime, 'number', 'currentTime');
+	assert.equal(typeof player.defaultMuted, 'boolean', 'defaultMuted');
+	assert.equal(typeof player.defaultPlaybackRate, 'number', 'defaultPlaybackRate');
 	assert.equal(typeof player.duration, 'number', 'duration');
 	assert.equal(typeof player.paused, 'boolean', 'paused');
 	assert.equal(typeof player.ended, 'boolean', 'ended');
-	assert.equal(typeof player.seeking, 'boolean', 'seeking');
+	assert.strictEqual(player.error, null, 'error'); // string but defaults to null/empty
+	assert.equal(typeof player.loop, 'boolean', 'loop');
+	assert.equal(player.mediaGroup, null, 'mediaGroup'); // string but defaults to null/empty
 	assert.equal(typeof player.muted, 'boolean', 'muted');
+	assert.equal(typeof player.networkState, 'number', 'networkState');
+	assert.equal(typeof player.playbackRate, 'number', 'playbackRate');
+	assert.equal(typeof player.played, 'object', 'played'); // ??
 	assert.equal(typeof player.poster, 'string', 'poster');
+	assert.equal(typeof player.seeking, 'boolean', 'seeking');
+	assert.equal(typeof player.src, 'string', 'src');
 	assert.equal(typeof player.videoWidth, 'number', 'videoWidth');
 	assert.equal(typeof player.videoHeight, 'number', 'videoHeight');
+	assert.equal(typeof player.volume, 'number', 'volume');
 	assert.equal(typeof player.width, 'number', 'width');
 	assert.equal(typeof player.height, 'number', 'height');
-	assert.equal(player.onloadedmetadata, null, 'onloadedmetadata');
-	assert.equal(player.onplay, null, 'onplay');
-	assert.equal(player.onpause, null, 'onpause');
-	assert.equal(player.onended, null, 'onended');
 
 	assert.equal(typeof player.canPlayType, 'function', 'canPlayType');
+	//assert.equal(typeof player.fastSeek, 'function', 'fastSeek'); // missing on native in Chromium as of 49
 	assert.equal(typeof player.load, 'function', 'load');
 	assert.equal(typeof player.play, 'function', 'play');
 	assert.equal(typeof player.pause, 'function', 'pause');
+
+	assert.equal(player.onloadstart, null, 'onloadstart');
+	assert.equal(player.onprogress, null, 'onprogress');
+	assert.equal(player.onsuspend, null, 'onsuspend');
+	assert.equal(player.onabort, null, 'onabort');
+	assert.equal(player.onemptied, null, 'onemptied');
+	assert.equal(player.onstalled, null, 'onstalled');
+
+	assert.equal(player.onloadedmetadata, null, 'onloadedmetadata');
+	assert.equal(player.onloadeddata, null, 'onloadeddata');
+	assert.equal(player.oncanplay, null, 'oncanplay');
+	assert.equal(player.oncanplaythrough, null, 'oncanplaythrough');
+	assert.equal(player.onplaying, null, 'onplaying');
+	assert.equal(player.onwaiting, null, 'onwaiting');
+	assert.equal(player.onseeking, null, 'onseeking');
+	assert.equal(player.onseeked, null, 'onseeked');
+	assert.equal(player.onended, null, 'onended');
+	assert.equal(player.ondurationchange, null, 'ondurationchange');
+	assert.equal(player.ontimeupdate, null, 'ontimeupdate');
+	assert.equal(player.onplay, null, 'onplay');
+	assert.equal(player.onpause, null, 'onpause');
+	assert.equal(player.onratechange, null, 'onratechange');
+	assert.equal(player.onresize, null, 'onresize');
+	assert.equal(player.onvolumechange, null, 'onvolumechange');
+
+	// MSE-ish stuff, not yet implemented
+	//assert.equal(typeof player.audioTracks, 'object', 'audioTracks');
+	//assert.equal(typeof player.textTracks, 'object', 'textTracks');
+	//assert.equal(typeof player.videoTracks, 'object', 'videoTracks');
+	//assert.equal(typeof player.srcObject, 'object', 'srcObject');
+	//assert.equal(typeof player.addTextTrack, 'function', 'addTextTrack');
+
+	// In spec but also not implemented consistently, so don't support
+	//assert.equal(typeof player.disableRemotePlayback, 'boolean', 'disableRemotePlayback'); // ??
+
 });
 
 QUnit.test('MediaType', function(assert) {
