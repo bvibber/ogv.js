@@ -331,6 +331,7 @@ build/tests/index.html : build/tests/tests.js \
                          build/tests/media/3seconds.ogv \
                          build/tests/media/3seconds-noskeleton.ogv \
                          build/tests/media/320x240.ogv \
+												 build/tests/media/aspect.ogv \
                          $(TESTS_DIR)/index.html
 	test -d build/tests || mkdir -p build/tests
 	cp $(TESTS_DIR)/index.html build/tests/index.html
@@ -366,3 +367,7 @@ build/tests/media/3seconds-noskeleton.ogv : $(TESTS_DIR)/media/3seconds-noskelet
 build/tests/media/320x240.ogv : $(TESTS_DIR)/media/320x240.ogv
 	test -d build/tests/media || mkdir -p build/tests/media
 	cp $(TESTS_DIR)/media/320x240.ogv build/tests/media/320x240.ogv
+
+build/tests/media/aspect.ogv : $(TESTS_DIR)/media/aspect.ogv
+	test -d build/tests/media || mkdir -p build/tests/media
+	cp $(TESTS_DIR)/media/aspect.ogv build/tests/media/aspect.ogv

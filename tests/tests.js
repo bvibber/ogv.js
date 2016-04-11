@@ -57,7 +57,7 @@ function doubleAsyncTest(description, func) {
 QUnit.test("OGVCompat", function(assert) {
 	assert.ok(OGVCompat.supported('OGVDecoder'), 'current browser supports OGVDecoder');
 	assert.ok(OGVCompat.supported('OGVPlayer'), 'current browser supports OGVPlayer');
-	
+
 	// some sample UAs from semirandom google searches
 	assert.ok(OGVCompat.isBlacklisted('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25'), 'iPhone 6 safari blacklisted');
 	assert.ok(OGVCompat.isBlacklisted('Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25'), 'iPhone 6 safari blacklisted');
@@ -181,6 +181,18 @@ doubleAsyncTest('metadata detects size', function(assert, player) {
 	player.onloadedmetadata = function() {
 		assert.equal(player.videoWidth, 320, "videoWidth");
 		assert.equal(player.videoHeight, 240, "videoHeight");
+		QUnit.start();
+	};
+	player.load();
+});
+
+doubleAsyncTest('metadata detects aspect ratio', function(assert, player) {
+	player.src = 'media/aspect.ogv';
+	assert.equal(player.videoWidth, 0, "don't know width before");
+	assert.equal(player.videoHeight, 0, "don't know height before");
+	player.onloadedmetadata = function() {
+		assert.equal(player.videoWidth, 525, "videoWidth is 525 not 352");
+		assert.equal(player.videoHeight, 288, "videoHeight is 288");
 		QUnit.start();
 	};
 	player.load();
