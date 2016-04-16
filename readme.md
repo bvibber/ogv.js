@@ -5,8 +5,8 @@ The AudioFeeder class abstracts a buffered output pipe for uncompressed PCM
 audio in the browser, supporting both the standard W3C Web Audio API and a
 Flash-based fallback for IE 10/11.
 
-AudioFeeder was written for the ogv.js in-browser Ogg/WebM media player, and
-is suitable for use in custom audio and video playback.
+AudioFeeder was written for the [ogv.js in-browser Ogg/WebM media player](https://github.com/brion/ogv.js),
+and is suitable for use in custom audio and video playback.
 
 ## Copyright and license
 
@@ -15,34 +15,19 @@ is suitable for use in custom audio and video playback.
 
 ## Updates
 
+* 0.1.0 - 2016-04-16
+ * Refactored code paths and build process!
+ * Can now be imported directly into a webpack-based project
+ * 'make build' to pre-build standalone .js to use in other build processes
 * 0.0.2 - 2016-03-27
  * Broken out from ogv.js, cleaning up to publish as npm module
 
-## Installing with Bower
+## Installing with webpack
 
-If bundling via Bower, add to your bower dependencies:
+If your project is built with webpack, it's easy to bundle up AudioFeeder's
+JavaScript classes and the Flash shim for IE.
 
-```
-bower install audio-feeder
-```
-
-By default, files will go into the bower_components/audio-feeder directory.
-You will need to manually load the AudioFeeder.js file, such as:
-
-```
-<script src="bower_components/audio-feeder/AudioFeeder.js"></script>
-```
-
-or else load it through some other bundling process.
-
-Then follow the instructions in the 'Usage' section below. You will need
-to ensure that dynamicaudio.swf is also packaged along with your bundled
-JS output from browserify to support IE 10/11, and may need to manually
-set the base path in the options to the AudioFeeder constructor.
-
-## Installing with Browserify
-
-If bundling via Browserify, add to your npm dependencies:
+Add to your npm dependencies:
 
 ```
 npm install audio-feeder
@@ -54,10 +39,27 @@ and in your using code, set up the class like so:
 var AudioFeeder = require('audio-feeder');
 ```
 
-Then follow the instructions in the 'Usage' section below. You will need
-to ensure that dynamicaudio.swf is also packaged along with your bundled
-JS output from browserify to support IE 10/11, and may need to manually
-set the base path in the options to the AudioFeeder constructor.
+The Flash shim dynamicaudio.swf (needed for IE 10/11) should be bundled
+automatically along with your output, via the
+[file-loader plugin for webpack](https://www.npmjs.com/package/file-loader).
+However if you have additional build steps, you may need to ensure that
+this file gets copied along with the .js and any other assets, and that
+URL paths are correctly interpreted.
+
+## Using in other build systems
+
+If your main project doesn't use webpack, you can build a pre-packed
+AudioFeeder.js with webpack locally, or download a pre-built release
+archive from https://github.com/brion/audio-feeder/releases
+
+AudioFeeder.js can then be directly loaded in a &lt;script>, or you can
+use it in another packaging system.
+
+You will need to ensure that dynamicaudio.swf is included along with your
+bundled JS/HTML/etc output to support IE 10/11, and may need to manually set
+the base path in the options to the AudioFeeder constructor.
+
+See the section below on rebuilding the pre-packed files for more info.
 
 ## Usage
 
@@ -120,6 +122,8 @@ See also the included demo.html file for a live sample web page.
 AudioFeeder works with 32-bit floating point PCM audio. Data packets are
 represented as an array containing a separate Float32Array for each channel.
 
+Warning: this may change to use a wrapper class before 1.0.
+
 ## Status and audio/video synchronization
 
 Playback state including the current playback position in seconds can be
@@ -127,28 +131,77 @@ retrieved from the getPlaybackState() method:
 
 ```
 {
-  playbackPosition: Float /* seconds */,
-  samplesQueued: Float /* samples, approx */,
+  playbackPosition: Float /* seconds of sample data that have played back so far */,
+  samplesQueued: Float /* samples remaining before the buffer empties out, approximate */,
   dropped: Integer /* count of buffer underrun events */,
-  delayed: Float /* seconds */
+  delayed: Float /* total seconds of silence played to cover underruns */
 }
 ```
 
 Warning: this structure may change before 1.0.
 
-playbackPosition tracks the time via actual samples output, so will correct for
-drops and underruns and is suitable for use in scheduling output of synchronized
+playbackPosition tracks the time via actual samples output, corrected for drops
+and underruns. This value is suitable for use in scheduling output of synchronized
 video frames.
+
+This high-level pseudocode shows a simplified version of the playback sync logic
+from the [ogv.js video player](https://github.com/brion/ogv.js):
+
+```
+function processMediaData() {
+  var state = audioFeeder.getPlaybackState();
+
+  while (codec.audioReady && state.samplesQueued < audioFeeder.bufferSize * 2) {
+    // When our audio buffer gets low, feed it some more audio data.
+    audioFeeder.bufferData(decodeAudioPacket());
+  }
+
+  if (codec.frameReady && state.playbackPosition >= codec.nextFrameTimestamp) {
+    // When the audio playback has reached the scheduled time position
+    // of the next frame, decode and draw it.
+    player.drawFrame(codec.decodeVideoPacket());
+  }
+
+  // And check back in before the next frame or buffer expiration!
+  if (codec.dataPending) {
+    setTimeout(processMediaData, timeUntilNextExcitingEvent);
+  }
+}
+processMediaData();
+```
+
+The caller is responsible for maintaining a loop and scheduling any decoding,
+frame drawing, etc.
+
+## Performance considerations
+
+Beware that setTimeout, setInterval, and requestAnimationFrame may be throttled
+on background tabs, leading to spotty performance if scheduling decoding
+based on them.
+
+You can buffer an arbitrarily large amount of audio data, but for non-trivial
+examples it's best to decode or generate audio in smallish chunks and buffer
+them over time. Pre-buffering will eat more memory, and could lead to slowness
+on the main thread if you process a lot of data on the main thread in one
+function call.
+
+Performing other slow tasks on the foreground thread may also prevent the
+Web Audio API or Flash callbacks from being called in a timely fashion,
+resulting in audio underruns even if lots of data has been buffered up.
 
 ## Events
 
 There is currently only one supported event, the 'onstarved' property.
 This is called if available buffered data runs out during playback.
 
+You can use this event to buffer additional data at the last minute,
+or to trigger a close-out of the feeder when no more data is available.
+
 Todo:
 * add events for beginning of playback?
 * add event for reaching a threshold near starvation
 * add event for scheduled end of playback
+* fix event callback with Flash backend
 
 ## Flash and Internet Explorer 10/11
 
@@ -162,10 +215,64 @@ fallback to work!
 Flash output is resampled to 2-channel 44.1 kHz, which is the only supported
 output format for dynamically generated audio in Flash.
 
-## Rebuilding Flash shim
+## Rebuilding pre-packed AudioFeeder.js
 
-The Flash shim can be rebuilt from source using the Apache Flex SDK:
+The pre-packed AudioFeeder.js included in tarball releases can be built
+from the source files.
+
+Build prerequisites:
+* bash
+* make
+* node.js / npm
 
 ```
-mxmlc -o dynamicaudio.swf -file-specs dynamicaudio.as
+# Fetch build dependencies (webpack, eslint etc)
+npm install
+
+# Lint and rebuild
+make
+```
+
+This will produce a 'build' subdirectory containing a ready to use
+AudioFeeder.js and dynamicaudio.swf, as well as a demo.html example
+page.
+
+It may or may not work to build on Windows given a suitable shell.
+If having trouble with the Makefile, try calling via npm directly:
+
+```
+npm run-script lint
+npm run-script build
+```
+
+## Rebuilding Flash shim
+
+The Flash shim can be rebuilt from source using the Apache Flex SDK.
+The Makefile in this project fetches a local copy of the SDK, which
+is not conveniently packaged.
+
+Building the Flash shim is known to work on Mac OS X and Linux.
+
+Build prerequisites:
+
+* bash
+* make
+* java
+* ant
+* curl
+
+```
+# Rebuild dynamicaudio.swf, installing Flex SDK if necessary
+make swf
+```
+
+Be warned that downloading libraries for the Apache Flex SDK may prompt
+you for permission at your terminal!
+
+```
+# To remove just the dynamicaudio.swf
+make clean
+
+# To remove the Flex SDK
+make distclean
 ```

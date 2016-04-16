@@ -1,8 +1,8 @@
 {
   "name": "audio-feeder",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Abstraction for streaming raw PCM audio in browser via Web Audio API.",
-  "main": "AudioFeeder.js",
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/brion/audio-feeder.git"
@@ -18,7 +18,29 @@
     "url": "https://github.com/brion/audio-feeder/issues"
   },
   "homepage": "https://github.com/brion/audio-feeder#readme",
-  "file": [
-    "AudioFeeder.js"
-  ]
+  "files": [
+    "src",
+    "assets"
+  ],
+  "devDependencies": {
+    "eslint": "^1.7.3",
+    "webpack": "^1.12.2",
+    "file-loader": "^0.8.5"
+  },
+  "scripts": {
+    "build": "webpack --optimize-dedupe",
+    "lint": "eslint src"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "commonjs": true
+    },
+    "rules": {
+      "no-undef": 2,
+      "valid-jsdoc": [1, {
+        "requireReturn": false
+      }]
+    }
+  }
 }
