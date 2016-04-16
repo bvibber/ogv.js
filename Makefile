@@ -8,15 +8,12 @@ TESTS_DIR:=tests
 BUILDSCRIPTS_DIR:=buildscripts
 
 AUDIO_DIR:=node_modules/audio-feeder
-AUDIO_JS_FILES:=$(AUDIO_DIR)/AudioFeeder.js
-AUDIO_SWF:=$(AUDIO_DIR)/dynamicaudio.swf
 
 CORTADO_JAR:=assets/cortado.jar
 
 JS_SRC_DIR:=src/js
 JS_FILES:=$(shell find $(JS_SRC_DIR) -type f -name "*.js")
 JS_FILES+= $(shell find $(JS_SRC_DIR)/workers -type f -name "*.js")
-JS_FILES+= $(AUDIO_JS_FILES)
 
 EMSCRIPTEN_MODULE_TARGETS:=build/ogv-demuxer-ogg.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-demuxer-webm.js
@@ -87,7 +84,7 @@ clean:
 
 # Build everything and copy the result into distro folder and zip that
 
-dist: js $(AUDIO_SWF) README.md COPYING
+dist: js README.md COPYING
 	rm -rf dist
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
@@ -100,7 +97,7 @@ dist: js $(AUDIO_SWF) README.md COPYING
 	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
-	      $(AUDIO_SWF) \
+	      build/dynamicaudio.swf \
 	      README.md \
 	      COPYING \
 	      dist/ogvjs-$(VERSION)/
