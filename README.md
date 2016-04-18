@@ -124,7 +124,7 @@ I've gotten acceptable performance for Vorbis audio and 160p/15fps Theora files 
 
 Meanwhile, newer 64-bit iPhones and iPads are comparable to low-end laptops, and videos at 360p and often 480p play acceptably. Since 32-bit and 64-bit iOS devices have the same user-agent, a benchmark must be used to approximately test minimum CPU speed.
 
-(On iOS 8, Safari performs significantly better than Chrome or other alternative browsers that are unable to enable the JIT due to iOS limitations on third-party developers. Again, a benchmark must be used to detect slow performance, as the browser remains otherwise compatible.)
+(On iOS, Safari performs significantly better than some alternative browsers that are unable to enable the JIT due to use of the old UIWebView API. Chrome 49 and Firefox for iOS are known to work using the newer WKWebView API internally. Again, a benchmark must be used to detect slow performance, as the browser remains otherwise compatible.)
 
 
 Windows on 32-bit ARM platforms is similar... IE 11 on Windows RT 8.1 on a Surface tablet (NVidia Tegra 3), and Edge on Windows 10 Mobile build 10166 on a Lumia 635, perform acceptably with audio and with 160p/15fps videos but have trouble starting around 240p.
