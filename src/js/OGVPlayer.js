@@ -1611,6 +1611,18 @@ var OGVPlayer = function(options) {
 			return null;
 		}
 	});
+	/**
+ 	 * @property preload {string}
+	 * @todo implement
+	 */
+	Object.defineProperty(self, "preload", {
+		get: function getPreload() {
+			return 'auto';
+		},
+		set: function setPreload(val) {
+			// ignore
+		}
+	});
 
 	/**
 	 * @property readyState {number}

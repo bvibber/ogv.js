@@ -94,6 +94,7 @@ doubleTest("object has expected properties", function(assert, player) {
 	assert.equal(typeof player.playbackRate, 'number', 'playbackRate');
 	assert.equal(typeof player.played, 'object', 'played'); // ??
 	assert.equal(typeof player.poster, 'string', 'poster');
+	assert.equal(typeof player.preload, 'string', 'preload');
 	assert.equal(typeof player.readyState, 'number', 'readyState');
 	assert.equal(typeof player.seeking, 'boolean', 'seeking');
 	assert.equal(typeof player.src, 'string', 'src');
