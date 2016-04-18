@@ -188,6 +188,11 @@ var OGVPlayer = function(options) {
 			self.onresize.call(self, event);
 		}
 	}
+	function fireEventAsync(eventName, props) {
+		setTimeout(function() {
+			fireEvent(eventName, props);
+		}, 0);
+	}
 
 	var codec,
 		actionQueue = [],
@@ -197,9 +202,6 @@ var OGVPlayer = function(options) {
 		initialPlaybackOffset = 0.0;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
-		if (muted) {
-			audioFeeder.mute();
-		}
 		audioFeeder.onstarved = function() {
 			// If we're in a background tab, timers may be throttled.
 			// When audio buffers run out, go decode some more stuff.
@@ -210,6 +212,8 @@ var OGVPlayer = function(options) {
 			}
 		};
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
+		audioFeeder.volume = self.volume;
+		audioFeeder.muted = self.muted;
 	}
 
 	function startPlayback(offset) {
@@ -1400,12 +1404,9 @@ var OGVPlayer = function(options) {
 		set: function setMuted(val) {
 			muted = val;
 			if (audioFeeder) {
-				if (muted) {
-					audioFeeder.mute();
-				} else {
-					audioFeeder.unmute();
-				}
+				audioFeeder.muted = muted;
 			}
+			fireEventAsync('volumechange');
 		}
 	});
 
@@ -1672,16 +1673,22 @@ var OGVPlayer = function(options) {
 		}
 	});
 
+	var _volume = 1;
+
 	/**
 	 * @property volume {number}
 	 * @todo implement
 	 */
 	Object.defineProperty(self, "volume", {
 		get: function getVolume() {
-			return 1;
+			return _volume;
 		},
 		set: function setVolume(val) {
-			// ignore
+			_volume = +val;
+			if (audioFeeder) {
+				audioFeeder.volume = _volume;
+			}
+			fireEventAsync('volumechange');
 		}
 	});
 

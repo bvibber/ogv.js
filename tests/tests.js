@@ -219,6 +219,42 @@ doubleTest('canPlayTypeSpaces', function(assert, player) {
 	assert.equal(player.canPlayType('video/ogg; codecs="theora ,opus"'), 'probably', 'video/ogg; codecs="theora ,opus"');
 });
 
+doubleTest('canSetMuted', function(assert, player) {
+	assert.equal(player.muted, false, 'muted starts at false');
+	player.muted = true;
+	assert.equal(player.muted, true, 'muted is true after setting it');
+	player.muted = false;
+	assert.equal(player.muted, false, 'muted is false after setting it');
+});
+
+doubleTest('canSetVolume', function(assert, player) {
+	assert.equal(player.volume, 1, 'volume starts at 1');
+	player.volume = 0.5;
+	assert.equal(player.volume, 0.5, 'volume is 0.5 after setting it');
+});
+
+doubleAsyncTest('setting muted yields onvolumechange', function(assert, player) {
+	var hasFired = false;
+	player.onvolumechange = function() {
+		hasFired = true;
+		assert.ok( true, 'onvolumechange was fired');
+		QUnit.start();
+	};
+	player.muted = true;
+	assert.ok( !hasFired, "event should not fire until next event loop" );
+});
+
+doubleAsyncTest('setting volume yields onvolumechange', function(assert, player) {
+	var hasFired = false;
+	player.onvolumechange = function() {
+		hasFired = true;
+		assert.ok( true, 'onvolumechange was fired');
+		QUnit.start();
+	};
+	player.volume = 0.5;
+	assert.ok( !hasFired, "event should not fire until next event loop" );
+});
+
 
 doubleAsyncTest('load yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before load');
