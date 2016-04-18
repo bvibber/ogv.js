@@ -7,8 +7,17 @@
 <body>
   <h1>audio-feeder demo</h1>
   <p>Plays middle C note for 1 second</p>
-  <button id=start disabled>Start audio</button>
-  <button id=stop disabled>Stop audio</button>
+  <div>
+    <button id=start disabled>Start audio</button>
+    <button id=stop disabled>Stop audio</button>
+  </div>
+  <div>
+    <label><input type=checkbox name=muted val=1> Mute</label>
+    <label><input type=radio name=volume value=25> 25% vol</label>
+    <label><input type=radio name=volume value=50> 50% vol</label>
+    <label><input type=radio name=volume value=75> 75% vol</label>
+    <label><input type=radio name=volume value=100 checked> 100% vol</label>
+  </div>
 
   <script src="AudioFeeder.js"></script>
   <script src="demo.js"></script>

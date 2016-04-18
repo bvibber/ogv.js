@@ -21,12 +21,14 @@ package {
         private var latency:Number = 0;
         private var dropped:Number = 0;
         private var targetRate:Number = 44100;
+        private var volume:Number = 1;
 
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
             ExternalInterface.addCallback('start', startPlayback);
             ExternalInterface.addCallback('stop', stopPlayback);
+            ExternalInterface.addCallback('setVolume', setVolume);
 
             // Create a hex digit lookup table
             var hexDigits:Array = ['0', '1', '2', '3', '4', '5', '6', '7',
@@ -38,7 +40,7 @@ package {
 
         // Called from JavaScript to add samples to the buffer
         // Note we are using a hex string of 16-bit int samples instead of an
-        // array. Flash's stupid ExternalInterface passes every sample as XML, 
+        // array. Flash's stupid ExternalInterface passes every sample as XML,
         // which is incredibly expensive to encode/decode
         public function write(s:String):void {
             // Decode the hex string asynchronously.
@@ -56,7 +58,7 @@ package {
             playbackTimeAtBufferTail = 0;
             soundChannel = this.sound.play();
         }
-        
+
         public function stopPlayback():void {
             if (soundChannel) {
                 playbackTimeAtBufferTail = soundChannel.position / 1000;
@@ -70,7 +72,7 @@ package {
             stringBuffer.splice(0, stringBuffer.length);
             buffer.splice(0, buffer.length);
         }
-        
+
         public function flushBuffers():void {
             while (stringBuffer.length > 0) {
                 var s:String = stringBuffer.shift();
@@ -113,12 +115,16 @@ package {
             }
         }
 
+        public function setVolume(val:Number):void {
+          volume = val;
+        }
+
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
             flushBuffers();
 
             var playbackTime:Number = (event.position / targetRate);
-            
+
             var expectedTime:Number = playbackTimeAtBufferTail;
             if (expectedTime < playbackTime) {
                 // we may have lost some time while something ran too slow
@@ -139,8 +145,8 @@ package {
             var sampleCount:Number = Math.min(buffer.length / 2, bufferSize);
 
             for (i = 0; i < sampleCount; i++) {
-                event.data.writeFloat(buffer[i * 2]);
-                event.data.writeFloat(buffer[i * 2 + 1]);
+                event.data.writeFloat(buffer[i * 2] * volume);
+                event.data.writeFloat(buffer[i * 2 + 1] * volume);
             }
             queuedTime += sampleCount / targetRate;
             playbackTimeAtBufferTail = playbackTime + sampleCount / targetRate;
@@ -149,4 +155,3 @@ package {
         }
     }
 }
-

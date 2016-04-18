@@ -93,21 +93,70 @@
 	AudioFeeder.prototype.channels = 0;
 
 	/**
-	 * Is the feeder currently set to mute output?
-	 *
-	 * @type {boolean}
-	 * @readonly
-	 * @see {AudioFeeder#mute}
-	 * @see {AudioFeeder#unmute}
-	 */
-	AudioFeeder.prototype.muted = false;
-
-	/**
 	 * Size of output buffers in samples, as a hint for latency/scheduling
 	 * @type {number}
 	 * @readonly
 	 */
 	AudioFeeder.prototype.bufferSize = 0;
+
+	/**
+	 * Is the feeder currently set to mute output?
+	 * When muted, this overrides the volume property.
+	 *
+	 * @type {boolean}
+	 */
+	Object.defineProperty(AudioFeeder.prototype, 'muted', {
+ 		get: function getMuted() {
+			if (this._backend) {
+				return this._backend.muted;
+			} else {
+				throw 'Invalid state: cannot get mute before init';
+			}
+ 		},
+ 		set: function setMuted(val) {
+			if (this._backend) {
+				this._backend.muted = val;
+			} else {
+				throw 'Invalid state: cannot set mute before init';
+			}
+ 		}
+ 	});
+
+	/**
+	 * @deprecated in favor of muted and volume properties
+	 */
+	AudioFeeder.prototype.mute = function() {
+		this.muted = true;
+	};
+
+	/**
+	* @deprecated in favor of muted and volume properties
+	 */
+	AudioFeeder.prototype.unmute = function() {
+		this.muted = false;
+	};
+
+	/**
+	 * Volume multiplier, defaults to 1.0.
+	 * @name volume
+	 * @type {number}
+	 */
+	Object.defineProperty(AudioFeeder.prototype, 'volume', {
+		get: function getVolume() {
+			if (this._backend) {
+				return this._backend.volume;
+			} else {
+				throw 'Invalid state: cannot get volume before init';
+			}
+		},
+		set: function setVolume(val) {
+			if (this._backend) {
+				this._backend.volume = val;
+			} else {
+				throw 'Invalid state: cannot set volume before init';
+			}
+		}
+	});
 
 	/**
 	 * Start setting up for output with the given channel count and sample rate.
@@ -133,6 +182,13 @@
 
 		this.targetRate = this._backend.rate;
 		this.bufferSize = this._backend.bufferSize;
+
+		// Pass through the starved event
+		this._backend.onstarved = (function() {
+			if (this.onstarved) {
+				this.onstarved();
+			}
+		}).bind(this);
 	};
 
 	/**
@@ -198,22 +254,6 @@
 		} else {
 			throw 'Invalid state: AudioFeeder cannot getPlaybackState before init';
 		}
-	};
-
-	/**
-	 * @todo replace with volume property
-	 */
-	AudioFeeder.prototype.mute = function() {
-		this.muted = true;
-		this._backend.mute();
-	};
-
-	/**
-	 * @todo replace with volume property
-	 */
-	AudioFeeder.prototype.unmute = function() {
-		this.muted = false;
-		this._backend.unmute();
 	};
 
 	/**

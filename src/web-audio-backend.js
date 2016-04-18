@@ -51,7 +51,6 @@
     this._queuedTime = 0;
     this._delayedTime = 0;
     this._dropped = 0;
-    this._muted = false;
 
     // @todo support new audio worker mode too
     if (context.createScriptProcessor) {
@@ -63,6 +62,49 @@
       throw new Error("Bad version of web audio API?");
     }
   }
+
+  /**
+   * Internal volume property backing.
+   * @type {number}
+   * @access private
+   */
+  WebAudioBackend.prototype._volume = 1;
+
+  /**
+	 * Volume multiplier, defaults to 1.0.
+	 * @name volume
+	 * @type {number}
+	 */
+	Object.defineProperty(WebAudioBackend.prototype, 'volume', {
+		get: function getVolume() {
+      return this._volume;
+		},
+		set: function setVolume(val) {
+      this._volume = +val;
+		}
+	});
+
+  /**
+   * Internal muted property backing.
+   * @type {number}
+   * @access private
+   */
+  WebAudioBackend.prototype._muted = false;
+
+  /**
+	 * Is the backend currently set to mute output?
+	 * When muted, this overrides the volume property.
+	 *
+	 * @type {boolean}
+	 */
+	Object.defineProperty(WebAudioBackend.prototype, 'muted', {
+ 		get: function getMuted() {
+      return this._muted;
+ 		},
+ 		set: function setMuted(val) {
+      this._muted = !!val;
+ 		}
+ 	});
 
   /**
    * onaudioprocess event handler for the ScriptProcessorNode
@@ -107,8 +149,7 @@
       return;
     }
 
-    // @todo adjust volume on a full scale as well as the mute param
-    var volume = (this._muted ? 0 : 1);
+    var volume = (this.muted ? 0 : this.volume);
 
     // Actually get that data and write it out...
     var inputBuffer = this._bufferQueue.nextBuffer();
@@ -222,20 +263,6 @@
 
     this._context = null;
     this._buffers = null;
-  };
-
-  /**
-   * Set the output to muted.
-   */
-  WebAudioBackend.prototype.mute = function() {
-    this._muted = true;
-  };
-
-  /**
-   * Set the output to unmuted.
-   */
-  WebAudioBackend.prototype.unmute = function() {
-    this._muted = false;
   };
 
   /**

@@ -12,6 +12,12 @@ module.exports = function demo() {
     samples = 48000,
     feeder = new AudioFeeder();
 
+  start.disabled = true;
+  feeder.init(channels, samples);
+  feeder.waitUntilReady(function() {
+    start.disabled = false;
+  });
+
   function bufferSineWave() {
     var freq = 261, // middle C
       buffer = new Float32Array(samples),
@@ -26,30 +32,36 @@ module.exports = function demo() {
 
   start.addEventListener('click', function() {
     start.disabled = true;
-    feeder.init(channels, samples);
-    feeder.waitUntilReady(function() {
-      stop.disabled = false;
+    stop.disabled = false;
 
-      bufferSineWave();
-      feeder.start();
-    });
+    bufferSineWave();
+    feeder.start();
   });
 
   stop.addEventListener('click', function() {
     stop.disabled = true;
-    feeder.close();
-    feeder = new AudioFeeder();
     start.disabled = false;
+    feeder.stop();
   });
 
   feeder.onstarved = function() {
-    setTimeout(function() {
-      stop.disabled = true;
-      feeder.close();
-      feeder = new AudioFeeder();
-      start.disabled = false;
-    });
+    console.log('starving');
+    stop.disabled = true;
+    start.disabled = false;
+    feeder.stop();
   };
+
+  var muted = document.querySelector('input[name=muted]');
+  muted.addEventListener('click', function() {
+    feeder.muted = this.checked;
+  });
+
+  var volumes = document.querySelectorAll('input[name=volume]');
+  for (var i = 0; i < volumes.length; i++) {
+    volumes[i].addEventListener('click', function() {
+      feeder.volume = parseInt(this.value) / 100;
+    });
+  }
 
   start.disabled = false;
 };
