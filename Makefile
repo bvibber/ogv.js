@@ -31,7 +31,7 @@ C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
 
-.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist lint cleanshaders shaders run-demo run-dev-server
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint cleanshaders shaders run-demo run-dev-server
 
 DEFAULT : all
 
@@ -50,7 +50,8 @@ run-dev-server : package.json
 
 # Build all
 
-all : js \
+all : dist \
+      zip \
       demo \
       tests
 
@@ -82,12 +83,11 @@ clean:
 	rm -f libskeleton/configure
 	rm -f libnestegg/configure
 
-# Build everything and copy the result into distro folder and zip that
+# Build everything and copy the result into dist folder
 
 dist: js README.md COPYING
 	rm -rf dist
 	mkdir dist
-	mkdir dist/ogvjs-$(VERSION)
 	cp -p build/ogv.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
@@ -102,15 +102,24 @@ dist: js README.md COPYING
 	      build/dynamicaudio.swf \
 	      README.md \
 	      COPYING \
-	      dist/ogvjs-$(VERSION)/
-	cp -p libogg/COPYING dist/ogvjs-$(VERSION)/COPYING-ogg.txt
-	cp -p libvorbis/COPYING dist/ogvjs-$(VERSION)/COPYING-vorbis.txt
-	cp -p libtheora/COPYING dist/ogvjs-$(VERSION)/COPYING-theora.txt
-	cp -p libopus/COPYING dist/ogvjs-$(VERSION)/COPYING-opus.txt
-	cp -p libnestegg/LICENSE dist/ogvjs-$(VERSION)/LICENSE-nestegg.txt
-	cp -p libvpx/LICENSE dist/ogvjs-$(VERSION)/LICENSE-vpx.txt
-	cp -p libvpx/PATENTS dist/ogvjs-$(VERSION)/PATENTS-vpx.txt
-	(cd dist && zip -r ogvjs-$(VERSION).zip ogvjs-$(VERSION))
+	      dist/
+	cp -p libogg/COPYING dist/COPYING-ogg.txt
+	cp -p libvorbis/COPYING dist/COPYING-vorbis.txt
+	cp -p libtheora/COPYING dist/COPYING-theora.txt
+	cp -p libopus/COPYING dist/COPYING-opus.txt
+	cp -p libnestegg/LICENSE dist/LICENSE-nestegg.txt
+	cp -p libvpx/LICENSE dist/LICENSE-vpx.txt
+	cp -p libvpx/PATENTS dist/PATENTS-vpx.txt
+
+# Zip up the dist folder for non-packaged release
+
+zip: dist
+	rm -rf zip
+	mkdir zip
+	mkdir zip/ogvjs-$(VERSION)
+	cp -pr dist/* zip/ogvjs-$(VERSION)
+	(cd zip && zip -r ogvjs-$(VERSION).zip ogvjs-$(VERSION))
+
 
 # Build depending C libraries with Emscripten
 
@@ -309,7 +318,7 @@ build/demo/media/curiosity.ogv : $(DEMO_DIR)/media/curiosity.ogv
 
 build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp -pr dist/ogvjs-$(VERSION)/* build/demo/lib/
+	cp -pr dist/* build/demo/lib/
 
 build/demo/lib/cortado.jar : $(CORTADO_JAR)
 	test -d build/demo/lib || mkdir -p build/demo/lib
@@ -341,7 +350,7 @@ build/tests/tests.js : $(TESTS_DIR)/tests.js
 
 build/tests/lib/ogv.js : dist
 	test -d build/tests/lib || mkdir -p build/tests/lib
-	cp -pr dist/ogvjs-$(VERSION)/* build/tests/lib/
+	cp -pr dist/* build/tests/lib/
 
 build/tests/media/1frame.ogv : $(TESTS_DIR)/media/1frame.ogv
 	test -d build/tests/media || mkdir -p build/tests/media

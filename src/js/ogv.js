@@ -4,17 +4,25 @@
 // Copyright (c) 2013-2016 Brion Vibber
 //
 
+var OGVCompat = require("./OGVCompat.js"),
+	OGVLoader = require("./OGVLoader.js"),
+	OGVMediaType = require("./OGVMediaType.js"),
+	OGVPlayer = require("./OGVPlayer.js"),
+	OGVVersion = __OGV_FULL_VERSION__;
+
 // Version 1.0's web-facing and test-facing interfaces
-window.OGVCompat = require("./OGVCompat.js");
-window.OGVLoader = require("./OGVLoader.js");
-window.OGVMediaType = require("./OGVMediaType.js");
-window.OGVPlayer = require("./OGVPlayer.js");
-window.OGVVersion = __OGV_FULL_VERSION__;
+if (window) {
+	window.OGVCompat = OGVCompat;
+	window.OGVLoader = OGVLoader;
+	window.OGVMediaType = OGVMediaType;
+	window.OGVPlayer = OGVPlayer;
+	window.OGVVersion = OGVVersion;
+}
 
 module.exports = {
-	Compat: OGVCompat,
-	Loader: OGVLoader,
-	MediaType: OGVMediaType,
-	Player: OGVPlayer,
-	Version: __OGV_FULL_VERSION__
+	OGVCompat: OGVCompat,
+	OGVLoader: OGVLoader,
+	OGVMediaType: OGVMediaType,
+	OGVPlayer: OGVPlayer,
+	OGVVersion: OGVVersion
 };

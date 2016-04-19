@@ -16,13 +16,13 @@ var plugins = [
 module.exports = [
   {
     // Main entry point!
-    entry: './index',
+    entry: './src/js/ogv.js',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
-      filename: 'ogv.js'
-      // don't use library module format...
-      // we export a few symbols to the global context on purpose.
+      filename: 'ogv.js',
+      libraryTarget: 'umd',
+      library: 'ogvjs'
     },
     plugins: plugins
   },
