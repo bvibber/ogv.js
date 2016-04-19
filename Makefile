@@ -89,6 +89,8 @@ dist: js README.md COPYING
 	mkdir dist
 	mkdir dist/ogvjs-$(VERSION)
 	cp -p build/ogv.js \
+	      build/ogv-support.js \
+	      build/ogv-version.js \
 	      build/ogv-demuxer-ogg.js \
 	      build/ogv-demuxer-webm.js \
 	      build/ogv-decoder-audio-opus.js \

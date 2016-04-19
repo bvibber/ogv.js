@@ -15,13 +15,34 @@ var plugins = [
 
 module.exports = [
   {
+    // Main entry point!
     entry: './index',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
       filename: 'ogv.js'
       // don't use library module format...
-      // we export a couple few symbols to the global context on purpose.
+      // we export a few symbols to the global context on purpose.
+    },
+    plugins: plugins
+  },
+  {
+    // Alt limited entry point for compat testing before loading
+    entry: './src/js/ogv-support.js',
+    output: {
+      path: path.resolve(__dirname, BUILD_DIR),
+      publicPath: publicPath(),
+      filename: 'ogv-support.js'
+    },
+    plugins: plugins
+  },
+  {
+    // Alt limited entry point for just exposting the version marker string
+    entry: './src/js/ogv-version.js',
+    output: {
+      path: path.resolve(__dirname, BUILD_DIR),
+      publicPath: publicPath(),
+      filename: 'ogv-version.js'
     },
     plugins: plugins
   },
