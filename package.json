@@ -7,7 +7,8 @@
     "index.js",
     "README.md",
     "COPYING",
-    "dist/"
+    "dist/",
+    "webpack-bundle/"
   ],
   "scripts": {
     "prepublish": "make dist",
@@ -47,14 +48,12 @@
     "url": "https://github.com/brion/ogv.js/issues"
   },
   "homepage": "https://github.com/brion/ogv.js#readme",
-  "dependencies": {
-    "webpack": "^1.12.2",
-    "file-loader": "^0.8.5"
-  },
   "devDependencies": {
     "eslint": "^1.7.3",
     "node-static": "^0.7.7",
     "webpack-dev-server": "^1.12.1",
+    "webpack": "^1.12.2",
+    "file-loader": "^0.8.5",
     "audio-feeder": "0.1.1"
   }
 }

@@ -4,7 +4,7 @@ var path = require("path");
 const BUILD_DIR = 'build';
 
 function publicPath() {
-  return '/' + BUILD_DIR + '/';
+  return '';
 }
 
 var plugins = [

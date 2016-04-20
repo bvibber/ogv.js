@@ -10,7 +10,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * 1.1.0alpha - 2016-04-??
  * refactored parts of build using webpack
  * reduction in unnecessary global symbols
- * (bugfixes to come)
+ * added many properties from standard media elements
+ * volume property now works
+ * (many bug fixes in the works)
 * 1.0 - 2015-09-04
  * initial stable release, as used on Wikipedia
 
@@ -64,6 +66,39 @@ Testing browsers (these support .ogv natively):
 * Chrome 44
 
 
+## Package installation
+
+Pre-built releases of ogv.js are available as [.zip downloads from the GitHub releases page](https://github.com/brion/ogv.js/releases) and (soon) through the npm package manager.
+
+You can load the ogv.js main entry point directly in a script tag, or bundle it through whatever build process you like. The other .js files and the .swf file (for audio in IE) must be made available for runtime loading, together in the same directory.
+
+ogv.js will try to auto-detect the path to its resources based on the script element that loads ogv.js or ogv-support.js. If you load ogv.js through another bundler (such as browserify or MediaWiki's ResourceLoader) you may need to override this manually before instantiating players:
+
+```
+  // Path to ogv-demuxer-ogg.js, ogv-worker-audio.js, dynamicaudio.swf etc
+  OGVLoader.base = '/path/to/resources';
+```
+
+To fetch from npm:
+
+```
+npm install ogv
+```
+
+The same files from the zip releases will appear in 'node_modules/ogv/dist'.
+
+```
+var ogv = require('ogv'),
+  player = new ogv.OGVPlayer();
+```
+
+For webpack projects, there is an experimental 'ogv/webpack-bundle' submodule that bundles the dist files into an 'ogv.js' subdirectory alongside your output, using the 'file-loader' module. Try:
+
+```
+var ogv = require('ogv/webpack-bundle'),
+  player = new ogv.OGVPlayer();
+```
+
 ## Usage
 
 The `OGVPlayer` class implements a player, and supports a subset of the events, properties and methods from [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) and [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement).
@@ -102,13 +137,6 @@ If you need a URL versioning/cache-buster parameter for dynamic loading of `ogv.
   var script = document.createElement('script');
   script.src = 'ogv.js?version=' + encodeURIComponent(OGVVersion);
   document.querySelector('head').appendChild(script);
-```
-
-Usually, ogv.js will auto-detect the path to its resources based on the script element that loads ogv.js or ogv-support.js. If you load ogv.js through a non-customary bundler (such as MediaWiki's ResourceLoader) you may need to override this manually before instantiating players:
-
-```
-  // Path to ogv-demuxer-ogg.js, ogv-worker-audio.js, dynamicaudio.swf etc
-  OGVLoader.base = '/path/to/resources';
 ```
 
 
