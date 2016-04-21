@@ -811,8 +811,9 @@ var OGVPlayer = function(options) {
 							log("ENDING NOW");
 							stopPlayback();
 							ended = true;
-							fireEvent('ended');
 							// @todo implement loop behavior
+							paused = true;
+							fireEvent('ended');
 						}
 					}
 				} else if (paused) {
