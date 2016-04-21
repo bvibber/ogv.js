@@ -256,6 +256,7 @@ var OGVPlayer = function(options) {
 
 	var currentSrc = '',
 		stream,
+		streamEnded = false,
 		byteLength = 0,
 		duration = null,
 		lastSeenTimestamp = null,
@@ -284,20 +285,25 @@ var OGVPlayer = function(options) {
 		delayedAudio = 0; // seconds audio processing was delayed by blocked CPU
 	var poster = '', thumbnail;
 
+	// called when stopping old video on load()
 	function stopVideo() {
 		log("STOPPING");
 		// kill the previous video if any
 		state = State.INITIAL;
+		seekState = SeekState.NOT_SEEKING;
 		started = false;
 		paused = true;
-		ended = true;
+		ended = false;
 		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
 
 		if (stream) {
+			// @todo fire an abort event if still loading
+			// @todo fire an emptied event if previously had data
 			stream.abort();
 			stream = null;
+			streamEnded = false;
 		}
 		if (codec) {
 			codec.destroy();
@@ -311,6 +317,9 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
+		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
+		duration = NaN; // do not fire durationchange
+		// timeline offset to 0?
 	}
 
 	var lastFrameTime = getTimestamp(),
@@ -387,6 +396,7 @@ var OGVPlayer = function(options) {
 		if (stream.bytesTotal === 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
+		streamEnded = false;
 		state = State.SEEKING;
 		seekTargetTime = toTime;
 		seekTargetKeypoint = -1;
@@ -699,6 +709,7 @@ var OGVPlayer = function(options) {
 						state = State.LOADED;
 						codec.flush(function() {
 							stream.seek(0);
+							streamEnded = false;
 							readBytesAndWait();
 						});
 					}
@@ -780,7 +791,7 @@ var OGVPlayer = function(options) {
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
 				if (!more) {
-					if (stream) {
+					if (!streamEnded) {
 						// Ran out of buffered input
 						readBytesAndWait();
 					} else {
@@ -795,9 +806,10 @@ var OGVPlayer = function(options) {
 							pingProcessing(Math.max(0, finalDelay));
 						} else {
 							log("ENDING NOW");
-							stopVideo();
+							stopPlayback();
 							ended = true;
 							fireEvent('ended');
+							// @todo implement loop behavior
 						}
 					}
 				} else if (paused) {
@@ -1084,13 +1096,14 @@ var OGVPlayer = function(options) {
 	 * HTMLMediaElement load method
 	 */
 	self.load = function() {
-		if (stream) {
+		if (currentSrc == self.src) {
 			// already loaded.
 			return;
 		}
 
+		stopVideo();
+
 		currentSrc = '' + self.src;
-		started = false;
 		stream = new StreamFile({
 			url: currentSrc,
 			bufferSize: 65536 * 4,
@@ -1125,20 +1138,14 @@ var OGVPlayer = function(options) {
 			ondone: function() {
 				waitingOnInput = false;
 
-				if (state == State.SEEKING) {
-					pingProcessing();
-				} else if (state == State.SEEKING_END) {
-					pingProcessing();
-				} else {
-					log('closing stream (done)');
-					stream = null;
+				// @todo record doneness in networkState
+				log('stream is at end!');
 
-					if (isProcessing()) {
-						// We're waiting on the codec already...
-					} else {
-						// Let the read/decode/draw loop know we're out!
-						pingProcessing();
-					}
+				if (isProcessing()) {
+					// We're waiting on the codec already...
+				} else {
+					// Let the read/decode/draw loop know we're out!
+					pingProcessing();
 				}
 			},
 			onerror: function(err) {
