@@ -7,7 +7,9 @@ function nativePlayer() {
 }
 
 function ogvPlayer() {
-	return new OGVPlayer();
+	return new OGVPlayer({
+		debug: true
+	});
 }
 
 QUnit.assert.floatClose = function(actual, expected, message) {
@@ -397,6 +399,7 @@ doubleAsyncTest('play yields onended', function(assert, player) {
 	player.onended = function() {
 		assert.ok( true, 'onended event was fired' );
 		assert.ok( player.paused, 'player thinks it is paused again');
+		assert.floatClose( player.currentTime, 1, 'play ended at expected time' );
 		QUnit.start();
 	};
 	player.play();
@@ -456,6 +459,22 @@ doubleAsyncTest('seek while playing triggers seeking, seeked', function(assert, 
 		QUnit.start();
 	};
 
+	player.play();
+});
+
+doubleAsyncTest('play after ended replays', function(assert, player) {
+	player.src = 'media/1second.ogv';
+	player.onended = function() {
+		assert.ok( true, 'onended event was fired' );
+		player.onplay = function() {
+			assert.ok( player.currentTime < 0.25, 'on replay started near beginning' );
+		};
+		player.onended = function() {
+			assert.ok( true, 'onended event was fired a second time' );
+			QUnit.start();
+		};
+		player.play();
+	};
 	player.play();
 });
 
