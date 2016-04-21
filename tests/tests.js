@@ -7,7 +7,9 @@ function nativePlayer() {
 }
 
 function ogvPlayer() {
-	return new OGVPlayer();
+	return new OGVPlayer({
+		debug: true
+	});
 }
 
 QUnit.assert.floatClose = function(actual, expected, message) {
@@ -458,5 +460,9 @@ doubleAsyncTest('seek while playing triggers seeking, seeked', function(assert, 
 
 	player.play();
 });
+
+// @todo write test for 'ended actually reaches the end'
+
+// @todo write test for 'play after ended restarts from beginning'
 
 // @todo implement and test seeking while *not* playing
