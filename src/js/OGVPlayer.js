@@ -701,6 +701,7 @@ var OGVPlayer = function(options) {
 						readBytesAndWait();
 					} else {
 						// We are at the end!
+						log('seek-duration: we are at the end');
 						if (lastSeenTimestamp > 0) {
 							duration = lastSeenTimestamp;
 						}
@@ -1101,7 +1102,9 @@ var OGVPlayer = function(options) {
 			return;
 		}
 
-		stopVideo();
+		if (started) {
+			stopVideo();
+		}
 
 		currentSrc = '' + self.src;
 		stream = new StreamFile({
