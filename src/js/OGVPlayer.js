@@ -797,6 +797,7 @@ var OGVPlayer = function(options) {
 						readBytesAndWait();
 					} else {
 						// Ran out of stream!
+						log('Ran out of stream!');
 						var finalDelay = 0;
 						if (codec.hasAudio) {
 							audioState = audioFeeder.getPlaybackState();
@@ -804,6 +805,7 @@ var OGVPlayer = function(options) {
 							finalDelay = audioBufferedDuration * 1000;
 						}
 						if (pendingAudio || pendingFrame || finalDelay > 0) {
+							log('ending pending ' + finalDelay + ' ms');
 							pingProcessing(Math.max(0, finalDelay));
 						} else {
 							log("ENDING NOW");
@@ -1143,6 +1145,7 @@ var OGVPlayer = function(options) {
 
 				// @todo record doneness in networkState
 				log('stream is at end!');
+				streamEnded = true;
 
 				if (isProcessing()) {
 					// We're waiting on the codec already...
