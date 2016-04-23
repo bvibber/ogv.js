@@ -399,6 +399,7 @@ doubleAsyncTest('play yields onended', function(assert, player) {
 	player.onended = function() {
 		assert.ok( true, 'onended event was fired' );
 		assert.ok( player.paused, 'player thinks it is paused again');
+		assert.floatClose( player.currentTime, 1, 'play ended at expected time' );
 		QUnit.start();
 	};
 	player.play();
@@ -461,8 +462,20 @@ doubleAsyncTest('seek while playing triggers seeking, seeked', function(assert, 
 	player.play();
 });
 
-// @todo write test for 'ended actually reaches the end'
-
-// @todo write test for 'play after ended restarts from beginning'
+doubleAsyncTest('play after ended replays', function(assert, player) {
+	player.src = 'media/1second.ogv';
+	player.onended = function() {
+		assert.ok( true, 'onended event was fired' );
+		player.onplay = function() {
+			assert.ok( player.currentTime < 0.25, 'on replay started near beginning' );
+		};
+		player.onended = function() {
+			assert.ok( true, 'onended event was fired a second time' );
+			QUnit.start();
+		};
+		player.play();
+	};
+	player.play();
+});
 
 // @todo implement and test seeking while *not* playing

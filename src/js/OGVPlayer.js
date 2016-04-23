@@ -795,6 +795,9 @@ var OGVPlayer = function(options) {
 					if (!streamEnded) {
 						// Ran out of buffered input
 						readBytesAndWait();
+					} else if (pendingAudio || pendingFrame) {
+						// Still more to decode
+						// We'll be pinged when they come back
 					} else {
 						// Ran out of stream!
 						log('Ran out of stream!');
@@ -804,12 +807,15 @@ var OGVPlayer = function(options) {
 							audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate);
 							finalDelay = audioBufferedDuration * 1000;
 						}
-						if (pendingAudio || pendingFrame || finalDelay > 0) {
+						if (finalDelay > 0) {
 							log('ending pending ' + finalDelay + ' ms');
 							pingProcessing(Math.max(0, finalDelay));
 						} else {
 							log("ENDING NOW");
-							stopPlayback();
+							if (audioFeeder) {
+								audioFeeder.stop();
+							}
+							initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
 							ended = true;
 							// @todo implement loop behavior
 							paused = true;
@@ -1210,7 +1216,14 @@ var OGVPlayer = function(options) {
 
 			if (started) {
 
-				log('.play() while already started');
+				if (ended && stream && byteLength) {
+
+					log('.play() starting over after end');
+					seek(0);
+
+				} else {
+					log('.play() while already started');
+				}
 
 				actionQueue.push(function() {
 					startPlayback();
