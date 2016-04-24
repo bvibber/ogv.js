@@ -122,8 +122,6 @@ function WebGLFrameSink(canvas, videoInfo) {
 	}
 
 	function init(yCbCrBuffer) {
-		gl.viewport(0, 0, canvas.width, canvas.height);
-
 		vertexShader = compileShader(gl.VERTEX_SHADER, YCBCR_VERTEX_SHADER);
 		if (WebGLFrameSink.stripe) {
 			fragmentShader = compileShader(gl.FRAGMENT_SHADER, YCBCR_STRIPE_FRAGMENT_SHADER);
@@ -266,6 +264,16 @@ function WebGLFrameSink(canvas, videoInfo) {
 		gl.drawArrays(gl.TRIANGLES, 0, rectangle.length / 2);
 		checkError();
 	};
+	
+	self.clear = function() {
+		gl.clearColor(0.0, 0.0, 0.0, 0.0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+	};
+
+	// @fixme make the clearing work reliably
+	self.clear();
+	gl.viewport(0, 0, canvas.width, canvas.height);
+	self.clear();
 
 	return self;
 }

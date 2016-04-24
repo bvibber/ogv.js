@@ -326,6 +326,10 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
+		if (frameSink) {
+			frameSink.clear();
+			frameSink = null;
+		}
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
 		duration = null; // do not fire durationchange
 		// timeline offset to 0?
