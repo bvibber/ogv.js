@@ -122,6 +122,8 @@ function WebGLFrameSink(canvas, videoInfo) {
 	}
 
 	function init(yCbCrBuffer) {
+		gl.viewport(0, 0, canvas.width, canvas.height);
+
 		vertexShader = compileShader(gl.VERTEX_SHADER, YCBCR_VERTEX_SHADER);
 		if (WebGLFrameSink.stripe) {
 			fragmentShader = compileShader(gl.FRAGMENT_SHADER, YCBCR_STRIPE_FRAGMENT_SHADER);
