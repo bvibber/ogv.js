@@ -9,30 +9,36 @@
 
 <script src="lib/ogv.js"></script>
 
+
+</head>
+<body>
+
+<div id="videoarea"></div>
+
+<select onchange="switchmedia(this)">
+	<option value="media/curiosity.ogv">Curiosity's Seven Minutes of Terror (Vorbis, Theora; 160p)</option>
+	<option value="media/ehren-paper_lights-96.opus">Ehren - Paper Lights (Opus)</option>
+	<option value="media/pixel_aspect_ratio.ogg">Theora Test suite pixel_aspect_ratio.ogg</option>
+</select>
+<div>
+<button onclick="play(sampleFile);">Play</button><button onclick="pause();">Pause/Unpause</button>
+</div>
+
+
 <script language="JavaScript">
 
 var player = null;
 var paused = false;
 var sampleFile = 'media/curiosity.ogv';
 
+player = new OGVPlayer();
+document.getElementById("videoarea").appendChild(player);
+
 function play(src) {
-	if(player) {
-		player.stop();
-		player.parentNode.removeChild(player);
-	}
-	player = new OGVPlayer();
 	//player = new OgvSwfPlayer();
 	//player = document.createElement('video');
 	player.src = src;
-	document.getElementById("videoarea").appendChild(player);
-	/*
-	player.load();
-	player.onloadedmetadata = function() {
-		player.play();
-	}
-	*/
-	player.play();
-	
+	player.play();	
 }
 
 function pause() {
@@ -49,28 +55,9 @@ function pause() {
 
 function switchmedia(src) {
 	sampleFile = src.value;
-	if (player) {
-		player = null;
-		paused = false;
-		document.getElementById("videoarea").innerHTML = '';
-	}
+	play(sampleFile);
 }
 
 </script>
-
-
-</head>
-<body>
-
-<div id="videoarea"></div>
-
-<select onchange="switchmedia(this)">
-	<option value="media/curiosity.ogv">Curiosity's Seven Minutes of Terror (Vorbis, Theora; 160p)</option>
-	<option value="media/ehren-paper_lights-96.opus">Ehren - Paper Lights (Opus)</option>
-	<option value="media/pixel_aspect_ratio.ogg">Theora Test suite pixel_aspect_ratio.ogg</option>
-</select>
-<div>
-<button onclick="play(sampleFile);">Play</button><button onclick="pause();">Pause/Unpause</button>
-</div>
 
 </body></html>

@@ -478,4 +478,38 @@ doubleAsyncTest('play after ended replays', function(assert, player) {
 	player.play();
 });
 
+doubleAsyncTest('switching sources works', function(assert, player) {
+	player.src = 'media/1second.ogv';
+	assert.equal(player.currentSrc, '', 'currentSrc is empty at beginning');
+	player.ontimeupdate = function() {
+		if (player.currentTime < 0.25) {
+			// come back shortly
+			return;
+		}
+		assert.ok( true, 'timeupdate fired past 0.25s' );
+		player.ontimeupdate = null;
+		
+		assert.ok(player.currentSrc.match(/media\/1second.ogv/), 'currentSrc is on 1second.ogv before switch');
+		assert.equal(player.videoWidth, 320, 'videoWidth is 320 before switch');
+		
+		player.src = 'media/aspect.ogv';
+
+		assert.equal(player.currentSrc, '', 'currentSrc is empty after src=');
+		assert.equal(player.videoWidth, 0, 'videoWidth is 0 after src=');
+
+		player.onloadedmetadata = function() {
+			assert.ok(player.currentSrc.match(/media\/aspect.ogv/), 'currentSrc is on aspect.ogv after metadata loaded of second file');
+			assert.equal(player.videoWidth, 525, 'videoWidth is 525 after metadata loaded of second file');
+			player.play();
+		};
+		player.onplay = function() {
+			assert.ok( player.currentTime < 0.25, 'second file play started near beginning' );
+			player.pause();
+			QUnit.start();
+		};
+	};
+	player.play();
+});
+
+
 // @todo implement and test seeking while *not* playing

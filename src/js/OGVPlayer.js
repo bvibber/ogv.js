@@ -194,9 +194,11 @@ var OGVPlayer = function(options) {
 		}, 0);
 	}
 
-	var codec,
+	var codec = null,
+		videoInfo = null,
+		audioInfo = null,
 		actionQueue = [],
-		audioFeeder;
+		audioFeeder = null;
 	var muted = false,
 		initialPlaybackPosition = 0.0,
 		initialPlaybackOffset = 0.0;
@@ -261,6 +263,7 @@ var OGVPlayer = function(options) {
 		duration = null,
 		lastSeenTimestamp = null,
 		nextProcessingTimer,
+		loading = false,
 		started = false,
 		paused = true,
 		ended = false,
@@ -292,11 +295,14 @@ var OGVPlayer = function(options) {
 		state = State.INITIAL;
 		seekState = SeekState.NOT_SEEKING;
 		started = false;
-		paused = true;
+		//paused = true; // don't change this?
 		ended = false;
 		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
+
+		// Abort all queued actions
+		actionQueue = [];
 
 		if (stream) {
 			// @todo fire an abort event if still loading
@@ -304,11 +310,14 @@ var OGVPlayer = function(options) {
 			stream.abort();
 			stream = null;
 			streamEnded = false;
+			waitingOnInput = false;
 		}
 		if (codec) {
 			codec.destroy();
 			codec = null;
 		}
+		videoInfo = null;
+		audioInfo = null;
 		if (audioFeeder) {
 			audioFeeder.close();
 			audioFeeder = undefined;
@@ -318,7 +327,7 @@ var OGVPlayer = function(options) {
 			nextProcessingTimer = null;
 		}
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
-		duration = NaN; // do not fire durationchange
+		duration = null; // do not fire durationchange
 		// timeline offset to 0?
 	}
 
@@ -1105,67 +1114,80 @@ var OGVPlayer = function(options) {
 
 	/**
 	 * HTMLMediaElement load method
+	 *
+	 * https://www.w3.org/TR/html5/embedded-content-0.html#concept-media-load-algorithm
 	 */
 	self.load = function() {
-		if (currentSrc == self.src) {
-			// already loaded.
-			return;
-		}
+		stopVideo();
+		
+		// @todo networkState = self.NETWORK_NO_SOURCE;
+		// @todo show poster
+		// @todo set 'delay load event flag'
+		
+		currentSrc = '';
+		loading = true;
 
-		if (started) {
-			stopVideo();
-		}
+		actionQueue.push(function() {
 
-		currentSrc = '' + self.src;
-		stream = new StreamFile({
-			url: currentSrc,
-			bufferSize: 65536 * 4,
-			onstart: function() {
-				// Fire off the read/decode/draw loop...
-				byteLength = stream.bytesTotal;
+			// @todo networkState == NETWORK_LOADING
+			stream = new StreamFile({
+				url: self.src,
+				bufferSize: 65536 * 4,
+				onstart: function() {
+					loading = false;
 
-				// If we get X-Content-Duration, that's as good as an explicit hint
-				var durationHeader = stream.getResponseHeader('X-Content-Duration');
-				if (typeof durationHeader === 'string') {
-					duration = parseFloat(durationHeader);
-				}
-				loadCodec(startProcessingVideo);
-			},
-			onread: function(data) {
-				log('got input');
-				waitingOnInput = false;
+					// @todo handle failure / unrecognized type
 
-				// Save chunk to pass into the codec's buffer
-				actionQueue.push(function doReceiveInput() {
-					codec.receiveInput(data, function() {
-						pingProcessing();
+					currentSrc = self.src;
+
+					// Fire off the read/decode/draw loop...
+					byteLength = stream.bytesTotal;
+
+					// If we get X-Content-Duration, that's as good as an explicit hint
+					var durationHeader = stream.getResponseHeader('X-Content-Duration');
+					if (typeof durationHeader === 'string') {
+						duration = parseFloat(durationHeader);
+					}
+					loadCodec(startProcessingVideo);
+				},
+				onread: function(data) {
+					log('got input');
+					waitingOnInput = false;
+
+					// Save chunk to pass into the codec's buffer
+					actionQueue.push(function doReceiveInput() {
+						codec.receiveInput(data, function() {
+							pingProcessing();
+						});
 					});
-				});
 
-				if (isProcessing()) {
-					// We're waiting on the codec already...
-				} else {
-					pingProcessing();
+					if (isProcessing()) {
+						// We're waiting on the codec already...
+					} else {
+						pingProcessing();
+					}
+				},
+				ondone: function() {
+					waitingOnInput = false;
+
+					// @todo record doneness in networkState
+					log('stream is at end!');
+					streamEnded = true;
+
+					if (isProcessing()) {
+						// We're waiting on the codec already...
+					} else {
+						// Let the read/decode/draw loop know we're out!
+						pingProcessing();
+					}
+				},
+				onerror: function(err) {
+					// @todo handle failure to initialize
+					console.log("reading error: " + err);
 				}
-			},
-			ondone: function() {
-				waitingOnInput = false;
-
-				// @todo record doneness in networkState
-				log('stream is at end!');
-				streamEnded = true;
-
-				if (isProcessing()) {
-					// We're waiting on the codec already...
-				} else {
-					// Let the read/decode/draw loop know we're out!
-					pingProcessing();
-				}
-			},
-			onerror: function(err) {
-				console.log("reading error: " + err);
-			}
+			});
 		});
+		pingProcessing(0);
 	};
 
 	/**
@@ -1293,10 +1315,7 @@ var OGVPlayer = function(options) {
 	 * HTMLMediaElement pause method
 	 */
 	self.pause = function() {
-		if (!stream) {
-			paused = true;
-			self.load();
-		} else if (!paused) {
+		if (!paused) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			stopPlayback();
@@ -1310,6 +1329,7 @@ var OGVPlayer = function(options) {
 	 */
 	self.stop = function() {
 		stopVideo();
+		paused = true;
 	};
 
 	/**
@@ -1322,7 +1342,16 @@ var OGVPlayer = function(options) {
 	/**
 	 * HTMLMediaElement src property
 	 */
-	self.src = "";
+	Object.defineProperty(self, "src", {
+		get: function getSrc() {
+			return '' + self.getAttribute('src');
+		},
+		set: function setSrc(val) {
+			self.setAttribute('src', val);
+			loading = false; // just in case?
+			self.load();
+		}
+	});
 
 	/**
 	 * HTMLMediaElement buffered property
@@ -1614,6 +1643,7 @@ var OGVPlayer = function(options) {
 	 */
 	Object.defineProperty(self, "currentSrc", {
 		get: function getCurrentSrc() {
+			// @todo return absolute URL per spec
 			return currentSrc;
 		}
 	});
