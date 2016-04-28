@@ -1,3 +1,7 @@
+/* global LibraryManager */
+/* global mergeInto */
+/* global Module */
+
 mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_init_video: function(frameWidth, frameHeight,

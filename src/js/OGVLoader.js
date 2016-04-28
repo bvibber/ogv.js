@@ -85,7 +85,8 @@ var OGVVersion = __OGV_FULL_VERSION__;
 			// for browser, try to autodetect
 			var scriptNodes = document.querySelectorAll('script'),
 				regex = /^(?:(.*)\/)ogv(?:-support)?\.js(?:\?|#|$)/,
-				path;
+				path,
+				matches;
 			for (var i = 0; i < scriptNodes.length; i++) {
 				path = scriptNodes[i].getAttribute('src');
 				if (path) {

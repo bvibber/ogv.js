@@ -43,6 +43,7 @@ function FrameSink(canvas, videoInfo) {
 		YCbCr.convertYCbCr(yCbCrBuffer, imageData.data);
 
 		var resample = (videoInfo.picWidth != videoInfo.displayWidth || videoInfo.picHeight != videoInfo.displayHeight);
+		var drawContext;
 		if (resample) {
 			// hack for non-square aspect-ratio
 			// putImageData doesn't resample, so we have to draw in two steps.

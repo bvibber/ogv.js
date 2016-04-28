@@ -120,7 +120,7 @@ function OGVWorkerSupport(propList, handlers) {
 							propVal = copyAudioBuffer(propVal);
 							props[propName] = propVal;
 							if (propVal) {
-								for (i = 0; i < propVal.length; i++) {
+								for (var i = 0; i < propVal.length; i++) {
 									transfers.push(propVal[i].buffer);
 								}
 							}

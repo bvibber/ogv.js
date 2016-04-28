@@ -12,7 +12,7 @@ var OGVLoader = require("./OGVLoader.js");
 var OGVWrapperCodec = (function(options) {
 	options = options || {};
 	var self = this,
-		suffix = '?version=' + encodeURIComponent(OGVVersion),
+		suffix = '?version=' + encodeURIComponent(__OGV_FULL_VERSION__),
 		base = (typeof options.base === 'string') ? (options.base + '/') : '',
 		type = (typeof options.type === 'string') ? options.type : 'video/ogg',
 		processing = false,
@@ -216,7 +216,8 @@ var OGVWrapperCodec = (function(options) {
 
 	var loadedDemuxerMetadata = false,
 		loadedAudioMetadata = false,
-		loadedVideoMetadata = false;
+		loadedVideoMetadata = false,
+		loadedAllMetadata = false;
 
 	self.process = function(callback) {
 		if (processing) {
@@ -354,7 +355,7 @@ var OGVWrapperCodec = (function(options) {
 
 	self.discardAudio = function(callback) {
 		demuxer.dequeueAudioPacket(function(packet) {
-			callback(ok);
+			callback();
 		});
 	};
 

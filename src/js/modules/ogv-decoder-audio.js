@@ -1,3 +1,6 @@
+/* global Module */
+/* global options */
+
 // Resizable input buffer to store input packets
 
 var inputBuffer, inputBufferSize;
