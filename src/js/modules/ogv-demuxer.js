@@ -18,7 +18,7 @@ function reallocInputBuffer(size) {
 
 // - Properties
 
-Module.loadedmetadata = false;
+Module.loadedMetadata = false;
 Module.videoCodec = null;
 Module.audioCodec = null;
 Module.duration = NaN;
