@@ -1,4 +1,4 @@
-// Makefile for the Flash build
+# Makefile for the Flash build
 
 all : swf
 
