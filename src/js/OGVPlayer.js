@@ -8,7 +8,8 @@ var OGVLoader = require("./OGVLoader.js");
 var StreamFile = require("./StreamFile.js");
 
 // -- AudioFeeder.js
-var AudioFeeder = require("audio-feeder");
+var AudioFeeder = require("audio-feeder"),
+	dynamicaudio_swf = require("audio-feeder/dist/dynamicaudio.swf");
 
 // -- Bisector.js
 var Bisector = require("./Bisector.js");
@@ -1123,11 +1124,11 @@ var OGVPlayer = function(options) {
 	 */
 	self.load = function() {
 		stopVideo();
-		
+
 		// @todo networkState = self.NETWORK_NO_SOURCE;
 		// @todo show poster
 		// @todo set 'delay load event flag'
-		
+
 		currentSrc = '';
 		loading = true;
 

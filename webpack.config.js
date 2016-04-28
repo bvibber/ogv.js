@@ -24,7 +24,15 @@ module.exports = [
       libraryTarget: 'umd',
       library: 'ogvjs'
     },
-    plugins: plugins
+    plugins: plugins,
+    module: {
+      loaders: [
+        {
+          test: /\.swf$/,
+          loader: 'file?name=[name].[ext]?version=[hash]'
+        }
+      ]
+    }
   },
   {
     // Alt limited entry point for compat testing before loading
