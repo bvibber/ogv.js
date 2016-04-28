@@ -150,3 +150,10 @@ Module.flush = function(callback) {
 	Module._ogv_demuxer_flush();
 	callback();
 };
+
+/**
+ * Close out any resources required by the demuxer module
+ */
+Module.close = function() {
+	// no-op
+};

@@ -147,10 +147,19 @@ var OGVWrapperCodec = (function(options) {
 		});
 	};
 
-	self.destroy = function() {
-		demuxer = null;
-		videoDecoder = null;
-		audioDecoder = null;
+	self.close = function() {
+		if (demuxer) {
+			demuxer.close();
+			demuxer = null;
+		}
+		if (videoDecoder) {
+			videoDecoder.close();
+			videoDecoder = null;
+		}
+		if (audioDecoder) {
+			audioDecoder.close();
+			audioDecoder = null;
+		}
 	};
 
 	var inputQueue = [];

@@ -85,3 +85,10 @@ Module.processFrame = function(data, callback) {
 
 	callback(ret);
 };
+
+/**
+ * Close out any resources required by the decoder module
+ */
+Module.close = function() {
+	// no-op
+};

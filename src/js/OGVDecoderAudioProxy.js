@@ -15,6 +15,10 @@ var OGVDecoderAudioProxy = OGVProxyClass({
 
 	processAudio: function(data, callback) {
 		this.proxy('processAudio', [data], callback, [data]);
+	},
+
+	close: function() {
+		this.terminate();
 	}
 });
 

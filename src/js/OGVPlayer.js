@@ -314,7 +314,7 @@ var OGVPlayer = function(options) {
 			waitingOnInput = false;
 		}
 		if (codec) {
-			codec.destroy();
+			codec.close();
 			codec = null;
 		}
 		videoInfo = null;

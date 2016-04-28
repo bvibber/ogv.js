@@ -65,6 +65,9 @@ function OGVProxyClass(initialProps, methods) {
 		var messageCount = 0,
 			pendingCallbacks = {};
 		this.proxy = function(action, args, callback, transfers) {
+			if (!worker) {
+				throw 'Tried to call "' + action + '" method on closed proxy object';
+			}
 			var callbackId = 'callback-' + (++messageCount) + '-' + action;
 			if (callback) {
 				pendingCallbacks[callbackId] = callback;
@@ -79,6 +82,14 @@ function OGVProxyClass(initialProps, methods) {
 				worker.postMessage(out, transfers || []);
 			} else {
 				worker.postMessage(out);
+			}
+		};
+		this.terminate = function() {
+			if (worker) {
+				worker.terminate();
+				worker = null;
+				processingQueue = 0;
+				pendingCallbacks = {};
 			}
 		};
 

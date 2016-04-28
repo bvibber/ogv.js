@@ -15,6 +15,10 @@ var OGVDecoderVideoProxy = OGVProxyClass({
 
 	processFrame: function(data, callback) {
 		this.proxy('processFrame', [data], callback, [data]);
+	},
+
+	close: function() {
+		this.terminate();
 	}
 });
 
