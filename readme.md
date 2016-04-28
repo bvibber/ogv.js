@@ -22,10 +22,11 @@ and is suitable for use in custom audio and video playback.
 * 0.0.2 - 2016-03-27
  * Broken out from ogv.js, cleaning up to publish as npm module
 
-## Installing with webpack
+## Installing with webpack or browserify
 
-If your project is built with webpack, it's easy to bundle up AudioFeeder's
-JavaScript classes and the Flash shim for IE.
+If your project is built with webpack or browserify, it's easy to bundle up
+AudioFeeder's JavaScript classes; you will have to manually ensure that the
+Flash shim for IE is bundled alongside it.
 
 Add to your npm dependencies:
 
@@ -39,27 +40,16 @@ and in your using code, set up the class like so:
 var AudioFeeder = require('audio-feeder');
 ```
 
-The Flash shim dynamicaudio.swf (needed for IE 10/11) should be bundled
-automatically along with your output, via the
-[file-loader plugin for webpack](https://www.npmjs.com/package/file-loader).
-However if you have additional build steps, you may need to ensure that
-this file gets copied along with the .js and any other assets, and that
-URL paths are correctly interpreted.
-
-## Using in other build systems
-
-If your main project doesn't use webpack, you can build a pre-packed
-AudioFeeder.js with webpack locally, or download a pre-built release
-archive from https://github.com/brion/audio-feeder/releases
-
-AudioFeeder.js can then be directly loaded in a &lt;script>, or you can
-use it in another packaging system.
-
 You will need to ensure that dynamicaudio.swf is included along with your
 bundled JS/HTML/etc output to support IE 10/11, and may need to manually set
 the base path in the options to the AudioFeeder constructor.
 
-See the section below on rebuilding the pre-packed files for more info.
+## Including AudioFeeder manually in a project
+
+Grab AudioFeeder.js or AudioFeeder.min.js (minified) from the ZIP download or
+from dist/ subdir in the npm module.
+
+Include either as a module (CommonJS or AMD) or a standalone script.
 
 ## Usage
 
@@ -217,33 +207,25 @@ output format for dynamically generated audio in Flash.
 
 ## Rebuilding pre-packed AudioFeeder.js
 
-The pre-packed AudioFeeder.js included in tarball releases can be built
-from the source files.
+The pre-packed AudioFeeder.js included in ZIP and npm releases can be rebuilt
+from the source files. This is known to work on Mac, Linux, and Windows.
 
 Build prerequisites:
-* bash
-* make
 * node.js / npm
 
 ```
 # Fetch build dependencies (webpack, eslint etc)
 npm install
+npm install -g grunt-cli
 
 # Lint and rebuild
-make
+grunt
 ```
 
-This will produce a 'build' subdirectory containing a ready to use
-AudioFeeder.js and dynamicaudio.swf, as well as a demo.html example
-page.
+This will produce a 'dist' subdirectory containing a ready to use
+AudioFeeder.js, AudioFeeder.min.js, and dynamicaudio.swf, as well as
+a demo.html example page.
 
-It may or may not work to build on Windows given a suitable shell.
-If having trouble with the Makefile, try calling via npm directly:
-
-```
-npm run-script lint
-npm run-script build
-```
 
 ## Rebuilding Flash shim
 

@@ -1,5 +1,9 @@
 node_modules
+
 build
+dist
+
 .DS_Store
+
 apache-flex-sdk-4.15.0-bin
 apache-flex-sdk-4.15.0-bin.tar.gz

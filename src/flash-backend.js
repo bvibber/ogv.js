@@ -1,7 +1,7 @@
 (function() {
 
   /* global ActiveXObject */
-  var dynamicaudio_swf = require('file?name=[name].[ext]?[hash]!../assets/dynamicaudio.swf');
+  var dynamicaudio_swf = require('file?name=[name].[ext]?version=[hash]!../assets/dynamicaudio.swf');
 
   /**
    * Constructor for AudioFeeder's Flash audio backend.
@@ -19,7 +19,7 @@
     var flashOptions = {};
     if (typeof options.base === 'string') {
       // @fixme replace the version string with an auto-updateable one
-      flashOptions.swf = options.base + '/dynamicaudio.swf?version=0.1.1';
+      flashOptions.swf = options.base + '/' + dynamicaudio_swf;
     }
     this._flashaudio = new DynamicAudio(flashOptions);
     this._flashBuffer = '';

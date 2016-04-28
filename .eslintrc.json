@@ -1,0 +1,20 @@
+{
+  "env": {
+    "browser": true,
+    "commonjs": true
+  },
+  "rules": {
+    "no-undef": 2,
+    "valid-jsdoc": [
+      1,
+      {
+        "requireReturn": false
+      }
+    ]
+  },
+  "globals": {
+    "Float32Array": true,
+    "Int16Array": true,
+    "Uint8Array": true
+  }
+}

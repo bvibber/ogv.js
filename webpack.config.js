@@ -4,7 +4,7 @@ module.exports = [
   {
     entry: './src/index.js',
     output: {
-      path: 'build',
+      path: 'dist',
       filename: 'AudioFeeder.js',
       libraryTarget: 'umd',
       library: 'AudioFeeder'
@@ -13,7 +13,7 @@ module.exports = [
   {
     entry: './src/demo.js',
     output: {
-      path: 'build',
+      path: 'dist',
       filename: 'demo.js',
       libraryTarget: 'var',
       library: 'demo'

@@ -1,16 +1,11 @@
-all : build
+// Makefile for the Flash build
 
-.FAKE : all swf lint build deps clean distclean flexsdk flexsdk-base flexsdk-libs flexsdk-playerglobal
+all : swf
 
-build : lint swf
-	npm run-script build
-
-lint :
-	npm run-script lint
+.FAKE : all swf deps clean distclean flexsdk flexsdk-base flexsdk-libs flexsdk-playerglobal
 
 clean :
 	rm -f assets/dynamicaudio.swf
-	rm -rf build
 
 distclean :
 	rm -f apache-flex-sdk-*-bin.tar.gz
