@@ -15,6 +15,8 @@ and is suitable for use in custom audio and video playback.
 
 ## Updates
 
+* 0.2.1 - 2016-04-28
+ * Fixed regression in Flash build makefile
 * 0.2.0 - 2016-04-27
  * Refactored build to use Grunt instead of make for JS build
  * Pre-built JS included in npm package instead of webpack-specific sources
