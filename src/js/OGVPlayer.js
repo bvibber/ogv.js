@@ -1610,6 +1610,7 @@ var OGVPlayer = function(options) {
 		set: function setWidth(val) {
 			width = parseInt(val, 10);
 			self.style.width = width + 'px';
+			OGVPlayer.updatePositionOnResize();
 		}
 	});
 
@@ -1624,6 +1625,7 @@ var OGVPlayer = function(options) {
 		set: function setHeight(val) {
 			height = parseInt(val, 10);
 			self.style.height = height + 'px';
+			OGVPlayer.updatePositionOnResize();
 		}
 	});
 
