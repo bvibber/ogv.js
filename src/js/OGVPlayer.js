@@ -419,6 +419,9 @@ var OGVPlayer = function(options) {
 		lastSeekPosition = -1;
 
 		actionQueue.push(function() {
+			if (!started) {
+				startPlayback();
+			}
 			stopPlayback();
 
 			codec.flush(function() {
@@ -446,29 +449,64 @@ var OGVPlayer = function(options) {
 				});
 			});
 		});
+		if (isProcessing()) {
+			// already waiting on input
+		} else {
+			pingProcessing(0);
+		}
 	}
 
 	function continueSeekedPlayback() {
-		seekState = SeekState.NOT_SEEKING;
-		state = State.PLAYING;
-		frameEndTimestamp = codec.frameTimestamp;
-		audioEndTimestamp = codec.audioTimestamp;
-		if (codec.hasAudio) {
-			seekTargetTime = codec.audioTimestamp;
-		} else {
-			seekTargetTime = codec.frameTimestamp;
-		}
-		startPlayback(seekTargetTime);
-		if (paused) {
-			stopPlayback(); // :P
-		} else {
-			if (isProcessing()) {
-				// wait for whatever's going on to complete
+		function finishContinuePlaying() {
+			seekState = SeekState.NOT_SEEKING;
+			state = State.PLAYING;
+			frameEndTimestamp = codec.frameTimestamp;
+			audioEndTimestamp = codec.audioTimestamp;
+			if (codec.hasAudio) {
+				seekTargetTime = codec.audioTimestamp;
 			} else {
-				pingProcessing(0);
+				seekTargetTime = codec.frameTimestamp;
 			}
+			startPlayback(seekTargetTime);
+
+			function finishedSeeking() {
+				if (isProcessing()) {
+					// wait for whatever's going on to complete
+				} else {
+					pingProcessing(0);
+				}
+				fireEvent('seeked');
+			}
+
+			if (paused) {
+				stopPlayback(); // :P
+
+				// Decode and show first frame immediately
+				if (codec.hasVideo && codec.frameReady) {
+					// hack! move this into the main loop when retooling
+					// to avoid maintaining this double draw
+					codec.decodeFrame(function(ok) {
+						if (ok) {
+							if (thumbnail) {
+								self.removeChild(thumbnail);
+								thumbnail = null;
+							}
+							frameSink.drawFrame(codec.frameBuffer);
+							yCbCrBuffer = null;
+						}
+						finishedSeeking();
+					} );
+					return;
+				}
+			}
+			finishedSeeking();
 		}
-		fireEvent('seeked');
+		if (codec.hasAudio && !audioFeeder) {
+			initAudioFeeder();
+			audioFeeder.waitUntilReady(finishContinuePlaying);
+		} else {
+			finishContinuePlaying();
+		}
 	}
 
 	/**
@@ -477,7 +515,7 @@ var OGVPlayer = function(options) {
 	function doProcessLinearSeeking() {
 		var frameDuration;
 		if (codec.hasVideo) {
-			frameDuration = targetPerFrameTime;
+			frameDuration = targetPerFrameTime / 1000;
 		} else {
 			frameDuration = 1 / 256; // approximate packet audio size, fake!
 		}
