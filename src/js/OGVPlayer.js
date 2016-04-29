@@ -478,6 +478,8 @@ var OGVPlayer = function(options) {
 				} else {
 					pingProcessing(0);
 				}
+				lastTimeUpdate = seekTargetTime;
+				fireEvent('timeupdate');
 				fireEvent('seeked');
 			}
 
@@ -576,7 +578,7 @@ var OGVPlayer = function(options) {
 				return;
 			}
 			timestamp = codec.frameTimestamp;
-			frameDuration = targetPerFrameTime;
+			frameDuration = targetPerFrameTime / 1000;
 		} else if (codec.hasAudio) {
 			if (!codec.audioReady) {
 				// Haven't found an audio packet yet, process more data
@@ -603,17 +605,19 @@ var OGVPlayer = function(options) {
 			} else {
 				pingProcessing();
 			}
-		} else if (timestamp - frameDuration > bisectTargetTime) {
+		} else if (timestamp - frameDuration / 2 > bisectTargetTime) {
 			if (seekBisector.left()) {
 				// wait for new data to come in
 			} else {
+				log('close enough (left)');
 				seekTargetTime = codec.frameTimestamp;
 				continueSeekedPlayback();
 			}
-		} else if (timestamp + frameDuration < bisectTargetTime) {
+		} else if (timestamp + frameDuration / 2 < bisectTargetTime) {
 			if (seekBisector.right()) {
 				// wait for new data to come in
 			} else {
+				log('close enough (right)');
 				seekTargetTime = codec.frameTimestamp;
 				continueSeekedPlayback();
 			}
@@ -621,9 +625,11 @@ var OGVPlayer = function(options) {
 			// Reached the bisection target!
 			if (seekState == SeekState.BISECT_TO_TARGET && (codec.hasVideo && codec.keyframeTimestamp < codec.frameTimestamp)) {
 				// We have to go back and find a keyframe. Sigh.
+				log('finding the keypoint now');
 				seekState = SeekState.BISECT_TO_KEYPOINT;
 				startBisection(codec.keyframeTimestamp);
 			} else {
+				log('straight seeking now');
 				// Switch to linear mode to find the final target.
 				seekState = SeekState.LINEAR_TO_TARGET;
 				pingProcessing();
