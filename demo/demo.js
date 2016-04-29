@@ -1030,6 +1030,7 @@
 						dx = event.clientX - initialThumbX,
 						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
 					seekTarget = fraction * player.duration;
+					player.currentTime = seekTarget;
 					updateProgress();
 					event.preventDefault();
 				};
@@ -1066,6 +1067,7 @@
 						dx = event.touches[0].pageX - initialThumbX,
 						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
 					seekTarget = fraction * player.duration;
+					player.currentTime = seekTarget;
 					updateProgress();
 					event.preventDefault();
 				};
@@ -1098,6 +1100,7 @@
 						dx = event.clientX - initialThumbX,
 						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
 					seekTarget = fraction * player.duration;
+					player.currentTime = seekTarget;
 					updateProgress();
 					event.preventDefault();
 				};
