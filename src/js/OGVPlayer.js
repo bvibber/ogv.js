@@ -811,6 +811,7 @@ var OGVPlayer = function(options) {
 					startPlayback(0.0);
 					pingProcessing(0);
 					fireEvent('play');
+					fireEvent('playing');
 				}
 
 				if (codec.hasAudio) {
@@ -1297,6 +1298,7 @@ var OGVPlayer = function(options) {
 				actionQueue.push(function() {
 					startPlayback();
 					fireEvent('play');
+					fireEvent('playing');
 					pingProcessing(0);
 				});
 				if (isProcessing()) {
