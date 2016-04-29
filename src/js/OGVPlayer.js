@@ -1122,7 +1122,9 @@ var OGVPlayer = function(options) {
 			delay = -1;
 		}
 		if (isProcessing()) {
-			throw new Error('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
+			// We'll get pinged again when whatever we were doing returns...
+			log('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
+			return;
 		}
 		if (nextProcessingTimer) {
 			//log('canceling old processing timer');
