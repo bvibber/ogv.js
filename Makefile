@@ -278,7 +278,7 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/lib/cortado.jar \
                         build/demo/lib/CortadoPlayer.js
 	test -d build/demo || mkdir -p build/demo
-	cpp -E -w -P -CC -nostdinc -DWITH_JS $(DEMO_DIR)/index.html.in > build/demo/index.html
+	sed 's/OGV_VERSION/$(FULLVER)/g' < $(DEMO_DIR)/index.html.in > build/demo/index.html
 
 build/demo/demo.css : $(DEMO_DIR)/demo.css
 	test -d build/demo || mkdir -p build/demo
