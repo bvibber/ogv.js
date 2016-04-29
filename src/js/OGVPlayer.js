@@ -413,19 +413,30 @@ var OGVPlayer = function(options) {
 		if (stream.bytesTotal === 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
-		streamEnded = false;
-		ended = false;
-		state = State.SEEKING;
-		seekTargetTime = toTime;
-		seekTargetKeypoint = -1;
-		lastFrameSkipped = false;
-		lastSeekPosition = -1;
+		function prepForSeek() {
+			if (waitingOnInput) {
+				stream.abort();
+				waitingOnInput = false;
+			} else {
+				stopPlayback();
+			}
+			state = State.SEEKING;
+			seekTargetTime = toTime;
+		}
+
+		// Abort any previous seek or play suitably
+		prepForSeek();
 
 		actionQueue.push(function() {
-			if (!started) {
-				startPlayback();
-			}
-			stopPlayback();
+			// Just in case another async task stopped us...
+			prepForSeek();
+			streamEnded = false;
+			ended = false;
+			state = State.SEEKING;
+			seekTargetTime = toTime;
+			seekTargetKeypoint = -1;
+			lastFrameSkipped = false;
+			lastSeekPosition = -1;
 
 			codec.flush(function() {
 				codec.getKeypointOffset(toTime, function(offset) {
