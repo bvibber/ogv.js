@@ -1985,7 +1985,7 @@ function StyleManager() {
 			}
 		}
 		var rule = selector + '{' + bits.join(';') + '}';
-		sheet.insertRule(rule, sheet.length - 1);
+		sheet.insertRule(rule, sheet.cssRules.length - 1);
 	};
 }
 OGVPlayer.styleManager = new StyleManager();
