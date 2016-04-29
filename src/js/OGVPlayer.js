@@ -1280,7 +1280,7 @@ var OGVPlayer = function(options) {
 
 			paused = false;
 
-			if (started) {
+			if (started || loading) {
 
 				if (ended && stream && byteLength) {
 

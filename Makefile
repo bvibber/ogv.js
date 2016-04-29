@@ -300,9 +300,9 @@ build/demo/benchmark.html : $(DEMO_DIR)/benchmark.html
 	test -d build/demo || mkdir -p build/demo
 	cp $(DEMO_DIR)/benchmark.html build/demo/benchmark.html
 
-build/demo/minimal.html : $(DEMO_DIR)/minimal.html
+build/demo/minimal.html : $(DEMO_DIR)/minimal.html.in
 	test -d build/demo || mkdir -p build/demo
-	cp $(DEMO_DIR)/minimal.html build/demo/minimal.html
+	sed 's/OGV_VERSION/$(FULLVER)/g' < $(DEMO_DIR)/minimal.html.in > build/demo/minimal.html
 
 build/demo/media/ehren-paper_lights-96.opus : $(DEMO_DIR)/media/ehren-paper_lights-96.opus
 	test -d build/demo/media || mkdir -p build/demo/media

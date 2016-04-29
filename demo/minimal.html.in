@@ -5,11 +5,7 @@
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 	<title>Minimal Ogv.js example</title>
 
-<body>
-
-<script src="lib/ogv.js"></script>
-
-
+	<script src="lib/ogv.js?version=OGV_VERSION"></script>
 </head>
 <body>
 
