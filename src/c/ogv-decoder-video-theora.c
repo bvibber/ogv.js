@@ -65,7 +65,7 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 	} else if (theoraProcessingHeaders > 0) {
 		return 1;
 	} else {
-		printf("Error parsing theora headers: %d.\n", theoraProcessingHeaders);
+		//printf("Error parsing theora headers: %d.\n", theoraProcessingHeaders);
 		return 0;
 	}
 }
@@ -89,7 +89,7 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 							 hdec, vdec);
         return 1;
     } else {
-        printf("Theora decoder failed mysteriously? %d\n", ret);
+        //printf("Theora decoder failed mysteriously? %d\n", ret);
         return 0;
     }
 }
