@@ -80,16 +80,14 @@ function BogoSlow() {
 	 * Return the defined cutoff speed value for 'too slow' devices,
 	 * based on results measured from some test devices.
 	 *
+	 * No longer used.
+	 *
 	 * @property {number}
+	 * @deprecated
 	 */
 	Object.defineProperty(self, 'tooSlowCutoff', {
 		get: function() {
-			// ------------ line of total doom ------------
-			return 12000;
-			//   v these are toooooo slow and explode
-			// Chrome on iPhone 5s     (iOS 8)       ~8,000
-			// iPod 4th-gen            (iOS 6.1)     ~6,750
-			// iPhone 3Gs              (iOS 6.1)     ~4,500
+			return 0;
 		}
 	});
 
