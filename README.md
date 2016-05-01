@@ -7,12 +7,15 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.0alpha - 2016-04-??
+* 1.1.0-alpha.0 - 2016-05-01
  * refactored parts of build using webpack
- * reduction in unnecessary global symbols
- * added many properties from standard media elements
+ * reduction in unnecessary globals
+ * added stubs for standard properties
  * volume property now works
- * (many bug fixes in the works)
+ * seeking is much more reliable
+ * switching sources is much more reliable
+ * Chrome input corruption bug fixed
+ * console spam on oggs without skeleton track fixed
 * 1.0 - 2015-09-04
  * initial stable release, as used on Wikipedia
 
@@ -32,7 +35,7 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * SIMD acceleration: no
 * controls: no (currently provided by demo or other UI harness)
 
-Ogg files are fairly well supported, but WebM is still very experimental.
+Ogg files are fairly well supported, but WebM is still very experimental and is disabled by default.
 
 
 ## Goals
@@ -47,13 +50,13 @@ The API isn't quite complete, but works pretty well.
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
 The primary target browsers are (testing 360p/30fps):
-* Safari 6.1/7/8 on Mac OS X 10.7-10.10
-* Safari on iOS 8 64-bit
+* Safari 6.1/7/8/9 on Mac OS X 10.7-10.11
+* Safari on iOS 8/9 64-bit
 * Edge on Windows 10 desktop/tablet
-* Internet Explorer 10/11 on Windows 7/8/8.1 (desktop/tablet)
+* Internet Explorer 10/11 on Windows 7/8/8.1/10 (desktop/tablet)
 
 And for lower-resolution files (testing 160p/15fps):
-* Safari on iOS 8 32-bit
+* Safari on iOS 8/9 32-bit
 * Edge on Windows 10 Mobile
 * Internet Explorer 10/11 on Windows RT
 
@@ -61,16 +64,16 @@ Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arr
 
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS, Windows RT, or Windows 10 Mobile.)
 
-Testing browsers (these support .ogv natively):
-* Firefox 40
-* Chrome 44
+Testing browsers (these support .ogv and .webm natively):
+* Firefox 46
+* Chrome 50
 
 
 ## Package installation
 
-Pre-built releases of ogv.js are available as [.zip downloads from the GitHub releases page](https://github.com/brion/ogv.js/releases) and (soon) through the npm package manager.
+Pre-built releases of ogv.js are available as [.zip downloads from the GitHub releases page](https://github.com/brion/ogv.js/releases) and through the npm package manager.
 
-You can load the ogv.js main entry point directly in a script tag, or bundle it through whatever build process you like. The other .js files and the .swf file (for audio in IE) must be made available for runtime loading, together in the same directory.
+You can load the `ogv.js` main entry point directly in a script tag, or bundle it through whatever build process you like. The other .js files and the .swf file (for audio in IE) must be made available for runtime loading, together in the same directory.
 
 ogv.js will try to auto-detect the path to its resources based on the script element that loads ogv.js or ogv-support.js. If you load ogv.js through another bundler (such as browserify or MediaWiki's ResourceLoader) you may need to override this manually before instantiating players:
 
@@ -85,18 +88,17 @@ To fetch from npm:
 npm install ogv
 ```
 
-The same files from the zip releases will appear in 'node_modules/ogv/dist'.
+The distribution-ready files will appear in 'node_modules/ogv/dist'.
+
+To load the player library into your browserify or webpack project:
 
 ```
-var ogv = require('ogv'),
-  player = new ogv.OGVPlayer();
-```
+var ogv = require('ogv');
 
-For webpack projects, there is an experimental 'ogv/webpack-bundle' submodule that bundles the dist files into an 'ogv.js' subdirectory alongside your output, using the 'file-loader' module. Try:
-
-```
-var ogv = require('ogv/webpack-bundle'),
-  player = new ogv.OGVPlayer();
+// Access public classes either as ogv.OGVPlayer or just OGVPlayer.
+// Your build/lint tools may be happier with ogv.OGVPlayer!
+ogv.OGVLoader.base = '/path/to/resources';
+var player = new ogv.OGVPlayer();
 ```
 
 ## Usage
@@ -138,6 +140,28 @@ If you need a URL versioning/cache-buster parameter for dynamic loading of `ogv.
   script.src = 'ogv.js?version=' + encodeURIComponent(OGVVersion);
   document.querySelector('head').appendChild(script);
 ```
+
+## Distribution notes
+
+Entry points:
+* `ogv.js` contains the main runtime classes, including OGVPlayer, OGVLoader, and OGVCompat.
+* `ogv-support.js` contains the OGVCompat class and OGVVersion symbol, useful for checking for runtime support before loading the main `ogv.js`.
+* `ogv-version.js` contains only the OGVVersion symbol.
+
+These entry points may be loaded directly from a script element, or concatenated into a larger project, or otherwise loaded as you like.
+
+Further code modules are loaded at runtime, which must be available with their defined names together in a directory. Currently the files should be hosted same-origin to the web page that includes them, or the worker threads and Flash audio shim may not load correctly.
+
+Dynamically loaded assets:
+* `ogv-worker-audio.js` and `ogv-worker-video.js` are Worker entry points, used to run video and audio decoders in the background.
+* `ogv-demuxer-ogg.js` is used in playing .ogg, .oga, and .ogv files.
+* `ogv-demuxer-webm.js` is used in playing .webm files.
+* `ogv-decoder-audio-vorbis.js` and `ogv-decoder-audio-opus.js` are used in playing both Ogg and WebM files containing audio.
+* `ogv-decoder-video-theora.js` is used in playing .ogg and .ogv video files.
+* `ogv-decoder-video-vp8.js` is used in playing .webm video files.
+* `dynamicaudio.swf` is the Flash audio shim, used for Internet Explorer 10/11.
+
+If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
 
 
 ## Performance
