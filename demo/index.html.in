@@ -78,6 +78,8 @@
 									<option value="720p.webm">720p WebM</option>
 									<option value="480p.webm">480p WebM</option>
 									<option value="360p.webm">360p WebM</option>
+									<option value="240p.webm">240p WebM</option>
+									<option value="160p.webm">160p WebM</option>
 								</optgroup>
 							</select>
 
