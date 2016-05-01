@@ -274,7 +274,8 @@ float ogv_demuxer_media_duration() {
 
 int ogv_demuxer_seekable()
 {
-	return skeletonHeadersComplete;
+	// even if we don't have the skeleton tracks, we allow bisection
+	return 1;
 }
 
 long ogv_demuxer_keypoint_offset(long time_ms)
