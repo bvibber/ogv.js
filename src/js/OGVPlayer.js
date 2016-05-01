@@ -303,7 +303,7 @@ var OGVPlayer = function(options) {
 		lastFrameDecodeTime = 0.0;
 
 		// Abort all queued actions
-		actionQueue = [];
+		actionQueue.splice(0, actionQueue.length);
 
 		if (stream) {
 			// @todo fire an abort event if still loading
@@ -417,6 +417,8 @@ var OGVPlayer = function(options) {
 			if (waitingOnInput) {
 				stream.abort();
 				waitingOnInput = false;
+				// clear any queued input/seek-start
+				actionQueue.splice(0, actionQueue.length);
 			} else {
 				stopPlayback();
 			}
