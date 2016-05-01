@@ -1194,6 +1194,7 @@ var OGVPlayer = function(options) {
 				url: self.src,
 				bufferSize: 65536 * 4,
 				onstart: function() {
+					waitingOnInput = false;
 					loading = false;
 
 					// @todo handle failure / unrecognized type
@@ -1246,6 +1247,7 @@ var OGVPlayer = function(options) {
 					console.log("reading error: " + err);
 				}
 			});
+			waitingOnInput = true;
 		});
 		pingProcessing(0);
 	};
