@@ -141,9 +141,13 @@ var OGVWrapperCodec = (function(options) {
 		} else {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
+		processing = true;
 		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
-			demuxer.init(callback);
+			demuxer.init(function() {
+				processing = false;
+				callback();
+			});
 		});
 	};
 
