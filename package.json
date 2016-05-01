@@ -7,8 +7,7 @@
     "index.js",
     "README.md",
     "COPYING",
-    "dist/",
-    "webpack-bundle/"
+    "dist/"
   ],
   "scripts": {
     "prepublish": "make dist",
@@ -54,6 +53,6 @@
     "webpack-dev-server": "^1.12.1",
     "webpack": "^1.12.2",
     "file-loader": "^0.8.5",
-    "audio-feeder": "0.2"
+    "audio-feeder": "0.2.1"
   }
 }
