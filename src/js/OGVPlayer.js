@@ -473,58 +473,50 @@ var OGVPlayer = function(options) {
 	}
 
 	function continueSeekedPlayback() {
-		function finishContinuePlaying() {
-			seekState = SeekState.NOT_SEEKING;
-			state = State.PLAYING;
-			frameEndTimestamp = codec.frameTimestamp;
-			audioEndTimestamp = codec.audioTimestamp;
-			if (codec.hasAudio) {
-				seekTargetTime = codec.audioTimestamp;
-			} else {
-				seekTargetTime = codec.frameTimestamp;
-			}
-			startPlayback(seekTargetTime);
-
-			function finishedSeeking() {
-				if (isProcessing()) {
-					// wait for whatever's going on to complete
-				} else {
-					pingProcessing(0);
-				}
-				lastTimeUpdate = seekTargetTime;
-				fireEvent('timeupdate');
-				fireEvent('seeked');
-			}
-
-			if (paused) {
-				stopPlayback(); // :P
-
-				// Decode and show first frame immediately
-				if (codec.hasVideo && codec.frameReady) {
-					// hack! move this into the main loop when retooling
-					// to avoid maintaining this double draw
-					codec.decodeFrame(function(ok) {
-						if (ok) {
-							if (thumbnail) {
-								self.removeChild(thumbnail);
-								thumbnail = null;
-							}
-							frameSink.drawFrame(codec.frameBuffer);
-							yCbCrBuffer = null;
-						}
-						finishedSeeking();
-					} );
-					return;
-				}
-			}
-			finishedSeeking();
-		}
-		if (codec.hasAudio && !audioFeeder) {
-			initAudioFeeder();
-			audioFeeder.waitUntilReady(finishContinuePlaying);
+		seekState = SeekState.NOT_SEEKING;
+		state = State.READY;
+		frameEndTimestamp = codec.frameTimestamp;
+		audioEndTimestamp = codec.audioTimestamp;
+		if (codec.hasAudio) {
+			seekTargetTime = codec.audioTimestamp;
 		} else {
-			finishContinuePlaying();
+			seekTargetTime = codec.frameTimestamp;
 		}
+		initialPlaybackOffset = seekTargetTime;
+
+		function finishedSeeking() {
+			if (isProcessing()) {
+				// wait for whatever's going on to complete
+			} else {
+				pingProcessing(0);
+			}
+			lastTimeUpdate = seekTargetTime;
+			fireEvent('timeupdate');
+			fireEvent('seeked');
+		}
+
+		if (paused) {
+			//stopPlayback(); // :P
+
+			// Decode and show first frame immediately
+			if (codec.hasVideo && codec.frameReady) {
+				// hack! move this into the main loop when retooling
+				// to avoid maintaining this double draw
+				codec.decodeFrame(function(ok) {
+					if (ok) {
+						if (thumbnail) {
+							self.removeChild(thumbnail);
+							thumbnail = null;
+						}
+						frameSink.drawFrame(codec.frameBuffer);
+						yCbCrBuffer = null;
+					}
+					finishedSeeking();
+				} );
+				return;
+			}
+		}
+		finishedSeeking();
 	}
 
 	/**
@@ -827,7 +819,7 @@ var OGVPlayer = function(options) {
 					state = State.PLAYING;
 					lastFrameTimestamp = getTimestamp();
 
-					startPlayback(0.0);
+					startPlayback();
 					pingProcessing(0);
 					fireEvent('play');
 					fireEvent('playing');
