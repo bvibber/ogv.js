@@ -1407,7 +1407,7 @@ var OGVPlayer = function(options) {
 	 */
 	Object.defineProperty(self, "src", {
 		get: function getSrc() {
-			return '' + self.getAttribute('src');
+			return self.getAttribute('src') || '';
 		},
 		set: function setSrc(val) {
 			self.setAttribute('src', val);
