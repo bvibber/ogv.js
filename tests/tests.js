@@ -24,6 +24,15 @@ var hasNativeOgg = (function() {
 	       video.canPlayType('video/ogg; codecs="theora,opus"');
 })();
 
+function filenameFromUrl(url) {
+	bits = url.split('/');
+	if (bits.length) {
+		return bits.pop();
+	} else {
+		return '';
+	}
+}
+
 function doubleTest(description, func) {
 	if (hasNativeOgg) {
 		QUnit.test("native video: " + description, function( assert ) {
@@ -157,6 +166,14 @@ doubleTest("object has expected properties", function(assert, player) {
 	// In spec but also not implemented consistently, so don't support
 	//assert.equal(typeof player.disableRemotePlayback, 'boolean', 'disableRemotePlayback'); // ??
 
+});
+
+doubleTest("player.src reflects attribute", function(assert, player) {
+	assert.equal(player.src, '', 'starts at empty string');
+	player.setAttribute('src', 'foo');
+	assert.equal(filenameFromUrl(player.src), 'foo', 'can set to foo');
+	player.removeAttribute('src');
+	assert.equal(player.src, '', 'back to empty when we remove it');
 });
 
 QUnit.test('MediaType', function(assert) {
