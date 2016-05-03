@@ -8,7 +8,8 @@
 (function() {
 
   var AudioContext = window.AudioContext || window.webkitAudioContext,
-    BufferQueue = require('./buffer-queue.js');
+    BufferQueue = require('./buffer-queue.js'),
+    nextTick = require('./next-tick-browser.js');
 
   /**
    * Constructor for AudioFeeder's Web Audio API backend.
@@ -39,12 +40,10 @@
      */
     this.channels = Math.min(numChannels, 2); // @fixme remove this limit
 
-    /**
-     * Size of output buffers in samples, as a hint for latency/scheduling
-     * @type {number}
-     * @readonly
-     */
-    this.bufferSize = 4096 || (options.bufferSize | 0);
+    if (options.bufferSize) {
+        this.bufferSize = (options.bufferSize | 0);
+    }
+    this.bufferThreshold = 2 * this.bufferSize;
 
     this._bufferQueue = new BufferQueue(this.channels, this.bufferSize);
     this._playbackTimeAtBufferTail = context.currentTime;
@@ -62,6 +61,23 @@
       throw new Error("Bad version of web audio API?");
     }
   }
+
+  /**
+   * Size of output buffers in samples, as a hint for latency/scheduling
+   * @type {number}
+   * @readonly
+   */
+  WebAudioBackend.prototype.bufferSize = 4096;
+
+  /**
+   * Remaining sample count at which a 'bufferlow' event will be triggered.
+   *
+   * Will be pinged when falling below bufferThreshold or bufferSize,
+   * whichever is larger.
+   *
+   * @type {number}
+   */
+  WebAudioBackend.prototype.bufferThreshold = 8192;
 
   /**
    * Internal volume property backing.
@@ -166,6 +182,14 @@
     }
     this._queuedTime += (this.bufferSize / this.rate);
     this._playbackTimeAtBufferTail = playbackTime + (this.bufferSize / this.rate);
+
+    if (this._bufferQueue.sampleCount() < Math.max(this.bufferSize, this.bufferThreshold)) {
+      // Let the decoder know ahead of time we're running low on data.
+      // @todo use standard event firing?
+      if (this.onbufferlow) {
+        nextTick(this.onbufferlow.bind(this));
+      }
+    }
   };
 
 
@@ -264,6 +288,21 @@
     this._context = null;
     this._buffers = null;
   };
+
+  /**
+   * Synchronous callback for when we run out of input data
+   *
+   * @type function|null
+   */
+  WebAudioBackend.prototype.onstarved = null;
+
+  /**
+   * Asynchronous callback for when the buffer runs low and
+   * should be refilled soon.
+   *
+   * @type function|null
+   */
+  WebAudioBackend.prototype.onbufferlow = null;
 
   /**
    * Check if Web Audio API appears to be supported.

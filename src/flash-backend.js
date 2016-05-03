@@ -3,6 +3,8 @@
   /* global ActiveXObject */
   var dynamicaudio_swf = require('file?name=[name].[ext]?version=[hash]!../assets/dynamicaudio.swf');
 
+  var nextTick = require('./next-tick-browser.js');
+
   /**
    * Constructor for AudioFeeder's Flash audio backend.
    * @class
@@ -21,6 +23,10 @@
       // @fixme replace the version string with an auto-updateable one
       flashOptions.swf = options.base + '/' + dynamicaudio_swf;
     }
+    if (options.bufferSize) {
+      this.bufferSize = (options.bufferSize | 0);
+    }
+
     this._flashaudio = new DynamicAudio(flashOptions);
     this._flashBuffer = '';
     this._flushTimeout = null;
@@ -28,14 +34,35 @@
     this._cachedFlashTime = 0;
     this._cachedFlashInterval = 40; // resync state no more often than every X ms
 
-    var allowedEvents = {
-        'starved': true
+    this._waitUntilReadyQueue = [];
+    this.onready = function() {
+        this._flashaudio.flashElement.setBufferSize(this.bufferSize);
+        this._flashaudio.flashElement.setBufferThreshold(this.bufferThreshold);
+        while (this._waitUntilReadyQueue.length) {
+            var callback = this._waitUntilReadyQueue.shift();
+            callback.apply(this);
+        }
+    };
+
+    this.bufferThreshold = this.bufferSize * 2;
+
+    var events = {
+        'ready': 'sync',
+        'starved': 'sync',
+        'bufferlow': 'async'
     };
     this._callbackName = 'AudioFeederFlashBackendCallback' + this._flashaudio.id;
     var self = this;
     window[this._callbackName] = (function(eventName) {
-        if (allowedEvents[eventName] && this['on' + eventName]) {
-            this['on' + eventName]();
+        var method = events[eventName],
+            callback = this['on' + eventName];
+        if (method && callback) {
+            if (method === 'async') {
+                nextTick(callback.bind(this));
+            } else {
+                callback.apply(this);
+                this._flushFlashBuffer();
+            }
         }
     }).bind(this);
   };
@@ -57,11 +84,38 @@
   FlashBackend.prototype.channels = 2;
 
   /**
-   * Buffer size hint. Fake for now!
+   * Buffer size hint.
    * @type {number}
    * @readonly
    */
   FlashBackend.prototype.bufferSize = 4096;
+
+  /**
+   * Internal bufferThreshold property backing.
+   * @type {number}
+   * @access private
+   */
+  FlashBackend.prototype._bufferThreshold = 8192;
+
+  /**
+   * Remaining sample count at which a 'bufferlow' event will be triggered.
+   *
+   * Will be pinged when falling below bufferThreshold or bufferSize,
+   * whichever is larger.
+   *
+   * @type {number}
+   */
+  Object.defineProperty(FlashBackend.prototype, 'bufferThreshold', {
+    get: function getBufferThreshold() {
+      return this._bufferThreshold;
+    },
+    set: function setBufferThreshold(val) {
+      this._bufferThreshold = val | 0;
+      this.waitUntilReady((function() {
+        this._flashaudio.flashElement.setBufferThreshold(this._bufferThreshold);
+      }).bind(this));
+    }
+  });
 
   /**
    * Internal volume property backing.
@@ -178,9 +232,11 @@
     this._flashBuffer = '';
     this._flushTimeout = null;
 
-    this.waitUntilReady(function() {
-      flashElement.write(chunk);
-    });
+    if (chunk.length > 0) {
+      this.waitUntilReady(function() {
+        flashElement.write(chunk);
+      });
+    }
   };
 
   /**
@@ -199,7 +255,8 @@
       if (!this._flushTimeout) {
         // consolidate multiple consecutive tiny buffers in one pass;
         // pushing data to Flash is relatively expensive on slow machines
-        this._flushTimeout = setTimeout(this._flushFlashBuffer.bind(this), 0);
+        this._flushTimeout = true;
+        nextTick(this._flushFlashBuffer.bind(this));
       }
     }
   };
@@ -243,30 +300,14 @@
   /**
    * Wait until the backend is ready to start, then call the callback.
    *
-   * @param {function} callback - called on completion or timeout
+   * @param {function} callback - called on completion
    * @todo handle fail case better?
    */
   FlashBackend.prototype.waitUntilReady = function(callback) {
-    var self = this,
-      times = 0,
-      maxTimes = 100;
-    function pingFlashPlugin() {
-      setTimeout(function doPingFlashPlugin() {
-        times++;
-        if (self._flashaudio && self._flashaudio.flashElement.write) {
-          callback();
-        } else if (times > maxTimes) {
-          self.close();
-          callback();
-        } else {
-          pingFlashPlugin();
-        }
-      }, 20);
-    }
-    if (self._flashaudio && self._flashaudio.flashElement.write) {
-      callback();
+    if (this._flashaudio && this._flashaudio.flashElement.write) {
+      callback.apply(this);
     } else {
-      pingFlashPlugin();
+      this._waitUntilReadyQueue.push(callback);
     }
   };
 
@@ -306,6 +347,14 @@
    * @type function|null
    */
   FlashBackend.prototype.onstarved = null;
+
+  /**
+   * Asynchronous callback for when the buffer runs low and
+   * should be refilled soon.
+   *
+   * @type function|null
+   */
+  FlashBackend.prototype.onbufferlow = null;
 
   /**
    * Check if the browser appears to support Flash.

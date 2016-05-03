@@ -9,22 +9,26 @@ module.exports = function demo() {
   var start = document.getElementById('start'),
     stop = document.getElementById('stop'),
     channels = 1,
-    samples = 48000,
+    rate = 48000,
+    sampleCounter = 0,
     feeder = new AudioFeeder();
 
   start.disabled = true;
-  feeder.init(channels, samples);
+  feeder.init(channels, rate);
   feeder.waitUntilReady(function() {
     start.disabled = false;
   });
 
-  function bufferSineWave() {
+  function bufferSineWave(time) {
     var freq = 261, // middle C
+      chunkSamples = Math.round(time * rate), // buffer 1s at a time
+      samples = Math.ceil(chunkSamples / freq) * freq,
       buffer = new Float32Array(samples),
       packet = [buffer];
 
     for (var i = 0; i < samples; i++) {
-      buffer[i] = Math.sin((i / samples) * freq * 2 * Math.PI);
+      buffer[i] = Math.sin((sampleCounter / rate) * freq * 2 * Math.PI);
+      sampleCounter++;
     }
 
     feeder.bufferData(packet);
@@ -34,7 +38,7 @@ module.exports = function demo() {
     start.disabled = true;
     stop.disabled = false;
 
-    bufferSineWave();
+    bufferSineWave(1); // pre-buffer 1s
     feeder.start();
   });
 
@@ -43,6 +47,13 @@ module.exports = function demo() {
     start.disabled = false;
     feeder.stop();
   });
+
+  feeder.onbufferlow = function() {
+    console.log('buffer low');
+    while (feeder.durationBuffered < feeder.bufferThreshold * 2) {
+      bufferSineWave(1);
+    }
+  };
 
   feeder.onstarved = function() {
     console.log('starving');

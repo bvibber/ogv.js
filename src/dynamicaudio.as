@@ -24,6 +24,7 @@ package {
         private var volume:Number = 1;
 
         private var objectId:String = null;
+        private var bufferThreshold:Number = 0;
 
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
@@ -31,6 +32,8 @@ package {
             ExternalInterface.addCallback('start', startPlayback);
             ExternalInterface.addCallback('stop', stopPlayback);
             ExternalInterface.addCallback('setVolume', setVolume);
+            ExternalInterface.addCallback('setBufferSize', setBufferSize);
+            ExternalInterface.addCallback('setBufferThreshold', setBufferThreshold);
 
             // Create a hex digit lookup table
             var hexDigits:Array = ['0', '1', '2', '3', '4', '5', '6', '7',
@@ -124,6 +127,15 @@ package {
           volume = val;
         }
 
+        public function setBufferSize(val:Number):void {
+          // Must write at least 2048 samples every time
+          bufferSize = Math.max(2048, val);
+        }
+
+        public function setBufferThreshold(val:Number):void {
+          bufferThreshold = Math.max(0, val);
+        }
+
         public function soundGenerator(event:SampleDataEvent):void {
             var i:int;
             flushBuffers();
@@ -136,14 +148,14 @@ package {
                 delayedTime += (playbackTime - expectedTime);
             }
 
-            if (buffer.length < bufferSize) {
+            if (buffer.length < bufferSize * 2) {
                 // go ping the decoder and let it know we need more data now!
                 triggerCallback('starved');
             }
 
             // If we haven't got enough data, write a buffer of of silence to
             // both channels (must be at least 2048 samples to keep audio running)
-            if (buffer.length < bufferSize) {
+            if (buffer.length < bufferSize * 2) {
                 for (i = 0; i < bufferSize; i++) {
                     event.data.writeFloat(0.0);
                     event.data.writeFloat(0.0);
@@ -162,6 +174,14 @@ package {
             playbackTimeAtBufferTail = playbackTime + sampleCount / targetRate;
 
             buffer = buffer.slice(sampleCount * 2, buffer.length);
+
+            if (buffer.length < Math.max(bufferSize, bufferThreshold) * 2) {
+                // This is an async callback, but there is not seemingly
+                // a nextTick / setImmediate equivalent in Flash, and
+                // setTimeout(foo, 0) gets throttled in background tabs.
+                // Let the browser deal with the async side.
+                triggerCallback('bufferlow');
+            }
         }
 
         public function triggerCallback(eventName:String):void {

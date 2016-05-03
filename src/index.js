@@ -100,6 +100,84 @@
 	AudioFeeder.prototype.bufferSize = 0;
 
 	/**
+	 * Duration of the minimum buffer size, in seconds.
+	 * If the amount of buffered data falls below this,
+	 * caller will receive a synchronous 'starved' event
+	 * with a last chance to buffer more data.
+	 *
+	 * @type {number}
+	 * @readonly
+	 */
+	Object.defineProperty(AudioFeeder.prototype, 'bufferDuration', {
+		get: function getBufferDuration() {
+			if (this.targetRate) {
+				return this.bufferSize / this.targetRate;
+			} else {
+				return 0;
+			}
+		}
+	});
+
+	/**
+	 * Duration of remaining data at which a 'bufferlow' event will be
+	 * triggered, in seconds.
+	 *
+	 * This defaults to twice bufferDuration, but can be overridden.
+	 *
+	 * @type {number}
+	 */
+	Object.defineProperty(AudioFeeder.prototype, 'bufferThreshold', {
+		get: function getBufferThreshold() {
+			if (this._backend) {
+				return this._backend.bufferThreshold / this.targetRate;
+			} else {
+				return 0;
+			}
+		},
+		set: function setBufferThreshold(val) {
+			if (this._backend) {
+				this._backend.bufferThreshold = Math.round(val * this.targetRate);
+			} else {
+				throw 'Invalid state: AudioFeeder cannot set bufferThreshold before init';
+			}
+		}
+	});
+
+	/**
+	 * Current playback position, in seconds.
+	 * This compensates for drops and underruns, and is suitable for a/v sync.
+	 *
+	 * @type {number}
+	 * @readonly
+	 */
+	Object.defineProperty(AudioFeeder.prototype, 'playbackPosition', {
+		get: function getPlaybackPosition() {
+			if (this._backend) {
+				var playbackState = this.getPlaybackState();
+				return playbackState.playbackPosition;
+			} else {
+				return 0;
+			}
+		}
+	});
+
+	/**
+	 * Duration of remaining queued data, in seconds.
+	 *
+	 * @type {number}
+	 */
+	Object.defineProperty(AudioFeeder.prototype, 'durationBuffered', {
+		get: function getDurationBuffered() {
+			if (this._backend) {
+				var playbackState = this.getPlaybackState();
+				return playbackState.samplesQueued / this.targetRate;
+			} else {
+				return 0;
+			}
+		}
+	});
+
+	/**
 	 * Is the feeder currently set to mute output?
 	 * When muted, this overrides the volume property.
 	 *
@@ -187,6 +265,11 @@
 		this._backend.onstarved = (function() {
 			if (this.onstarved) {
 				this.onstarved();
+			}
+		}).bind(this);
+		this._backend.onbufferlow = (function() {
+			if (this.onbufferlow) {
+				this.onbufferlow();
 			}
 		}).bind(this);
 	};
@@ -317,11 +400,18 @@
 	};
 
 	/**
-	 * A callback when we find we're out of buffered data.
+	 * Synchronous callback when we find we're out of buffered data.
 	 *
 	 * @type {function}
 	 */
 	AudioFeeder.prototype.onstarved = null;
+
+	/**
+	 * Asynchronous callback when we're running low on buffered data.
+	 *
+	 * @type {function}
+	 */
+	AudioFeeder.prototype.onbufferlow = null;
 
 	/**
 	 * Is the AudioFeeder class supported in this browser?

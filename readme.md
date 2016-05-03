@@ -15,8 +15,13 @@ and is suitable for use in custom audio and video playback.
 
 ## Updates
 
-* 0.2.2 - 2016-05-02
+* 0.3.0 - 2016-05-03
  * Implemented `onstarved` callback for Flash backend
+ * Added `onbufferlow` callback when buffered data gets low, but not yet empty
+ * Added `bufferThreshold` property to get/set the threshold in seconds
+ * Added `durationBuffered` property to track amount of data left to play
+ * Added `playbackPosition` property mirroring getPlaybackState().playbackPosition
+ * Retooled Flash plugin setup to use a callback instead of timer-based polling
 * 0.2.1 - 2016-04-28
  * Fixed regression in Flash build makefile
 * 0.2.0 - 2016-04-27
@@ -94,17 +99,19 @@ feeder.waitUntilReady(function() {
   document.querySelector('button.stop').addEventListener('click', function() {
     // You can pause output at any time:
     feeder.stop();
+    // to release resources, call feeder.close() instead.
   });
 
-  // Optional callback when the buffered data runs out!
-  feeder.onstarved = function() {
-    // We don't have more data, so we'll just close out here.
-    feeder.close();
-
-    // Beware this may be a performance-sensitive callback; it's recommended
-    // to do expensive decoding or audio generation in a worker thread and
-    // pass it through for buffering rather than doing on-demand decoding.
+  // Callback when buffered data runs below feeder.bufferThreshold seconds:
+  feeder.onbufferlow = function() {
+    while (feeder.durationBuffered < feeder.bufferThreshold) {
+      feeder.bufferData([
+        new Float32Array(12000),
+        new Float32Array(12000)
+      ]);
+    }
   };
+
 });
 ```
 
@@ -124,8 +131,11 @@ Warning: this may change to use a wrapper class before 1.0.
 
 ## Status and audio/video synchronization
 
-Playback state including the current playback position in seconds can be
-retrieved from the getPlaybackState() method:
+The current playback position in seconds, and the duration of buffered but not
+yet played data, are available through the `playbackPosition` and
+`durationBuffered` properties.
+
+Additional playback state can be retrieved from the getPlaybackState() method:
 
 ```
 {
@@ -147,25 +157,29 @@ from the [ogv.js video player](https://github.com/brion/ogv.js):
 
 ```
 function processMediaData() {
-  var state = audioFeeder.getPlaybackState();
-
-  while (codec.audioReady && state.samplesQueued < audioFeeder.bufferSize * 2) {
+  while (codec.audioReady && audioFeeder.durationBuffered < audioFeeder.bufferThreshold) {
     // When our audio buffer gets low, feed it some more audio data.
     audioFeeder.bufferData(decodeAudioPacket());
   }
 
-  if (codec.frameReady && state.playbackPosition >= codec.nextFrameTimestamp) {
+  if (codec.frameReady && audioFeeder.playbackPosition >= codec.nextFrameTimestamp) {
     // When the audio playback has reached the scheduled time position
     // of the next frame, decode and draw it.
     player.drawFrame(codec.decodeVideoPacket());
   }
 
-  // And check back in before the next frame or buffer expiration!
+  // And check back in before the next frame!
   if (codec.dataPending) {
-    setTimeout(processMediaData, timeUntilNextExcitingEvent);
+    requestAnimationFrame(processMediaData);
   }
 }
-processMediaData();
+
+// Fire off an animation-based loop...
+requestAnimationFrame(processMediaData);
+
+// If in a background thread, animation loops will be throttled.
+// Also fire when audio gets low!
+audioFeeder.onbufferlow = processMediaData;
 ```
 
 The caller is responsible for maintaining a loop and scheduling any decoding,
@@ -176,6 +190,10 @@ frame drawing, etc.
 Beware that setTimeout, setInterval, and requestAnimationFrame may be throttled
 on background tabs, leading to spotty performance if scheduling decoding
 based on them.
+
+To avoid background tab throttling, use the `onbufferlow` event callback
+to run additional decoding/buffering. This is fired asynchronously when
+the available buffered data runs below `bufferThreshold` seconds.
 
 You can buffer an arbitrarily large amount of audio data, but for non-trivial
 examples it's best to decode or generate audio in smallish chunks and buffer
@@ -189,15 +207,23 @@ resulting in audio underruns even if lots of data has been buffered up.
 
 ## Events
 
-There is currently only one supported event, the 'onstarved' property.
-This is called if available buffered data runs out during playback.
+There are currently two supported events, set via the 'onstarved' and
+'onbufferlow' properties.
 
-You can use this event to buffer additional data at the last minute,
+'onstarved' is called when buffered data runs out during playback,
+giving a last-chance opportunity to buffer more data. This is a synchronous
+call in the audio path, and may not be enough to guarantee good performance.
+
+'onbufferlow' is called asynchronously when the buffered data runs
+lower than a configurable threshold, which is more flexible. This
+threshold is available for get and set via the `bufferThreshold` property,
+defaulting to twice the low-level buffer duration.
+
+You can use these events to buffer additional data at the last minute,
 or to trigger a close-out of the feeder when no more data is available.
 
 Todo:
 * add events for beginning of playback?
-* add event for reaching a threshold near starvation
 * add event for scheduled end of playback
 
 ## Flash and Internet Explorer 10/11
