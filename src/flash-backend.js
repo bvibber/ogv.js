@@ -27,6 +27,17 @@
     this._cachedFlashState = null;
     this._cachedFlashTime = 0;
     this._cachedFlashInterval = 40; // resync state no more often than every X ms
+
+    var allowedEvents = {
+        'starved': true
+    };
+    this._callbackName = 'AudioFeederFlashBackendCallback' + this._flashaudio.id;
+    var self = this;
+    window[this._callbackName] = (function(eventName) {
+        if (allowedEvents[eventName] && this['on' + eventName]) {
+            this['on' + eventName]();
+        }
+    }).bind(this);
   };
 
   /**
@@ -286,7 +297,15 @@
     var wrapper = this._flashaudio.flashWrapper;
     wrapper.parentNode.removeChild(wrapper);
     this._flashaudio = null;
+    delete window[this._callbackName];
   };
+
+  /**
+   * Synchronous callback for when we run out of input data
+   *
+   * @type function|null
+   */
+  FlashBackend.prototype.onstarved = null;
 
   /**
    * Check if the browser appears to support Flash.
@@ -402,8 +421,9 @@
 			document.body.appendChild(self.flashWrapper);
 
 			var id = self.flashElement.id;
+            var params = '<param name="FlashVars" value="objectId=' + self.id + '">';
 
-			self.flashWrapper.innerHTML = "<object id='"+id+"' width='10' height='10' type='application/x-shockwave-flash' data='"+self.swf+"' style='visibility: visible;'><param name='allowscriptaccess' value='always'></object>";
+			self.flashWrapper.innerHTML = "<object id='"+id+"' width='10' height='10' type='application/x-shockwave-flash' data='"+self.swf+"' style='visibility: visible;'><param name='allowscriptaccess' value='always'>" + params + "</object>";
 			self.flashElement = document.getElementById(id);
 		},
 	};

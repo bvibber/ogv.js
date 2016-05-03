@@ -46,9 +46,7 @@ module.exports = function demo() {
 
   feeder.onstarved = function() {
     console.log('starving');
-    stop.disabled = true;
-    start.disabled = false;
-    feeder.stop();
+    bufferSineWave();
   };
 
   var muted = document.querySelector('input[name=muted]');

@@ -23,6 +23,8 @@ package {
         private var targetRate:Number = 44100;
         private var volume:Number = 1;
 
+        private var objectId:String = null;
+
         public function dynamicaudio() {
             ExternalInterface.addCallback('write',  write);
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
@@ -36,6 +38,9 @@ package {
             for (var i:int = 0; i < hexDigits.length; i++) {
                 this.hexValues[hexDigits[i].charCodeAt(0)] = i;
             }
+
+            objectId = loaderInfo.parameters.objectId;
+            triggerCallback('ready');
         }
 
         // Called from JavaScript to add samples to the buffer
@@ -131,6 +136,11 @@ package {
                 delayedTime += (playbackTime - expectedTime);
             }
 
+            if (buffer.length < bufferSize) {
+                // go ping the decoder and let it know we need more data now!
+                triggerCallback('starved');
+            }
+
             // If we haven't got enough data, write a buffer of of silence to
             // both channels (must be at least 2048 samples to keep audio running)
             if (buffer.length < bufferSize) {
@@ -152,6 +162,12 @@ package {
             playbackTimeAtBufferTail = playbackTime + sampleCount / targetRate;
 
             buffer = buffer.slice(sampleCount * 2, buffer.length);
+        }
+
+        public function triggerCallback(eventName:String):void {
+            if (objectId !== null) {
+                ExternalInterface.call('AudioFeederFlashBackendCallback' + objectId, eventName);
+            }
         }
     }
 }

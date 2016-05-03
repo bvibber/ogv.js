@@ -15,6 +15,8 @@ and is suitable for use in custom audio and video playback.
 
 ## Updates
 
+* 0.2.2 - 2016-05-02
+ * Implemented `onstarved` callback for Flash backend
 * 0.2.1 - 2016-04-28
  * Fixed regression in Flash build makefile
 * 0.2.0 - 2016-04-27
@@ -197,7 +199,6 @@ Todo:
 * add events for beginning of playback?
 * add event for reaching a threshold near starvation
 * add event for scheduled end of playback
-* fix event callback with Flash backend
 
 ## Flash and Internet Explorer 10/11
 
