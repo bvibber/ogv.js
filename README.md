@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.0-alpha.1 - 2016-05-03
+ * fixed race condition in poster removal
+ * fixed regression in empty 'src' property
+ * updated audio-feeder to 0.3.0
 * 1.1.0-alpha.0 - 2016-05-01
  * refactored parts of build using webpack
  * reduction in unnecessary globals
