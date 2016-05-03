@@ -1549,14 +1549,18 @@ var OGVPlayer = function(options) {
 				thumbnail.style.width = '100%';
 				thumbnail.style.height = '100%';
 				thumbnail.style.objectFit = 'contain';
+				thumbnail.style.visibility = 'hidden';
 				thumbnail.addEventListener('load', function() {
-					OGVPlayer.styleManager.appendRule('.' + instanceId, {
-						width: thumbnail.naturalWidth + 'px',
-						height: thumbnail.naturalHeight + 'px'
-					});
-					self.appendChild(thumbnail);
-					OGVPlayer.updatePositionOnResize();
+					if (thumbnail === this) {
+						OGVPlayer.styleManager.appendRule('.' + instanceId, {
+							width: thumbnail.naturalWidth + 'px',
+							height: thumbnail.naturalHeight + 'px'
+						});
+						OGVPlayer.updatePositionOnResize();
+						thumbnail.style.visibility = 'visible';
+					}
 				});
+				self.appendChild(thumbnail);
 			}
 		}
 	});
