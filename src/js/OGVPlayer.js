@@ -205,18 +205,36 @@ var OGVPlayer = function(options) {
 		initialPlaybackOffset = 0.0;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
-		audioFeeder.onstarved = function() {
-			// If we're in a background tab, timers may be throttled.
-			// When audio buffers run out, go decode some more stuff.
-			if (nextProcessingTimer) {
-				clearTimeout(nextProcessingTimer);
-				nextProcessingTimer = null;
-				pingProcessing();
-			}
-		};
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
 		audioFeeder.volume = self.volume;
 		audioFeeder.muted = self.muted;
+
+		// If we're in a background tab, timers may be throttled.
+		// audioFeeder will call us when buffers need refilling,
+		// without any throttling.
+		audioFeeder.onbufferlow = function audioCallback() {
+			if (isProcessing()) {
+				// We're waiting on input or other async processing;
+				// we'll get triggered later.
+			} else {
+				// We're in an async event so it's safe to run the loop:
+				pingProcessing();
+			}
+		};
+
+		// If we ran out of audio *completely* schedule some more processing.
+		// This shouldn't happen if we keep up with onbufferlow, except at
+		// the very beginning of playback when we haven't buffered any data yet.
+		// @todo pre-buffer a little data to avoid needing this
+		audioFeeder.onstarved = function () {
+			if (isProcessing()) {
+				// We're waiting on input or other async processing;
+				// we'll get triggered later.
+			} else {
+				// Schedule loop after this synchronous event.
+				pingProcessing(0);
+			}
+		};
 	}
 
 	function startPlayback(offset) {
@@ -939,14 +957,10 @@ var OGVPlayer = function(options) {
 							} else if (codec.hasVideo && (playbackPosition - frameEndTimestamp) > bufferDuration) {
 								// don't get too far ahead of the video if it's slow!
 								readyForAudioDecode = false;
-								nextDelays.push((playbackPosition - frameEndTimestamp) * 1000);
+								// wait for audioFeeder to ping us
 							} else {
 								// Check in when the audio buffer runs low again...
-								nextDelays.push((audioBufferedDuration - bufferDuration) * 1000);
-
-								// @todo figure out why the above doesn't do the job reliably
-								// with Flash audio shim on IE!
-								nextDelays.push(bufferDuration * 1000 / 4);
+								// wait for audioFeeder to ping us
 							}
 						} else {
 							// No audio; drive on the general clock.
@@ -964,6 +978,7 @@ var OGVPlayer = function(options) {
 							readyForFrameDraw = !!yCbCrBuffer && !pendingFrame && (frameDelay <= fudgeDelta);
 							readyForFrameDecode = !yCbCrBuffer && !pendingFrame && codec.frameReady;
 
+							// @todo use requestAnimationFrame instead of timers here
 							if (yCbCrBuffer) {
 								// Check in when the decoded frame is due
 								nextDelays.push(frameDelay);
@@ -1000,7 +1015,7 @@ var OGVPlayer = function(options) {
 
 							doFrameComplete();
 
-							pingProcessing(0);
+							pingProcessing();
 
 						} else if (readyForFrameDecode) {
 
@@ -1059,6 +1074,10 @@ var OGVPlayer = function(options) {
 											audioFeeder.bufferData(buffer);
 										});
 										audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
+										if (!codec.hasVideo) {
+											framesProcessed++; // pretend!
+											doFrameComplete();
+										}
 									}
 								}
 								pendingAudio--;
@@ -1075,12 +1094,8 @@ var OGVPlayer = function(options) {
 							var nextDelay = Math.min.apply(Math, nextDelays);
 							if (nextDelays.length > 0) {
 								log('idle: ' + nextDelay + ' - ' + nextDelays.join(','));
-								if (!codec.hasVideo) {
-									framesProcessed++; // pretend!
-									doFrameComplete();
-								}
 								pingProcessing(Math.max(0, nextDelay));
-							} else if (pendingFrame || pendingAudio) {
+							} else if (pendingFrame || pendingAudio || audioFeeder) {
 								log('waiting on pending events');
 							} else {
 								log('we may be lost');
