@@ -8,7 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 ## Updates
 
 * 1.1.0-alpha.2 - 2016-05-03
- * fixed background tab performance
+ * fixed background tab audio performance
 * 1.1.0-alpha.1 - 2016-05-03
  * fixed race condition in poster removal
  * fixed regression in empty 'src' property
