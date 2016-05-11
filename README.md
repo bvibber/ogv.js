@@ -7,13 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.0-alpha.2 - 2016-05-03
+* 1.1.0 - 2016-05-10
  * fixed background tab audio performance
-* 1.1.0-alpha.1 - 2016-05-03
  * fixed race condition in poster removal
- * fixed regression in empty 'src' property
  * updated audio-feeder to 0.3.0
-* 1.1.0-alpha.0 - 2016-05-01
  * refactored parts of build using webpack
  * reduction in unnecessary globals
  * added stubs for standard properties
@@ -27,7 +24,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Current status
 
-As of August 2015, ogv.js can be seen in action [on Wikipedia and Wikimedia Commons](https://commons.wikimedia.org/wiki/Commons:Video) in Safari and IE/Edge where native Ogg and WebM playback is not available. (See [technical details on MediaWiki integration](https://www.mediawiki.org/wiki/Extension:TimedMediaHandler/ogv.js).)
+Since August 2015, ogv.js can be seen in action [on Wikipedia and Wikimedia Commons](https://commons.wikimedia.org/wiki/Commons:Video) in Safari and IE/Edge where native Ogg and WebM playback is not available. (See [technical details on MediaWiki integration](https://www.mediawiki.org/wiki/Extension:TimedMediaHandler/ogv.js).)
 
 See also a standalone demo with performance metrics at https://brionv.com/misc/ogv.js/demo/
 
