@@ -87,6 +87,7 @@ var OGVPlayer = function(options) {
 		INITIAL: 'INITIAL',
 		SEEKING_END: 'SEEKING_END',
 		LOADED: 'LOADED',
+		PRELOAD: 'PRELOAD',
 		READY: 'READY',
 		PLAYING: 'PLAYING',
 		SEEKING: 'SEEKING',
@@ -811,19 +812,33 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.LOADED) {
 
-			state = State.READY;
-			if (paused) {
-				// Paused? stop here.
-				log('pausing stopping at loaded');
-			} else {
-				// Not paused? Continue on to play processing.
-				log('not paused so continuing');
-				pingProcessing(0);
-			}
+			state = State.PRELOAD;
 			fireEvent('loadedmetadata');
 			fireEvent('durationchange');
 			if (codec.hasVideo) {
 				fireEvent('resize');
+			}
+			pingProcessing(0);
+
+		} else if (state == State.PRELOAD) {
+
+			if ((codec.frameReady || !codec.hasVideo) &&
+			    (codec.audioReady || !codec.hasAudio)) {
+
+				state = State.READY;
+				fireEvent('loadeddata');
+				pingProcessing(0);
+			} else {
+				codec.process(function doProcessPreload(more) {
+					if (more) {
+						pingProcessing();
+					} else if (streamEnded) {
+						// Ran out of data before data available...?
+						ended = true;
+					} else {
+						readBytesAndWait();
+					}
+				});
 			}
 
 		} else if (state == State.READY) {

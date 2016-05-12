@@ -387,6 +387,20 @@ doubleAsyncTest('addEventListener for loadedmetadata', function(assert, player) 
 	player.load();
 });
 
+doubleAsyncTest('load yields onloaded', function(assert, player) {
+	player.src = 'media/320x240.ogv';
+	var loadedmetadata = false;
+	player.onloadedmetadata = function() {
+		loadedmetadata = true;
+	};
+	player.onloadeddata = function() {
+		assert.ok( true, 'onloadeddata was fired' );
+		assert.ok( loadedmetadata, 'loadeddata came after loadedmetadata');
+		QUnit.start();
+	};
+	player.load();
+});
+
 doubleAsyncTest('play yields onloadedmetadata', function(assert, player) {
 	assert.ok( player.paused, 'player thinks it is paused before play');
 	player.src = 'media/3seconds.ogv';
