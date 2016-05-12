@@ -334,6 +334,8 @@ var OGVPlayer = function(options) {
 		if (codec) {
 			codec.close();
 			codec = null;
+			pendingFrame = 0;
+			pendingAudio = 0;
 		}
 		videoInfo = null;
 		audioInfo = null;
@@ -353,6 +355,8 @@ var OGVPlayer = function(options) {
 			yCbCrBuffer = null;
 		}
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
+		initialPlaybackPosition = 0;
+		initialPlaybackOffset = 0;
 		duration = null; // do not fire durationchange
 		// timeline offset to 0?
 	}
