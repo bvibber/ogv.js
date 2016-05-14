@@ -1418,6 +1418,9 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			stopPlayback();
+			if (codec.hasAudio) {
+				initialPlaybackOffset = audioEndTimestamp;
+			}
 			paused = true;
 			fireEvent('pause');
 		}
