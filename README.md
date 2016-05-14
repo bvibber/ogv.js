@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.1-alpha.3 - 2016-05-14
+ * update to audio-feeder 0.4.0
+ * much cleaner audio behavior on pause/continue
+ * revert "release audio resources during pause/seek"
 * 1.1.1-alpha.2 - 2016-05-14
  * pause event now fired before ended
  * avoid infinite 'ended' events
