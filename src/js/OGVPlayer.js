@@ -256,12 +256,9 @@ var OGVPlayer = function(options) {
 
 	function stopPlayback() {
 		if (audioFeeder) {
-			audioFeeder.close();
-			audioFeeder = null;
-			initialPlaybackOffset = audioEndTimestamp;
-		} else {
-			initialPlaybackOffset = getPlaybackTime();
+			audioFeeder.stop();
 		}
+		initialPlaybackOffset = getPlaybackTime();
 		log('pausing at ' + initialPlaybackOffset);
 	}
 
@@ -449,6 +446,9 @@ var OGVPlayer = function(options) {
 				actionQueue.splice(0, actionQueue.length);
 			} else {
 				stopPlayback();
+				if (audioFeeder) {
+					audioFeeder.flush();
+				}
 			}
 			state = State.SEEKING;
 			seekTargetTime = toTime;
@@ -867,7 +867,7 @@ var OGVPlayer = function(options) {
 					fireEvent('playing');
 				}
 
-				if (codec.hasAudio) {
+				if (codec.hasAudio && !audioFeeder) {
 					initAudioFeeder();
 					audioFeeder.waitUntilReady(finishStartPlaying);
 				} else {
@@ -1421,9 +1421,6 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			stopPlayback();
-			if (codec.hasAudio) {
-				initialPlaybackOffset = audioEndTimestamp;
-			}
 			paused = true;
 			fireEvent('pause');
 		}

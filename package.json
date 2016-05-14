@@ -53,6 +53,6 @@
     "webpack-dev-server": "^1.12.1",
     "webpack": "^1.12.2",
     "file-loader": "^0.8.5",
-    "audio-feeder": "^0.3.0"
+    "audio-feeder": "^0.4.0"
   }
 }
