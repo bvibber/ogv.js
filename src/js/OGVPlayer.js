@@ -214,6 +214,7 @@ var OGVPlayer = function(options) {
 		// audioFeeder will call us when buffers need refilling,
 		// without any throttling.
 		audioFeeder.onbufferlow = function audioCallback() {
+			log('onbufferlow');
 			if (isProcessing()) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
@@ -228,6 +229,7 @@ var OGVPlayer = function(options) {
 		// the very beginning of playback when we haven't buffered any data yet.
 		// @todo pre-buffer a little data to avoid needing this
 		audioFeeder.onstarved = function () {
+			log('onstarved');
 			if (isProcessing()) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
@@ -903,14 +905,14 @@ var OGVPlayer = function(options) {
 					} else if (pendingAudio || pendingFrame) {
 						// Still more to decode
 						// We'll be pinged when they come back
+					} else if (ended) {
+						log('Unexpectedly processing after ended');
 					} else {
 						// Ran out of stream!
 						log('Ran out of stream!');
 						var finalDelay = 0;
 						if (codec.hasAudio) {
-							audioState = audioFeeder.getPlaybackState();
-							audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate);
-							finalDelay = audioBufferedDuration * 1000;
+							finalDelay = audioFeeder.durationBuffered * 1000;
 						}
 						if (finalDelay > 0) {
 							log('ending pending ' + finalDelay + ' ms');
@@ -1345,12 +1347,7 @@ var OGVPlayer = function(options) {
 					log('.play() while already started');
 				}
 
-				actionQueue.push(function() {
-					startPlayback();
-					fireEvent('play');
-					fireEvent('playing');
-					pingProcessing(0);
-				});
+				state = State.READY;
 				if (isProcessing()) {
 					// waiting on the codec already
 				} else {
