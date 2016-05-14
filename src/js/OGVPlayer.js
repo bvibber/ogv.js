@@ -867,7 +867,7 @@ var OGVPlayer = function(options) {
 					fireEvent('playing');
 				}
 
-				if (codec.hasAudio) {
+				if (codec.hasAudio && !muted) {
 					initAudioFeeder();
 					audioFeeder.waitUntilReady(finishStartPlaying);
 				} else {
@@ -989,6 +989,10 @@ var OGVPlayer = function(options) {
 							// No audio; drive on the general clock.
 							// @fixme account for dropped frame times...
 							playbackPosition = getPlaybackTime();
+
+							// If playing muted with no audio output device,
+							// just keep up with audio in general.
+							readyForAudioDecode = codec.audioReady && (audioEndTimestamp < playbackPosition);
 						}
 
 						if (codec.hasVideo) {
@@ -1567,6 +1571,10 @@ var OGVPlayer = function(options) {
 			muted = val;
 			if (audioFeeder) {
 				audioFeeder.muted = muted;
+			} else if (started && !muted && codec && codec.hasAudio) {
+				log('unmuting: switching from timer to audio clock');
+				initAudioFeeder();
+				startPlayback(audioEndTimestamp);
 			}
 			fireEventAsync('volumechange');
 		}
