@@ -15,6 +15,9 @@ and is suitable for use in custom audio and video playback.
 
 ## Updates
 
+* 0.4.0 - 2016-05-14
+ * more precise recovery of playback position after `stop()`/`start()`
+ * addded `flush()` method; use to clear buffers after a stop when seeking etc
 * 0.3.0 - 2016-05-03
  * Implemented `onstarved` callback for Flash backend
  * Added `onbufferlow` callback when buffered data gets low, but not yet empty

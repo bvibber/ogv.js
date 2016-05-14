@@ -319,6 +319,7 @@
    */
   FlashBackend.prototype.start = function() {
     this._flashaudio.flashElement.start();
+    this._cachedFlashState = null;
   };
 
   /**
@@ -327,6 +328,15 @@
    */
   FlashBackend.prototype.stop = function() {
     this._flashaudio.flashElement.stop();
+    this._cachedFlashState = null;
+  };
+
+  /**
+   * Flush any queued data out of the system.
+   */
+  FlashBackend.prototype.flush = function() {
+    this._flashaudio.flashElement.flush();
+    this._cachedFlashState = null;
   };
 
   /**

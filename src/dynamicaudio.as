@@ -12,6 +12,7 @@ package {
         public var soundChannel:SoundChannel = null;
         public var stringBuffer:Vector.<String> = new Vector.<String>();
         public var buffer:Vector.<Number> = new Vector.<Number>();
+        public var liveBuffer:Vector.<Number> = null;
         public var multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
         public var hexValues:Vector.<int> = new Vector.<int>(256);
 
@@ -31,6 +32,7 @@ package {
             ExternalInterface.addCallback('getPlaybackState', getPlaybackState);
             ExternalInterface.addCallback('start', startPlayback);
             ExternalInterface.addCallback('stop', stopPlayback);
+            ExternalInterface.addCallback('flush', flushData);
             ExternalInterface.addCallback('setVolume', setVolume);
             ExternalInterface.addCallback('setBufferSize', setBufferSize);
             ExternalInterface.addCallback('setBufferThreshold', setBufferThreshold);
@@ -69,14 +71,40 @@ package {
 
         public function stopPlayback():void {
             if (soundChannel) {
+                var timeRemaining:Number = playbackTimeAtBufferTail - (soundChannel.position / 1000),
+                    samplesRemaining:Number = Math.round(timeRemaining * targetRate);
+
                 playbackTimeAtBufferTail = soundChannel.position / 1000;
                 soundChannel.stop();
+
+                if (samplesRemaining > 0 && liveBuffer) {
+                    // There's some data we sent out already that didn't get played yet.
+                    // Put it back at the beginning of the buffer...
+                    // @fixme liveBuffer often isn't big enough to cover the actual buffer, so this is partial.
+                    var newbuffer:Vector.<Number> = new Vector.<Number>(),
+                        retained:Number = Math.min(liveBuffer.length / 2, samplesRemaining),
+                        start:Number = (liveBuffer.length / 2) - retained,
+                        i:int;
+                    for (i = start; i < liveBuffer.length / 2; i++) {
+                        newbuffer.push(liveBuffer[i * 2]);
+                        newbuffer.push(liveBuffer[i * 2 + 1]);
+                    }
+                    for (i = 0; i < buffer.length / 2; i++) {
+                        newbuffer.push(buffer[i * 2]);
+                        newbuffer.push(buffer[i * 2 + 1]);
+                    }
+                    buffer = newbuffer;
+                    liveBuffer = null;
+
+                    queuedTime -= (retained / targetRate);
+                }
             }
             soundChannel = null;
             sound = null;
+        }
 
-            queuedTime += samplesQueued() / targetRate;
-            playbackTimeAtBufferTail += samplesQueued() / targetRate;
+        public function flushData():void {
+            // @todo also flush any current live data?
             stringBuffer.splice(0, stringBuffer.length);
             buffer.splice(0, buffer.length);
         }
@@ -173,6 +201,7 @@ package {
             queuedTime += sampleCount / targetRate;
             playbackTimeAtBufferTail = playbackTime + sampleCount / targetRate;
 
+            liveBuffer = buffer.slice(0, sampleCount * 2);
             buffer = buffer.slice(sampleCount * 2, buffer.length);
 
             if (buffer.length < Math.max(bufferSize, bufferThreshold) * 2) {

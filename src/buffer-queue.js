@@ -25,10 +25,17 @@ function BufferQueue(numChannels, bufferSize) {
   }
   this.channels = numChannels;
   this.bufferSize = bufferSize;
+  this.flush();
+}
+
+/**
+ * Flush any data out of the queue, resetting to empty state.
+ */
+BufferQueue.prototype.flush = function() {
   this._buffers = [];
   this._pendingBuffer = this.createBuffer(this.bufferSize);
   this._pendingPos = 0;
-}
+};
 
 /**
  * Count how many samples are queued up
@@ -113,6 +120,33 @@ BufferQueue.prototype.appendBuffer = function(sampleData) {
 };
 
 /**
+ * Unshift the given sample buffer onto the beginning of the buffer queue.
+ *
+ * @param {SampleBuffer} sampleData - an audio buffer to prepend
+ * @throws exception on invalid input
+ *
+ * @todo this is currently pretty inefficient as it rechunks all the buffers.
+ */
+BufferQueue.prototype.prependBuffer = function(sampleData) {
+  if (!this.validate(sampleData)) {
+    throw "Invalid audio buffer passed to BufferQueue.prependBuffer";
+  }
+
+  // Since everything is pre-chunked in the queue, we're going to have
+  // to pull everything out and re-append it.
+  var buffers = this._buffers.slice(0)
+  buffers.push(this.trimBuffer(this._pendingBuffer, 0, this._pendingPos));
+
+  this.flush();
+  this.appendBuffer(sampleData);
+
+  // Now put back any old buffers, dividing them up into chunks.
+  for (var i = 0; i < buffers.length; i++) {
+    this.appendBuffer(buffers[i]);
+  }
+};
+
+/**
  * Shift out a buffer from the head of the queue, containing a maximum of
  * {@link BufferQueue#bufferSize} samples; if there are not enough samples
  * you may get a shorter buffer. Call {@link BufferQueue#sampleCount} to
@@ -124,7 +158,7 @@ BufferQueue.prototype.nextBuffer = function() {
   if (this._buffers.length) {
     return this._buffers.shift();
   } else {
-    var trimmed = this.trimBuffer(this._pendingBuffer, this._pendingPos);
+    var trimmed = this.trimBuffer(this._pendingBuffer, 0, this._pendingPos);
     this._pendingBuffer = this.createBuffer(this.bufferSize);
     this._pendingPos = 0;
     return trimmed;
@@ -134,20 +168,22 @@ BufferQueue.prototype.nextBuffer = function() {
 /**
  * Trim a buffer down to a given maximum sample count.
  * Any additional samples will simply be cropped off of the view.
+ * If no trimming is required, the same buffer will be returned.
  *
  * @param {SampleBuffer} sampleData - input data
+ * @param {number} start - sample number to start at
  * @param {number} maxSamples - count of samples to crop to
  * @returns {SampleBuffer} - output data with at most maxSamples samples
  */
-BufferQueue.prototype.trimBuffer = function(sampleData, maxSamples) {
+BufferQueue.prototype.trimBuffer = function(sampleData, start, maxSamples) {
   var bufferLength = sampleData[0].length,
-    end = Math.min(maxSamples, bufferLength);
-  if (end > bufferLength) {
+    end = start + Math.min(maxSamples, bufferLength);
+  if (start == 0 && end >= bufferLength) {
     return sampleData;
   } else {
     var output = [];
     for (var i = 0; i < this.channels; i++) {
-      output[i] = sampleData[i].subarray(0, end);
+      output[i] = sampleData[i].subarray(start, end);
     }
     return output;
   }

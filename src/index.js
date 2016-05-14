@@ -386,6 +386,17 @@
 	};
 
 	/**
+	 * Flush any queued data out of the system.
+	 */
+	AudioFeeder.prototype.flush = function() {
+		if (this._backend) {
+			this._backend.flush();
+		} else {
+			throw 'Invalid state: AudioFeeder cannot flush before init';
+		}
+	}
+
+	/**
 	 * Close out the audio channel. The AudioFeeder instance will no
 	 * longer be usable after closing.
 	 *

@@ -50,6 +50,7 @@
     this._queuedTime = 0;
     this._delayedTime = 0;
     this._dropped = 0;
+    this._liveBuffer = this._bufferQueue.createBuffer(this.bufferSize);
 
     // @todo support new audio worker mode too
     if (context.createScriptProcessor) {
@@ -175,6 +176,11 @@
     }
     for (channel = 0; channel < this.channels; channel++) {
       input = inputBuffer[channel];
+
+      // Save this buffer data for later in case we pause
+      this._liveBuffer[channel].set(inputBuffer[channel]);
+
+      // And play it out with volume applied...
       output = event.outputBuffer.getChannelData(channel);
       for (i = 0; i < input.length; i++) {
         output[i] = input[i] * volume;
@@ -272,9 +278,25 @@
    */
   WebAudioBackend.prototype.stop = function() {
     if (this._node) {
+      var timeRemaining = this._timeAwaitingPlayback();
+      if (timeRemaining > 0) {
+        // We have some leftover samples that got queued but didn't get played.
+        // Unshift them back onto the beginning of the buffer.
+        this._bufferQueue.prependBuffer(
+          this._bufferQueue.trimBuffer(this._liveBuffer,
+            Math.round(timeRemaining * this.targetRate)));
+        this._playbackTimeAtBufferTail -= timeRemaining;
+      }
       this._node.onaudioprocess = null;
       this._node.disconnect();
     }
+  };
+
+  /**
+   * Flush any queued data out of the system.
+   */
+  WebAudioBackend.prototype.flush = function() {
+    this._bufferQueue.flush();
   };
 
   /**
@@ -286,7 +308,6 @@
     this.stop();
 
     this._context = null;
-    this._buffers = null;
   };
 
   /**
