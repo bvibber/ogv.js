@@ -924,7 +924,8 @@ var OGVPlayer = function(options) {
 							ended = true;
 							// @todo implement loop behavior
 							paused = true;
-							fireEvent('ended');
+							fireEventAsync('pause');
+							fireEventAsync('ended');
 						}
 					}
 				} else if (paused) {

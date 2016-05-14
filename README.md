@@ -10,6 +10,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * 1.1.1-alpha.0
  * fix occasional loss of a/v sync after source switch
  * loadeddata event now fired
+ * pause event now fired before ended
 * 1.1.0 - 2016-05-10
  * fixed background tab audio performance
  * fixed race condition in poster removal
