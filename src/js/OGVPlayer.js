@@ -1336,7 +1336,7 @@ var OGVPlayer = function(options) {
 
 			paused = false;
 
-			if (started || loading) {
+			if (started) {
 
 				if (ended && stream && byteLength) {
 
@@ -1353,6 +1353,10 @@ var OGVPlayer = function(options) {
 				} else {
 					pingProcessing();
 				}
+
+			} else if (loading) {
+
+				log('.play() while loading');
 
 			} else {
 
