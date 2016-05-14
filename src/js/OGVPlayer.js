@@ -256,9 +256,12 @@ var OGVPlayer = function(options) {
 
 	function stopPlayback() {
 		if (audioFeeder) {
-			audioFeeder.stop();
+			audioFeeder.close();
+			audioFeeder = null;
+			initialPlaybackOffset = audioEndTimestamp;
+		} else {
+			initialPlaybackOffset = getPlaybackTime();
 		}
-		initialPlaybackOffset = getPlaybackTime();
 		log('pausing at ' + initialPlaybackOffset);
 	}
 
@@ -344,7 +347,7 @@ var OGVPlayer = function(options) {
 		audioInfo = null;
 		if (audioFeeder) {
 			audioFeeder.close();
-			audioFeeder = undefined;
+			audioFeeder = null;
 		}
 		if (nextProcessingTimer) {
 			clearTimeout(nextProcessingTimer);
@@ -919,9 +922,7 @@ var OGVPlayer = function(options) {
 							pingProcessing(Math.max(0, finalDelay));
 						} else {
 							log("ENDING NOW");
-							if (audioFeeder) {
-								audioFeeder.stop();
-							}
+							stopPlayback();
 							initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
 							ended = true;
 							// @todo implement loop behavior
@@ -1093,7 +1094,9 @@ var OGVPlayer = function(options) {
 										// Keep track of how much time we spend queueing audio as well
 										// This is slow when using the Flash shim on IE 10/11
 										bufferTime += time(function() {
-											audioFeeder.bufferData(buffer);
+											if (audioFeeder) {
+												audioFeeder.bufferData(buffer);
+											}
 										});
 										audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
 										if (!codec.hasVideo) {

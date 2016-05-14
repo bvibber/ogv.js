@@ -11,6 +11,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * pause event now fired before ended
  * avoid infinite 'ended' events
  * fix slight a/v sync loss after pause/play
+ * release audio resources during pause/seek
 * 1.1.1-alpha.0
  * fix occasional loss of a/v sync after source switch
  * loadeddata event now fired
