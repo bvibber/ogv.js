@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.1-alpha.1 - 2016-05-14
+* 1.1.1-alpha.2 - 2016-05-14
  * pause event now fired before ended
  * avoid infinite 'ended' events
  * fix slight a/v sync loss after pause/play
