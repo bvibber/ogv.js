@@ -1334,7 +1334,7 @@ var OGVPlayer = function(options) {
 	 * HTMLMediaElement play method
 	 */
 	self.play = function() {
-		if (!audioOptions.audioContext) {
+		if (!muted && !audioOptions.audioContext) {
 			OGVPlayer.initSharedAudioContext();
 		}
 

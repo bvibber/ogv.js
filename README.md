@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.1-alpha.5 - 2016-05-16
+ * fix for unmuting after muted play on iOS
 * 1.1.1-alpha.4 - 2016-05-14
  * when playback starts muted, drive on timer instead of audio clock
 * 1.1.1-alpha.3 - 2016-05-14
