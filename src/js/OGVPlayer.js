@@ -1346,7 +1346,7 @@ var OGVPlayer = function(options) {
 
 			paused = false;
 
-			if (started) {
+			if (started && codec && codec.loadedMetadata) {
 
 				if (ended && stream && byteLength) {
 

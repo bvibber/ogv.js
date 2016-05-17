@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.1-alpha.7 - 2016-05-16
+ * fix for regression when hitting 'play' during loading
 * 1.1.1-alpha.6 - 2016-05-16
  * fix for Theora streams with pathologically high frequency of dupe frames
 * 1.1.1-alpha.5 - 2016-05-16
