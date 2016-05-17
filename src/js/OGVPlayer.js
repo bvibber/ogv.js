@@ -1059,18 +1059,21 @@ var OGVPlayer = function(options) {
 							frameEndTimestamp = codec.frameTimestamp;
 							var pendingFramePing = false;
 							codec.decodeFrame(function processingDecodeFrame(ok) {
+								pendingFrame--;
 								log('decoded frame');
 								var delta = getTimestamp() - videoStartTime;
 								videoDecodingTime += delta;
 								lastFrameDecodeTime += delta;
-								if (ok) {
+								if (ok && codec.frameBuffer.duplicate) {
+									// Dupe frame! No need to draw anything.
+									doFrameComplete();
+								} else if (ok) {
 									// Save the buffer until it's time to draw
 									yCbCrBuffer = codec.frameBuffer;
 								} else {
 									// Bad packet or something.
 									log('Bad video packet or something');
 								}
-								pendingFrame--;
 								if (!isProcessing()) {
 									pingProcessing();
 								}

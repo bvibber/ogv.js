@@ -341,14 +341,33 @@ var OGVWrapperCodec = (function(options) {
 		var timestamp = self.frameTimestamp,
 			keyframeTimestamp = self.keyframeTimestamp;
 		demuxer.dequeueVideoPacket(function(packet) {
-			videoDecoder.processFrame(packet, function(ok) {
+			function finish(ok) {
 				// hack
 				if (self.frameBuffer) {
 					self.frameBuffer.timestamp = timestamp;
 					self.frameBuffer.keyframeTimestamp = keyframeTimestamp;
 				}
 				callback(ok);
-			});
+			}
+			if (packet.byteLength === 0) {
+				//
+				// Zero-byte packets in Theora mean dupe frames.
+				//
+				// Going through the decoder worker is expensive in Edge
+				// for pathological cases such as "1000 fps" files created
+				// in some sort of super-mutant-creating transcoding accident.
+				//
+				// Skip the worker and just return a dupe frame immediately.
+				//
+				if (self.frameBuffer) {
+					self.frameBuffer.duplicate = true;
+					finish(true);
+				} else {
+					finish(false);
+				}
+			} else {
+				videoDecoder.processFrame(packet, finish);
+			}
 		});
 	};
 
