@@ -269,7 +269,8 @@ The Flash shim can be rebuilt from source using the Apache Flex SDK.
 The Makefile in this project fetches a local copy of the SDK, which
 is not conveniently packaged.
 
-Building the Flash shim is known to work on Mac OS X and Linux.
+Building the Flash shim is known to work on Mac OS X and Linux, or
+on Windows 10 with Cygwin shell plus native Java/Ant.
 
 Build prerequisites:
 
