@@ -7,24 +7,18 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.1-alpha.7 - 2016-05-16
+* 1.1.1 - 2016-05-18
  * fix for regression when hitting 'play' during loading
-* 1.1.1-alpha.6 - 2016-05-16
  * fix for Theora streams with pathologically high frequency of dupe frames
-* 1.1.1-alpha.5 - 2016-05-16
  * fix for unmuting after muted play on iOS
-* 1.1.1-alpha.4 - 2016-05-14
  * when playback starts muted, drive on timer instead of audio clock
-* 1.1.1-alpha.3 - 2016-05-14
  * update to audio-feeder 0.4.0
  * much cleaner audio behavior on pause/continue
  * revert "release audio resources during pause/seek"
-* 1.1.1-alpha.2 - 2016-05-14
  * pause event now fired before ended
  * avoid infinite 'ended' events
  * fix slight a/v sync loss after pause/play
  * release audio resources during pause/seek
-* 1.1.1-alpha.0
  * fix occasional loss of a/v sync after source switch
  * loadeddata event now fired
 * 1.1.0 - 2016-05-10
