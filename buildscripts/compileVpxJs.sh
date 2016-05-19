@@ -30,7 +30,7 @@ EMCONFIGURE_JS=1 \
     --disable-examples
 
 # compile libvpx
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..

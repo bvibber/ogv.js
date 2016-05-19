@@ -19,7 +19,7 @@ emconfigure ../../../libskeleton/configure \
 	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
 
 # compile libskeleton
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..

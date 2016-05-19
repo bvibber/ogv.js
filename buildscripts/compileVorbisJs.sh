@@ -17,7 +17,7 @@ cd libvorbis
 emconfigure ../../../libvorbis/configure --disable-oggtest --prefix="$dir/build/js/root"
 
 # compile libvorbis
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..

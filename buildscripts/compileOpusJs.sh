@@ -17,7 +17,7 @@ cd libopus
 emconfigure ../../../libopus/configure --disable-asm --disable-oggtest --disable-doc --disable-extra-programs --prefix="$dir/build/js/root"
 
 # compile libopus
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..

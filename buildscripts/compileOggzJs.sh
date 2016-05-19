@@ -17,7 +17,7 @@ cd liboggz
 emconfigure ../../../liboggz/configure --prefix="$dir/build/js/root" --disable-write
 
 # compile liboggz
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..

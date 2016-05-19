@@ -17,7 +17,7 @@ cd libnestegg
 EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure ../../../libnestegg/configure --prefix="$dir/build/js/root"
 
 # compile libnestegg
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..

@@ -17,7 +17,7 @@ cd libogg
 emconfigure ../../../libogg/configure --prefix="$dir/build/js/root"
 
 # compile libogg
-emmake make
+emmake make -j4
 emmake make install
 
 cd ..
