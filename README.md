@@ -9,6 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 * 1.1.2-alpha.0 - 2016-05-22
  * fix memory leak in WebM demuxer
+ * allow WebM files to play all the way to end
 * 1.1.1 - 2016-05-18
  * fix for regression when hitting 'play' during loading
  * fix for Theora streams with pathologically high frequency of dupe frames
