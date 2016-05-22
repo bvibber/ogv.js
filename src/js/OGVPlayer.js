@@ -468,28 +468,37 @@ var OGVPlayer = function(options) {
 			lastFrameSkipped = false;
 			lastSeekPosition = -1;
 
-			codec.flush(function() {
-				codec.getKeypointOffset(toTime, function(offset) {
-					if (offset > 0) {
-						// This file has an index!
-						//
-						// Start at the keypoint, then decode forward to the desired time.
-						//
-						seekState = SeekState.LINEAR_TO_TARGET;
-						stream.seek(offset);
-						readBytesAndWait();
-					} else {
-						// No index.
-						//
-						// Bisect through the file finding our target time, then we'll
-						// have to do it again to reach the keypoint, and *then* we'll
-						// have to decode forward back to the desired time.
-						//
-						seekState = SeekState.BISECT_TO_TARGET;
-						startBisection(seekTargetTime);
-					}
-
+			codec.seekToKeypoint(toTime, function(seeking) {
+				if (seeking) {
+					seekState = SeekState.LINEAR_TO_TARGET;
+					readBytesAndWait();
 					fireEvent('seeking');
+					return;
+				}
+				// Use the old interface still implemented on ogg demuxer
+				codec.flush(function() {
+					codec.getKeypointOffset(toTime, function(offset) {
+						if (offset > 0) {
+							// This file has an index!
+							//
+							// Start at the keypoint, then decode forward to the desired time.
+							//
+							seekState = SeekState.LINEAR_TO_TARGET;
+							stream.seek(offset);
+							readBytesAndWait();
+						} else {
+							// No index.
+							//
+							// Bisect through the file finding our target time, then we'll
+							// have to do it again to reach the keypoint, and *then* we'll
+							// have to decode forward back to the desired time.
+							//
+							seekState = SeekState.BISECT_TO_TARGET;
+							startBisection(seekTargetTime);
+						}
+
+						fireEvent('seeking');
+					});
 				});
 			});
 		});
@@ -879,6 +888,7 @@ var OGVPlayer = function(options) {
 
 			codec.process(function processSeeking(more) {
 				if (!more) {
+					console.log('seek needs more data');
 					readBytesAndWait();
 				} else if (seekState == SeekState.NOT_SEEKING) {
 					throw new Error('seeking in invalid state (not seeking?)');
@@ -1200,6 +1210,12 @@ var OGVPlayer = function(options) {
 		ended = false;
 
 		codec = new codecClass(codecOptions);
+		codec.onseek = function(offset) {
+			if (stream) {
+				console.log('SEEKING TO', offset);
+				stream.seek(offset);
+			}
+		};
 		codec.init(function() {
 			readBytesAndWait();
 		});

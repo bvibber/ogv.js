@@ -22,6 +22,7 @@ Module.loadedMetadata = false;
 Module.videoCodec = null;
 Module.audioCodec = null;
 Module.duration = NaN;
+Module.onseek = null;
 
 Module.audioPackets = [];
 Object.defineProperty(Module, 'hasAudio', {
@@ -142,6 +143,24 @@ Module.dequeueAudioPacket = function(callback) {
 Module.getKeypointOffset = function(timeSeconds, callback) {
 	var offset = Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
 	callback(offset);
+};
+
+/**
+ * Initiate seek to the nearest keyframe or other position just before
+ * the given presentation timestamp. This may trigger seek requests, and
+ * it may take some time before processing returns more packets.
+ *
+ * @param number timeSeconds
+ * @param function(boolean) callback
+ *        indicates whether seeking was initiated or not.
+ */
+Module.seekToKeypoint = function(timeSeconds, callback) {
+	var ret = Module._ogv_demuxer_seek_to_keypoint(timeSeconds * 1000);
+	if (ret) {
+		Module.audioPackets.splice(0, Module.audioPackets.length);
+		Module.videoPackets.splice(0, Module.videoPackets.length);
+	}
+	callback(!!ret);
 };
 
 Module.flush = function(callback) {

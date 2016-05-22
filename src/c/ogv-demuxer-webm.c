@@ -24,6 +24,7 @@ typedef struct {
     size_t len;
     size_t max;
     int64_t pos;
+    int64_t lastSeekTarget;
 } BufferQueue;
 
 static BufferQueue *bq_init() {
@@ -37,14 +38,14 @@ static BufferQueue *bq_init() {
 
 static int64_t bq_start(BufferQueue *queue) {
     if (queue->len == 0) {
-        return 0;
+        return queue->pos;
     }
     return queue->items[0].start;
 }
 
 static int64_t bq_end(BufferQueue *queue) {
     if (queue->len == 0) {
-        return 0;
+        return queue->pos;
     }
     return queue->items[queue->len - 1].start + queue->items[queue->len - 1].len;
 }
@@ -59,11 +60,16 @@ static int64_t bq_headroom(BufferQueue *queue) {
 
 static int bq_seek(BufferQueue *queue, int64_t pos) {
     if (bq_start(queue) > pos) {
+        printf("trying to seek to %lld\n", pos);
+        queue->lastSeekTarget = pos;
         return -1;
     }
-    if (bq_end(queue) < pos) {
+    if (bq_end(queue) <= pos) {
+        printf("trying to seek to %lld\n", pos);
+        queue->lastSeekTarget = pos;
         return -1;
     }
+    printf("in-buffer seek to %lld\n", pos);
     queue->pos = pos;
     return 0;
 }
@@ -84,6 +90,14 @@ static void bq_trim(BufferQueue *queue) {
         queue->len -= shift;
         memmove(queue->items, queue->items + shift, queue->len * sizeof(BufferQueueItem));
     }
+}
+
+static void bq_flush(BufferQueue *queue) {
+    for (int i = 0; i < queue->len; i++) {
+        free(queue->items[i].bytes);
+        queue->items[i].bytes = NULL;
+    }
+    queue->len = 0;
 }
 
 static void bq_append(BufferQueue *queue, const char *data, size_t len) {
@@ -133,6 +147,7 @@ static int bq_read(BufferQueue *queue, char *data, size_t len) {
 }
 
 static void bq_free(BufferQueue *queue) {
+    bq_flush(queue);
     free(queue->items);
     free(queue);
 };
@@ -150,9 +165,13 @@ static unsigned int    audioTrack = 0;
 static int             audioCodec = -1;
 static char           *audioCodecName = NULL;
 
+static int64_t         seekTime;
+static unsigned int    seekTrack;
+
 enum AppState {
     STATE_BEGIN,
-    STATE_DECODING
+    STATE_DECODING,
+    STATE_SEEKING
 } appState;
 
 void ogv_demuxer_init() {
@@ -219,6 +238,82 @@ static nestegg_io ioCallbacks = {
 	tellCallback,
 	NULL
 };
+
+/**
+ * Safe read of EBML id or data size int64 from a data stream.
+ * @returns byte count of the ebml number on success, or 0 on failure
+ */
+static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask_bit)
+{
+    // Count of initial 0 bits plus first 1 bit encode total number of bytes.
+    // Rest of the bits are a big-endian number.
+    char first;
+    if (bq_read(bufferQueue, &first, 1)) {
+        printf("out of bytes at start of field\n");
+        return 0;
+    }
+    if (first == 0) {
+        printf("zero field\n");
+        return 0;
+    }
+
+    int shift = 0;
+    while (((unsigned char)first & 0x80) == 0) {
+        shift++;
+        first = (unsigned char)first << 1;
+    }
+    int byteCount = shift + 1;
+
+    if (!keep_mask_bit) {
+        // id keeps the mask bit, data size strips it
+        first = first & 0x7f;
+    }
+    // Save the top bits from that first byte.
+    *val = (unsigned char)first >> shift;
+    for (int i = 1; i < byteCount; i++) {
+        char next;
+        if (bq_read(bufferQueue, &next, 1)) {
+            printf("out of bytes in field\n");
+            return 0;
+        }
+        *val = *val << 8 | (unsigned char)next;
+    }
+    //printf("byteCount %d; val %lld\n", byteCount, *val);
+    return byteCount;
+}
+
+static int readyForNextPacket()
+{
+    int64_t pos = bq_tell(bufferQueue);
+    int ok = 0;
+    
+    int64_t id, size;
+    int idSize, sizeSize;
+    
+    idSize = read_ebml_int64(bufferQueue, &id, 1);
+    if (idSize) {
+        if (id != 0x1c53bb6bLL) {
+            // Right now we only care about reading the cues.
+            // If used elsewhere, unpack that. ;)
+            ok = 1;
+        }
+        sizeSize = read_ebml_int64(bufferQueue, &size, 0);
+        if (sizeSize) {
+            if (bq_headroom(bufferQueue) >= size) {
+                ok = 1;
+            }
+        }
+    }
+    /*
+    if (!ok) {
+        printf("not ready for packet! %lld/%lld %d %d %llx %lld\n", bq_tell(bufferQueue), bq_headroom(bufferQueue), idSize, sizeSize, id, size);
+    } else {
+        printf("ready for packet! %lld/%lld %d %d %llx %lld\n", bq_tell(bufferQueue), bq_headroom(bufferQueue), idSize, sizeSize, id, size);
+    }
+    */
+    bq_seek(bufferQueue, pos);
+    return ok;
+}
 
 static int processBegin() {
 	// This will read through headers, hopefully we have enough data
@@ -359,6 +454,29 @@ static int processDecoding() {
 	}
 }
 
+static int processSeeking()
+{
+    bufferQueue->lastSeekTarget = 0;
+    int r = nestegg_track_seek(demuxContext, seekTrack, seekTime);
+    if (r) {
+        if (bufferQueue->lastSeekTarget == 0) {
+            // Maybe we just need more data?
+            printf("is seeking processing... FAILED at %lld %lld %lld\n", bufferQueue->pos, bq_start(bufferQueue), bq_end(bufferQueue));
+        } else {
+            // We need to go off and load stuff...
+            printf("is seeking processing... MOAR SEEK %lld %lld %lld\n", bufferQueue->lastSeekTarget, bq_start(bufferQueue), bq_end(bufferQueue));
+            ogvjs_callback_seek(bufferQueue->lastSeekTarget);
+            bufferQueue->pos = bufferQueue->lastSeekTarget;
+            bq_flush(bufferQueue);
+        }
+        return 0;
+    } else {
+        appState = STATE_DECODING;
+        printf("is seeking processing... LOOKS ROLL OVER\n");
+        return 1;
+    }
+}
+
 static void receive_input(const char *buffer, int bufsize) {
     if (bufsize > 0) {
         bq_append(bufferQueue, buffer, bufsize);
@@ -380,6 +498,14 @@ int ogv_demuxer_process(const char *data, size_t data_len) {
             // whee!
         }
         return 0;
+    } else if (appState == STATE_SEEKING) {
+        if (readyForNextPacket()) {
+            return processSeeking();
+        } else {
+            // need more data
+            printf("not ready to read the cues\n");
+            return 0;
+        }
 	} else {
 		// uhhh...
 		printf("Invalid appState in ogv_demuxer_process\n");
@@ -394,11 +520,9 @@ void ogv_demuxer_destroy() {
 }
 
 void ogv_demuxer_flush() {
-	// @todo
-
-	// First, read out anything left in our input buffer
-	
-	// Then, dump all packets from the streams
+    bq_flush(bufferQueue);
+    // we may not need to handle the packet queue because this only
+    // happens after seeking and nestegg handles that internally
 }
 
 /**
@@ -423,15 +547,26 @@ float ogv_demuxer_media_duration() {
 
 int ogv_demuxer_seekable()
 {
-	// @todo implement or rework
-	// nestegg's seeking implementation is sync
-	//return nestegg_has_cues(demuxContext);
-	return 0;
+	return nestegg_has_cues(demuxContext);
 }
 
 long ogv_demuxer_keypoint_offset(long time_ms)
 {
-	// @todo implement or rework
-	// nestegg's seeking implementation is sync
+	// can't do with nestegg's API; use ogv_demuxer_seek_to_keypoint instead
 	return -1;
+}
+
+int ogv_demuxer_seek_to_keypoint(long time_ms)
+{
+    appState = STATE_SEEKING;
+    seekTime = (int64_t)time_ms * 1000000LL;
+    if (hasVideo) {
+        seekTrack = videoTrack;
+    } else if (hasAudio) {
+        seekTrack = audioTrack;
+    } else {
+        return 0;
+    }
+    processSeeking();
+    return 1;
 }

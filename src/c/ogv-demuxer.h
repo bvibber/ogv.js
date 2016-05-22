@@ -13,3 +13,4 @@ extern void ogvjs_callback_video_packet(const char *buffer, size_t len, float fr
 extern void ogvjs_callback_audio_packet(const char *buffer, size_t len, float audioTimestamp);
 extern int ogvjs_callback_frame_ready(void);
 extern int ogvjs_callback_audio_ready(void);
+extern void ogvjs_callback_seek(int64_t offset);

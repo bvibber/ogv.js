@@ -144,6 +144,11 @@ var OGVWrapperCodec = (function(options) {
 		processing = true;
 		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
+			demuxer.onseek = function(offset) {
+				if (self.onseek) {
+					self.onseek(offset);
+				}
+			};
 			demuxer.init(function() {
 				processing = false;
 				callback();
@@ -399,6 +404,17 @@ var OGVWrapperCodec = (function(options) {
 	self.getKeypointOffset = function(timeSeconds, callback) {
 		demuxer.getKeypointOffset(timeSeconds, callback);
 	};
+
+	self.seekToKeypoint = function(timeSeconds, callback) {
+		demuxer.seekToKeypoint(timeSeconds, function(seeking) {
+			if (seeking) {
+				inputQueue.splice(0, inputQueue.length);
+			}
+			callback(seeking)
+		});
+	}
+
+	self.onseek = null;
 
 	return self;
 });

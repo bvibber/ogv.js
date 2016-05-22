@@ -294,6 +294,11 @@ long ogv_demuxer_keypoint_offset(long time_ms)
     return (long)offset;
 }
 
+int ogv_demuxer_seek_to_keypoint(long time_ms)
+{
+	return 0;
+}
+
 void ogv_demuxer_flush()
 {
 	oggz_purge(oggz);
