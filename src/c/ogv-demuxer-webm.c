@@ -215,6 +215,8 @@ static int processDecoding() {
 		} else {
 			// throw away unknown packets
 		}
+
+		nestegg_free_packet(packet);
 		return 1;
 	}
 }
