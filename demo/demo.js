@@ -391,8 +391,8 @@
 
 		var today = new Date(),
 			year = 2016,
-			month = 04,
-			day = 10; // where we left off in motd.js, @fixme use live info
+			month = 05,
+			day = 22; // where we left off in motd.js, @fixme use live info
 
 		var input = '';
 		while (true) {
@@ -496,7 +496,13 @@
 		//return 'File:How_Open_Access_Empowered_a_16-Year-Old_to_Make_Cancer_Breakthrough.ogv';
 
 		// video mostly talking heads, 720p source, speech needs lipsync
-		return 'File:¿Qué es Wikipedia?.ogv';
+		//return 'File:¿Qué es Wikipedia?.ogv';
+
+		// long live-action, mix of various types. 720p+ source, speech needs lipsync
+		//return 'File:Knowledge_for_Everyone_(no_subtitles).webm';
+
+		// classics! 720p source, mix of gfx and talking heads. speech needs libsync
+		return 'File:Curiosity\'s_Seven_Minutes_of_Terror.ogv';
 	}
 
 	var chooserState = 0,

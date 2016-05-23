@@ -47,7 +47,7 @@ Since August 2015, ogv.js can be seen in action [on Wikipedia and Wikimedia Comm
 See also a standalone demo with performance metrics at https://brionv.com/misc/ogv.js/demo/
 
 * streaming: yes (with Range header)
-* seeking: yes for Ogg (with Range header), no for WebM
+* seeking: yes for Ogg and WebM (with Range header)
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * background threading: yes (video, audio decoders in Workers)
@@ -248,7 +248,7 @@ Seeking is implemented via the HTTP Range: header.
 
 For Ogg files with keyframe indices in a skeleton index, seeking is very fast. Otherwise,  a bisection search is used to locate the target frame or audio position, which is very slow over the internet as it creates a lot of short-lived HTTP requests.
 
-For WebM files, seeking is not yet supported; this will require refactoring the demuxer modules to present a synchronous i/o abstraction to the demuxer library.
+For WebM files with cues, efficient seeking is supported as well as of 1.1.2.
 
 As with chunked streaming, cross-site playback requires CORS support for the Range header.
 
@@ -280,9 +280,7 @@ You can then unmute the video in response to a touch or click handler. Alternate
 
 *WebM*
 
-WebM support was added in June 2015, and is currently very experimental. Not everything works yet, and performance is pretty bad. See [issue tracker for WebM milestone](https://github.com/brion/ogv.js/milestones/WebM%20playback) on the GitHub page.
-
-The i/o model of the nestegg WebM container demuxing library is a bit different from what ogv.js was designed around so seeking is not yet supported and it may sometimes cut off partway through a file. Needs more work.
+WebM support was added in June 2015, with some major issues finally worked out in May 2016. It remains experimental, but should be fully enabled in the future once a few more bugs are worked out. Beware that performance of WebM VP8 decoding is much slower than Ogg Theora.
 
 To enable, set `enableWebM: true` in your `options` array.
 
