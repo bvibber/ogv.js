@@ -936,7 +936,7 @@
 			if (player.currentTime) {
 				startTime = player.currentTime;
 			}
-			autoplay = (player.paused === false) && !navigator.userAgent.match(/iPhone|iPad|iPod/);
+			autoplay = (player.paused === false);
 			player.parentElement.removeChild(player);
 			player = null;
 		}
