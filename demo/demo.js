@@ -848,9 +848,11 @@
 			player.src = selectedUrl;
 			player.muted = muted;
 			player.addEventListener('loadedmetadata', function() {
-				player.currentTime = startTime;
-				if (autoplay) {
-					player.play();
+				if (startTime) {
+					player.currentTime = startTime;
+					if (autoplay) {
+						player.play();
+					}
 				}
 			});
 
