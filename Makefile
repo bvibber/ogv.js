@@ -266,6 +266,7 @@ cleanshaders:
 
 build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/demo.css \
+                        build/demo/ajax-loader.gif \
                         build/demo/demo.js \
                         build/demo/iconfont.css \
                         build/demo/motd.js \
@@ -283,6 +284,10 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
 build/demo/demo.css : $(DEMO_DIR)/demo.css
 	test -d build/demo || mkdir -p build/demo
 	cp $(DEMO_DIR)/demo.css build/demo/demo.css
+
+build/demo/ajax-loader.gif : $(DEMO_DIR)/ajax-loader.gif
+	test -d build/demo || mkdir -p build/demo
+	cp $(DEMO_DIR)/ajax-loader.gif build/demo/ajax-loader.gif
 
 build/demo/demo.js : $(DEMO_DIR)/demo.js
 	test -d build/demo || mkdir -p build/demo

@@ -443,6 +443,7 @@
 
 	var container = document.getElementById('player'),
 		controls = document.getElementById('controls'),
+		spinner = document.getElementById('spinner-panel'),
 		videoChooser = document.getElementById('video-chooser'),
 		selectedTitle = null,
 		selectedUrl = null,
@@ -790,7 +791,10 @@
 			document.getElementById('audio-channels').textContent = '';
 			document.getElementById('audio-rate').textContent = '';
 			document.getElementById('audio-drops').textContent = '';
+
+			spinner.classList.add('loading');
 			player.addEventListener('loadedmetadata', function() {
+				spinner.classList.remove('loading');
 				updateProgress();
 
 				// Standard metadata ain't much.
@@ -813,6 +817,14 @@
 					document.getElementById('audio-channels').textContent = player.ogvjsAudioChannels;
 					document.getElementById('audio-rate').textContent = player.ogvjsAudioSampleRate;
 				}
+			});
+
+			spinner.classList.remove('seeking');
+			player.addEventListener('seeking', function() {
+				spinner.classList.add('seeking');
+			});
+			player.addEventListener('seeked', function() {
+				spinner.classList.remove('seeking');
 			});
 
 			player.addEventListener('timeupdate', function() {

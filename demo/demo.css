@@ -136,6 +136,25 @@ html, body {
 	height: 100%;
 }
 
+#spinner-panel {
+	display: none;
+
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+
+	background-color: rgba(0, 0, 0, 0.5);
+	background-image: url('ajax-loader.gif');
+	background-repeat: no-repeat;
+	background-position: center;
+}
+#spinner-panel.seeking,
+#spinner-panel.loading {
+	display: block;
+}
+
 #control-panel {
 	position: absolute;
 	
