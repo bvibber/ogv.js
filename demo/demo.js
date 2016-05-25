@@ -817,7 +817,6 @@
 
 			player.addEventListener('timeupdate', function() {
 				updateProgress();
-				startTime = this.currentTime;
 			});
 
 			clearBenchmark();

@@ -427,7 +427,7 @@ static int processDecoding() {
 	} else if (ret < 0) {
 		// Unknown unrecoverable error
 		printf("webm processDecoding: error %d\n", ret);
-		return 1;
+		return 0;
 	} else {
 		//printf("webm processDecoding: got packet?\n");
 		unsigned int track;
@@ -494,10 +494,17 @@ int ogv_demuxer_process(const char *data, size_t data_len) {
             return 0;
         }
     } else if (appState == STATE_DECODING) {
+        int needData = 1;
+		if ((!hasVideo || ogvjs_callback_frame_ready()) &&
+			(!hasAudio || ogvjs_callback_audio_ready())) {
+			// We've already got data ready!
+			needData = 0;
+		}
         while (processDecoding()) {
             // whee!
+            needData = 0;
         }
-        return 0;
+        return !needData;
     } else if (appState == STATE_SEEKING) {
         if (readyForNextPacket()) {
             return processSeeking();

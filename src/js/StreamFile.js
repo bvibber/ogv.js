@@ -29,7 +29,6 @@ function StreamFile(options) {
 		waitingForInput = false,
 		doneBuffering = false,
 		bytesTotal = 0,
-		bytesRead = 0,
 		buffers = [],
 		cachever = 0,
 		responseHeaders = {};
@@ -128,8 +127,6 @@ function StreamFile(options) {
 				xhr.setRequestHeader('Range', range);
 			}
 
-			bytesRead = 0;
-
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState == 2) {
 					if (xhr.status == 206) {
@@ -166,8 +163,8 @@ function StreamFile(options) {
 					internal.onXHRLoading(xhr);
 				} else if (xhr.readyState == 4) {
 					// Complete.
-					internal.onXHRLoading(xhr);
 					internal.onXHRDone(xhr);
+					internal.onXHRLoading(xhr);
 				}
 			};
 
@@ -283,13 +280,11 @@ function StreamFile(options) {
 				}
 			}
 
-			bytesRead += byteLength;
 			bufferPosition += byteLength;
 			return bufferOut.slice(0, byteLength);
 		},
 
 		clearReadState: function() {
-			bytesRead = 0;
 			doneBuffering = false;
 			waitingForInput = true;
 		},
@@ -305,9 +300,6 @@ function StreamFile(options) {
 			if (waitingForInput) {
 				waitingForInput = false;
 				onread(internal.popBuffer());
-				if (doneBuffering && !internal.dataToRead()) {
-					internal.onReadDone();
-				}
 			}
 		},
 
@@ -326,12 +318,12 @@ function StreamFile(options) {
 	self.readBytes = function() {
 		if (internal.dataToRead()) {
 			var buffer = internal.popBuffer();
-			onread(buffer);
 			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
 				seekPosition += chunkSize;
 				internal.clearReadState();
 				internal.openXHR();
 			}
+			onread(buffer);
 		} else if (doneBuffering) {
 			// We're out of data!
 			internal.onReadDone();
@@ -346,6 +338,7 @@ function StreamFile(options) {
 			internal.abortXHR(internal.xhr);
 			internal.xhr = null;
 			internal.clearBuffers();
+			waitingForInput = false;
 		}
 	};
 
@@ -385,7 +378,7 @@ function StreamFile(options) {
 
 	Object.defineProperty(self, 'bytesRead', {
 		get: function() {
-			return seekPosition + bytesRead;
+			return bufferPosition;
 		}
 	});
 
@@ -470,7 +463,6 @@ function StreamFile(options) {
 					var buffer = event.target.result,
 						len = buffer.byteLength;
 					if (len > 0) {
-						bytesRead += len;
 						bufferPosition += len;
 						onread(buffer);
 					} else {

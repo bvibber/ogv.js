@@ -442,13 +442,12 @@ var OGVPlayer = function(options) {
 			if (waitingOnInput) {
 				stream.abort();
 				waitingOnInput = false;
-				// clear any queued input/seek-start
-				actionQueue.splice(0, actionQueue.length);
-			} else {
-				stopPlayback();
-				if (audioFeeder) {
-					audioFeeder.flush();
-				}
+			}
+			// clear any queued input/seek-start
+			actionQueue.splice(0, actionQueue.length);
+			stopPlayback();
+			if (audioFeeder) {
+				audioFeeder.flush();
 			}
 			state = State.SEEKING;
 			seekTargetTime = toTime;
@@ -471,8 +470,12 @@ var OGVPlayer = function(options) {
 			codec.seekToKeypoint(toTime, function(seeking) {
 				if (seeking) {
 					seekState = SeekState.LINEAR_TO_TARGET;
-					readBytesAndWait();
-					fireEvent('seeking');
+					fireEventAsync('seeking');
+					if (isProcessing()) {
+						// wait for i/o
+					} else {
+						pingProcessing();
+					}
 					return;
 				}
 				// Use the old interface still implemented on ogg demuxer
@@ -522,14 +525,14 @@ var OGVPlayer = function(options) {
 		initialPlaybackOffset = seekTargetTime;
 
 		function finishedSeeking() {
+			lastTimeUpdate = seekTargetTime;
+			fireEventAsync('timeupdate');
+			fireEventAsync('seeked');
 			if (isProcessing()) {
 				// wait for whatever's going on to complete
 			} else {
-				pingProcessing(0);
+				pingProcessing();
 			}
-			lastTimeUpdate = seekTargetTime;
-			fireEvent('timeupdate');
-			fireEvent('seeked');
 		}
 
 		if (paused) {
@@ -572,10 +575,12 @@ var OGVPlayer = function(options) {
 				// Haven't found a frame yet, process more data
 				pingProcessing();
 				return;
-			} else if (codec.frameTimestamp < 0 || codec.frameTimestamp + frameDuration < seekTargetTime) {
+			} else if (codec.frameTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it in case we're at our keyframe or a following intraframe...
+				waitingOnInput = true;
 				codec.decodeFrame(function() {
+					waitingOnInput = false;
 					pingProcessing();
 				});
 				return;
@@ -595,11 +600,12 @@ var OGVPlayer = function(options) {
 				// Haven't found an audio packet yet, process more data
 				pingProcessing();
 				return;
-			}
-			if (codec.audioTimestamp < 0 || codec.audioTimestamp + frameDuration < seekTargetTime) {
+			} else if (codec.audioTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it so when we reach the target we've got consistent data.
+				waitingOnInput = true;
 				codec.decodeAudio(function() {
+					waitingOnInput = false;
 					pingProcessing();
 				});
 				return;
@@ -702,20 +708,9 @@ var OGVPlayer = function(options) {
 	}
 
 	var depth = 0,
-		useImmediate = options.useImmediate && !!window.setImmediate,
-		useTailCalls = !useImmediate,
+		needProcessing = false,
 		pendingFrame = 0,
 		pendingAudio = 0;
-
-	function tailCall(func) {
-		if (useImmediate) {
-			setImmediate(func);
-		} else if (!useTailCalls) {
-			setTimeout(func, 0);
-		} else {
-			func();
-		}
-	}
 
 	function doProcessing() {
 		nextProcessingTimer = null;
@@ -723,13 +718,30 @@ var OGVPlayer = function(options) {
 		if (isProcessing()) {
 			// Called async while waiting for something else to complete...
 			// let it finish, then we'll get called again to continue.
-			return;
+			//return;
+			throw new Error('REENTRANCY FAIL: doProcessing during processing');
 		}
 
-		if (depth > 0 && !useTailCalls) {
+		if (depth > 0) {
 			throw new Error('REENTRANCY FAIL: doProcessing recursing unexpectedly');
 		}
-		depth++;
+		var iters = 0;
+		do {
+			needProcessing = false;
+			depth++;
+			doProcessingLoop();
+			depth--;
+			
+			if (needProcessing && isProcessing()) {
+				throw new Error('REENTRANCY FAIL: waiting on input or codec but asked to keep processing');
+			}
+			if (++iters > 500) {
+				throw new Error('stuck in processing loop');
+			}
+		} while (needProcessing);
+	}
+
+	function doProcessingLoop() {
 
 		if (actionQueue.length) {
 			// data or user i/o to process in our serialized event stream
@@ -827,10 +839,10 @@ var OGVPlayer = function(options) {
 		} else if (state == State.LOADED) {
 
 			state = State.PRELOAD;
-			fireEvent('loadedmetadata');
-			fireEvent('durationchange');
+			fireEventAsync('loadedmetadata');
+			fireEventAsync('durationchange');
 			if (codec.hasVideo) {
-				fireEvent('resize');
+				fireEventAsync('resize');
 			}
 			pingProcessing(0);
 
@@ -840,8 +852,8 @@ var OGVPlayer = function(options) {
 			    (codec.audioReady || !codec.hasAudio)) {
 
 				state = State.READY;
-				fireEvent('loadeddata');
-				pingProcessing(0);
+				fireEventAsync('loadeddata');
+				pingProcessing();
 			} else {
 				codec.process(function doProcessPreload(more) {
 					if (more) {
@@ -872,8 +884,8 @@ var OGVPlayer = function(options) {
 
 					startPlayback();
 					pingProcessing(0);
-					fireEvent('play');
-					fireEvent('playing');
+					fireEventAsync('play');
+					fireEventAsync('playing');
 				}
 
 				if (codec.hasAudio && !audioFeeder && !muted) {
@@ -886,20 +898,28 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.SEEKING) {
 
-			codec.process(function processSeeking(more) {
-				if (!more) {
-					console.log('seek needs more data');
-					readBytesAndWait();
-				} else if (seekState == SeekState.NOT_SEEKING) {
-					throw new Error('seeking in invalid state (not seeking?)');
-				} else if (seekState == SeekState.BISECT_TO_TARGET) {
-					doProcessBisectionSeek();
-				} else if (seekState == SeekState.BISECT_TO_KEYPOINT) {
-					doProcessBisectionSeek();
-				} else if (seekState == SeekState.LINEAR_TO_TARGET) {
-					doProcessLinearSeeking();
-				}
-			});
+			//console.log('seeking', seekTargetTime, codec.frameTimestamp, codec.audioTimestamp, stream.bytesRead, stream.bytesBuffered - stream.bytesRead);
+			if ((codec.hasVideo && codec.frameTimestamp < 0)
+			 || (codec.hasAudio && codec.audioTimestamp < 0)
+			) {
+				codec.process(function processSeeking(more) {
+					if (more) {
+						pingProcessing();
+					} else {
+						readBytesAndWait();
+					}
+				});
+			} else if (seekState == SeekState.NOT_SEEKING) {
+				throw new Error('seeking in invalid state (not seeking?)');
+			} else if (seekState == SeekState.BISECT_TO_TARGET) {
+				doProcessBisectionSeek();
+			} else if (seekState == SeekState.BISECT_TO_KEYPOINT) {
+				doProcessBisectionSeek();
+			} else if (seekState == SeekState.LINEAR_TO_TARGET) {
+				doProcessLinearSeeking();
+			} else {
+				throw new Error('Invalid seek state ' + seekState);
+			}
 
 		} else if (state == State.PLAYING) {
 
@@ -1152,8 +1172,6 @@ var OGVPlayer = function(options) {
 			throw new Error('Unexpected OGVPlayer state ' + state);
 
 		}
-
-		depth--;
 	}
 
 	/**
@@ -1186,9 +1204,11 @@ var OGVPlayer = function(options) {
 		if (delay > fudge) {
 			//log('pingProcessing delay: ' + delay);
 			nextProcessingTimer = setTimeout(doProcessing, delay);
-		} else {
+		} else if (depth) {
 			//log('pingProcessing tail call (' + delay + ')');
-			tailCall(doProcessing);
+			needProcessing = true;
+		} else {
+			doProcessing();
 		}
 	}
 
@@ -1214,6 +1234,7 @@ var OGVPlayer = function(options) {
 			if (stream) {
 				console.log('SEEKING TO', offset);
 				stream.seek(offset);
+				readBytesAndWait();
 			}
 		};
 		codec.init(function() {

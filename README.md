@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.2-alpha.1 - 2016-05-25
+ * more seek fixes
+ * fixed bug in StreamFile buffering that broke some seeks
+ * retooled loop to avoid recursion crashes in Chrome
 * 1.1.2-alpha.0 - 2016-05-22
  * fix memory leak in WebM demuxer
  * allow WebM files to play all the way to end
