@@ -3,7 +3,8 @@ var OGVProxyClass = require('./OGVProxyClass.js');
 var OGVDecoderVideoProxy = OGVProxyClass({
 	loadedMetadata: false,
 	videoFormat: null,
-	frameBuffer: null
+	frameBuffer: null,
+	cpuTime: 0
 }, {
 	init: function(callback) {
 		this.proxy('init', [], callback);

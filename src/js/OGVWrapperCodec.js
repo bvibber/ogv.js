@@ -416,6 +416,34 @@ var OGVWrapperCodec = (function(options) {
 
 	self.onseek = null;
 
+	Object.defineProperty(self, "demuxerCpuTime", {
+		get: function() {
+			if (demuxer) {
+				return demuxer.cpuTime;
+			} else {
+				return 0;
+			}
+		}
+	});
+	Object.defineProperty(self, "audioCpuTime", {
+		get: function() {
+			if (audioDecoder) {
+				return audioDecoder.cpuTime;
+			} else {
+				return 0;
+			}
+		}
+	});
+	Object.defineProperty(self, "videoCpuTime", {
+		get: function() {
+			if (videoDecoder) {
+				return videoDecoder.cpuTime;
+			} else {
+				return 0;
+			}
+		}
+	});
+
 	return self;
 });
 

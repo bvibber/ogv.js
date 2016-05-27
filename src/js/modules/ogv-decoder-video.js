@@ -17,6 +17,20 @@ function reallocInputBuffer(size) {
 	return inputBuffer;
 }
 
+var getTimestamp;
+if (typeof performance === 'undefined' || typeof performance.now === 'undefined') {
+	getTimestamp = Date.now;
+} else {
+	getTimestamp = performance.now.bind(performance);
+}
+function time(func) {
+	var start = getTimestamp(),
+		ret;
+	ret = func();
+	Module.cpuTime += (getTimestamp() - start);
+	return ret;
+}
+
 // - Properties
 
 /**
@@ -36,6 +50,12 @@ Module.videoFormat = options.videoFormat || null;
 Module.frameBuffer = null;
 
 /**
+ * Running tally of CPU time spent in the decoder.
+ * @property number
+ */
+Module.cpuTime = 0;
+
+/**
  * Are we in the middle of an asynchronous processing operation?
  * @property boolean
  */
@@ -48,7 +68,9 @@ Object.defineProperty(Module, 'processing', {
 // - public methods
 
 Module.init = function(callback) {
-	Module._ogv_video_decoder_init();
+	time(function() {
+		Module._ogv_video_decoder_init();
+	});
 	callback();
 };
 
@@ -59,13 +81,14 @@ Module.init = function(callback) {
  * @param function callback on completion
  */
 Module.processHeader = function(data, callback) {
-	// Map the ArrayBuffer into emscripten's runtime heap
-	var len = data.byteLength;
-	var buffer = reallocInputBuffer(len);
-	Module.HEAPU8.set(new Uint8Array(data), buffer);
+	var ret = time(function() {
+		// Map the ArrayBuffer into emscripten's runtime heap
+		var len = data.byteLength;
+		var buffer = reallocInputBuffer(len);
+		Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-	var ret = Module._ogv_video_decoder_process_header(buffer, len);
-
+		return Module._ogv_video_decoder_process_header(buffer, len);
+	});
 	callback(ret);
 };
 
@@ -76,13 +99,14 @@ Module.processHeader = function(data, callback) {
  * @param function callback on completion
  */
 Module.processFrame = function(data, callback) {
-	// Map the ArrayBuffer into emscripten's runtime heap
-	var len = data.byteLength;
-	var buffer = reallocInputBuffer(len);
-	Module.HEAPU8.set(new Uint8Array(data), buffer);
+	var ret = time(function() {
+		// Map the ArrayBuffer into emscripten's runtime heap
+		var len = data.byteLength;
+		var buffer = reallocInputBuffer(len);
+		Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-	var ret = Module._ogv_video_decoder_process_frame(buffer, len)
-
+		return Module._ogv_video_decoder_process_frame(buffer, len)
+	});
 	callback(ret);
 };
 

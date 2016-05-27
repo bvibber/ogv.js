@@ -16,6 +16,20 @@ function reallocInputBuffer(size) {
 	return inputBuffer;
 }
 
+var getTimestamp;
+if (typeof performance === 'undefined' || typeof performance.now === 'undefined') {
+	getTimestamp = Date.now;
+} else {
+	getTimestamp = performance.now.bind(performance);
+}
+function time(func) {
+	var start = getTimestamp(),
+		ret;
+	ret = func();
+	Module.cpuTime += (getTimestamp() - start);
+	return ret;
+}
+
 // - Properties
 
 Module.loadedMetadata = false;
@@ -23,6 +37,7 @@ Module.videoCodec = null;
 Module.audioCodec = null;
 Module.duration = NaN;
 Module.onseek = null;
+Module.cpuTime = 0;
 
 Module.audioPackets = [];
 Object.defineProperty(Module, 'hasAudio', {
@@ -94,8 +109,10 @@ Object.defineProperty(Module, 'seekable', {
 // - public methods
 
 Module.init = function(callback) {
-	Module._ogv_demuxer_init();
-	callback();
+	time(function() {
+		Module._ogv_demuxer_init();
+		callback();
+	});
 }
 
 /**
@@ -105,12 +122,14 @@ Module.init = function(callback) {
  * @param function callback on completion
  */
 Module.process = function(data, callback) {
-	// Map the ArrayBuffer into emscripten's runtime heap
-	var len = data.byteLength;
-	var buffer = reallocInputBuffer(len);
-	Module.HEAPU8.set(new Uint8Array(data), buffer);
+	var ret = time(function() {
+		// Map the ArrayBuffer into emscripten's runtime heap
+		var len = data.byteLength;
+		var buffer = reallocInputBuffer(len);
+		Module.HEAPU8.set(new Uint8Array(data), buffer);
 
-	var ret = Module._ogv_demuxer_process(buffer, len);
+		return Module._ogv_demuxer_process(buffer, len);
+	});
 	callback(ret);
 };
 
@@ -141,7 +160,9 @@ Module.dequeueAudioPacket = function(callback) {
  *        takes the calculated byte offset
  */
 Module.getKeypointOffset = function(timeSeconds, callback) {
-	var offset = Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
+	var offset = time(function() {
+		Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
+	});
 	callback(offset);
 };
 
@@ -155,7 +176,9 @@ Module.getKeypointOffset = function(timeSeconds, callback) {
  *        indicates whether seeking was initiated or not.
  */
 Module.seekToKeypoint = function(timeSeconds, callback) {
-	var ret = Module._ogv_demuxer_seek_to_keypoint(timeSeconds * 1000);
+	var ret = time(function() {
+		return Module._ogv_demuxer_seek_to_keypoint(timeSeconds * 1000);
+	});
 	if (ret) {
 		Module.audioPackets.splice(0, Module.audioPackets.length);
 		Module.videoPackets.splice(0, Module.videoPackets.length);
@@ -164,9 +187,11 @@ Module.seekToKeypoint = function(timeSeconds, callback) {
 };
 
 Module.flush = function(callback) {
-	Module.audioPackets.splice(0, Module.audioPackets.length);
-	Module.videoPackets.splice(0, Module.videoPackets.length);
-	Module._ogv_demuxer_flush();
+	time(function() {
+		Module.audioPackets.splice(0, Module.audioPackets.length);
+		Module.videoPackets.splice(0, Module.videoPackets.length);
+		Module._ogv_demuxer_flush();
+	});
 	callback();
 };
 

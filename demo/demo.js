@@ -836,7 +836,7 @@
 			// seems to fire every quarter second. No per-frame callback for
 			// native video, sorry!
 			player.addEventListener('framecallback', function(info) {
-				recordBenchmarkPoint(info.cpuTime, info.clockTime);
+				recordBenchmarkPoint(info.cpuTime + info.videoTime + info.audioTime, info.clockTime);
 			});
 
 			player.addEventListener('ended', function() {

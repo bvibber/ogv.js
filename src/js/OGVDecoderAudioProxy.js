@@ -3,7 +3,8 @@ var OGVProxyClass = require('./OGVProxyClass.js');
 var OGVDecoderAudioProxy = OGVProxyClass({
 	loadedMetadata: false,
 	audioFormat: null,
-	audioBuffer: null
+	audioBuffer: null,
+	cpuTime: 0
 }, {
 	init: function(callback) {
 		this.proxy('init', [], callback);

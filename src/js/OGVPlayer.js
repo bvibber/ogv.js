@@ -299,9 +299,6 @@ var OGVPlayer = function(options) {
 		totalFrameTime = 0, // ms
 		totalFrameCount = 0, // frames
 		playTime = 0, // ms
-		demuxingTime = 0, // ms
-		videoDecodingTime = 0, // ms
-		audioDecodingTime = 0, // ms
 		bufferTime = 0, // ms
 		drawingTime = 0, // ms
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
@@ -368,7 +365,13 @@ var OGVPlayer = function(options) {
 		frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
 		yCbCrBuffer = null;
-	var lastFrameDecodeTime = 0.0;
+	var lastFrameDecodeTime = 0.0,
+		lastFrameVideoCpuTime = 0,
+		lastFrameAudioCpuTime = 0,
+		lastFrameDemuxerCpuTime = 0;
+		lastVideoCpuTime = 0,
+		lastAudioCpuTime = 0,
+		lastDemuxerCpuTime = 0;
 	var lastFrameTimestamp = 0.0;
 
 	var lastTimeUpdate = 0, // ms
@@ -389,13 +392,29 @@ var OGVPlayer = function(options) {
 		totalJitter += jitter;
 		playTime += wallClockTime;
 
-		fireEvent('framecallback', {
+		var timing = {
 			cpuTime: lastFrameDecodeTime,
+			videoTime: 0,
+			audioTime: 0,
 			clockTime: wallClockTime
-		});
-
+		};
+		if (codec) {
+			timing.cpuTime += (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
+			timing.videoTime += (codec.videoCpuTime - lastFrameVideoCpuTime);
+			timing.audioTime += (codec.audioCpuTime - lastFrameAudioCpuTime);
+		}
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
+		if (codec) {
+			lastFrameVideoCpuTime = codec.videoCpuTime;
+			lastFrameAudioCpuTime = codec.audioCpuTime;
+			lastFrameDemuxerCpuTime = codec.demuxerCpuTime;
+		} else {
+			lastFrameVideoCpuTime = 0;
+			lastFrameAudioCpuTime = 0;
+			lastFrameDemuxerCpuTime = 0;
+		}
+		fireEvent('framecallback', timing);
 
 		if (!lastTimeUpdate || (newFrameTimestamp - lastTimeUpdate) >= timeUpdateInterval) {
 			lastTimeUpdate = newFrameTimestamp;
@@ -923,11 +942,7 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.PLAYING) {
 
-			var demuxStartTime = getTimestamp();
 			codec.process(function doProcessPlay(more) {
-				var delta = getTimestamp() - demuxStartTime;
-				demuxingTime += delta;
-				lastFrameDecodeTime += delta;
 
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
@@ -1078,7 +1093,6 @@ var OGVPlayer = function(options) {
 
 							log('ready to decode frame');
 
-							var videoStartTime = getTimestamp();
 							pendingFrame++;
 							if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
 								// WebM doesn't encode a frame rate
@@ -1091,9 +1105,6 @@ var OGVPlayer = function(options) {
 							codec.decodeFrame(function processingDecodeFrame(ok) {
 								pendingFrame--;
 								log('decoded frame');
-								var delta = getTimestamp() - videoStartTime;
-								videoDecodingTime += delta;
-								lastFrameDecodeTime += delta;
 								if (ok && codec.frameBuffer.duplicate) {
 									// Dupe frame! No need to draw anything.
 									doFrameComplete();
@@ -1116,14 +1127,10 @@ var OGVPlayer = function(options) {
 
 							log('ready for audio');
 
-							var audioStartTime = getTimestamp();
 							pendingAudio++;
 							audioEndTimestamp = codec.audioTimestamp;
 							codec.decodeAudio(function processingDecodeAudio(ok) {
 								log('decoded audio');
-								var delta = getTimestamp() - audioStartTime;
-								audioDecodingTime += delta;
-								lastFrameDecodeTime += delta;
 
 								if (ok) {
 									var buffer = codec.audioBuffer;
@@ -1221,15 +1228,18 @@ var OGVPlayer = function(options) {
 		}
 
 		framesProcessed = 0;
-		demuxingTime = 0;
-		videoDecodingTime = 0;
-		audioDecodingTime = 0;
 		bufferTime = 0;
 		drawingTime = 0;
 		started = true;
 		ended = false;
 
 		codec = new codecClass(codecOptions);
+		lastVideoCpuTime = 0;
+		lastAudioCpuTime = 0;
+		lastDemuxerCpuTime = 0;
+		lastFrameVideoCpuTime = 0;
+		lastFrameAudioCpuTime = 0;
+		lastFrameDemuxerCpuTime = 0;
 		codec.onseek = function(offset) {
 			if (stream) {
 				console.log('SEEKING TO', offset);
@@ -1426,9 +1436,9 @@ var OGVPlayer = function(options) {
 			targetPerFrameTime: targetPerFrameTime,
 			framesProcessed: framesProcessed,
 			playTime: playTime,
-			demuxingTime: demuxingTime,
-			videoDecodingTime: videoDecodingTime,
-			audioDecodingTime: audioDecodingTime,
+			demuxingTime: codec ? (codec.demuxerCpuTime - lastDemuxerCpuTime) : 0,
+			videoDecodingTime: codec ? (codec.videoCpuTime - lastVideoCpuTime) : 0,
+			audioDecodingTime: codec ? (codec.audioCpuTime - lastAudioCpuTime) : 0,
 			bufferTime: bufferTime,
 			drawingTime: drawingTime,
 			droppedAudio: droppedAudio,
@@ -1439,9 +1449,11 @@ var OGVPlayer = function(options) {
 	self.resetPlaybackStats = function() {
 		framesProcessed = 0;
 		playTime = 0;
-		demuxingTime = 0;
-		videoDecodingTime = 0;
-		audioDecodingTime = 0;
+		if (codec) {
+			lastDemuxerCpuTime = codec.demuxerCpuTime;
+			lastVideoCpuTime = codec.videoCpuTime;
+			lastAudioCpuTime = codec.audioCpuTime;
+		}
 		bufferTime = 0;
 		drawingTime = 0;
 		totalJitter = 0;

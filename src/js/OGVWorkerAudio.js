@@ -3,7 +3,8 @@ var OGVWorkerSupport = require('./OGVWorkerSupport.js');
 var proxy = new OGVWorkerSupport([
 	'loadedMetadata',
 	'audioFormat',
-	'audioBuffer'
+	'audioBuffer',
+	'cpuTime'
 ], {
 	init: function(args, callback) {
 		this.target.init(callback);
