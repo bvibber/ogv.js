@@ -161,7 +161,7 @@ Module.dequeueAudioPacket = function(callback) {
  */
 Module.getKeypointOffset = function(timeSeconds, callback) {
 	var offset = time(function() {
-		Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
+		return Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
 	});
 	callback(offset);
 };

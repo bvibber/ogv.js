@@ -71,13 +71,13 @@ function OGVProxyClass(initialProps, methods) {
 			var callbackId = 'callback-' + (++messageCount) + '-' + action;
 			if (callback) {
 				pendingCallbacks[callbackId] = callback;
-				processingQueue++;
 			}
 			var out = {
 				'action': action,
 				'callbackId': callbackId,
 				'args': args || []
 			};
+			processingQueue++;
 			if (transferables) {
 				worker.postMessage(out, transfers || []);
 			} else {
