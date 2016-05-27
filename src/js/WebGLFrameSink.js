@@ -301,7 +301,9 @@ WebGLFrameSink.isAvailable = function() {
 	canvas.width = 1;
 	canvas.height = 1;
 	var options = {
-		failIfMajorPerformanceCaveat: true
+		// Still dithering on whether to use this.
+		// Recommend avoiding it, as it's overly conservative
+		//failIfMajorPerformanceCaveat: true
 	};
 	try {
 		gl = canvas.getContext('webgl', options) || canvas.getContext('experimental-webgl', options);
