@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.1-alpha.2 - 2016-05-28
+ * default video memory limit back to 32MB
+ * 'memoryLimit' option key to override video decoder memory limit
 * 1.1.2-alpha.1 - 2016-05-28
  * more seek fixes
  * fixed bug in StreamFile buffering that broke some seeks
