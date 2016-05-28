@@ -151,6 +151,10 @@ function StreamFile(options) {
 							return;
 						}
 					}
+					if (xhr.status >= 400) {
+						onerror('HTTP error; status code ' + xhr.status);
+						return;
+					}
 					if (!started) {
 						internal.setBytesTotal(xhr);
 						internal.processResponseHeaders(xhr);

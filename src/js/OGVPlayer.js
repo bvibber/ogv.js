@@ -91,7 +91,8 @@ var OGVPlayer = function(options) {
 		READY: 'READY',
 		PLAYING: 'PLAYING',
 		SEEKING: 'SEEKING',
-		ENDED: 'ENDED'
+		ENDED: 'ENDED',
+		ERROR: 'ERROR'
 	}, state = State.INITIAL;
 
 	var SeekState = {
@@ -1179,6 +1180,11 @@ var OGVPlayer = function(options) {
 				}
 			});
 
+		} else if (state == State.ERROR) {
+
+			// Nothing to do.
+			console.log("Reached error state. Sorry bout that.");
+
 		} else {
 
 			throw new Error('Unexpected OGVPlayer state ' + state);
@@ -1344,6 +1350,7 @@ var OGVPlayer = function(options) {
 				onerror: function(err) {
 					// @todo handle failure to initialize
 					console.log("reading error: " + err);
+					state = State.ERROR;
 				}
 			});
 			waitingOnInput = true;
@@ -1839,7 +1846,11 @@ var OGVPlayer = function(options) {
 	 */
 	Object.defineProperty(self, "error", {
 		get: function getError() {
-			return null;
+			if (state === State.ERROR) {
+				return "error occurred in media procesing";
+			} else {
+				return null;
+			}
 		}
 	});
 	/**
