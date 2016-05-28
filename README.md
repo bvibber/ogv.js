@@ -13,6 +13,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * retooled loop to avoid recursion crashes in Chrome
  * enabled WebGL on more devices (no longer using failIfMajorPerformanceCaveat: true)
  * fixed inflated CPU time reporting when using worker threads
+ * bumped up video codec memory limits to 64MB to aid with 4K testing
 * 1.1.2-alpha.0 - 2016-05-22
  * fix memory leak in WebM demuxer
  * allow WebM files to play all the way to end
