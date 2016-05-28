@@ -755,7 +755,9 @@ var OGVPlayer = function(options) {
 				throw new Error('REENTRANCY FAIL: waiting on input or codec but asked to keep processing');
 			}
 			if (++iters > 500) {
-				throw new Error('stuck in processing loop');
+				console.log('stuck in processing loop; breaking with timer');
+				needProcessing = 0;
+				pingProcessing(0);
 			}
 		} while (needProcessing);
 	}
