@@ -218,6 +218,9 @@ var OGVWrapperCodec = (function(options) {
 				if (demuxer.videoFormat) {
 					videoOptions.videoFormat = demuxer.videoFormat;
 				}
+				if (options.memoryLimit) {
+					videoOptions.memoryLimit = options.memoryLimit;
+				}
 				videoDecoder = new videoCodecClass(videoOptions);
 				videoDecoder.init(function() {
 					loadedVideoMetadata = videoDecoder.loadedMetadata;

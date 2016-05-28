@@ -8,3 +8,6 @@ Module = {
 		console.log(str);
 	}
 };
+if (options['memoryLimit']) {
+	Module['TOTAL_MEMORY'] = options['memoryLimit'];
+}

@@ -116,6 +116,9 @@ var OGVPlayer = function(options) {
 		audioOptions.audioContext = options.audioContext;
 	}
 	codecOptions.worker = enableWorker;
+	if (typeof options.memoryLimit === 'number') {
+		codecOptions.memoryLimit = options.memoryLimit;
+	}
 
 	var canvas = document.createElement('canvas');
 	var frameSink;
