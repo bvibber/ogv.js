@@ -9,6 +9,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 * 1.1.1-alpha.4 - 2016-05-29
  * use smaller streaming read chunk size on IE for smoother perf
+ * demux less aggressively
+ * lazy-extract buffers from strings on Safari for smoother demuxing perf on slow iOS
 * 1.1.1-alpha.3 - 2016-05-28
  * partial error handling of failure to load initial data
 * 1.1.1-alpha.2 - 2016-05-28
