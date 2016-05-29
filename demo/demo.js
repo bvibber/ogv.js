@@ -385,8 +385,8 @@
 				var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
 					widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
 					formats = ['ogv', 'webm'];
-				sizes.forEach(function(size) {
-					formats.forEach(function(format, i) {
+				sizes.forEach(function(size, i) {
+					formats.forEach(function(format) {
 						// fixme: tweak if necessary
 						var width = widths[i],
 							aspect = imageinfo.width / imageinfo.height,
@@ -831,22 +831,31 @@
 				// this should not happen
 				stopVideo();
 			}
+			var maxmem = undefined;
+			if (selected.height > 1080) {
+				// hack
+				maxmem = 1024 * 1024 * 128;
+			}
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
+					memoryLimit: maxmem,
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'js-cpu') {
 				player = new OGVPlayer({
+					memoryLimit: maxmem,
 					webGL: false, // force 2d canvas
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'js-noworker') {
 				player = new OGVPlayer({
+					memoryLimit: maxmem,
 					worker: false, // experimental
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'webgl') {
 				player = new OGVPlayer({
+					memoryLimit: maxmem,
 					forceWebGL: true,
 					enableWebM: true // experimental
 				});
