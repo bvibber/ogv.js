@@ -271,7 +271,11 @@
 		var matches = url.match(/^(.*)\/(.\/..)\/(.*?)$/),
 			baseUrl = matches[1],
 			hash = matches[2],
-			filename = matches[3];
+			filename = matches[3],
+			sourceMode = document.querySelector('#media-source').value;
+		if (sourceMode == 'shortlist') {
+			baseUrl = 'https://media-streaming.wmflabs.org';
+		}
 		return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
 	}
 
@@ -346,34 +350,60 @@
 			});
 
 			// Build entries for the transcodes
-			for (var key in transcodestatus) {
-				if (transcodestatus.hasOwnProperty(key)) {
-					var transcode = transcodestatus[key];
-					if (transcode.time_success != '') {
-						var format, height, matches;
-						matches = key.match(/^(\d+)p\.(.*?)$/);
-						if (matches) {
-							var height = parseInt(matches[1]),
-								format = matches[2],
-								bitrate = parseFloat(transcode.final_bitrate);
-							if (bitrate == 0) {
-								// incomplete
-								continue;
+			var sourceMode = document.querySelector('#media-source').value;
+			if (sourceMode == 'motd') {
+				for (var key in transcodestatus) {
+					if (transcodestatus.hasOwnProperty(key)) {
+						var transcode = transcodestatus[key];
+						if (transcode.time_success != '') {
+							var format, height, matches;
+							matches = key.match(/^(\d+)p\.(.*?)$/);
+							if (matches) {
+								var height = parseInt(matches[1]),
+									format = matches[2],
+									bitrate = parseFloat(transcode.final_bitrate);
+								if (bitrate == 0) {
+									// incomplete
+									continue;
+								}
+								sources.push({
+									key: key,
+									format: format,
+									width: Math.round(imageinfo.width * height / imageinfo.height),
+									height: height,
+									url: transcodeUrl(imageinfo.url, height, format),
+									size: Math.round(bitrate * mediaInfo.duration / 8),
+									bitrate: bitrate
+								});
+							} else {
+								console.log("unexpected transcode key name: " + key);
 							}
-							sources.push({
-								key: key,
-								format: format,
-								width: Math.round(imageinfo.width * height / imageinfo.height),
-								height: height,
-								url: transcodeUrl(imageinfo.url, height, format),
-								size: Math.round(bitrate * mediaInfo.duration / 8),
-								bitrate: bitrate
-							});
-						} else {
-							console.log("unexpected transcode key name: " + key);
 						}
 					}
 				}
+			} else if (sourceMode == 'shortlist') {
+				var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
+					widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
+					formats = ['ogv', 'webm'];
+				sizes.forEach(function(size) {
+					formats.forEach(function(format, i) {
+						// fixme: tweak if necessary
+						var width = widths[i],
+							aspect = imageinfo.width / imageinfo.height,
+							height = Math.round(width / aspect);
+						if (width <= imageinfo.width) {
+							sources.push({
+								key: size + 'p.' + format,
+								format: format,
+								width: width,
+								height: height,
+								url: transcodeUrl(imageinfo.url, size, format),
+							});
+						}
+					});
+				});
+			} else {
+				throw new Error('unexpected source mode');
 			}
 
 			callback(mediaInfo, sources);
@@ -482,6 +512,8 @@
 				} else if (name == 'player') {
 					document.getElementById('player-backend').value = value;
 					playerBackend = value;
+				} else if (name == 'source') {
+					document.querySelector('#media-source').value = value;
 				}
 			});
 			if (title) {
@@ -521,6 +553,9 @@
 	document.querySelector('#media-source').addEventListener('change', function() {
 		lastSearchValue = null;
 		dismissChooser();
+		stopVideo();
+		setHash();
+		showVideo();
 		showChooser();
 	});
 	function showChooser() {
@@ -699,6 +734,13 @@
 
 		var sizeKey = document.getElementById('video-preferred-size').value;
 		hash += '&size=' + sizeKey;
+
+		var mode = document.getElementById('media-source').value;
+		if (mode == 'motd') {
+			// nothin
+		} else {
+			hash += '&source=' + mode;
+		}
 
 		document.location.hash = hash;
 	}
