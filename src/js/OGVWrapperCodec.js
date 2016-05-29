@@ -18,7 +18,18 @@ var OGVWrapperCodec = (function(options) {
 		processing = false,
 		demuxer = null,
 		videoDecoder = null,
-		audioDecoder = null;
+		audioDecoder = null,
+		flushIter = 0;
+
+	// Wrapper for callbacks to drop them after a flush
+	function flushSafe(func) {
+		var savedFlushIter = flushIter;
+		return function(arg) {
+			if (flushIter <= savedFlushIter) {
+				func(arg);
+			}
+		};
+	}
 
 	var loadedMetadata = false;
 	Object.defineProperty(self, 'loadedMetadata', {
@@ -340,7 +351,8 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.decodeFrame = function(callback) {
-		var timestamp = self.frameTimestamp,
+		var cb = flushSafe(callback),
+			timestamp = self.frameTimestamp,
 			keyframeTimestamp = self.keyframeTimestamp;
 		demuxer.dequeueVideoPacket(function(packet) {
 			function finish(ok) {
@@ -349,7 +361,7 @@ var OGVWrapperCodec = (function(options) {
 					self.frameBuffer.timestamp = timestamp;
 					self.frameBuffer.keyframeTimestamp = keyframeTimestamp;
 				}
-				callback(ok);
+				cb(ok);
 			}
 			if (packet.byteLength === 0) {
 				//
@@ -374,10 +386,9 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.decodeAudio = function(callback) {
+		var cb = flushSafe(callback);
 		demuxer.dequeueAudioPacket(function(packet) {
-			audioDecoder.processAudio(packet, function(ok) {
-				callback(ok);
-			});
+			audioDecoder.processAudio(packet, cb);
 		});
 	}
 
@@ -394,6 +405,7 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.flush = function(callback) {
+		flushIter++;
 		inputQueue.splice(0, inputQueue.length);
 		demuxer.flush(callback);
 	};

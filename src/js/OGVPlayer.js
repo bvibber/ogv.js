@@ -383,7 +383,8 @@ var OGVPlayer = function(options) {
 		lastVideoCpuTime = 0,
 		lastAudioCpuTime = 0,
 		lastDemuxerCpuTime = 0;
-	var lastFrameTimestamp = 0.0;
+	var lastFrameTimestamp = 0.0,
+		currentVideoCpuTime = 0.0;
 
 	var lastTimeUpdate = 0, // ms
 		timeUpdateInterval = 250; // ms
@@ -411,13 +412,13 @@ var OGVPlayer = function(options) {
 		};
 		if (codec) {
 			timing.cpuTime += (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
-			timing.videoTime += (codec.videoCpuTime - lastFrameVideoCpuTime);
+			timing.videoTime += (currentVideoCpuTime - lastFrameVideoCpuTime);
 			timing.audioTime += (codec.audioCpuTime - lastFrameAudioCpuTime);
 		}
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
 		if (codec) {
-			lastFrameVideoCpuTime = codec.videoCpuTime;
+			lastFrameVideoCpuTime = currentVideoCpuTime;
 			lastFrameAudioCpuTime = codec.audioCpuTime;
 			lastFrameDemuxerCpuTime = codec.demuxerCpuTime;
 		} else {
@@ -473,6 +474,7 @@ var OGVPlayer = function(options) {
 	}
 
 	function seek(toTime) {
+		log('requested seek to ' + toTime);
 		if (stream.bytesTotal === 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
@@ -505,19 +507,22 @@ var OGVPlayer = function(options) {
 			lastFrameSkipped = false;
 			lastSeekPosition = -1;
 
-			codec.seekToKeypoint(toTime, function(seeking) {
-				if (seeking) {
-					seekState = SeekState.LINEAR_TO_TARGET;
-					fireEventAsync('seeking');
-					if (isProcessing()) {
-						// wait for i/o
-					} else {
-						pingProcessing();
+			frameCompleteCallback = null;
+			pendingFrame = 0;
+			pendingAudio = 0;
+			codec.flush(function() {
+				codec.seekToKeypoint(toTime, function(seeking) {
+					if (seeking) {
+						seekState = SeekState.LINEAR_TO_TARGET;
+						fireEventAsync('seeking');
+						if (isProcessing()) {
+							// wait for i/o
+						} else {
+							pingProcessing();
+						}
+						return;
 					}
-					return;
-				}
-				// Use the old interface still implemented on ogg demuxer
-				codec.flush(function() {
+					// Use the old interface still implemented on ogg demuxer
 					codec.getKeypointOffset(toTime, function(offset) {
 						if (offset > 0) {
 							// This file has an index!
@@ -1053,10 +1058,11 @@ var OGVPlayer = function(options) {
 							totalFrameTime += targetPerFrameTime;
 							totalFrameCount++;
 							
-							frameEndTimestamp = codec.frameTimestamp;
+							var nextFrameEndTimestamp = codec.frameTimestamp;
 							function onDecodeFrameComplete(ok) {
 								pendingFrame--;
-								//frameEndTimestamp = nextFrameEndTimestamp;
+								frameEndTimestamp = nextFrameEndTimestamp;
+								currentVideoCpuTime = codec.videoCpuTime;
 								log('decoded frame');
 								if (ok && codec.frameBuffer.duplicate) {
 									// Dupe frame! No need to draw anything.
@@ -1263,6 +1269,8 @@ var OGVPlayer = function(options) {
 		lastFrameVideoCpuTime = 0;
 		lastFrameAudioCpuTime = 0;
 		lastFrameDemuxerCpuTime = 0;
+		currentVideoCpuTime = 0;
+		frameCompleteCallback = null;
 		codec.onseek = function(offset) {
 			if (stream) {
 				console.log('SEEKING TO', offset);

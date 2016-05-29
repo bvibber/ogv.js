@@ -839,6 +839,7 @@
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					memoryLimit: maxmem,
+					debug: true,
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'js-cpu') {
