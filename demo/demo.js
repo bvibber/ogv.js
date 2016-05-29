@@ -518,7 +518,14 @@
 	document.getElementById('media-chooser-stub').addEventListener('click', function() {
 		dismissChooser();
 	});
+	document.querySelector('#media-source').addEventListener('change', function() {
+		lastSearchValue = null;
+		dismissChooser();
+		showChooser();
+	});
 	function showChooser() {
+		var sourceMode = document.querySelector('#media-source').value;
+
 		if (typingSearchTimeout) {
 			clearTimeout(typingSearchTimeout);
 			typingSearchTimeout = null;
@@ -543,7 +550,38 @@
 				}
 			}
 		}
-		var selection = list.reverse().slice(0, max);
+		var selection = [];
+		
+		if (sourceMode == 'motd') {
+			selection = list.reverse().slice(0, max);
+		} else if (sourceMode == 'shortlist') {
+			selection = [
+				// 2160p
+				"File:RED 4K Video of Colorful Liquid in Space.webm",
+				"File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+				"File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
+				"File:Here's to Engineering.webm",
+
+				// 1440p
+				"File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
+
+				// 1080p60
+				"File:Stugl,aerial video.webm",
+				"File:Snowdonia by drone.webm",
+				"File:Share-a-Fact on the Official Wikipedia Android app.webm",
+
+				// 1080p
+				"File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
+				"File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
+				"File:Sneak Preview - Wikipedia VisualEditor.webm",
+				"File:Wikipedia Edit 2015.webm",
+
+				// 720p
+				"File:Curiosity's Seven Minutes of Terror.ogv"
+			];
+		} else {
+			throw new Error('unexpected sourceMode');
+		}
 
 		mediaList.innerHTML = '';
 
