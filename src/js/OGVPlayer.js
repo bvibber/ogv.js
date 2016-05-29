@@ -289,6 +289,7 @@ var OGVPlayer = function(options) {
 		duration = null,
 		lastSeenTimestamp = null,
 		nextProcessingTimer,
+		nextFrameTimer = null,
 		loading = false,
 		started = false,
 		paused = true,
@@ -351,6 +352,10 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
+		if (nextFrameTimer) {
+			clearTimeout(nextFrameTimer);
+			nextFrameTimer = null;
+		}
 		if (frameSink) {
 			frameSink.clear();
 			frameSink = null;
@@ -358,6 +363,7 @@ var OGVPlayer = function(options) {
 		if (yCbCrBuffer) {
 			yCbCrBuffer = null;
 		}
+		frameCompleteCallback = null;
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
 		initialPlaybackPosition = 0;
 		initialPlaybackOffset = 0;
@@ -368,7 +374,8 @@ var OGVPlayer = function(options) {
 	var lastFrameTime = getTimestamp(),
 		frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
-		yCbCrBuffer = null;
+		yCbCrBuffer = null,
+		frameCompleteCallback = null;
 	var lastFrameDecodeTime = 0.0,
 		lastFrameVideoCpuTime = 0,
 		lastFrameAudioCpuTime = 0,
@@ -418,11 +425,19 @@ var OGVPlayer = function(options) {
 			lastFrameAudioCpuTime = 0;
 			lastFrameDemuxerCpuTime = 0;
 		}
+
 		fireEvent('framecallback', timing);
 
 		if (!lastTimeUpdate || (newFrameTimestamp - lastTimeUpdate) >= timeUpdateInterval) {
 			lastTimeUpdate = newFrameTimestamp;
-			fireEvent('timeupdate');
+			fireEventAsync('timeupdate');
+		}
+
+		if (frameCompleteCallback) {
+			//log('found a frameCompleteCallback!')
+			var cb = frameCompleteCallback;
+			frameCompleteCallback = null;
+			cb();
 		}
 	}
 
@@ -742,7 +757,7 @@ var OGVPlayer = function(options) {
 			// Called async while waiting for something else to complete...
 			// let it finish, then we'll get called again to continue.
 			//return;
-			throw new Error('REENTRANCY FAIL: doProcessing during processing');
+			//throw new Error('REENTRANCY FAIL: doProcessing during processing');
 		}
 
 		if (depth > 0) {
@@ -952,58 +967,24 @@ var OGVPlayer = function(options) {
 
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
-				if (!more) {
-					if (!streamEnded) {
-						// Ran out of buffered input
-						readBytesAndWait();
-					} else if (pendingAudio || pendingFrame) {
-						// Still more to decode
-						// We'll be pinged when they come back
-					} else if (ended) {
-						log('Unexpectedly processing after ended');
-					} else {
-						// Ran out of stream!
-						log('Ran out of stream!');
-						var finalDelay = 0;
-						if (codec.hasAudio) {
-							finalDelay = audioFeeder.durationBuffered * 1000;
-						}
-						if (finalDelay > 0) {
-							log('ending pending ' + finalDelay + ' ms');
-							pingProcessing(Math.max(0, finalDelay));
-						} else {
-							log("ENDING NOW");
-							stopPlayback();
-							initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
-							ended = true;
-							// @todo implement loop behavior
-							paused = true;
-							fireEventAsync('pause');
-							fireEventAsync('ended');
-						}
-					}
-				} else if (paused) {
+				if (paused) {
 
 					// ok we're done for now!
+					log('paused during playback; stopping loop');
 
 				} else {
 
-					if (!((codec.audioReady || !codec.hasAudio) && (codec.frameReady || !codec.frameReady))) {
-
-						log('need more data');
-
-						// Have to process some more pages to find data.
-						pingProcessing();
-
-					} else {
+					if ((!codec.hasAudio || codec.audioReady || pendingAudio) &&
+					 	(!codec.hasVideo || codec.frameReady || pendingFrame || yCbCrBuffer)
+					) {
 
 						var audioBufferedDuration = 0,
 							audioDecodingDuration = 0,
 							audioState = null,
 							playbackPosition = 0,
-							nextDelays = [],
 							readyForAudioDecode,
 							readyForFrameDraw,
+							frameDelay = 0,
 							readyForFrameDecode;
 
 						if (codec.hasAudio && audioFeeder) {
@@ -1020,7 +1001,7 @@ var OGVPlayer = function(options) {
 							delayedAudio = audioState.delayed;
 							//readyForAudioDecode = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
 							var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 2;
-							readyForAudioDecode = codec.audioReady && (audioBufferedDuration <= bufferDuration);
+							readyForAudioDecode = !pendingAudio && codec.audioReady && (audioBufferedDuration <= bufferDuration);
 
 							// Check in when all audio runs out
 							if (pendingAudio) {
@@ -1047,55 +1028,20 @@ var OGVPlayer = function(options) {
 						}
 
 						if (codec.hasVideo) {
-							var fudgeDelta = 0.1,
-								frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+							var fudgeDelta = 0.1;
 
+							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 							frameDelay = Math.max(0, frameDelay);
 							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
-							readyForFrameDraw = !!yCbCrBuffer && !pendingFrame && (frameDelay <= fudgeDelta);
-							readyForFrameDecode = !yCbCrBuffer && !pendingFrame && codec.frameReady;
-
-							// @todo use requestAnimationFrame instead of timers here
-							if (yCbCrBuffer) {
-								// Check in when the decoded frame is due
-								nextDelays.push(frameDelay);
-							} else if (pendingFrame) {
-								// We'll check in when done decoding
-							} else if (!codec.frameReady) {
-								// need more data!
-								nextDelays.push(-1);
-							} else {
-								// Check in when the decoded frame is due
-								nextDelays.push(frameDelay);
-							}
+							readyForFrameDraw = !!yCbCrBuffer && (frameDelay <= fudgeDelta);
+							readyForFrameDecode = (!yCbCrBuffer || !frameCompleteCallback) && !pendingFrame && codec.frameReady;
 						}
 
 						log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
 
-						if (readyForFrameDraw) {
 
-							log('ready to draw frame');
-
-							// Ready to draw the decoded frame...
-							if (thumbnail) {
-								self.removeChild(thumbnail);
-								thumbnail = null;
-							}
-
-							drawingTime += time(function() {
-								frameSink.drawFrame(yCbCrBuffer);
-							});
-							yCbCrBuffer = null;
-
-							framesProcessed++;
-							framesPlayed++;
-
-							doFrameComplete();
-
-							pingProcessing();
-
-						} else if (readyForFrameDecode) {
+						if (readyForFrameDecode) {
 
 							log('ready to decode frame');
 
@@ -1106,10 +1052,11 @@ var OGVPlayer = function(options) {
 							}
 							totalFrameTime += targetPerFrameTime;
 							totalFrameCount++;
+							
 							frameEndTimestamp = codec.frameTimestamp;
-							var pendingFramePing = false;
-							codec.decodeFrame(function processingDecodeFrame(ok) {
+							function onDecodeFrameComplete(ok) {
 								pendingFrame--;
+								//frameEndTimestamp = nextFrameEndTimestamp;
 								log('decoded frame');
 								if (ok && codec.frameBuffer.duplicate) {
 									// Dupe frame! No need to draw anything.
@@ -1121,13 +1068,21 @@ var OGVPlayer = function(options) {
 									// Bad packet or something.
 									log('Bad video packet or something');
 								}
-								if (!isProcessing()) {
+							}
+							codec.decodeFrame(function processingDecodeFrame(ok) {
+								if (frameCompleteCallback) {
+									throw new Error('Reentrancy error: decoded frames without drawing them');
+								} else if (yCbCrBuffer) {
+									log('already have a decoded frame, saving this for later');
+									frameCompleteCallback = function() {
+										onDecodeFrameComplete(ok);
+									};
+									pingProcessing();
+								} else {
+									onDecodeFrameComplete(ok);
 									pingProcessing();
 								}
 							});
-							if (!isProcessing()) {
-								pingProcessing();
-							}
 
 						} else if (readyForAudioDecode) {
 
@@ -1156,24 +1111,79 @@ var OGVPlayer = function(options) {
 									}
 								}
 								pendingAudio--;
-								if (!isProcessing()) {
-									pingProcessing();
-								}
-							});
-							if (!isProcessing()) {
 								pingProcessing();
+							});
+
+						} else if (readyForFrameDraw) {
+
+							log('ready to draw frame');
+
+							// Ready to draw the decoded frame...
+							if (thumbnail) {
+								self.removeChild(thumbnail);
+								thumbnail = null;
 							}
+
+							drawingTime += time(function() {
+								frameSink.drawFrame(yCbCrBuffer);
+							});
+							yCbCrBuffer = null;
+
+							framesProcessed++;
+							framesPlayed++;
+
+							doFrameComplete();
+
+							pingProcessing();
+
+						} else if (yCbCrBuffer && !nextFrameTimer) {
+
+							// @todo consider using requestAnimationFrame
+							log('setting a timer for drawing ' + frameDelay);
+							nextFrameTimer = setTimeout(function() {
+								nextFrameTimer = null;
+								pingProcessing();
+							}, frameDelay);
 
 						} else {
 
-							var nextDelay = Math.min.apply(Math, nextDelays);
-							if (nextDelays.length > 0) {
-								log('idle: ' + nextDelay + ' - ' + nextDelays.join(','));
-								pingProcessing(Math.max(0, nextDelay));
-							} else if (pendingFrame || pendingAudio || audioFeeder) {
-								log('waiting on pending events');
+							log('waiting on async/timers');
+
+						}
+
+					} else {
+
+						if (more) {
+							// Have to process some more pages to find data.
+							log('processing to find more packets');
+							pingProcessing();
+						} else {
+							log('ran out of data');
+							if (!streamEnded) {
+								// Ran out of buffered input
+								readBytesAndWait();
+							} else if (ended) {
+								log('Unexpectedly processing after ended');
 							} else {
-								log('we may be lost');
+								// Ran out of stream!
+								log('Ran out of stream!');
+								var finalDelay = 0;
+								if (codec.hasAudio) {
+									finalDelay = audioFeeder.durationBuffered * 1000;
+								}
+								if (finalDelay > 0) {
+									log('ending pending ' + finalDelay + ' ms');
+									pingProcessing(Math.max(0, finalDelay));
+								} else {
+									log("ENDING NOW");
+									stopPlayback();
+									initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
+									ended = true;
+									// @todo implement loop behavior
+									paused = true;
+									fireEventAsync('pause');
+									fireEventAsync('ended');
+								}
 							}
 						}
 					}
@@ -1193,7 +1203,7 @@ var OGVPlayer = function(options) {
 	}
 
 	/**
-	 * Are we waiting on an async operation we can't interrupt?
+	 * Are we waiting on an async operation that will return later?
 	 */
 	function isProcessing() {
 		return waitingOnInput || (codec && codec.processing);
@@ -1208,13 +1218,15 @@ var OGVPlayer = function(options) {
 		if (delay === undefined) {
 			delay = -1;
 		}
+		/*
 		if (isProcessing()) {
 			// We'll get pinged again when whatever we were doing returns...
 			log('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
 			return;
 		}
+		*/
 		if (nextProcessingTimer) {
-			//log('canceling old processing timer');
+			log('canceling old processing timer');
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 		}
