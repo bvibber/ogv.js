@@ -7,6 +7,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.1-alpha.4 - 2016-05-29
+ * use smaller streaming read chunk size on IE for smoother perf
 * 1.1.1-alpha.3 - 2016-05-28
  * partial error handling of failure to load initial data
 * 1.1.1-alpha.2 - 2016-05-28
