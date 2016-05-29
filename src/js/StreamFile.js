@@ -271,6 +271,10 @@ function StreamFile(options) {
 				if (!nextBuffer) {
 					break;
 				}
+				if (!(nextBuffer instanceof ArrayBuffer)) {
+					// lazy-expand if necessary
+					nextBuffer = nextBuffer.getBuffer();
+				}
 
 				if (needBytes >= nextBuffer.byteLength) {
 					// if it fits, it sits
@@ -507,6 +511,20 @@ function StreamFile(options) {
 			return buffer;
 		};
 
+		// Wrapper for buffers, to let us lazy-extract the binary data
+		function StringBufferWrapper(xhr, start, end) {
+			this.start = start;
+			this.end = end;
+			this.byteLength = end - start;
+			this.xhr = xhr;
+		}
+		StringBufferWrapper.prototype.getBuffer = function() {
+			var str = this.xhr.responseText,
+				chunk = str.slice(this.start, this.end),
+				buffer = stringToArrayBuffer(chunk);
+			return buffer;
+		};
+
 		internal.clearReadState = function() {
 			orig.clearReadState();
 			lastPosition = 0;
@@ -516,8 +534,7 @@ function StreamFile(options) {
 			// xhr.responseText is a binary string of entire file so far
 			var str = xhr.responseText;
 			if (lastPosition < str.length) {
-				var chunk = str.slice(lastPosition),
-					buffer = stringToArrayBuffer(chunk);
+				var buffer = new StringBufferWrapper(xhr, lastPosition, str.length);
 				lastPosition = str.length;
 				internal.bufferData(buffer);
 			}
