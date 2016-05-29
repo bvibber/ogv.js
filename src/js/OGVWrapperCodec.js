@@ -253,13 +253,7 @@ var OGVWrapperCodec = (function(options) {
 		function doProcessData() {
 			if (inputQueue.length) {
 				var data = inputQueue.shift();
-				demuxer.process(data, function(more) {
-					if (!more && inputQueue.length) {
-						// we've got more to process already
-						more = true;
-					}
-					finish(more);
-				});
+				demuxer.process(data, finish);
 			} else {
 				// out of data! ask for more
 				finish(false);
