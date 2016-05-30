@@ -836,15 +836,18 @@
 				// hack
 				maxmem = 1024 * 1024 * 128;
 			}
-			//var debugFilter = /setting a timer|ready to draw frame|decode frame|decoded frame|drew frame/;
-			//var debugFilter = /drew frame/;
-			//var debugFilter = /drew frame.*mux: [^0]/;
-			//var debugFilter = /drew frame.*mux: [^0]|ahead|dropped|delayed/;
-			//var debugFilter = /drew frame.*mux: [^0]|audio checkin/;
-			var debugFilter = /drew frame|dropped|delayed/;
+			var debugFilter;
+			//debugFilter = /setting a timer|ready to draw frame|decode frame|decoded frame|drew frame/;
+			//debugFilter = /drew frame/;
+			//debugFilter = /drew frame.*mux: [^0]/;
+			//debugFilter = /drew frame.*mux: [^0]|ahead|dropped|delayed/;
+			//debugFilter = /drew frame.*mux: [^0]|audio checkin/;
+			//debugFilter = /drew frame|dropped|delayed/;
+			//debugFilter = /demuxer|stream is at end/;
+			debugFilter = /waiting/;
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
-					debug: true,
+					debug: !!debugFilter,
 					debugFilter: debugFilter,
 					memoryLimit: maxmem,
 					enableWebM: true // experimental

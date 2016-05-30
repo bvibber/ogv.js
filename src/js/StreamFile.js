@@ -324,17 +324,29 @@ function StreamFile(options) {
 
 	// -- Public methods
 	self.readBytes = function() {
-		if (internal.dataToRead()) {
-			var buffer = internal.popBuffer();
+		if (waitingForInput) {
+			throw new Error('Re-entrancy fail in StreamFile.readyBytes while waiting');
+		}
+		function advance() {
 			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
 				seekPosition += chunkSize;
 				internal.clearReadState();
 				internal.openXHR();
+				waitingForInput = false;
+				return true;
+			} else {
+				return false;
 			}
+		}
+		if (internal.dataToRead()) {
+			var buffer = internal.popBuffer();
+			advance();
 			onread(buffer);
 		} else if (doneBuffering) {
 			// We're out of data!
-			internal.onReadDone();
+			if (!advance()) {
+				internal.onReadDone();
+			}
 		} else {
 			// Nothing queued...
 			waitingForInput = true;

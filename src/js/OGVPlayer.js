@@ -1205,18 +1205,19 @@ var OGVPlayer = function(options) {
 				codec.process(function doProcessPlayDemuxHandler(more) {
 					if (more) {
 						// Have to process some more pages to find data.
-						log('processing to find more packets');
+						log('demuxer processing to find more packets');
 						pingProcessing();
 					} else {
-						log('ran out of data');
+						log('demuxer ran out of data');
 						if (!streamEnded) {
 							// Ran out of buffered input
+							log('demuxer loading more data');
 							readBytesAndWait();
 						} else if (ended) {
-							log('Unexpectedly processing after ended');
+							log('demuxer unexpectedly processing after ended');
 						} else {
 							// Ran out of stream!
-							log('Ran out of stream!');
+							log('demuxer reached end of stream');
 							var finalDelay = 0;
 							if (codec.hasAudio) {
 								finalDelay = audioFeeder.durationBuffered * 1000;
@@ -1268,6 +1269,9 @@ var OGVPlayer = function(options) {
 	}
 
 	function readBytesAndWait() {
+		if (waitingOnInput) {
+			throw new Error('Re-entrancy fail: asked for input when already waiting');
+		}
 		waitingOnInput = true;
 		stream.readBytes();
 	}
@@ -1283,6 +1287,11 @@ var OGVPlayer = function(options) {
 			return;
 		}
 		*/
+		if (waitingOnInput) {
+			// wait for this input pls
+			log('waiting on input');
+			return;
+		}
 		if (nextProcessingTimer) {
 			log('canceling old processing timer');
 			clearTimeout(nextProcessingTimer);
@@ -1424,6 +1433,7 @@ var OGVPlayer = function(options) {
 					}
 				},
 				onerror: function(err) {
+					waitingOnInput = false;
 					// @todo handle failure to initialize
 					console.log("reading error: " + err);
 					stopPlayback();
