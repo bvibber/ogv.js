@@ -220,7 +220,7 @@ var OGVPlayer = function(options) {
 		// without any throttling.
 		audioFeeder.onbufferlow = function audioCallback() {
 			log('onbufferlow');
-			if (isProcessing()) {
+			if (waitingOnInput || pendingAudio) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
 			} else {
@@ -380,10 +380,14 @@ var OGVPlayer = function(options) {
 	var lastFrameDecodeTime = 0.0,
 		lastFrameVideoCpuTime = 0,
 		lastFrameAudioCpuTime = 0,
-		lastFrameDemuxerCpuTime = 0;
+		lastFrameDemuxerCpuTime = 0,
+		lastFrameDrawingTime = 0,
+		lastFrameBufferTime = 0;
 		lastVideoCpuTime = 0,
 		lastAudioCpuTime = 0,
-		lastDemuxerCpuTime = 0;
+		lastDemuxerCpuTime = 0,
+		lastBufferTime = 0,
+		lastDrawingTime = 0;
 	var lastFrameTimestamp = 0.0,
 		currentVideoCpuTime = 0.0;
 
@@ -401,21 +405,26 @@ var OGVPlayer = function(options) {
 
 		var newFrameTimestamp = getTimestamp(),
 			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
-			jitter = Math.abs(wallClockTime - targetPerFrameTime);
-		totalJitter += jitter;
+			jitter = wallClockTime - targetPerFrameTime;
+		totalJitter += Math.abs(jitter);
 		playTime += wallClockTime;
 
 		var timing = {
 			cpuTime: lastFrameDecodeTime,
+			drawingTime: drawingTime - lastFrameDrawingTime,
+			bufferTime: bufferTime - lastFrameBufferTime,
+			
+			demuxerTime: 0,
 			videoTime: 0,
 			audioTime: 0,
 			clockTime: wallClockTime
 		};
 		if (codec) {
-			timing.cpuTime += (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
+			timing.demuxerTime = (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
 			timing.videoTime += (currentVideoCpuTime - lastFrameVideoCpuTime);
 			timing.audioTime += (codec.audioCpuTime - lastFrameAudioCpuTime);
 		}
+		timing.cpuTime += timing.demuxerTime;
 		lastFrameDecodeTime = 0;
 		lastFrameTimestamp = newFrameTimestamp;
 		if (codec) {
@@ -427,8 +436,16 @@ var OGVPlayer = function(options) {
 			lastFrameAudioCpuTime = 0;
 			lastFrameDemuxerCpuTime = 0;
 		}
+		lastFrameDrawingTime = drawingTime;
+		lastFrameBufferTime = bufferTime;
 
-		fireEvent('framecallback', timing);
+		function n(x) {
+			return Math.round(x * 10) / 10;
+		}
+		log('drew frame clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
+			'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ') ' +
+			'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
+		fireEventAsync('framecallback', timing);
 
 		if (!lastTimeUpdate || (newFrameTimestamp - lastTimeUpdate) >= timeUpdateInterval) {
 			lastTimeUpdate = newFrameTimestamp;
@@ -984,9 +1001,7 @@ var OGVPlayer = function(options) {
 					 	(!codec.hasVideo || codec.frameReady || pendingFrame || yCbCrBuffer)
 					) {
 
-						var audioBufferedDuration = 0,
-							audioDecodingDuration = 0,
-							audioState = null,
+						var audioState = null,
 							playbackPosition = 0,
 							readyForAudioDecode,
 							readyForFrameDraw,
@@ -998,30 +1013,35 @@ var OGVPlayer = function(options) {
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
 
-							audioBufferedDuration = (audioState.samplesQueued / audioFeeder.targetRate);
-							//audioBufferedDuration = audioEndTimestamp - playbackPosition; // @fixme?
-
-							//console.log('audio buffered', audioBufferedDuration, audioDecodingDuration);
-
 							droppedAudio = audioState.dropped;
 							delayedAudio = audioState.delayed;
-							//readyForAudioDecode = audioState.samplesQueued <= (audioFeeder.bufferSize * 2);
-							var bufferDuration = (audioFeeder.bufferSize / audioFeeder.targetRate) * 2;
-							readyForAudioDecode = !pendingAudio && codec.audioReady && (audioBufferedDuration <= bufferDuration);
+							//readyForAudioDecode = !pendingAudio && codec.audioReady && audioFeeder.durationBuffered <= audioFeeder.bufferThreshold;
+							
+							var headroom = 1 / 60;
+							if (codec.hasVideo && frameEndTimestamp) {
+								// Try to process one frame's worth in addition to buffer space
+								headroom = frameEndTimestamp - playbackPosition;
+							}
+							readyForAudioDecode = audioFeeder.durationBuffered <
+								audioFeeder.bufferThreshold + headroom;
 
 							// Check in when all audio runs out
 							if (pendingAudio) {
 								// We'll check in when done decoding
+								readyForAudioDecode = false;
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
-								nextDelays.push(-1);
-							} else if (codec.hasVideo && (playbackPosition - frameEndTimestamp) > bufferDuration) {
+								readyForAudioDecode = false;
+							} else if (codec.hasVideo && (playbackPosition - frameEndTimestamp) > audioFeeder.bufferThreshold * 2) {
 								// don't get too far ahead of the video if it's slow!
 								readyForAudioDecode = false;
 								// wait for audioFeeder to ping us
 							} else {
 								// Check in when the audio buffer runs low again...
 								// wait for audioFeeder to ping us
+							}
+							if (!pendingAudio) {
+								log('audio checkin: ' + [readyForAudioDecode, audioFeeder.bufferThreshold, audioFeeder.durationBuffered, headroom, playbackPosition, frameEndTimestamp, audioEndTimestamp, codec.audioReady].join(', '))
 							}
 						} else {
 							// No audio; drive on the general clock.
@@ -1063,7 +1083,6 @@ var OGVPlayer = function(options) {
 								pendingFrame--;
 								frameEndTimestamp = nextFrameEndTimestamp;
 								currentVideoCpuTime = codec.videoCpuTime;
-								log('decoded frame');
 								if (ok && codec.frameBuffer.duplicate) {
 									// Dupe frame! No need to draw anything.
 									doFrameComplete();
@@ -1076,10 +1095,11 @@ var OGVPlayer = function(options) {
 								}
 							}
 							codec.decodeFrame(function processingDecodeFrame(ok) {
+								log('decoded frame');
 								if (frameCompleteCallback) {
 									throw new Error('Reentrancy error: decoded frames without drawing them');
 								} else if (yCbCrBuffer) {
-									log('already have a decoded frame, saving this for later');
+									//log('already have a decoded frame, saving this for later');
 									frameCompleteCallback = function() {
 										onDecodeFrameComplete(ok);
 									};
@@ -1089,6 +1109,9 @@ var OGVPlayer = function(options) {
 									pingProcessing();
 								}
 							});
+							if (enableWorker) {
+								pingProcessing();
+							}
 
 						} else if (readyForAudioDecode) {
 
@@ -1097,6 +1120,7 @@ var OGVPlayer = function(options) {
 							pendingAudio++;
 							audioEndTimestamp = codec.audioTimestamp;
 							codec.decodeAudio(function processingDecodeAudio(ok) {
+								pendingAudio--;
 								log('decoded audio');
 
 								if (ok) {
@@ -1109,16 +1133,17 @@ var OGVPlayer = function(options) {
 												audioFeeder.bufferData(buffer);
 											}
 										});
-										audioBufferedDuration += (buffer[0].length / audioInfo.rate) * 1000;
 										if (!codec.hasVideo) {
 											framesProcessed++; // pretend!
 											doFrameComplete();
 										}
 									}
 								}
-								pendingAudio--;
 								pingProcessing();
 							});
+							if (enableWorker) {
+								pingProcessing();
+							}
 
 						} else if (readyForFrameDraw) {
 
@@ -1266,9 +1291,13 @@ var OGVPlayer = function(options) {
 		lastVideoCpuTime = 0;
 		lastAudioCpuTime = 0;
 		lastDemuxerCpuTime = 0;
+		lastBufferTime = 0;
+		lastDrawingTime = 0;
 		lastFrameVideoCpuTime = 0;
 		lastFrameAudioCpuTime = 0;
 		lastFrameDemuxerCpuTime = 0;
+		lastFrameBufferTime = 0;
+		lastFrameDrawingTime = 0;
 		currentVideoCpuTime = 0;
 		frameCompleteCallback = null;
 		codec.onseek = function(offset) {
@@ -1317,7 +1346,7 @@ var OGVPlayer = function(options) {
 			// @todo networkState == NETWORK_LOADING
 			stream = new StreamFile({
 				url: self.src,
-				bufferSize: 32768, //65536 * 4,
+				bufferSize: 512, //4096, // 32768, //65536 * 4,
 				onstart: function() {
 					waitingOnInput = false;
 					loading = false;
@@ -1471,8 +1500,8 @@ var OGVPlayer = function(options) {
 			demuxingTime: codec ? (codec.demuxerCpuTime - lastDemuxerCpuTime) : 0,
 			videoDecodingTime: codec ? (codec.videoCpuTime - lastVideoCpuTime) : 0,
 			audioDecodingTime: codec ? (codec.audioCpuTime - lastAudioCpuTime) : 0,
-			bufferTime: bufferTime,
-			drawingTime: drawingTime,
+			bufferTime: bufferTime - lastBufferTime,
+			drawingTime: drawingTime - lastDrawingTime,
 			droppedAudio: droppedAudio,
 			delayedAudio: delayedAudio,
 			jitter: totalJitter / framesProcessed
@@ -1486,8 +1515,8 @@ var OGVPlayer = function(options) {
 			lastVideoCpuTime = codec.videoCpuTime;
 			lastAudioCpuTime = codec.audioCpuTime;
 		}
-		bufferTime = 0;
-		drawingTime = 0;
+		lastBufferTime = bufferTime;
+		lastDrawingTime = drawingTime;
 		totalJitter = 0;
 		totalFrameTime = 0;
 		totalFrameCount = 0;

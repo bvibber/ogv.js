@@ -111,8 +111,8 @@ Object.defineProperty(Module, 'seekable', {
 Module.init = function(callback) {
 	time(function() {
 		Module._ogv_demuxer_init();
-		callback();
 	});
+	callback();
 }
 
 /**
@@ -127,7 +127,6 @@ Module.process = function(data, callback) {
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
 		Module.HEAPU8.set(new Uint8Array(data), buffer);
-
 		return Module._ogv_demuxer_process(buffer, len);
 	});
 	callback(ret);

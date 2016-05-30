@@ -22,7 +22,6 @@ function StreamFile(options) {
 		ondone = options.ondone || function(){},
 		onerror = options.onerror || function(){},
 		bufferSize = options.bufferSize || 8192,
-		minBufferSize = 32768,
 		seekPosition = options.seekPosition || 0,
 		bufferPosition = seekPosition,
 		chunkSize = options.chunkSize || 1024 * 1024, // read/buffer up to a megabyte at a time
@@ -264,7 +263,7 @@ function StreamFile(options) {
 				byteLength += bufferIn.byteLength;
 			}
 
-			var min = Math.max(minBufferSize, bufferSize);
+			var min = bufferSize;
 			while (byteLength < min) {
 				var needBytes = min - byteLength,
 					nextBuffer = buffers.shift();
@@ -482,7 +481,7 @@ function StreamFile(options) {
 				streamReader.onerror = function(event) {
 					onerror('mystery error streaming');
 				};
-				streamReader.readAsArrayBuffer(stream, minBufferSize);
+				streamReader.readAsArrayBuffer(stream, bufferSize);
 			} else {
 				waitingForInput = true;
 			}

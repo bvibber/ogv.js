@@ -836,10 +836,13 @@
 				// hack
 				maxmem = 1024 * 1024 * 128;
 			}
+			//var debugFilter = /setting a timer|ready to draw frame|decode frame|decoded frame|drew frame/;
+			var debugFilter = /drew frame.*mux: [^0]|audio checkin/;
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
-					memoryLimit: maxmem,
 					debug: true,
+					debugFilter: debugFilter,
+					memoryLimit: maxmem,
 					enableWebM: true // experimental
 				});
 			} else if (playerBackend == 'js-cpu') {
