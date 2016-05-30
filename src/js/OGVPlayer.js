@@ -116,6 +116,9 @@ var OGVPlayer = function(options) {
 		// Try passing a pre-created audioContext in?
 		audioOptions.audioContext = options.audioContext;
 	}
+	// Buffer in largeish chunks to survive long CPU spikes on slow CPUs (eg, 32-bit iOS)
+	audioOptions.bufferSize = 8192;
+
 	codecOptions.worker = enableWorker;
 	if (typeof options.memoryLimit === 'number') {
 		codecOptions.memoryLimit = options.memoryLimit;
@@ -212,6 +215,9 @@ var OGVPlayer = function(options) {
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
+		//audioFeeder.bufferThreshold = 0.25; // buffer a quarter second of audio
+		//audioFeeder.bufferThreshold = 0.5; // buffer a half second of audio
+		audioFeeder.bufferThreshold = 1; // buffer a full second of audio
 		audioFeeder.volume = self.volume;
 		audioFeeder.muted = self.muted;
 
@@ -1013,6 +1019,12 @@ var OGVPlayer = function(options) {
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
 
+							if (audioState.dropped != droppedAudio) {
+								log('dropped ' + (audioState.dropped - droppedAudio));
+							}
+							if (audioState.delayed != delayedAudio) {
+								log('delayed ' + (audioState.delayed - delayedAudio));
+							}
 							droppedAudio = audioState.dropped;
 							delayedAudio = audioState.delayed;
 							//readyForAudioDecode = !pendingAudio && codec.audioReady && audioFeeder.durationBuffered <= audioFeeder.bufferThreshold;
@@ -1035,6 +1047,7 @@ var OGVPlayer = function(options) {
 							} else if (codec.hasVideo && (playbackPosition - frameEndTimestamp) > audioFeeder.bufferThreshold * 2) {
 								// don't get too far ahead of the video if it's slow!
 								readyForAudioDecode = false;
+								log('we are too far ahead of video: ' + (playbackPosition - frameEndTimestamp))
 								// wait for audioFeeder to ping us
 							} else {
 								// Check in when the audio buffer runs low again...

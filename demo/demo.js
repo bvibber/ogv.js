@@ -837,8 +837,11 @@
 				maxmem = 1024 * 1024 * 128;
 			}
 			//var debugFilter = /setting a timer|ready to draw frame|decode frame|decoded frame|drew frame/;
-			var debugFilter = /drew frame.*mux: [^0]/;
+			//var debugFilter = /drew frame/;
+			//var debugFilter = /drew frame.*mux: [^0]/;
+			//var debugFilter = /drew frame.*mux: [^0]|ahead|dropped|delayed/;
 			//var debugFilter = /drew frame.*mux: [^0]|audio checkin/;
+			var debugFilter = /drew frame|dropped|delayed/;
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					debug: true,
