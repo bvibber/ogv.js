@@ -154,14 +154,15 @@ var OGVPlayer = function(options) {
 	var then = getTimestamp();
 	function log(msg) {
 		if (options.debug) {
-			/*
 			var now = getTimestamp(),
 				delta = now - then;
 
-			console.log('+' + delta + 'ms proc: ' + msg);
-			then = now;
-			*/
-			console.log('OGVPlayer: ' + msg);
+			//console.log('+' + delta + 'ms ' + msg);
+			//then = now;
+			
+			if (!options.debugFilter || msg.match(options.debugFilter)) {
+				console.log('[' + (Math.round(delta * 10) / 10) + 'ms] ' + msg);
+			}
 		}
 	}
 
@@ -1043,8 +1044,7 @@ var OGVPlayer = function(options) {
 							readyForFrameDecode = (!yCbCrBuffer || !frameCompleteCallback) && !pendingFrame && codec.frameReady;
 						}
 
-						log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
-
+						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
 
 						if (readyForFrameDecode) {
 
