@@ -986,7 +986,7 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.PLAYING) {
 
-			codec.process(function doProcessPlay(more) {
+			function doProcessPlay() {
 
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
@@ -1183,43 +1183,57 @@ var OGVPlayer = function(options) {
 						}
 
 					} else {
-
-						if (more) {
-							// Have to process some more pages to find data.
-							log('processing to find more packets');
-							pingProcessing();
+						doProcessPlayDemux();
+					}
+				}
+			}
+			
+			function doProcessPlayDemux() {
+				codec.process(function doProcessPlayDemuxHandler(more) {
+					if (more) {
+						// Have to process some more pages to find data.
+						log('processing to find more packets');
+						pingProcessing();
+					} else {
+						log('ran out of data');
+						if (!streamEnded) {
+							// Ran out of buffered input
+							readBytesAndWait();
+						} else if (ended) {
+							log('Unexpectedly processing after ended');
 						} else {
-							log('ran out of data');
-							if (!streamEnded) {
-								// Ran out of buffered input
-								readBytesAndWait();
-							} else if (ended) {
-								log('Unexpectedly processing after ended');
+							// Ran out of stream!
+							log('Ran out of stream!');
+							var finalDelay = 0;
+							if (codec.hasAudio) {
+								finalDelay = audioFeeder.durationBuffered * 1000;
+							}
+							if (finalDelay > 0) {
+								log('ending pending ' + finalDelay + ' ms');
+								pingProcessing(Math.max(0, finalDelay));
 							} else {
-								// Ran out of stream!
-								log('Ran out of stream!');
-								var finalDelay = 0;
-								if (codec.hasAudio) {
-									finalDelay = audioFeeder.durationBuffered * 1000;
-								}
-								if (finalDelay > 0) {
-									log('ending pending ' + finalDelay + ' ms');
-									pingProcessing(Math.max(0, finalDelay));
-								} else {
-									log("ENDING NOW");
-									stopPlayback();
-									initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
-									ended = true;
-									// @todo implement loop behavior
-									paused = true;
-									fireEventAsync('pause');
-									fireEventAsync('ended');
-								}
+								log("ENDING NOW");
+								stopPlayback();
+								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
+								ended = true;
+								// @todo implement loop behavior
+								paused = true;
+								fireEventAsync('pause');
+								fireEventAsync('ended');
 							}
 						}
 					}
-				}
-			});
+				});
+			}
+
+			if (codec.audioReady || codec.frameReady) {
+				// On low-end devices we want to take it easy.
+				// Demux audio packets one at a time!
+				doProcessPlay();
+			} else {
+				// No packets? Go demux!
+				doProcessPlayDemux();
+			}
 
 		} else if (state == State.ERROR) {
 
