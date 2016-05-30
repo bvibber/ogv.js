@@ -1360,7 +1360,7 @@ var OGVPlayer = function(options) {
 			// @todo networkState == NETWORK_LOADING
 			stream = new StreamFile({
 				url: self.src,
-				bufferSize: 512, //4096, // 32768, //65536 * 4,
+				bufferSize: 32768, //65536 * 4,
 				onstart: function() {
 					waitingOnInput = false;
 					loading = false;

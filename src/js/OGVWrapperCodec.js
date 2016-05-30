@@ -264,7 +264,7 @@ var OGVWrapperCodec = (function(options) {
 		function doProcessData() {
 			if (inputQueue.length) {
 				var data = inputQueue.shift();
-				console.log('demuxing ' + data.byteLength);
+				//console.log('demuxing ' + data.byteLength);
 				demuxer.process(data, finish);
 			} else {
 				// out of data! ask for more

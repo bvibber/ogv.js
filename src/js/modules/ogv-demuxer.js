@@ -26,7 +26,9 @@ function time(func) {
 	var start = getTimestamp(),
 		ret;
 	ret = func();
-	Module.cpuTime += (getTimestamp() - start);
+	var delta = (getTimestamp() - start);
+	Module.cpuTime += delta;
+	console.log('demux time ' + delta);
 	return ret;
 }
 
