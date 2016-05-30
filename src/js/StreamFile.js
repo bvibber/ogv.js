@@ -466,8 +466,12 @@ function StreamFile(options) {
 
 		self.readBytes = function() {
 			if (stream) {
-				streamReader = new MSStreamReader();
-				streamReader.onload = function(event) {
+				// Save the current position in case the stream died
+				// and we have to restart it...
+				var currentPosition = self.bytesRead;
+
+				var reader = streamReader = new MSStreamReader();
+				reader.onload = function(event) {
 					var buffer = event.target.result,
 						len = buffer.byteLength;
 					if (len > 0) {
@@ -478,8 +482,10 @@ function StreamFile(options) {
 						ondone();
 					}
 				};
-				streamReader.onerror = function(event) {
-					onerror('mystery error streaming');
+				reader.onerror = function(event) {
+					console.log('MSStreamReader error: ' + reader.error + '; trying to recover');
+					self.seek(currentPosition);
+					self.readBytes();
 				};
 				streamReader.readAsArrayBuffer(stream, bufferSize);
 			} else {

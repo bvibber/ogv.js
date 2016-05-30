@@ -14,6 +14,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * tweak to liboggz to reduce ogg demux overhead on slow iOS
  * retooled playback loop for better threading parallelism
  * increased audio buffer sizes for smoother playback on slow machines
+ * recover from streaming timeouts in IE/Edge
 * 1.1.1-alpha.3 - 2016-05-28
  * partial error handling of failure to load initial data
 * 1.1.1-alpha.2 - 2016-05-28

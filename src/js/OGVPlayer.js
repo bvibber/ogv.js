@@ -1426,6 +1426,7 @@ var OGVPlayer = function(options) {
 				onerror: function(err) {
 					// @todo handle failure to initialize
 					console.log("reading error: " + err);
+					stopPlayback();
 					state = State.ERROR;
 				}
 			});
