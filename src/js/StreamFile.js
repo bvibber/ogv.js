@@ -167,7 +167,6 @@ function StreamFile(options) {
 				} else if (xhr.readyState == 4) {
 					// Complete.
 					internal.onXHRDone(xhr);
-					internal.onXHRLoading(xhr);
 				}
 			};
 
@@ -223,12 +222,32 @@ function StreamFile(options) {
 		},
 
 		onXHRDone: function(xhr) {
+			console.log('xhr done! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 			doneBuffering = true;
+			console.log(waitingForInput, internal.dataToRead(), internal.bytesBuffered());
+			if (waitingForInput && !internal.dataToRead()) {
+				if (internal.advance()) {
+					return;
+				}
+			}
+			internal.onXHRLoading(xhr);
 		},
 
 		abortXHR: function(xhr) {
 			xhr.onreadystatechange = null;
 			xhr.abort();
+		},
+
+		advance: function() {
+			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
+				console.log('time to advance! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
+				seekPosition += chunkSize;
+				internal.clearReadState();
+				internal.openXHR();
+				return true;
+			} else {
+				return false;
+			}
 		},
 
 		bufferData: function(buffer) {
@@ -294,7 +313,6 @@ function StreamFile(options) {
 
 		clearReadState: function() {
 			doneBuffering = false;
-			waitingForInput = true;
 		},
 
 		clearBuffers: function() {
@@ -306,6 +324,7 @@ function StreamFile(options) {
 		// Read the next binary buffer out of the buffered data
 		readNextChunk: function() {
 			if (waitingForInput) {
+				console.log('we got some data in! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 				waitingForInput = false;
 				onread(internal.popBuffer());
 			}
@@ -325,29 +344,20 @@ function StreamFile(options) {
 	// -- Public methods
 	self.readBytes = function() {
 		if (waitingForInput) {
-			throw new Error('Re-entrancy fail in StreamFile.readyBytes while waiting');
-		}
-		function advance() {
-			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
-				seekPosition += chunkSize;
-				internal.clearReadState();
-				internal.openXHR();
-				waitingForInput = false;
-				return true;
-			} else {
-				return false;
-			}
+			throw new Error('StreamFile re-entrancy fail; readBytes called while waiting for data');
 		}
 		if (internal.dataToRead()) {
 			var buffer = internal.popBuffer();
-			advance();
+			internal.advance();
 			onread(buffer);
 		} else if (doneBuffering) {
 			// We're out of data!
-			if (!advance()) {
+			if (!internal.advance()) {
+				console.log('out of data');
 				internal.onReadDone();
 			}
 		} else {
+			console.log('waiting for input! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 			// Nothing queued...
 			waitingForInput = true;
 		}
@@ -477,6 +487,9 @@ function StreamFile(options) {
 		};
 
 		self.readBytes = function() {
+			if (waitingForInput) {
+				throw new Error('StreamFile re-entrancy fail; readBytes called while waiting for data');
+			}
 			if (stream) {
 				// Save the current position in case the stream died
 				// and we have to restart it...

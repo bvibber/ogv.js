@@ -843,8 +843,8 @@
 			//debugFilter = /drew frame.*mux: [^0]|ahead|dropped|delayed/;
 			//debugFilter = /drew frame.*mux: [^0]|audio checkin/;
 			//debugFilter = /drew frame|dropped|delayed/;
-			//debugFilter = /demuxer|stream is at end/;
-			debugFilter = /waiting/;
+			debugFilter = /demuxer|stream is at end/;
+			//debugFilter = /waiting/;
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					debug: !!debugFilter,
