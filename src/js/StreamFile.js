@@ -222,9 +222,7 @@ function StreamFile(options) {
 		},
 
 		onXHRDone: function(xhr) {
-			console.log('xhr done! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 			doneBuffering = true;
-			console.log(waitingForInput, internal.dataToRead(), internal.bytesBuffered());
 			if (waitingForInput && !internal.dataToRead()) {
 				if (internal.advance()) {
 					return;
@@ -240,7 +238,6 @@ function StreamFile(options) {
 
 		advance: function() {
 			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
-				console.log('time to advance! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 				seekPosition += chunkSize;
 				internal.clearReadState();
 				internal.openXHR();
@@ -324,7 +321,6 @@ function StreamFile(options) {
 		// Read the next binary buffer out of the buffered data
 		readNextChunk: function() {
 			if (waitingForInput) {
-				console.log('we got some data in! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 				waitingForInput = false;
 				onread(internal.popBuffer());
 			}
@@ -353,11 +349,9 @@ function StreamFile(options) {
 		} else if (doneBuffering) {
 			// We're out of data!
 			if (!internal.advance()) {
-				console.log('out of data');
 				internal.onReadDone();
 			}
 		} else {
-			console.log('waiting for input! bytesRead: ' + self.bytesRead + ' bytesBuffered: ' + self.bytesBuffered);
 			// Nothing queued...
 			waitingForInput = true;
 		}
