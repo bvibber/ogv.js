@@ -211,7 +211,8 @@ var OGVPlayer = function(options) {
 		audioFeeder = null;
 	var muted = false,
 		initialPlaybackPosition = 0.0,
-		initialPlaybackOffset = 0.0;
+		initialPlaybackOffset = 0.0,
+		stoppedForLateFrame = false;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
@@ -284,6 +285,7 @@ var OGVPlayer = function(options) {
 			state = state || audioFeeder.getPlaybackState();
 			position = state.playbackPosition;
 		} else {
+			// @fixme handle paused/stoped time better
 			position = getTimestamp() / 1000;
 		}
 		return (position - initialPlaybackPosition) + initialPlaybackOffset;
@@ -331,6 +333,7 @@ var OGVPlayer = function(options) {
 		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
+		stoppedForLateFrame = false;
 
 		// Abort all queued actions
 		actionQueue.splice(0, actionQueue.length);
@@ -1029,13 +1032,8 @@ var OGVPlayer = function(options) {
 							delayedAudio = audioState.delayed;
 							//readyForAudioDecode = !pendingAudio && codec.audioReady && audioFeeder.durationBuffered <= audioFeeder.bufferThreshold;
 							
-							var headroom = 1 / 60;
-							if (codec.hasVideo && frameEndTimestamp) {
-								// Try to process one frame's worth in addition to buffer space
-								headroom = frameEndTimestamp - playbackPosition;
-							}
 							readyForAudioDecode = audioFeeder.durationBuffered <
-								audioFeeder.bufferThreshold + headroom;
+								audioFeeder.bufferThreshold;
 
 							// Check in when all audio runs out
 							if (pendingAudio) {
@@ -1044,17 +1042,12 @@ var OGVPlayer = function(options) {
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
 								readyForAudioDecode = false;
-							} else if (codec.hasVideo && (playbackPosition - frameEndTimestamp) > audioFeeder.bufferThreshold * 2) {
-								// don't get too far ahead of the video if it's slow!
-								readyForAudioDecode = false;
-								log('we are too far ahead of video: ' + (playbackPosition - frameEndTimestamp))
-								// wait for audioFeeder to ping us
 							} else {
 								// Check in when the audio buffer runs low again...
 								// wait for audioFeeder to ping us
 							}
 							if (!pendingAudio) {
-								log('audio checkin: ' + [readyForAudioDecode, audioFeeder.bufferThreshold, audioFeeder.durationBuffered, headroom, playbackPosition, frameEndTimestamp, audioEndTimestamp, codec.audioReady].join(', '))
+								log('audio checkin: ' + [readyForAudioDecode, audioFeeder.bufferThreshold, audioFeeder.durationBuffered, playbackPosition, frameEndTimestamp, audioEndTimestamp, codec.audioReady].join(', '))
 							}
 						} else {
 							// No audio; drive on the general clock.
@@ -1070,11 +1063,36 @@ var OGVPlayer = function(options) {
 							var fudgeDelta = 0.1;
 
 							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
-							frameDelay = Math.max(0, frameDelay);
+							//frameDelay = Math.max(0, frameDelay);
 							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
-							readyForFrameDraw = !!yCbCrBuffer && (frameDelay <= fudgeDelta);
+							readyForFrameDraw = !!yCbCrBuffer;
 							readyForFrameDecode = (!yCbCrBuffer || !frameCompleteCallback) && !pendingFrame && codec.frameReady;
+
+							if (readyForFrameDraw && frameDelay <= -targetPerFrameTime) {
+								// late frame!
+								log('late frame: ' + frameDelay + ' expected ' + targetPerFrameTime);
+								if (!stoppedForLateFrame) {
+									stoppedForLateFrame = playbackPosition;
+									if (audioFeeder) {
+										// @fixme handle non-audio path too
+										audioFeeder.stop();
+									}
+								}
+							} else if (readyForFrameDraw && frameDelay <= fudgeDelta) {
+								// on time! draw
+								if (stoppedForLateFrame) {
+									log('late frame recovery reached');
+									stoppedForLateFrame = false;
+									if (audioFeeder) {
+										// @fixme handle non-audio path too
+										audioFeeder.start();
+									}
+								}
+							} else {
+								// not yet
+								readyForFrameDraw = false;
+							}
 						}
 
 						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));

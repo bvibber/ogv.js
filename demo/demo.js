@@ -845,6 +845,7 @@
 			//debugFilter = /drew frame|dropped|delayed/;
 			//debugFilter = /demuxer|stream is at end/;
 			//debugFilter = /waiting/;
+			//debugFilter = /late frame/;
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					debug: !!debugFilter,
