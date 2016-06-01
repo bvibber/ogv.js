@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.1-alpha.4 - 2016-05-29
+* 1.1.2-alpha.4 - 2016-06-01
  * use smaller streaming read chunk size on IE for smoother perf
  * demux less aggressively
  * lazy-extract buffers from strings on Safari for smoother demuxing perf on slow iOS
@@ -18,9 +18,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * fix some streaming chunk-boundary bugs in Safari/Chrome/Firefox
  * restore a/v sync much faster after late frames by pausing audio
  * fixes for duplicate frame handling and "1000fps" Theora files
-* 1.1.1-alpha.3 - 2016-05-28
+* 1.1.2-alpha.3 - 2016-05-28
  * partial error handling of failure to load initial data
-* 1.1.1-alpha.2 - 2016-05-28
+* 1.1.2-alpha.2 - 2016-05-28
  * default video memory limit back to 32MB
  * 'memoryLimit' option key to override video decoder memory limit
 * 1.1.2-alpha.1 - 2016-05-28
