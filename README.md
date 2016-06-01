@@ -17,6 +17,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * recover from streaming timeouts in IE/Edge
  * fix some streaming chunk-boundary bugs in Safari/Chrome/Firefox
  * restore a/v sync much faster after late frames by pausing audio
+ * fixes for duplicate frame handling and "1000fps" Theora files
 * 1.1.1-alpha.3 - 2016-05-28
  * partial error handling of failure to load initial data
 * 1.1.1-alpha.2 - 2016-05-28

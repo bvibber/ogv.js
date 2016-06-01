@@ -806,7 +806,7 @@ var OGVPlayer = function(options) {
 				throw new Error('REENTRANCY FAIL: waiting on input or codec but asked to keep processing');
 			}
 			if (++iters > 500) {
-				console.log('stuck in processing loop; breaking with timer');
+				log('stuck in processing loop; breaking with timer');
 				needProcessing = 0;
 				pingProcessing(0);
 			}
@@ -1060,7 +1060,8 @@ var OGVPlayer = function(options) {
 						}
 
 						if (codec.hasVideo) {
-							var fudgeDelta = 0.1;
+							// ok to draw 2ms early
+							var fudgeDelta = 2;
 
 							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 							//frameDelay = Math.max(0, frameDelay);
@@ -1069,11 +1070,12 @@ var OGVPlayer = function(options) {
 							readyForFrameDraw = !!yCbCrBuffer;
 							readyForFrameDecode = (!yCbCrBuffer || !frameCompleteCallback) && !pendingFrame && codec.frameReady;
 
-							if (readyForFrameDraw && frameDelay <= -targetPerFrameTime) {
+							var audioSyncThreshold = Math.max(targetPerFrameTime, 1000 / 30);
+							if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
-								log('late frame: ' + frameDelay + ' expected ' + targetPerFrameTime);
 								if (!stoppedForLateFrame) {
-									stoppedForLateFrame = playbackPosition;
+									log('late frame: ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
+									stoppedForLateFrame = true;
 									if (audioFeeder) {
 										// @fixme handle non-audio path too
 										audioFeeder.stop();
@@ -1114,10 +1116,7 @@ var OGVPlayer = function(options) {
 								pendingFrame--;
 								frameEndTimestamp = nextFrameEndTimestamp;
 								currentVideoCpuTime = codec.videoCpuTime;
-								if (ok && codec.frameBuffer.duplicate) {
-									// Dupe frame! No need to draw anything.
-									doFrameComplete();
-								} else if (ok) {
+								if (ok) {
 									// Save the buffer until it's time to draw
 									yCbCrBuffer = codec.frameBuffer;
 								} else {
@@ -1125,7 +1124,9 @@ var OGVPlayer = function(options) {
 									log('Bad video packet or something');
 								}
 							}
+							var syncDecoding = false;
 							codec.decodeFrame(function processingDecodeFrame(ok) {
+								syncDecoding = true;
 								log('decoded frame');
 								if (frameCompleteCallback) {
 									throw new Error('Reentrancy error: decoded frames without drawing them');
@@ -1140,7 +1141,7 @@ var OGVPlayer = function(options) {
 									pingProcessing();
 								}
 							});
-							if (enableWorker) {
+							if (!syncDecoding) {
 								pingProcessing();
 							}
 
@@ -1186,9 +1187,12 @@ var OGVPlayer = function(options) {
 								thumbnail = null;
 							}
 
-							drawingTime += time(function() {
-								frameSink.drawFrame(yCbCrBuffer);
-							});
+							var dupe = yCbCrBuffer.duplicate;
+							if (!dupe) {
+								drawingTime += time(function() {
+									frameSink.drawFrame(yCbCrBuffer);
+								});
+							}
 							yCbCrBuffer = null;
 
 							framesProcessed++;
@@ -1200,12 +1204,19 @@ var OGVPlayer = function(options) {
 
 						} else if (yCbCrBuffer && !nextFrameTimer) {
 
-							// @todo consider using requestAnimationFrame
-							log('setting a timer for drawing ' + frameDelay);
-							nextFrameTimer = setTimeout(function() {
-								nextFrameTimer = null;
+							if (frameDelay < 4) {
+								// Either we're very close or the frame rate is
+								// insanely high (infamous '1000fps bug')
+								// Timer will take 4ms anyway, so just check in now.
 								pingProcessing();
-							}, frameDelay);
+							} else {
+								// @todo consider using requestAnimationFrame
+								log('setting a timer for drawing ' + frameDelay);
+								nextFrameTimer = setTimeout(function() {
+									nextFrameTimer = null;
+									pingProcessing();
+								}, frameDelay);
+							}
 
 						} else {
 

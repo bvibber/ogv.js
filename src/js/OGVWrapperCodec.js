@@ -358,9 +358,9 @@ var OGVWrapperCodec = (function(options) {
 		demuxer.dequeueVideoPacket(function(packet) {
 			function finish(ok) {
 				// hack
-				if (self.frameBuffer) {
-					self.frameBuffer.timestamp = timestamp;
-					self.frameBuffer.keyframeTimestamp = keyframeTimestamp;
+				if (videoDecoder.frameBuffer) {
+					videoDecoder.frameBuffer.timestamp = timestamp;
+					videoDecoder.frameBuffer.keyframeTimestamp = keyframeTimestamp;
 				}
 				cb(ok);
 			}
@@ -374,8 +374,16 @@ var OGVWrapperCodec = (function(options) {
 				//
 				// Skip the worker and just return a dupe frame immediately.
 				//
-				if (self.frameBuffer) {
-					self.frameBuffer.duplicate = true;
+				var lastFrame = videoDecoder.frameBuffer;
+				if (lastFrame) {
+					var nextFrame = {};
+					for (var key in lastFrame) {
+						if (lastFrame.hasOwnProperty(key)) {
+							nextFrame[key] = lastFrame[key];
+						}
+					}
+					nextFrame.duplicate = true;
+					videoDecoder.frameBuffer = nextFrame;
 					finish(true);
 				} else {
 					finish(false);
