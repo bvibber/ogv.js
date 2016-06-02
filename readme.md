@@ -11,10 +11,15 @@ and is suitable for use in custom audio and video playback.
 ## Copyright and license
 
 * main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2016 Brion Vibber
-* dynamicaudio.as and Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
+* dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
 
+* 0.4.1 - 2016-06-02
+ * Flash: Cleaned up internal buffering
+ * Flash: `stop()`/`start()` more reliable, doesn't drop audio
+ * Flash: `playbackPosition` no longer advances while paused
+ * Now builds on Windows 10
 * 0.4.0 - 2016-05-14
  * more precise recovery of playback position after `stop()`/`start()`
  * addded `flush()` method; use to clear buffers after a stop when seeking etc
