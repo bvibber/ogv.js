@@ -14,6 +14,10 @@ distclean :
 	rm -rf apache-flex-sdk-*-bin
 	rm -f flashplayer-libs
 
+AS3_SOURCES=src/dynamicaudio.as \
+  src/BufferQueue.as \
+  src/BufferQueueItem.as \
+  src/ILogger.as
 
 # -----------
 # Flash stuff
@@ -36,7 +40,7 @@ FLEXSDK_LIBS_DEP:=$(FLEXSDK_DIR)/frameworks/libs/osmf.swc
 FLEXSDK_PLAYERGLOBAL_DEP:=$(PLAYERGLOBAL_DIR)/playerglobal.swc
 FLEXSDK_ALL_DEP:=$(FLEXSDK_BASE_DEP) $(FLEXSDK_LIBS_DEP) $(FLEXSDK_PLAYERGLOBAL_DEP)
 
-assets/dynamicaudio.swf : src/dynamicaudio.as $(FLEXSDK_ALL_DEP)
+assets/dynamicaudio.swf : $(AS3_SOURCES) $(FLEXSDK_ALL_DEP)
 	FLEX_HOME="$(HERE)/$(FLEXSDK_DIR)" \
 	PLAYERGLOBAL_HOME="$(HERE)/$(PLAYERGLOBAL_BASE)" \
 	$(FLEXSDK_DIR)/bin/mxmlc -o assets/dynamicaudio.swf -file-specs src/dynamicaudio.as

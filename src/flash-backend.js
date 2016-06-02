@@ -43,11 +43,15 @@
             callback.apply(this);
         }
     };
+    this.onlog = function(msg) {
+        console.log('AudioFeeder FlashBackend: ' + msg);
+    }
 
     this.bufferThreshold = this.bufferSize * 2;
 
     var events = {
         'ready': 'sync',
+        'log': 'sync',
         'starved': 'sync',
         'bufferlow': 'async'
     };
@@ -60,7 +64,7 @@
             if (method === 'async') {
                 nextTick(callback.bind(this));
             } else {
-                callback.apply(this);
+                callback.apply(this, Array.prototype.slice.call(arguments, 1));
                 this._flushFlashBuffer();
             }
         }
@@ -163,6 +167,13 @@
  	});
 
   /**
+   * Are we paused/idle?
+   * @type {boolean}
+   * @access private
+   */
+  FlashBackend.prototype._paused = true;
+
+  /**
    * Pass the currently configured muted+volume state down to the Flash plugin
    * @access private
    */
@@ -229,6 +240,9 @@
     var chunk = this._flashBuffer,
       flashElement = this._flashaudio.flashElement;
 
+    if (this._cachedFlashState) {
+        this._cachedFlashState.samplesQueued += chunk.length / 2;
+    }
     this._flashBuffer = '';
     this._flushTimeout = null;
 
@@ -269,13 +283,14 @@
   FlashBackend.prototype.getPlaybackState = function() {
     if (this._flashaudio && this._flashaudio.flashElement && this._flashaudio.flashElement.write) {
       var now = Date.now(),
-        delta = now - this._cachedFlashTime,
+        delta = this._paused ? 0 : (now - this._cachedFlashTime),
         state;
       if (this._cachedFlashState && delta < this._cachedFlashInterval) {
         var cachedFlashState = this._cachedFlashState;
         state = {
           playbackPosition: cachedFlashState.playbackPosition + delta / 1000,
-          samplesQueued: cachedFlashState.samplesQueued - Math.max(0, Math.round(delta * this.rate / 1000)),
+          samplesQueued: cachedFlashState.samplesQueued -
+            Math.max(0, Math.round(delta * this.rate / 1000)),
           dropped: cachedFlashState.dropped,
           delayed: cachedFlashState.delayed
         };
@@ -319,6 +334,7 @@
    */
   FlashBackend.prototype.start = function() {
     this._flashaudio.flashElement.start();
+    this._paused = false;
     this._cachedFlashState = null;
   };
 
@@ -328,6 +344,7 @@
    */
   FlashBackend.prototype.stop = function() {
     this._flashaudio.flashElement.stop();
+    this._paused = true;
     this._cachedFlashState = null;
   };
 
