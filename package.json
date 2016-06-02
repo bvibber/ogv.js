@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "1.1.2-alpha.4",
+  "version": "1.1.2-alpha.5",
   "description": "JavaScript media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
@@ -48,11 +48,11 @@
   },
   "homepage": "https://github.com/brion/ogv.js#readme",
   "devDependencies": {
+    "audio-feeder": "^0.4.1",
     "eslint": "^1.7.3",
-    "node-static": "^0.7.7",
-    "webpack-dev-server": "^1.12.1",
-    "webpack": "^1.12.2",
     "file-loader": "^0.8.5",
-    "audio-feeder": "^0.4.0"
+    "node-static": "^0.7.7",
+    "webpack": "^1.12.2",
+    "webpack-dev-server": "^1.12.1"
   }
 }
