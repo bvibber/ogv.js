@@ -1068,7 +1068,7 @@ var OGVPlayer = function(options) {
 							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
 							readyForFrameDraw = !!yCbCrBuffer;
-							readyForFrameDecode = (!yCbCrBuffer || !frameCompleteCallback) && !pendingFrame && codec.frameReady;
+							readyForFrameDecode = !frameCompleteCallback && !pendingFrame && codec.frameReady;
 
 							var audioSyncThreshold = Math.max(targetPerFrameTime, 1000 / 30);
 							if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
@@ -1081,16 +1081,16 @@ var OGVPlayer = function(options) {
 										audioFeeder.stop();
 									}
 								}
+							} else if (readyForFrameDraw && stoppedForLateFrame) {
+								// catching up, ok if we were early
+								log('late frame recovery reached');
+								stoppedForLateFrame = false;
+								if (audioFeeder) {
+									// @fixme handle non-audio path too
+									audioFeeder.start();
+								}
 							} else if (readyForFrameDraw && frameDelay <= fudgeDelta) {
 								// on time! draw
-								if (stoppedForLateFrame) {
-									log('late frame recovery reached');
-									stoppedForLateFrame = false;
-									if (audioFeeder) {
-										// @fixme handle non-audio path too
-										audioFeeder.start();
-									}
-								}
 							} else {
 								// not yet
 								readyForFrameDraw = false;
