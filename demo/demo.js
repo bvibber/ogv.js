@@ -591,28 +591,33 @@
 			selection = list.reverse().slice(0, max);
 		} else if (sourceMode == 'shortlist') {
 			selection = [
-				// 2160p
-				"File:RED 4K Video of Colorful Liquid in Space.webm",
-				"File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+				// 2160p24
+				"File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
 				"File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
+				"File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+
+				"File:Curiosity's Seven Minutes of Terror.ogv",
+				"File:RED 4K Video of Colorful Liquid in Space.webm",
+				"File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
 				"File:Here's to Engineering.webm",
 
-				// 1440p
-				"File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
-
-				// 1080p60
-				"File:Stugl,aerial video.webm",
-				"File:Snowdonia by drone.webm",
-				"File:Share-a-Fact on the Official Wikipedia Android app.webm",
-
-				// 1080p
 				"File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
-				"File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
+				"File:Knowledge for Everyone (short cut).webm",
+				"File:Share-a-Fact on the Official Wikipedia Android app.webm",
 				"File:Sneak Preview - Wikipedia VisualEditor.webm",
+				"File:The Impact Of Wikipedia.webm",
+				"File:WikiArabia tech meetup in Ramallah 2016.webm",
 				"File:Wikipedia Edit 2015.webm",
+				"File:Wiki Makes Video Intro 4 26.webm",
+				"File:This is the Wikimedia Foundation.webm",
 
-				// 720p
-				"File:Curiosity's Seven Minutes of Terror.ogv"
+				"File:Eisbach surfen v1.ogv",
+				"File:FEZ trial gameplay HD.webm",
+				"File:Furcifer pardalis moving eyes.ogv",
+				"File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
+				"File:Snowdonia by drone.webm",
+				"File:Stugl,aerial video.webm",
+				"File:Tawakkol Karman (English).ogv"
 			];
 		} else {
 			throw new Error('unexpected sourceMode');
