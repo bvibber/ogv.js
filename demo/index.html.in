@@ -159,10 +159,12 @@
 		<!-- lightbox-style click-to-dismiss background -->
 	</div>
 	<div id="media-chooser">
-		<select id=media-source>
-			<option value=motd>Wikimedia Commons Media of the Day</option>
-			<option value=shortlist>VBR transcode tests</option>
-		</select>
+		<div id=media-source-block>
+			<select id=media-source>
+				<option value=motd>Wikimedia Commons Media of the Day</option>
+				<option value=shortlist>VBR transcode tests</option>
+			</select>
+		</div>
 		<div id="media-list">
 			<!-- ... -->
 		</div>

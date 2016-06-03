@@ -307,6 +307,10 @@ html, body {
 	overflow-x: hidden;
 }
 
+#media-source-block {
+	padding: 16px;
+}
+
 .media-item {
 	position: relative;
 	width: 100%;
