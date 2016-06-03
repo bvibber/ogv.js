@@ -743,7 +743,7 @@
 				[
 					"File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
 					'1080p59.94',
-					'high fps, low motion'
+					'high fps, moderate motion'
 				],
 				[
 					"File:Snowdonia by drone.webm",
