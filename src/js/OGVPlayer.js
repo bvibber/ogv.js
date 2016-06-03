@@ -1124,24 +1124,25 @@ var OGVPlayer = function(options) {
 									log('Bad video packet or something');
 								}
 							}
-							var syncDecoding = false;
-							codec.decodeFrame(function processingDecodeFrame(ok) {
-								syncDecoding = true;
-								log('decoded frame');
-								if (frameCompleteCallback) {
-									throw new Error('Reentrancy error: decoded frames without drawing them');
-								} else if (yCbCrBuffer) {
-									//log('already have a decoded frame, saving this for later');
-									frameCompleteCallback = function() {
+							time(function() {
+								codec.decodeFrame(function processingDecodeFrame(ok) {
+									log('decoded frame');
+									if (frameCompleteCallback) {
+										throw new Error('Reentrancy error: decoded frames without drawing them');
+									} else if (yCbCrBuffer) {
+										//log('already have a decoded frame, saving this for later');
+										frameCompleteCallback = function() {
+											onDecodeFrameComplete(ok);
+										};
+										pingProcessing();
+									} else {
 										onDecodeFrameComplete(ok);
-									};
-									pingProcessing();
-								} else {
-									onDecodeFrameComplete(ok);
-									pingProcessing();
-								}
+										pingProcessing();
+									}
+								});
 							});
-							if (!syncDecoding) {
+							if (pendingFrame) {
+								// We can process something else while that's running
 								pingProcessing();
 							}
 
@@ -1151,29 +1152,32 @@ var OGVPlayer = function(options) {
 
 							pendingAudio++;
 							audioEndTimestamp = codec.audioTimestamp;
-							codec.decodeAudio(function processingDecodeAudio(ok) {
-								pendingAudio--;
-								log('decoded audio');
+							time(function() {
+								codec.decodeAudio(function processingDecodeAudio(ok) {
+									pendingAudio--;
+									log('decoded audio');
 
-								if (ok) {
-									var buffer = codec.audioBuffer;
-									if (buffer) {
-										// Keep track of how much time we spend queueing audio as well
-										// This is slow when using the Flash shim on IE 10/11
-										bufferTime += time(function() {
-											if (audioFeeder) {
-												audioFeeder.bufferData(buffer);
+									if (ok) {
+										var buffer = codec.audioBuffer;
+										if (buffer) {
+											// Keep track of how much time we spend queueing audio as well
+											// This is slow when using the Flash shim on IE 10/11
+											bufferTime += time(function() {
+												if (audioFeeder) {
+													audioFeeder.bufferData(buffer);
+												}
+											});
+											if (!codec.hasVideo) {
+												framesProcessed++; // pretend!
+												doFrameComplete();
 											}
-										});
-										if (!codec.hasVideo) {
-											framesProcessed++; // pretend!
-											doFrameComplete();
 										}
 									}
-								}
-								pingProcessing();
+									pingProcessing();
+								});
 							});
-							if (enableWorker) {
+							if (pendingAudio) {
+								// We can process something else while that's running
 								pingProcessing();
 							}
 
