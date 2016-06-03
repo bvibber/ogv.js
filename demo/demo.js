@@ -767,6 +767,9 @@
 					var imageinfo = mediaItems[title];
 					if (imageinfo) {
 						var fmt = imageinfo.width + 'x' + imageinfo.height;
+						if (fmt == '0x0') {
+							fmt = 'audio';
+						}
 						if (frameRates[title]) {
 							fmt += ' ';
 							fmt += frameRates[title];
