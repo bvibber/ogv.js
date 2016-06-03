@@ -318,7 +318,8 @@ var OGVPlayer = function(options) {
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0, // number of times we were starved for audio
-		delayedAudio = 0; // seconds audio processing was delayed by blocked CPU
+		delayedAudio = 0, // seconds audio processing was delayed by blocked CPU
+		lateFrames = 0;   // number of times a frame was late and we had to halt audio
 	var poster = '', thumbnail;
 
 	// called when stopping old video on load()
@@ -1075,6 +1076,7 @@ var OGVPlayer = function(options) {
 								// late frame!
 								if (!stoppedForLateFrame) {
 									log('late frame: ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
+									lateFrames++;
 									stoppedForLateFrame = true;
 									if (audioFeeder) {
 										// @fixme handle non-audio path too
@@ -1581,7 +1583,8 @@ var OGVPlayer = function(options) {
 			drawingTime: drawingTime - lastDrawingTime,
 			droppedAudio: droppedAudio,
 			delayedAudio: delayedAudio,
-			jitter: totalJitter / framesProcessed
+			jitter: totalJitter / framesProcessed,
+			lateFrames: lateFrames
 		};
 	};
 	self.resetPlaybackStats = function() {

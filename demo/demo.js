@@ -167,6 +167,7 @@
 
 			document.getElementById('video-fps').textContent = round2(player.ogvjsVideoFrameRate);
 			document.getElementById('video-jitter').textContent = round2(info.jitter);
+			document.getElementById('video-late').textContent = info.lateFrames;
 			document.getElementById('audio-drops').textContent = info.droppedAudio;
 			document.getElementById('audio-delayed').textContent = round1_0(info.delayedAudio);
 
