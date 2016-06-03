@@ -308,20 +308,46 @@ html, body {
 }
 
 .media-item {
-	min-height: 32px;
-
+	position: relative;
 	width: 100%;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	
+	height: 72px;
+
 	background: white;
 	border-top: solid 1px #eee;
 
 	cursor: pointer;
 }
-.media-item img {
-	vertical-align: middle;
+.media-item > img.thumb {
+	position: absolute;
+	top: 0;
+	height: 72px;
+	left: 0;
+	width: 128px;
+
+	object-fit: cover;
+}
+.media-item > div.title,
+.media-item > div.desc {
+	position: absolute;
+	left: 140px;
+	right: 0;
+	height: 50%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding-top: 8px;
+}
+.media-item > div.title {
+	top: 0;
+}
+.media-item > div.desc {
+	bottom: 0;
+	color: #222;
+	font-size: 80%;
+}
+.media-item > div.desc > span.format {
+	color: #666;
+	padding-right: 16px;
 }
 
 #info {

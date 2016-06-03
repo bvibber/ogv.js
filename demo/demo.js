@@ -576,49 +576,160 @@
 		lastSearchValue = filter.value;
 		var filterString = filter.value.toLowerCase().replace(/^\s+/, '').replace(/\s+$/, '');
 
-		var max = 40, list = [];
-		for (var day in motd) {
-			if (motd.hasOwnProperty(day)) {
-				var title = motd[day];
-				if (filterString == '' || title.toLowerCase().indexOf(filterString) != -1) {
-					list.push('File:' + motd[day]);
+		function passFilter(title) {
+			return filterString == '' || title.toLowerCase().indexOf(filterString) != -1;
+		}
+
+		var selection = [],
+			frameRates = {},
+			descriptions = {};
+		if (sourceMode == 'motd') {
+			var max = 40, list = [];
+			for (var day in motd) {
+				if (motd.hasOwnProperty(day)) {
+					var title = motd[day];
+					if (passFilter(title)) {
+						list.push('File:' + motd[day]);
+					}
 				}
 			}
-		}
-		var selection = [];
-		
-		if (sourceMode == 'motd') {
 			selection = list.reverse().slice(0, max);
 		} else if (sourceMode == 'shortlist') {
-			selection = [
-				// 2160p24
-				"File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
-				"File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
-				"File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+			var shortlist = [
+				// Blender movies
+				[
+					"File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
+					'1080p24',
+					'3d animated'
+				],
+				[
+					"File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
+					'2160p24',
+					'cartoon; some motion spikes'
+				],
+				[
+					"File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+					'2160p24',
+					'sci-fi; mix of scene types'
+				],
 
-				"File:Curiosity's Seven Minutes of Terror.ogv",
-				"File:RED 4K Video of Colorful Liquid in Space.webm",
-				"File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
-				"File:Here's to Engineering.webm",
+				// Space stuff
+				[
+					"File:Curiosity's Seven Minutes of Terror.ogv",
+					'720p23.98',
+					'live-action with CG elements'
+				],
+				[
+					"File:RED 4K Video of Colorful Liquid in Space.webm",
+					'2160p23.98',
+					'UHD, modest motion'
+				],
+				[
+					"File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
+					'2160p23.98',
+					'UHD, mix of low and high motion'
+				],
+				[
+					"File:Here's to Engineering.webm",
+					'2160p23.98',
+					'UHD, low motion'
+				],
 
-				"File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
-				"File:Knowledge for Everyone (short cut).webm",
-				"File:Share-a-Fact on the Official Wikipedia Android app.webm",
-				"File:Sneak Preview - Wikipedia VisualEditor.webm",
-				"File:The Impact Of Wikipedia.webm",
-				"File:WikiArabia tech meetup in Ramallah 2016.webm",
-				"File:Wikipedia Edit 2015.webm",
-				"File:Wiki Makes Video Intro 4 26.webm",
-				"File:This is the Wikimedia Foundation.webm",
+				// Wikipedia stuff
+				[
+					"File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
+					'1080p23.98',
+					'low motion with some spikes'
+				],
+				[
+					"File:Knowledge for Everyone (short cut).webm",
+					'1080p23.98',
+					'mix of scenes'
+				],
+				[
+					"File:Share-a-Fact on the Official Wikipedia Android app.webm",
+					'1080p29.97',
+					'short animation, some motion spikes'
+				],
+				[
+					"File:Sneak Preview - Wikipedia VisualEditor.webm",
+					'1080p23.98',
+					'modest motion with spikes'
+				],
+				[
+					"File:The Impact Of Wikipedia.webm",
+					'1080p23.98',
+					'low motion'
+				],
+				[
+					"File:WikiArabia tech meetup in Ramallah 2016.webm",
+					'1080p24',
+					'modest motion'
+				],
+				[
+					"File:Wikipedia Edit 2015.webm",
+					'1080p24',
+					'animated, many dupe frames'
+				],
+				[
+					"File:Wiki Makes Video Intro 4 26.webm",
+					'720p59.94',
+					'high fps, mix of scenes'
+				],
+				[
+					"File:This is the Wikimedia Foundation.webm",
+					'1080p23.98',
+					'mix of scenes'
+				],
 
-				"File:Eisbach surfen v1.ogv",
-				"File:FEZ trial gameplay HD.webm",
-				"File:Furcifer pardalis moving eyes.ogv",
-				"File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
-				"File:Snowdonia by drone.webm",
-				"File:Stugl,aerial video.webm",
-				"File:Tawakkol Karman (English).ogv"
+				// Misc stuff
+				[
+					"File:Tawakkol Karman (English).ogv",
+					'1080p50',
+					'high fps, modest motion'
+				],
+				[
+					"File:Eisbach surfen v1.ogv",
+					'1080p30',
+					'high motion'
+				],
+				[
+					"File:FEZ trial gameplay HD.webm",
+					'720p30',
+					'animation'
+				],
+				[
+					"File:Furcifer pardalis moving eyes.ogv",
+					'1080p24',
+					'low motion'
+				],
+				[
+					"File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
+					'1080p59.94',
+					'high fps, low motion'
+				],
+				[
+					"File:Snowdonia by drone.webm",
+					'1080p30',
+					'mix of high and low motion scenes'
+				],
+				[
+					"File:Stugl,aerial video.webm",
+					'1080p60',
+					'high fps, high motion'
+				]
 			];
+			shortlist.forEach(function(item) {
+				var title = item[0],
+					format = item[1],
+					desc = item[2];
+				if (passFilter(title) || passFilter(format) || passFilter(desc)) {
+					selection.push(title);
+					var bits = format.split(/p/);
+					frameRates[title] = parseFloat(bits[1]);
+					descriptions[title] = desc;
+				}
+			});
 		} else {
 			throw new Error('unexpected sourceMode');
 		}
@@ -655,7 +766,13 @@
 				selection.forEach(function(title) {
 					var imageinfo = mediaItems[title];
 					if (imageinfo) {
-						addMediaSelector(title, imageinfo);
+						var fmt = imageinfo.width + 'x' + imageinfo.height;
+						if (frameRates[title]) {
+							fmt += ' ';
+							fmt += frameRates[title];
+							fmt += 'fps';
+						}
+						addMediaSelector(title, imageinfo, fmt, descriptions[title]);
 					}
 				});
 			}
@@ -697,19 +814,39 @@
 		}
 	});
 
-	function addMediaSelector(title, imageinfo) {
+	function addMediaSelector(title, imageinfo, format, desc) {
 		var item = document.createElement('div'),
 			img = document.createElement('img');
 
 		item.className = 'media-item';
 
+		img.className = 'thumb';
 		img.src = imageinfo.thumburl;
 		img.title = "Play video"
 		img.width = imageinfo.thumbwidth / devicePixelRatio;
 		img.height = imageinfo.thumbheight / devicePixelRatio;
 
+		var titleDiv = document.createElement('div');
+		titleDiv.className = 'title';
+		titleDiv.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
+
+		var descDiv = document.createElement('div');
+		descDiv.className = 'desc';
+		if (format) {
+			var formatSpan = document.createElement('span');
+			formatSpan.className = 'format';
+			formatSpan.appendChild(document.createTextNode(format));
+			descDiv.appendChild(formatSpan);
+		}
+		if (desc) {
+			var descSpan = document.createElement('span');
+			descSpan.appendChild(document.createTextNode(desc));
+			descDiv.appendChild(descSpan);
+		}
+
 		item.appendChild(img);
-		item.appendChild(document.createTextNode(' ' + title.replace('File:', '').replace(/_/g, ' ')));
+		item.appendChild(titleDiv);
+		item.appendChild(descDiv);
 		item.addEventListener('click', function() {
 			stopVideo();
 			startTime = 0;
