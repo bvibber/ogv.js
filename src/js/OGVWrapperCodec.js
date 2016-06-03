@@ -40,9 +40,9 @@ var OGVWrapperCodec = (function(options) {
 
 	Object.defineProperty(self, 'processing', {
 		get: function() {
-			return processing
+			return processing/*
 				|| (videoDecoder && videoDecoder.processing)
-				|| (audioDecoder && audioDecoder.processing);
+				|| (audioDecoder && audioDecoder.processing)*/;
 		}
 	});
 

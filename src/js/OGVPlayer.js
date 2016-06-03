@@ -1036,7 +1036,7 @@ var OGVPlayer = function(options) {
 								audioFeeder.bufferThreshold;
 
 							// Check in when all audio runs out
-							if (pendingAudio) {
+							if (pendingAudio > 8) {
 								// We'll check in when done decoding
 								readyForAudioDecode = false;
 							} else if (!codec.audioReady) {
@@ -1151,11 +1151,12 @@ var OGVPlayer = function(options) {
 							log('ready for audio');
 
 							pendingAudio++;
-							audioEndTimestamp = codec.audioTimestamp;
+							var nextAudioEndTimestamp = codec.audioTimestamp;
 							time(function() {
 								codec.decodeAudio(function processingDecodeAudio(ok) {
 									pendingAudio--;
 									log('decoded audio');
+									audioEndTimestamp = nextAudioEndTimestamp;
 
 									if (ok) {
 										var buffer = codec.audioBuffer;
