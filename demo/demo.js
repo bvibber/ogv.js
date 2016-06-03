@@ -21,16 +21,22 @@
 
 	var benchmarkData = [],
 		benchmarkClockData = [],
+		benchmarkVideoData = [],
+		benchmarkAudioData = [],
 		benchmarkDirty = false,
 		benchmarkTargetFps = -1;
 	function clearBenchmark() {
 		benchmarkData = [];
 		benchmarkClockData = [];
+		benchmarkVideoData = [];
+		benchmarkAudioData = [];
 		benchmarkDirty = true;
 	}
-	function recordBenchmarkPoint(cpuTime, clockTime) {
-		benchmarkData.push(cpuTime);
-		benchmarkClockData.push(clockTime);
+	function recordBenchmarkPoint(info) {
+		benchmarkData.push(info.cpuTime);
+		benchmarkVideoData.push(info.videoTime);
+		benchmarkAudioData.push(info.audioTime);
+		benchmarkClockData.push(info.clockTime);
 
 		benchmarkDirty = true;
 	}
@@ -52,43 +58,75 @@
 			maxItems = Math.min(chunkSize, benchmarkData.length);
 
 		var clockData = benchmarkClockData.slice(-chunkSize),
-			cpuData = benchmarkData.slice(-chunkSize);
+			cpuData = benchmarkData.slice(-chunkSize),
+			videoData = benchmarkVideoData.slice(-chunkSize),
+			audioData = benchmarkAudioData.slice(-chunkSize);
 
 		// Draw!
 
 		ctx.clearRect(0, 0, width, height);
 
 		function x(i) {
-			return i * (width - 1) / maxItems;
+			return Math.round(i * (width - 1) / maxItems);
 		}
 		function y(ms) {
-			return (height - 1) - ms * (height - 1) / maxTime;
+			return Math.round((height - 1) - ms * (height - 1) / maxTime);
 		}
 
-		// Wall-clock time
-		ctx.beginPath();
-		ctx.strokeStyle = 'blue';
-		ctx.moveTo(0, (height - 1) - clockData[0] * (height - 1) / maxTime);
-		for (i = 1; i < maxItems; i++) {
-			ctx.lineTo(x(i), y(clockData[i]));
-		}
-		ctx.stroke();
+		function drawBar(px, py, pwidth, pheight) {
+			ctx.globalAlpha = 0.33;
+			console.log(px, py, pwidth, pheight);
+			ctx.fillRect(px, py, pwidth, pheight);
 
-		// CPU time
-		ctx.beginPath();
-		ctx.strokeStyle = 'black';
-		ctx.moveTo(0, (height - 1) - cpuData[0] * (height - 1) / maxTime);
-		for (i = 1; i < maxItems; i++) {
-			ctx.lineTo(x(i), y(cpuData[i]));
+			ctx.globalAlpha = 0.99;
+			ctx.beginPath();
+			ctx.moveTo(px, py);
+			ctx.lineTo(px + pwidth - 1, py);
+			ctx.stroke();
 		}
-		ctx.stroke();
+
+		ctx.globalAlpha = 1;
 
 		if (benchmarkTargetFps) {
 			ctx.beginPath();
 			ctx.strokeStyle = 'red';
+			ctx.fillStyle = 'none';
 			ctx.moveTo(x(0), y(fpsTarget));
 			ctx.lineTo(x(maxItems - 1), y(fpsTarget));
 			ctx.stroke();
+		}
+
+		// CPU time
+		for (i = 0; i < maxItems; i++) {
+			var px = x(i),
+			    pwidth = Math.max(x(i + 1) - px, 1),
+				py,
+				pheight;
+			
+			// Wall clock time
+			ctx.strokeStyle = 'blue';
+			ctx.fillStyle = 'blue';
+			py = y(clockData[i]);
+			pheight = y(fpsTarget) - py;
+			drawBar(px, py, pwidth, pheight);
+
+			// Main thread CPU time
+			ctx.strokeStyle = 'black';
+			ctx.fillStyle = 'black';
+			py = y(cpuData[i]);
+			drawBar(px, py, pwidth, height - py);
+
+			// Video decode thread
+			ctx.strokeStyle = 'darkcyan';
+			ctx.fillStyle = 'darkcyan';
+			py = y(videoData[i]);
+			drawBar(px, py, pwidth, height - py);
+
+			// Audio decode thread
+			ctx.strokeStyle = 'green';
+			ctx.fillStyle = 'green';
+			py = y(audioData[i]);
+			drawBar(px, py, pwidth, height - py);
 		}
 	}
 
@@ -1083,7 +1121,7 @@
 			// seems to fire every quarter second. No per-frame callback for
 			// native video, sorry!
 			player.addEventListener('framecallback', function(info) {
-				recordBenchmarkPoint(info.cpuTime + info.videoTime + info.audioTime, info.clockTime);
+				recordBenchmarkPoint(info);
 			});
 
 			player.addEventListener('ended', function() {
