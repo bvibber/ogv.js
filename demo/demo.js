@@ -75,7 +75,6 @@
 
 		function drawBar(px, py, pwidth, pheight) {
 			ctx.globalAlpha = 0.33;
-			console.log(px, py, pwidth, pheight);
 			ctx.fillRect(px, py, pwidth, pheight);
 
 			ctx.globalAlpha = 0.99;
