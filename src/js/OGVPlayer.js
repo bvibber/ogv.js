@@ -1185,6 +1185,11 @@ var OGVPlayer = function(options) {
 
 							log('ready to draw frame');
 
+							if (nextFrameTimer) {
+								clearTimeout(nextFrameTimer);
+								nextFrameTimer = null;
+							}
+
 							// Ready to draw the decoded frame...
 							if (thumbnail) {
 								self.removeChild(thumbnail);
