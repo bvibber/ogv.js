@@ -381,13 +381,24 @@ html, body {
 }
 #benchmark-legend {
 	position: absolute;
-	right: 0;
 	top: 0;
+	right: 0;
 	bottom: 0;
 	width: 500px;
 	
 	text-align: right;
 	font-size: 0.8em;
+}
+#benchmark-legend > ul {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+#benchmark-upper {
+	top: 0;
+}
+#benchmark-lower {
+	top: 6em;
 }
 #benchmark-legend li {
 	list-style: none;
