@@ -167,6 +167,8 @@ $(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/configureVpx.sh $(BUILDS
 
 build/ogv-demuxer-ogg.js : $(C_SRC_DIR)/ogv-demuxer-ogg.c \
                            $(C_SRC_DIR)/ogv-demuxer.h \
+                           $(C_SRC_DIR)/ogv-buffer-queue.c \
+                           $(C_SRC_DIR)/ogv-buffer-queue.h \
                            $(JS_SRC_DIR)/modules/ogv-demuxer.js \
                            $(JS_SRC_DIR)/modules/ogv-demuxer-callbacks.js \
                            $(JS_SRC_DIR)/modules/ogv-demuxer-exports.json \
@@ -180,6 +182,8 @@ build/ogv-demuxer-ogg.js : $(C_SRC_DIR)/ogv-demuxer-ogg.c \
 
 build/ogv-demuxer-webm.js : $(C_SRC_DIR)/ogv-demuxer-webm.c \
                             $(C_SRC_DIR)/ogv-demuxer.h \
+                            $(C_SRC_DIR)/ogv-buffer-queue.c \
+                            $(C_SRC_DIR)/ogv-buffer-queue.h \
                             $(JS_SRC_DIR)/modules/ogv-demuxer.js \
                             $(JS_SRC_DIR)/modules/ogv-demuxer-callbacks.js \
                             $(JS_SRC_DIR)/modules/ogv-demuxer-exports.json \

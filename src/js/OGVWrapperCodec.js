@@ -182,10 +182,8 @@ var OGVWrapperCodec = (function(options) {
 		}
 	};
 
-	var inputQueue = [];
 	self.receiveInput = function(data, callback) {
-		inputQueue.push(data);
-		callback();
+		demuxer.receiveInput(data, callback);
 	};
 
 	var audioClassMap = {
@@ -256,20 +254,26 @@ var OGVWrapperCodec = (function(options) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
 		processing = true;
+
+		var videoPacketCount = demuxer.videoPackets.length,
+			audioPacketCount = demuxer.audioPackets.length,
+			start = window.performance.now();
 		function finish(result) {
 			processing = false;
+			var delta = window.performance.now() - start;
+			if (delta > 8) {
+				console.log('slow demux in ' + delta + ' ms; ' +
+					(demuxer.videoPackets.length - videoPacketCount) + ' video packets, ' +
+					(demuxer.audioPackets.length - audioPacketCount) + ' audio packets');
+			}
 			callback(result);
 		}
 
 		function doProcessData() {
-			if (inputQueue.length) {
-				var data = inputQueue.shift();
-				//console.log('demuxing ' + data.byteLength);
-				demuxer.process(data, finish);
-			} else {
-				// out of data! ask for more
-				finish(false);
-			}
+			videoPacketCount = demuxer.videoPackets.length,
+			audioPacketCount = demuxer.audioPackets.length,
+			start = window.performance.now();
+			demuxer.process(finish);
 		}
 
 		if (demuxer.loadedMetadata && !loadedDemuxerMetadata) {
@@ -415,7 +419,6 @@ var OGVWrapperCodec = (function(options) {
 
 	self.flush = function(callback) {
 		flushIter++;
-		inputQueue.splice(0, inputQueue.length);
 		demuxer.flush(callback);
 	};
 
@@ -425,10 +428,7 @@ var OGVWrapperCodec = (function(options) {
 
 	self.seekToKeypoint = function(timeSeconds, callback) {
 		demuxer.seekToKeypoint(timeSeconds, function(seeking) {
-			if (seeking) {
-				inputQueue.splice(0, inputQueue.length);
-			}
-			callback(seeking)
+			callback(seeking);
 		});
 	}
 

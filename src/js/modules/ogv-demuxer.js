@@ -118,20 +118,36 @@ Module.init = function(callback) {
 }
 
 /**
- * Queue up some data and process into packets...
+ * Queue up some data for later processing...
  *
  * @param ArrayBuffer data
  * @param function callback on completion
  */
-Module.process = function(data, callback) {
+Module.receiveInput = function(data, callback) {
 	var ret = time(function() {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
 		Module.HEAPU8.set(new Uint8Array(data), buffer);
-		return Module._ogv_demuxer_process(buffer, len);
+		Module._ogv_demuxer_receive_input(buffer, len);
 	});
-	callback(ret);
+	callback();
+};
+
+/**
+ * Process previously queued data into packets.
+ *
+ * 'more' parameter to callback function is 'true' if there
+ * are more packets to be processed in the queued data,
+ * or 'false' if there aren't.
+ *
+ * @param {function(more:Boolean)} callback on completion
+ */
+Module.process = function(callback) {
+	var ret = time(function() {
+		return Module._ogv_demuxer_process();
+	});
+	callback(!!ret);
 };
 
 Module.dequeueVideoPacket = function(callback) {

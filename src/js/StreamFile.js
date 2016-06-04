@@ -142,8 +142,7 @@ function StreamFile(options) {
 			xhr.onprogress = function(event) {
 				if (xhr.readyState >= 2 && !internal.xhrStarted) {
 					internal.onXHRStart(xhr, event);
-				}
-				if (xhr.readyState >= 3) {
+				} else if (xhr.readyState >= 3) {
 					internal.onXHRLoading(xhr, event);
 				}
 			};
@@ -185,6 +184,7 @@ function StreamFile(options) {
 
 		onXHRStart: function(xhr, event) {
 			internal.xhrStarted = true;
+			//console.log('status is ' + xhr.status + '; content range is ' + xhr.getResponseHeader('Content-Range') + ' (start at ' + seekPosition + ')');
 			if (xhr.status == 206) {
 				var foundPosition = internal.getXHRRangeStart(xhr);
 				if (seekPosition != foundPosition) {
@@ -200,12 +200,18 @@ function StreamFile(options) {
 					// https://bugs.webkit.org/show_bug.cgi?id=82672
 					//
 					console.log('Expected start at ' + seekPosition + ' but got ' + foundPosition +
-						'; working around Safari range caching bug: https://bugs.webkit.org/show_bug.cgi?id=82672');
+						'; working around Safari range caching bug (' + cachever + '): https://bugs.webkit.org/show_bug.cgi?id=82672');
 					cachever++;
 					internal.abortXHR(xhr);
 					internal.openXHR();
 					return;
 				}
+			}
+			if (seekPosition && xhr.status != 206) {
+				var code = xhr.status;
+				internal.abortXHR(xhr);
+				onerror('HTTP seek failed; unexpected status code ' + code);
+				return;
 			}
 			if (xhr.status >= 400) {
 				onerror('HTTP error; status code ' + xhr.status);
@@ -216,6 +222,9 @@ function StreamFile(options) {
 				internal.processResponseHeaders(xhr);
 				started = true;
 				onstart();
+			}
+			if (xhr.readyState >= 3) {
+				internal.onXHRLoading(xhr, event);
 			}
 			//internal.onXHRHeadersReceived(xhr);
 			// @todo check that partial content was supported if relevant
@@ -244,7 +253,10 @@ function StreamFile(options) {
 		},
 
 		advance: function() {
-			if (doneBuffering && self.bytesBuffered < Math.min(bufferPosition + chunkSize, self.bytesTotal)) {
+			if (doneBuffering &&
+				self.bytesBuffered - self.bytesRead < chunkSize &&
+				seekPosition + chunkSize < self.bytesTotal
+			) {
 				seekPosition += chunkSize;
 				internal.clearReadState();
 				internal.openXHR();
@@ -450,8 +462,7 @@ function StreamFile(options) {
 			xhr.onreadystatechange = function(event) {
 				if (xhr.readyState >= 2 && !internal.xhrStarted) {
 					internal.onXHRStart(xhr, event);
-				}
-				if (xhr.readyState >= 3) {
+				} else if (xhr.readyState >= 3) {
 					internal.onXHRLoading(xhr, event);
 				}
 			}

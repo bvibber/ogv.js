@@ -26,4 +26,5 @@ EMCC_FAST_COMPILER=1 emcc \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-demuxer.js \
   src/c/ogv-demuxer-webm.c \
+  src/c/ogv-buffer-queue.c \
   -o build/ogv-demuxer-webm.js

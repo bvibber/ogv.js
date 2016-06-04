@@ -12,7 +12,10 @@
 #include <skeleton/skeleton.h>
 
 #include "ogv-demuxer.h"
+#include "ogv-buffer-queue.h"
 
+// Input buffer queue
+static BufferQueue *bufferQueue;
 
 /* Ogg and codec state for demux/decode */
 OGGZ *oggz;
@@ -37,7 +40,6 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
-static int buffersReceived = 0;
 static int needData = 1;
 
 
@@ -151,10 +153,12 @@ static int processDecoding(oggz_packet *packet, long serialno) {
 
     if (serialno == videoStream) {
     	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
+		return OGGZ_STOP_OK;
     }
 
     if (serialno == audioStream) {
     	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp);
+		return OGGZ_STOP_OK;
     }
 
 	return OGGZ_CONTINUE;
@@ -177,34 +181,101 @@ static int readPacketCallback(OGGZ *oggz, oggz_packet *packet, long serialno, vo
     }
 }
 
+static size_t readCallback(void *user_handle, void *buf, size_t n)
+{
+	BufferQueue *bq = (BufferQueue *)user_handle;
+	size_t available = bq_headroom(bq);
+	size_t to_read;
+	if (n < available) {
+		to_read = n;
+	} else {
+		to_read = available;
+	}
+	int ret = bq_read(bq, buf, to_read);
+	if (ret < 0) {
+		return -1;
+	} else {
+		return to_read;
+	}
+}
+
+static int seekCallback(void *user_handle, long offset, int whence)
+{
+	BufferQueue *bq = (BufferQueue *)user_handle;
+	int64_t pos;
+	switch (whence) {
+		case SEEK_SET:
+			pos = offset;
+			break;
+		case SEEK_CUR:
+			pos = bq_tell(bq) + offset;
+			break;
+		case SEEK_END: // not implemented
+		default:
+			return -1;
+	}
+	if (bq_seek(bq, pos)) {
+		printf("Buffer seek failure in ogg demuxer; %lld (%ld %d)\n", pos, offset, whence);
+		return -1;
+	} else {
+		return (long)pos;
+	}
+}
+
+static long tellCallback(void *user_handle)
+{
+	BufferQueue *bq = (BufferQueue *)user_handle;
+	return (long)bq_tell(bq);
+}
+
 void ogv_demuxer_init() {
     appState = STATE_BEGIN;
+	bufferQueue = bq_init();
 	oggz = oggz_new(OGGZ_READ | OGGZ_AUTO);
 	oggz_set_read_callback(oggz, -1, readPacketCallback, NULL);
+	oggz_io_set_read(oggz, readCallback, bufferQueue);
+	oggz_io_set_seek(oggz, seekCallback, bufferQueue);
+	oggz_io_set_tell(oggz, tellCallback, bufferQueue);
     skeleton = oggskel_new();
 }
 
-int ogv_demuxer_process(char *buffer, int bufsize) {
+void ogv_demuxer_receive_input(char *buffer, int bufsize) {
+	bq_append(bufferQueue, buffer, bufsize);
+}
+
+int ogv_demuxer_process() {
 	needData = 1;
 
-	if (appState == STATE_DECODING) {
-		if ((!videoCodec || ogvjs_callback_frame_ready()) &&
-			(!audioCodec || ogvjs_callback_audio_ready())) {
-			// We've already got data ready!
-			needData = 0;
+	do {
+		// read at most this many bytes in one go
+		// should be enough to resync ogg stream
+		int64_t headroom = bq_headroom(bufferQueue);
+		size_t bufsize = 65536;
+		if (headroom < 1) {
+			return 0;
+		} else if (headroom < bufsize) {
+			bufsize = headroom;
 		}
-	}
 
-    if (bufsize > 0) {
-		buffersReceived = 1;
-
-		int ret = oggz_read_input(oggz, (unsigned char *)buffer, bufsize);
-		if (ret < 0) {
-			printf("Error %d from oggz_read_input\n", ret);
-		} else if (ret < bufsize) {
-			printf("Expected to read %d from oggz_read_input but gave %d\n", ret, bufsize);
+		int ret = oggz_read(oggz, bufsize);
+		//printf("demuxer returned %d on %d bytes\n", ret, bufsize);
+		if (ret == OGGZ_ERR_STOP_OK) {
+			// We got a packet!
+			break;
+		} else if (ret > 0) {
+			// We read some data!
+			//printf("read %d bytes\n", ret);
+			continue;
+		} else if (ret == 0) {
+			printf("EOF %d from oggz_read\n", ret);
+			return 0;
+			break;
+		} else if (ret < 0) {
+			printf("Error %d from oggz_read\n", ret);
+			return 0;
+			break;
 		}
-    }
+	} while(needData);
 
 	return !needData;
 }
@@ -212,6 +283,8 @@ int ogv_demuxer_process(char *buffer, int bufsize) {
 void ogv_demuxer_destroy() {
 	oggskel_destroy(skeleton);
     oggz_close(oggz);
+	bq_free(bufferQueue);
+	bufferQueue = NULL;
 }
 
 /**
@@ -304,5 +377,10 @@ void ogv_demuxer_flush()
 	oggz_purge(oggz);
 
 	// Need to "seek" to clear out stored units
-	oggz_seek(oggz, 0, SEEK_CUR);
+	int ret = oggz_seek(oggz, 0, SEEK_CUR);
+	if (ret < 0) {
+		printf("Failed to 'seek' oggz %d\n", ret);
+	}
+
+	bq_flush(bufferQueue);
 }

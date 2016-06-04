@@ -505,7 +505,6 @@ var OGVPlayer = function(options) {
 					lastFrameSkipped = false;
 					codec.flush(function() {
 						stream.seek(position);
-						readBytesAndWait();
 					});
 					return true;
 				}
@@ -1394,7 +1393,7 @@ var OGVPlayer = function(options) {
 			if (stream) {
 				console.log('SEEKING TO', offset);
 				stream.seek(offset);
-				readBytesAndWait();
+				//readBytesAndWait();
 			}
 		};
 		codec.init(function() {
