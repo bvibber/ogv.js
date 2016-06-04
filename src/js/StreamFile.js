@@ -553,11 +553,16 @@ function StreamFile(options) {
 		};
 
 		internal.onXHRLoading = function(xhr, event) {
-			// xhr.responseText is a binary string of entire file so far
-			var str = xhr.responseText;
-			if (lastPosition < str.length) {
-				var buffer = new StringBufferWrapper(xhr, lastPosition, str.length);
-				lastPosition = str.length;
+			var position;
+			if (typeof event.loaded === 'number') {
+				position = event.loaded;
+			} else {
+				// xhr.responseText is a binary string of entire file so far
+				position = xhr.responseText.length;
+			}
+			if (lastPosition < position) {
+				var buffer = new StringBufferWrapper(xhr, lastPosition, position);
+				lastPosition = position;
 				internal.bufferData(buffer);
 			}
 		};
