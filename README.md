@@ -7,10 +7,14 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.2-alpha.5 - 2016-06-??
- * updated audio-feeder to 0.4.1 with IE fixes
+* 1.1.2-alpha.5 - 2016-06-04
+ * updated audio-feeder to 0.4.2 with IE and Web Audio fixes
  * fix for hanging playback in certain threading conditions
  * allow video decode and audio decode to be in parallel as well as drawing and decode
+ * pipeline multiple audio packet decodes for better slow IE perf
+ * fixes to late-frame a/v resynchronization
+ * new demo perf graph
+ * framecallback reports more per-frame info
 * 1.1.2-alpha.4 - 2016-06-01
  * use smaller streaming read chunk size on IE for smoother perf
  * demux less aggressively
