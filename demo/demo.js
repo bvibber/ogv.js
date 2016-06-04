@@ -23,6 +23,7 @@
 		benchmarkClockData = [],
 		benchmarkVideoData = [],
 		benchmarkAudioData = [],
+		benchmarkLateData = [],
 		benchmarkDirty = false,
 		benchmarkTargetFps = -1;
 	function clearBenchmark() {
@@ -37,6 +38,7 @@
 		benchmarkVideoData.push(info.videoTime);
 		benchmarkAudioData.push(info.audioTime);
 		benchmarkClockData.push(info.clockTime);
+		benchmarkLateData.push(info.late);
 
 		benchmarkDirty = true;
 	}
@@ -60,7 +62,8 @@
 		var clockData = benchmarkClockData.slice(-chunkSize),
 			cpuData = benchmarkData.slice(-chunkSize),
 			videoData = benchmarkVideoData.slice(-chunkSize),
-			audioData = benchmarkAudioData.slice(-chunkSize);
+			audioData = benchmarkAudioData.slice(-chunkSize),
+			lateData = benchmarkLateData.slice(-chunkSize);
 
 		// Draw!
 
@@ -84,17 +87,6 @@
 			ctx.stroke();
 		}
 
-		ctx.globalAlpha = 1;
-
-		if (benchmarkTargetFps) {
-			ctx.beginPath();
-			ctx.strokeStyle = 'red';
-			ctx.fillStyle = 'none';
-			ctx.moveTo(x(0), y(fpsTarget));
-			ctx.lineTo(x(maxItems - 1), y(fpsTarget));
-			ctx.stroke();
-		}
-
 		// CPU time
 		for (i = 0; i < maxItems; i++) {
 			var px = x(i),
@@ -103,8 +95,13 @@
 				pheight;
 			
 			// Wall clock time
-			ctx.strokeStyle = 'blue';
-			ctx.fillStyle = 'blue';
+			if (lateData[i]) {
+				ctx.strokeStyle = 'darkviolet';
+				ctx.fillStyle = 'darkviolet';
+			} else {
+				ctx.strokeStyle = 'blue';
+				ctx.fillStyle = 'blue';
+			}
 			py = y(clockData[i]);
 			pheight = y(fpsTarget) - py;
 			drawBar(px, py, pwidth, pheight);
@@ -127,6 +124,18 @@
 			py = y(audioData[i]);
 			drawBar(px, py, pwidth, height - py);
 		}
+
+		ctx.globalAlpha = 1;
+
+		if (benchmarkTargetFps) {
+			ctx.beginPath();
+			ctx.strokeStyle = 'red';
+			ctx.fillStyle = 'none';
+			ctx.moveTo(x(0), y(fpsTarget));
+			ctx.lineTo(x(maxItems - 1), y(fpsTarget));
+			ctx.stroke();
+		}
+
 	}
 
 	function round2(n) {

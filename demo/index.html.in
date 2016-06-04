@@ -48,8 +48,9 @@
 			<canvas id="benchmark" width=500 height=200></canvas>
 			<div id="benchmark-legend">
 				<ul id="benchmark-upper">
+					<li style="color:darkviolet">late frame delay
+					<li style="color:blue">on-time frame delay
 					<li style="color:red">frame rate target
-					<li style="color:blue">actual frame rate
 				</ul>
 				<ul id="benchmark-lower">
 					<li style="color:darkcyan">video decode time

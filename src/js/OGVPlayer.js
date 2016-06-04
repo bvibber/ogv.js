@@ -310,6 +310,7 @@ var OGVPlayer = function(options) {
 	// Benchmark data, exposed via getPlaybackStats()
 	var framesProcessed = 0, // frames
 		targetPerFrameTime = 1000 / 60, // ms
+		actualPerFrameTime = 0, // ms
 		totalFrameTime = 0, // ms
 		totalFrameCount = 0, // frames
 		playTime = 0, // ms
@@ -415,7 +416,8 @@ var OGVPlayer = function(options) {
 
 		var newFrameTimestamp = getTimestamp(),
 			wallClockTime = newFrameTimestamp - lastFrameTimestamp,
-			jitter = wallClockTime - targetPerFrameTime;
+			//jitter = wallClockTime - targetPerFrameTime;
+			jitter = actualPerFrameTime - targetPerFrameTime;
 		totalJitter += Math.abs(jitter);
 		playTime += wallClockTime;
 
@@ -427,7 +429,10 @@ var OGVPlayer = function(options) {
 			demuxerTime: 0,
 			videoTime: 0,
 			audioTime: 0,
-			clockTime: wallClockTime
+			//clockTime: wallClockTime
+			clockTime: actualPerFrameTime,
+
+			late: stoppedForLateFrame
 		};
 		if (codec) {
 			timing.demuxerTime = (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
@@ -1065,6 +1070,7 @@ var OGVPlayer = function(options) {
 							var fudgeDelta = 2;
 
 							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+							actualPerFrameTime = targetPerFrameTime - frameDelay;
 							//frameDelay = Math.max(0, frameDelay);
 							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
