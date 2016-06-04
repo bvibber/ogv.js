@@ -32,7 +32,19 @@ function StreamFile(options) {
 		cachever = 0,
 		responseHeaders = {};
 
-
+	// Wrapper for array buffers, to allow extending backing store
+	function BufferWrapper(buffer) {
+		this.byteLength = buffer.byteLength;
+		this.buffer = buffer;
+	}
+	BufferWrapper.prototype.getBuffer = function() {
+		return this.buffer;
+	};
+	BufferWrapper.prototype.split = function(position, callback) {
+		var a = new BufferWrapper(this.buffer.slice(0, position)),
+			b = new BufferWrapper(this.buffer.slice(position));
+		callback(a, b);
+	};
 
 	// -- internal private methods
 	var internal = {
@@ -281,20 +293,16 @@ function StreamFile(options) {
 				if (!nextBuffer) {
 					break;
 				}
-				if (!(nextBuffer instanceof ArrayBuffer)) {
-					// lazy-expand if necessary
-					nextBuffer = nextBuffer.getBuffer();
-				}
 
 				if (needBytes >= nextBuffer.byteLength) {
 					// if it fits, it sits
-					stuff(nextBuffer);
+					stuff(nextBuffer.getBuffer());
 				} else {
 					// Split the buffer and requeue the rest
-					var croppedBuffer = nextBuffer.slice(0, needBytes),
-						remainderBuffer = nextBuffer.slice(needBytes);
-					buffers.unshift(remainderBuffer);
-					stuff(croppedBuffer);
+					nextBuffer.split(needBytes, function(croppedBuffer, remainderBuffer) {
+						buffers.unshift(remainderBuffer);
+						stuff(croppedBuffer.getBuffer());
+					});
 					break;
 				}
 			}
@@ -422,7 +430,9 @@ function StreamFile(options) {
 		internal.onXHRLoading = function(xhr, event) {
 			// we have to get from the 'progress' event
 			// xhr.response is a per-chunk ArrayBuffer
-			internal.bufferData(xhr.response);
+			if (xhr.response) {
+				internal.bufferData(new BufferWrapper(xhr.response));
+			}
 		};
 
 	} else if (internal.tryMethod('ms-stream')) {
@@ -545,6 +555,11 @@ function StreamFile(options) {
 				chunk = str.slice(this.start, this.end),
 				buffer = stringToArrayBuffer(chunk);
 			return buffer;
+		};
+		StringBufferWrapper.prototype.split = function(position, callback) {
+			var a = new StringBufferWrapper(this.xhr, this.start, this.start + position),
+				b = new StringBufferWrapper(this.xhr, this.start + position, this.end)
+			callback(a, b);
 		};
 
 		internal.clearReadState = function() {
