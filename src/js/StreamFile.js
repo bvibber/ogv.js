@@ -109,6 +109,7 @@ function StreamFile(options) {
 			var xhr = internal.xhr = new XMLHttpRequest();
 			xhr.open("GET", getUrl);
 
+			internal.xhrStarted = false;
 			internal.setXHROptions(xhr);
 
 			var range = null;
@@ -126,49 +127,18 @@ function StreamFile(options) {
 				xhr.setRequestHeader('Range', range);
 			}
 
-			xhr.onreadystatechange = function(event) {
-				if (xhr.readyState == 2) {
-					if (xhr.status == 206) {
-						var foundPosition = internal.getXHRRangeStart(xhr);
-						if (seekPosition != foundPosition) {
-							//
-							// Safari sometimes messes up and gives us the wrong chunk.
-							// Seems to be a general problem with Safari and cached XHR ranges.
-							//
-							// Interestingly, it allows you to request _later_ ranges successfully,
-							// but when requesting _earlier_ ranges it returns the latest one retrieved.
-							// So we only need to update the cache-buster when we rewind and actually
-							// get an incorrect range.
-							//
-							// https://bugs.webkit.org/show_bug.cgi?id=82672
-							//
-							console.log('Expected start at ' + seekPosition + ' but got ' + foundPosition +
-								'; working around Safari range caching bug: https://bugs.webkit.org/show_bug.cgi?id=82672');
-							cachever++;
-							internal.abortXHR(xhr);
-							internal.openXHR();
-							return;
-						}
-					}
-					if (xhr.status >= 400) {
-						onerror('HTTP error; status code ' + xhr.status);
-						return;
-					}
-					if (!started) {
-						internal.setBytesTotal(xhr);
-						internal.processResponseHeaders(xhr);
-						started = true;
-						onstart();
-					}
-					//internal.onXHRHeadersReceived(xhr);
-					// @todo check that partial content was supported if relevant
-				} else if (xhr.readyState == 3) {
-					internal.onXHRLoading(xhr);
-				} else if (xhr.readyState == 4) {
-					// Complete.
-					internal.onXHRDone(xhr);
+			xhr.onprogress = function(event) {
+				if (xhr.readyState >= 2 && !internal.xhrStarted) {
+					internal.onXHRStart(xhr, event);
+				}
+				if (xhr.readyState >= 3) {
+					internal.onXHRLoading(xhr, event);
 				}
 			};
+
+			xhr.onloadend = function(event) {
+				internal.onXHRDone(xhr, event);
+			}
 
 			xhr.send();
 		},
@@ -201,38 +171,63 @@ function StreamFile(options) {
 			throw new Error('abstract function');
 		},
 
-		/*
-		onXHRHeadersReceived: function(xhr) {
+		onXHRStart: function(xhr, event) {
+			internal.xhrStarted = true;
+			if (xhr.status == 206) {
+				var foundPosition = internal.getXHRRangeStart(xhr);
+				if (seekPosition != foundPosition) {
+					//
+					// Safari sometimes messes up and gives us the wrong chunk.
+					// Seems to be a general problem with Safari and cached XHR ranges.
+					//
+					// Interestingly, it allows you to request _later_ ranges successfully,
+					// but when requesting _earlier_ ranges it returns the latest one retrieved.
+					// So we only need to update the cache-buster when we rewind and actually
+					// get an incorrect range.
+					//
+					// https://bugs.webkit.org/show_bug.cgi?id=82672
+					//
+					console.log('Expected start at ' + seekPosition + ' but got ' + foundPosition +
+						'; working around Safari range caching bug: https://bugs.webkit.org/show_bug.cgi?id=82672');
+					cachever++;
+					internal.abortXHR(xhr);
+					internal.openXHR();
+					return;
+				}
+			}
 			if (xhr.status >= 400) {
-				// errrorrrrrrr
-				console.log("HTTP " + xhr.status + ": " +xhr.statusText);
-				onerror();
-				xhr.abort();
-			} else {
+				onerror('HTTP error; status code ' + xhr.status);
+				return;
+			}
+			if (!started) {
 				internal.setBytesTotal(xhr);
 				internal.processResponseHeaders(xhr);
 				started = true;
 				onstart();
 			}
+			//internal.onXHRHeadersReceived(xhr);
+			// @todo check that partial content was supported if relevant
 		},
-		*/
 
-		onXHRLoading: function(xhr) {
+		onXHRLoading: function(xhr, event) {
 			throw new Error('abstract function');
 		},
 
-		onXHRDone: function(xhr) {
+		onXHRDone: function(xhr, event) {
 			doneBuffering = true;
 			if (waitingForInput && !internal.dataToRead()) {
 				if (internal.advance()) {
 					return;
 				}
 			}
-			internal.onXHRLoading(xhr);
+			internal.onXHRLoading(xhr, event);
 		},
 
 		abortXHR: function(xhr) {
-			xhr.onreadystatechange = null;
+			// These events do get called after abort.
+			// Let's not and say we did?
+			xhr.onprogress = null;
+			xhr.onloadend = null;
 			xhr.abort();
 		},
 
@@ -422,20 +417,12 @@ function StreamFile(options) {
 	if (internal.tryMethod('moz-chunked-arraybuffer')) {
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = 'moz-chunked-arraybuffer';
-
-			xhr.onprogress = function() {
-				// xhr.response is a per-chunk ArrayBuffer
-				internal.bufferData(xhr.response);
-			};
 		};
 
-		internal.abortXHR = function(xhr) {
-			xhr.onprogress = null;
-			orig.abortXHR(xhr);
-		};
-
-		internal.onXHRLoading = function(xhr) {
+		internal.onXHRLoading = function(xhr, event) {
 			// we have to get from the 'progress' event
+			// xhr.response is a per-chunk ArrayBuffer
+			internal.bufferData(xhr.response);
 		};
 
 	} else if (internal.tryMethod('ms-stream')) {
@@ -449,6 +436,15 @@ function StreamFile(options) {
 
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = 'ms-stream';
+			// onprogress doesn't get fired with ms-stream?
+			xhr.onreadystatechange = function(event) {
+				if (xhr.readyState >= 2 && !internal.xhrStarted) {
+					internal.onXHRStart(xhr, event);
+				}
+				if (xhr.readyState >= 3) {
+					internal.onXHRLoading(xhr, event);
+				}
+			}
 		};
 
 		internal.abortXHR = function(xhr) {
@@ -464,9 +460,11 @@ function StreamFile(options) {
 			orig.abortXHR(xhr);
 		};
 
-		internal.onXHRLoading = function(xhr) {
+		internal.onXHRLoading = function(xhr, event) {
 			// Transfer us over to the StreamReader...
 			stream = xhr.response;
+			xhr.onprogress = null;
+			xhr.onloadend = null;
 			xhr.onreadystatechange = null;
 			if (waitingForInput) {
 				waitingForInput = false;
@@ -554,7 +552,7 @@ function StreamFile(options) {
 			lastPosition = 0;
 		};
 
-		internal.onXHRLoading = function(xhr) {
+		internal.onXHRLoading = function(xhr, event) {
 			// xhr.responseText is a binary string of entire file so far
 			var str = xhr.responseText;
 			if (lastPosition < str.length) {
