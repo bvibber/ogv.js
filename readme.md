@@ -14,7 +14,9 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
-
+* 0.4.2 - 2016-06-03
+ * Flash: fixed sample count in cached playback data
+ * Web Audio: partial fixes to `stop()`/`start()` buffered audio recovery
 * 0.4.1 - 2016-06-02
  * Flash: Cleaned up internal buffering
  * Flash: `stop()`/`start()` more reliable, doesn't drop audio
