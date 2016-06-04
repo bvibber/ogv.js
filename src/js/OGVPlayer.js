@@ -263,6 +263,8 @@ var OGVPlayer = function(options) {
 		if (offset !== undefined) {
 			initialPlaybackOffset = offset;
 		}
+		// Clear the late flag if it was set.
+		stoppedForLateFrame = false;
 		log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 	}
 
@@ -272,6 +274,8 @@ var OGVPlayer = function(options) {
 		if (audioFeeder) {
 			audioFeeder.stop();
 		}
+		// Clear the late flag if it was set.
+		stoppedForLateFrame = false;
 	}
 
 	/**
@@ -528,7 +532,6 @@ var OGVPlayer = function(options) {
 			}
 			state = State.SEEKING;
 			seekTargetTime = toTime;
-			stoppedForLateFrame = false;
 		}
 
 		// Abort any previous seek or play suitably
@@ -544,7 +547,6 @@ var OGVPlayer = function(options) {
 			seekTargetKeypoint = -1;
 			lastFrameSkipped = false;
 			lastSeekPosition = -1;
-			stoppedForLateFrame = false;
 
 			frameCompleteCallback = null;
 			pendingFrame = 0;
@@ -1097,7 +1099,6 @@ var OGVPlayer = function(options) {
 							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
 								// catching up, ok if we were early
 								log('late frame recovery reached ' + frameDelay);
-								stoppedForLateFrame = false;
 								startPlayback(playbackPosition);
 								readyForFrameDraw = false; // go back through the loop again
 							} else if (readyForFrameDraw && stoppedForLateFrame) {
