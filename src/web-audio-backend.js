@@ -282,9 +282,18 @@
       if (timeRemaining > 0) {
         // We have some leftover samples that got queued but didn't get played.
         // Unshift them back onto the beginning of the buffer.
-        this._bufferQueue.prependBuffer(
-          this._bufferQueue.trimBuffer(this._liveBuffer,
-            Math.round(timeRemaining * this.targetRate)));
+        // @todo make this not a horrible hack
+        var samplesRemaining = Math.round(timeRemaining * this.rate),
+            samplesAvailable = this._liveBuffer ? this._liveBuffer[0].length : 0;
+        if (samplesRemaining > samplesAvailable) {
+          //console.log('liveBuffer size ' + samplesRemaining + ' vs ' + samplesAvailable);
+          this._bufferQueue.prependBuffer(this._liveBuffer);
+          this._bufferQueue.prependBuffer(
+            this._bufferQueue.createBuffer(samplesRemaining - samplesAvailable));
+        } else {
+          this._bufferQueue.prependBuffer(
+            this._bufferQueue.trimBuffer(this._liveBuffer, samplesAvailable - samplesRemaining, samplesRemaining));
+        }
         this._playbackTimeAtBufferTail -= timeRemaining;
       }
       this._node.onaudioprocess = null;
