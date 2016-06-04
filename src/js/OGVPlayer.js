@@ -1027,7 +1027,12 @@ var OGVPlayer = function(options) {
 							readyForAudioDecode,
 							readyForFrameDraw,
 							frameDelay = 0,
-							readyForFrameDecode;
+							readyForFrameDecode,
+							// timers never fire earlier than 4ms
+							timerMinimum = 4,
+							// ok to draw a couple ms early
+							fudgeDelta = timerMinimum;
+
 
 						if (codec.hasAudio && audioFeeder) {
 							// Drive on the audio clock!
@@ -1072,9 +1077,6 @@ var OGVPlayer = function(options) {
 						}
 
 						if (codec.hasVideo) {
-							// ok to draw 2ms early
-							var fudgeDelta = 2;
-
 							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 							actualPerFrameTime = targetPerFrameTime - frameDelay;
 							//frameDelay = Math.max(0, frameDelay);
@@ -1083,7 +1085,7 @@ var OGVPlayer = function(options) {
 							readyForFrameDraw = !!yCbCrBuffer;
 							readyForFrameDecode = !frameCompleteCallback && !pendingFrame && codec.frameReady;
 
-							var audioSyncThreshold = Math.max(targetPerFrameTime * 2, 1000 / 15);
+							var audioSyncThreshold = targetPerFrameTime;
 							if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
 								if (!stoppedForLateFrame) {
@@ -1092,11 +1094,14 @@ var OGVPlayer = function(options) {
 									stopPlayback();
 									stoppedForLateFrame = true;
 								}
-							} else if (readyForFrameDraw && stoppedForLateFrame) {
+							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
 								// catching up, ok if we were early
-								log('late frame recovery reached');
+								log('late frame recovery reached ' + frameDelay);
 								stoppedForLateFrame = false;
 								startPlayback(playbackPosition);
+								readyForFrameDraw = false; // go back through the loop again
+							} else if (readyForFrameDraw && stoppedForLateFrame) {
+								// draw asap
 							} else if (readyForFrameDraw && frameDelay <= fudgeDelta) {
 								// on time! draw
 							} else {
@@ -1222,18 +1227,19 @@ var OGVPlayer = function(options) {
 
 						} else if (yCbCrBuffer && !nextFrameTimer) {
 
-							if (frameDelay < 4) {
+							if (frameDelay < timerMinimum) {
 								// Either we're very close or the frame rate is
 								// insanely high (infamous '1000fps bug')
 								// Timer will take 4ms anyway, so just check in now.
 								pingProcessing();
 							} else {
+								var targetTimer = frameDelay - timerMinimum;
 								// @todo consider using requestAnimationFrame
-								log('setting a timer for drawing ' + frameDelay);
+								log('setting a timer for drawing ' + targetTimer);
 								nextFrameTimer = setTimeout(function() {
 									nextFrameTimer = null;
 									pingProcessing();
-								}, frameDelay);
+								}, targetTimer);
 							}
 
 						} else {
