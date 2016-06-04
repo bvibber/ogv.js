@@ -267,11 +267,11 @@ var OGVPlayer = function(options) {
 	}
 
 	function stopPlayback() {
+		initialPlaybackOffset = getPlaybackTime();
+		log('pausing at ' + initialPlaybackOffset);
 		if (audioFeeder) {
 			audioFeeder.stop();
 		}
-		initialPlaybackOffset = getPlaybackTime();
-		log('pausing at ' + initialPlaybackOffset);
 	}
 
 	/**
@@ -280,15 +280,19 @@ var OGVPlayer = function(options) {
 	 * @return {number} seconds since file start
 	 */
 	function getPlaybackTime(state) {
-		var position;
-		if (audioFeeder) {
-			state = state || audioFeeder.getPlaybackState();
-			position = state.playbackPosition;
+		if (stoppedForLateFrame || paused) {
+			return initialPlaybackOffset;
 		} else {
-			// @fixme handle paused/stoped time better
-			position = getTimestamp() / 1000;
+			var position;
+			if (audioFeeder) {
+				state = state || audioFeeder.getPlaybackState();
+				position = state.playbackPosition;
+			} else {
+				// @fixme handle paused/stoped time better
+				position = getTimestamp() / 1000;
+			}
+			return (position - initialPlaybackPosition) + initialPlaybackOffset;
 		}
-		return (position - initialPlaybackPosition) + initialPlaybackOffset;
 	}
 
 	var currentSrc = '',
@@ -524,6 +528,7 @@ var OGVPlayer = function(options) {
 			}
 			state = State.SEEKING;
 			seekTargetTime = toTime;
+			stoppedForLateFrame = false;
 		}
 
 		// Abort any previous seek or play suitably
@@ -539,6 +544,7 @@ var OGVPlayer = function(options) {
 			seekTargetKeypoint = -1;
 			lastFrameSkipped = false;
 			lastSeekPosition = -1;
+			stoppedForLateFrame = false;
 
 			frameCompleteCallback = null;
 			pendingFrame = 0;
@@ -1077,26 +1083,20 @@ var OGVPlayer = function(options) {
 							readyForFrameDraw = !!yCbCrBuffer;
 							readyForFrameDecode = !frameCompleteCallback && !pendingFrame && codec.frameReady;
 
-							var audioSyncThreshold = Math.max(targetPerFrameTime, 1000 / 30);
+							var audioSyncThreshold = Math.max(targetPerFrameTime * 2, 1000 / 15);
 							if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
 								if (!stoppedForLateFrame) {
-									log('late frame: ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
+									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
 									lateFrames++;
+									stopPlayback();
 									stoppedForLateFrame = true;
-									if (audioFeeder) {
-										// @fixme handle non-audio path too
-										audioFeeder.stop();
-									}
 								}
 							} else if (readyForFrameDraw && stoppedForLateFrame) {
 								// catching up, ok if we were early
 								log('late frame recovery reached');
 								stoppedForLateFrame = false;
-								if (audioFeeder) {
-									// @fixme handle non-audio path too
-									audioFeeder.start();
-								}
+								startPlayback();
 							} else if (readyForFrameDraw && frameDelay <= fudgeDelta) {
 								// on time! draw
 							} else {
