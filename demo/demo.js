@@ -689,6 +689,11 @@
 					'low motion with some spikes'
 				],
 				[
+					"File:How Open Access Empowered a 16-Year-Old to Make Cancer Breakthrough.ogv",
+					'1080p23.98',
+					'talking heads; modest motion'
+				],
+				[
 					"File:Knowledge for Everyone (short cut).webm",
 					'1080p23.98',
 					'mix of scenes'
