@@ -1096,7 +1096,7 @@ var OGVPlayer = function(options) {
 								// catching up, ok if we were early
 								log('late frame recovery reached');
 								stoppedForLateFrame = false;
-								startPlayback();
+								startPlayback(playbackPosition);
 							} else if (readyForFrameDraw && frameDelay <= fudgeDelta) {
 								// on time! draw
 							} else {
