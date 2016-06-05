@@ -40,9 +40,6 @@ enum AppState {
 	STATE_DECODING
 } appState;
 
-static int needData = 1;
-
-
 static int processSkeleton(oggz_packet *packet, long serialno);
 static int processDecoding(oggz_packet *packet, long serialno);
 
@@ -166,8 +163,6 @@ static int processDecoding(oggz_packet *packet, long serialno) {
 
 static int readPacketCallback(OGGZ *oggz, oggz_packet *packet, long serialno, void *user_data)
 {
-	needData = 0;
-
     switch (appState) {
         case STATE_BEGIN:
             return processBegin(packet, serialno);
@@ -244,16 +239,12 @@ void ogv_demuxer_receive_input(char *buffer, int bufsize) {
 }
 
 int ogv_demuxer_process() {
-	needData = 1;
-
 	do {
 		// read at most this many bytes in one go
 		// should be enough to resync ogg stream
 		int64_t headroom = bq_headroom(bufferQueue);
 		size_t bufsize = 65536;
-		if (headroom < 1) {
-			return 0;
-		} else if (headroom < bufsize) {
+		if (headroom < bufsize) {
 			bufsize = headroom;
 		}
 
@@ -261,23 +252,21 @@ int ogv_demuxer_process() {
 		//printf("demuxer returned %d on %d bytes\n", ret, bufsize);
 		if (ret == OGGZ_ERR_STOP_OK) {
 			// We got a packet!
-			break;
+			return 1;
 		} else if (ret > 0) {
-			// We read some data!
+			// We read some data, but no packets yet.
 			//printf("read %d bytes\n", ret);
 			continue;
 		} else if (ret == 0) {
-			printf("EOF %d from oggz_read\n", ret);
+			//printf("EOF %d from oggz_read\n", ret);
 			return 0;
-			break;
 		} else if (ret < 0) {
 			printf("Error %d from oggz_read\n", ret);
 			return 0;
-			break;
 		}
-	} while(needData);
+	} while(1);
 
-	return !needData;
+	return 0;
 }
 
 void ogv_demuxer_destroy() {

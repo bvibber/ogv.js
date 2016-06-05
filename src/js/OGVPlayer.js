@@ -170,6 +170,7 @@ var OGVPlayer = function(options) {
 	}
 
 	function fireEvent(eventName, props) {
+		log('fireEvent ' + eventName);
 		var event;
 		props = props || {};
 
@@ -199,6 +200,7 @@ var OGVPlayer = function(options) {
 		}
 	}
 	function fireEventAsync(eventName, props) {
+		log('fireEventAsync ' + eventName);
 		setTimeout(function() {
 			fireEvent(eventName, props);
 		}, 0);
@@ -302,6 +304,7 @@ var OGVPlayer = function(options) {
 	var currentSrc = '',
 		stream,
 		streamEnded = false,
+		dataEnded = false,
 		byteLength = 0,
 		duration = null,
 		lastSeenTimestamp = null,
@@ -359,6 +362,7 @@ var OGVPlayer = function(options) {
 			codec = null;
 			pendingFrame = 0;
 			pendingAudio = 0;
+			dataEnded = false;
 		}
 		videoInfo = null;
 		audioInfo = null;
@@ -463,7 +467,8 @@ var OGVPlayer = function(options) {
 		function n(x) {
 			return Math.round(x * 10) / 10;
 		}
-		log('drew frame clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
+		log('drew frame ' + frameEndTimestamp + ': ' +
+			'clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
 			'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ') ' +
 			'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
 		fireEventAsync('framecallback', timing);
@@ -549,6 +554,7 @@ var OGVPlayer = function(options) {
 			// Just in case another async task stopped us...
 			prepForSeek(function() {
 				streamEnded = false;
+				dataEnded = false;
 				ended = false;
 				state = State.SEEKING;
 				seekTargetTime = toTime;
@@ -658,7 +664,9 @@ var OGVPlayer = function(options) {
 		}
 
 		if (codec.hasVideo) {
-			if (!codec.frameReady) {
+			if (pendingFrame) {
+				// wait
+			} else if (!codec.frameReady) {
 				// Haven't found a frame yet, process more data
 				pingProcessing();
 				return;
@@ -681,7 +689,10 @@ var OGVPlayer = function(options) {
 			}
 		}
 		if (codec.hasAudio) {
-			if (!codec.audioReady) {
+			if (pendingAudio) {
+				// wait
+				return;
+			} if (!codec.audioReady) {
 				// Haven't found an audio packet yet, process more data
 				pingProcessing();
 				return;
@@ -838,88 +849,95 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.INITIAL) {
 
-			codec.process(function processInitial(more) {
-				if (codec.loadedMetadata) {
-					// we just fell over from headers into content; call onloadedmetadata etc
-					if (!codec.hasVideo && !codec.hasAudio) {
-						throw new Error('No audio or video found, something is wrong');
-					}
-					if (codec.hasAudio) {
-						audioInfo = codec.audioFormat;
-					}
-					if (codec.hasVideo) {
-						videoInfo = codec.videoFormat;
-						setupVideo();
-					}
-					if (!isNaN(codec.duration)) {
-						duration = codec.duration;
-					}
-					if (duration === null) {
-						if (stream.seekable) {
-							state = State.SEEKING_END;
-							lastSeenTimestamp = -1;
-							codec.flush(function() {
-								stream.seek(Math.max(0, stream.bytesTotal - 65536 * 2));
-								readBytesAndWait();
-							});
-						} else {
-							// Stream not seekable and no x-content-duration; assuming infinite stream.
-							state = State.LOADED;
-							pingProcessing();
-						}
+			if (codec.loadedMetadata) {
+				// we just fell over from headers into content; call onloadedmetadata etc
+				if (!codec.hasVideo && !codec.hasAudio) {
+					throw new Error('No audio or video found, something is wrong');
+				}
+				if (codec.hasAudio) {
+					audioInfo = codec.audioFormat;
+				}
+				if (codec.hasVideo) {
+					videoInfo = codec.videoFormat;
+					setupVideo();
+				}
+				if (!isNaN(codec.duration)) {
+					duration = codec.duration;
+				}
+				if (duration === null) {
+					if (stream.seekable) {
+						state = State.SEEKING_END;
+						lastSeenTimestamp = -1;
+						codec.flush(function() {
+							stream.seek(Math.max(0, stream.bytesTotal - 65536 * 2));
+							readBytesAndWait();
+						});
 					} else {
-						// We already know the duration.
+						// Stream not seekable and no x-content-duration; assuming infinite stream.
 						state = State.LOADED;
 						pingProcessing();
 					}
-				} else if (!more) {
-					// Read more data!
-					log('reading more cause we are out of data');
-					readBytesAndWait();
 				} else {
-					// Keep processing headers
+					// We already know the duration.
+					state = State.LOADED;
 					pingProcessing();
 				}
-			});
+			} else {
+				codec.process(function processInitial(more) {
+					if (!self.loadedMetadata && more) {
+						// Read more data!
+						log('reading more cause we are out of data');
+						readBytesAndWait();
+					} else {
+						// Keep processing headers
+						pingProcessing();
+					}
+				});
+			}
 
 		} else if (state == State.SEEKING_END) {
 
 			// Look for the last item.
-			codec.process(function processSeekingEnd(more) {
-				if (codec.hasVideo && codec.frameReady) {
-					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.frameTimestamp);
-					codec.discardFrame(function() {
-						pingProcessing();
-					});
-				} else if (codec.hasAudio && codec.audioReady) {
-					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.audioTimestamp);
-					codec.decodeAudio(function() {
-						pingProcessing();
-					});
-				} else if (!more) {
-					// Read more data!
-					if (stream.bytesRead < stream.bytesTotal) {
-						readBytesAndWait();
-					} else {
-						// We are at the end!
-						log('seek-duration: we are at the end');
-						if (lastSeenTimestamp > 0) {
-							duration = lastSeenTimestamp;
-						}
-
-						// Ok, seek back to the beginning and resync the streams.
-						state = State.LOADED;
-						codec.flush(function() {
-							stream.seek(0);
-							streamEnded = false;
-							readBytesAndWait();
-						});
-					}
-				} else {
-					// Keep processing headers
+			if (codec.frameReady) {
+				log('saw frame with ' + codec.frameTimestamp);
+				lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.frameTimestamp);
+				codec.discardFrame(function() {
 					pingProcessing();
-				}
-			});
+				});
+			} else if (codec.audioReady) {
+				log('saw audio with ' + codec.audioTimestamp);
+				lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.audioTimestamp);
+				codec.discardAudio(function() {
+					pingProcessing();
+				});
+			} else {
+				codec.process(function processSeekingEnd(more) {
+					if (more) {
+						// Keep processing headers
+						pingProcessing();
+					} else {
+						// Read more data!
+						if (stream.bytesRead < stream.bytesTotal) {
+							readBytesAndWait();
+						} else {
+							// We are at the end!
+							log('seek-duration: we are at the end: ' + lastSeenTimestamp);
+							if (lastSeenTimestamp > 0) {
+								duration = lastSeenTimestamp;
+							}
+
+							// Ok, seek back to the beginning and resync the streams.
+							state = State.LOADED;
+							codec.flush(function() {
+								stream.seek(0);
+								streamEnded = false;
+								dataEnded = false;
+								readBytesAndWait();
+							});
+						}
+					}
+				});
+			}
 
 		} else if (state == State.LOADED) {
 
@@ -1254,8 +1272,13 @@ var OGVPlayer = function(options) {
 			}
 			
 			function doProcessPlayDemux() {
+				var wasFrameReady = codec.frameReady,
+					wasAudioReady = codec.audioReady;
 				codec.process(function doProcessPlayDemuxHandler(more) {
-					if (more) {
+					if ((codec.frameReady && !wasFrameReady) || (codec.audioReady && !wasAudioReady)) {
+						log('demuxer has packets');
+						pingProcessing();
+					} else if (more) {
 						// Have to process some more pages to find data.
 						log('demuxer processing to find more packets');
 						pingProcessing();
@@ -1265,11 +1288,16 @@ var OGVPlayer = function(options) {
 							// Ran out of buffered input
 							log('demuxer loading more data');
 							readBytesAndWait();
+						} else if (pendingAudio || pendingFrame || yCbCrBuffer) {
+							log('dexmuxer out but playback still decoding; check in again after');
+							dataEnded = true;
 						} else if (ended) {
 							log('demuxer unexpectedly processing after ended');
+							dataEnded = true;
 						} else {
 							// Ran out of stream!
 							log('demuxer reached end of stream');
+							dataEnded = true;
 							var finalDelay = 0;
 							if (codec.hasAudio) {
 								finalDelay = audioFeeder.durationBuffered * 1000;
@@ -1278,7 +1306,7 @@ var OGVPlayer = function(options) {
 								log('ending pending ' + finalDelay + ' ms');
 								pingProcessing(Math.max(0, finalDelay));
 							} else {
-								log("ENDING NOW");
+								log('ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
 								stopPlayback();
 								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
 								ended = true;
@@ -1292,14 +1320,7 @@ var OGVPlayer = function(options) {
 				});
 			}
 
-			if (codec.audioReady || codec.frameReady) {
-				// On low-end devices we want to take it easy.
-				// Demux audio packets one at a time!
-				doProcessPlay();
-			} else {
-				// No packets? Go demux!
-				doProcessPlayDemux();
-			}
+			doProcessPlay();
 
 		} else if (state == State.ERROR) {
 

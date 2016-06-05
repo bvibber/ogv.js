@@ -263,9 +263,10 @@ var OGVWrapperCodec = (function(options) {
 			var delta = window.performance.now() - start;
 			if (delta > 8) {
 				console.log('slow demux in ' + delta + ' ms; ' +
-					(demuxer.videoPackets.length - videoPacketCount) + ' video packets, ' +
-					(demuxer.audioPackets.length - audioPacketCount) + ' audio packets');
+					(demuxer.videoPackets.length - videoPacketCount) + ' +video packets, ' +
+					(demuxer.audioPackets.length - audioPacketCount) + ' +audio packets');
 			}
+			//console.log('demux returned ' + (result ? 'true' : 'false') + '; ' + demuxer.videoPackets.length + '; ' + demuxer.audioPackets.length);
 			callback(result);
 		}
 
