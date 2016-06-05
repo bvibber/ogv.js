@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+* 1.1.2-alpha.6 - 2016-06-??
+ * smoothed out CPU spikes from demuxer on slow machines (iPad 3)
+ * use XHR progress events to avoid hitting xhr.responseText early
+ * stream chunking fixes
 * 1.1.2-alpha.5 - 2016-06-04
  * updated audio-feeder to 0.4.2 with IE and Web Audio fixes
  * fix for hanging playback in certain threading conditions
