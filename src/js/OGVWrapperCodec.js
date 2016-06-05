@@ -427,9 +427,7 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.seekToKeypoint = function(timeSeconds, callback) {
-		demuxer.seekToKeypoint(timeSeconds, function(seeking) {
-			callback(seeking);
-		});
+		demuxer.seekToKeypoint(timeSeconds, flushSafe(callback));
 	}
 
 	self.onseek = null;

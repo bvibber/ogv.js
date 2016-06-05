@@ -376,9 +376,9 @@ function StreamFile(options) {
 		if (internal.xhr) {
 			internal.abortXHR(internal.xhr);
 			internal.xhr = null;
-			internal.clearBuffers();
-			waitingForInput = false;
 		}
+		internal.clearBuffers();
+		waitingForInput = false;
 	};
 
 	self.seek = function(bytePosition) {
@@ -424,6 +424,12 @@ function StreamFile(options) {
 	Object.defineProperty(self, 'seekable', {
 		get: function() {
 			return (self.bytesTotal > 0);
+		}
+	});
+
+	Object.defineProperty(self, 'waiting', {
+		get: function() {
+			return waitingForInput;
 		}
 	});
 

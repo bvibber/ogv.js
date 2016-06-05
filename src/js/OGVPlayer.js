@@ -227,7 +227,7 @@ var OGVPlayer = function(options) {
 		// without any throttling.
 		audioFeeder.onbufferlow = function audioCallback() {
 			log('onbufferlow');
-			if (waitingOnInput || pendingAudio) {
+			if ((stream && stream.waiting) || pendingAudio) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
 			} else {
@@ -311,8 +311,7 @@ var OGVPlayer = function(options) {
 		started = false,
 		paused = true,
 		ended = false,
-		startedPlaybackInDocument = false,
-		waitingOnInput = false;
+		startedPlaybackInDocument = false;
 
 	var framesPlayed = 0;
 	// Benchmark data, exposed via getPlaybackStats()
@@ -354,7 +353,6 @@ var OGVPlayer = function(options) {
 			stream.abort();
 			stream = null;
 			streamEnded = false;
-			waitingOnInput = false;
 		}
 		if (codec) {
 			codec.close();
@@ -518,10 +516,9 @@ var OGVPlayer = function(options) {
 		if (stream.bytesTotal === 0) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
-		function prepForSeek() {
-			if (waitingOnInput) {
+		function prepForSeek(callback) {
+			if (stream) { //} && stream.waiting) {
 				stream.abort();
-				waitingOnInput = false;
 			}
 			// clear any queued input/seek-start
 			actionQueue.splice(0, actionQueue.length);
@@ -531,26 +528,38 @@ var OGVPlayer = function(options) {
 			}
 			state = State.SEEKING;
 			seekTargetTime = toTime;
+			if (codec) {
+				codec.flush(callback);
+			} else {
+				callback();
+			}
 		}
 
 		// Abort any previous seek or play suitably
-		prepForSeek();
+		prepForSeek(function() {
+			if (isProcessing()) {
+				// already waiting on input
+			} else {
+				// start up the new load *after* event loop churn
+				pingProcessing(0);
+			}
+		});
 
 		actionQueue.push(function() {
 			// Just in case another async task stopped us...
-			prepForSeek();
-			streamEnded = false;
-			ended = false;
-			state = State.SEEKING;
-			seekTargetTime = toTime;
-			seekTargetKeypoint = -1;
-			lastFrameSkipped = false;
-			lastSeekPosition = -1;
+			prepForSeek(function() {
+				streamEnded = false;
+				ended = false;
+				state = State.SEEKING;
+				seekTargetTime = toTime;
+				seekTargetKeypoint = -1;
+				lastFrameSkipped = false;
+				lastSeekPosition = -1;
 
-			frameCompleteCallback = null;
-			pendingFrame = 0;
-			pendingAudio = 0;
-			codec.flush(function() {
+				frameCompleteCallback = null;
+				pendingFrame = 0;
+				pendingAudio = 0;
+
 				codec.seekToKeypoint(toTime, function(seeking) {
 					if (seeking) {
 						seekState = SeekState.LINEAR_TO_TARGET;
@@ -588,11 +597,6 @@ var OGVPlayer = function(options) {
 				});
 			});
 		});
-		if (isProcessing()) {
-			// already waiting on input
-		} else {
-			pingProcessing(0);
-		}
 	}
 
 	function continueSeekedPlayback() {
@@ -661,9 +665,7 @@ var OGVPlayer = function(options) {
 			} else if (codec.frameTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it in case we're at our keyframe or a following intraframe...
-				waitingOnInput = true;
 				codec.decodeFrame(function() {
-					waitingOnInput = false;
 					pingProcessing();
 				});
 				return;
@@ -686,9 +688,7 @@ var OGVPlayer = function(options) {
 			} else if (codec.audioTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
 				// Decode it so when we reach the target we've got consistent data.
-				waitingOnInput = true;
 				codec.decodeAudio(function() {
-					waitingOnInput = false;
 					pingProcessing();
 				});
 				return;
@@ -983,7 +983,6 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.SEEKING) {
 
-			//console.log('seeking', seekTargetTime, codec.frameTimestamp, codec.audioTimestamp, stream.bytesRead, stream.bytesBuffered - stream.bytesRead);
 			if ((codec.hasVideo && codec.frameTimestamp < 0)
 			 || (codec.hasAudio && codec.audioTimestamp < 0)
 			) {
@@ -1318,14 +1317,10 @@ var OGVPlayer = function(options) {
 	 * Are we waiting on an async operation that will return later?
 	 */
 	function isProcessing() {
-		return waitingOnInput || (codec && codec.processing);
+		return (stream && stream.waiting) || (codec && codec.processing);
 	}
 
 	function readBytesAndWait() {
-		if (waitingOnInput) {
-			throw new Error('Re-entrancy fail: asked for input when already waiting');
-		}
-		waitingOnInput = true;
 		stream.readBytes();
 	}
 
@@ -1340,7 +1335,7 @@ var OGVPlayer = function(options) {
 			return;
 		}
 		*/
-		if (waitingOnInput) {
+		if (stream && stream.waiting) {
 			// wait for this input pls
 			log('waiting on input');
 			return;
@@ -1353,7 +1348,11 @@ var OGVPlayer = function(options) {
 		var fudge = -1 / 256;
 		if (delay > fudge) {
 			//log('pingProcessing delay: ' + delay);
-			nextProcessingTimer = setTimeout(doProcessing, delay);
+			nextProcessingTimer = setTimeout(function() {
+				// run through pingProcessing again to check
+				// in case some io started asynchronously in the meantime
+				pingProcessing();
+			}, delay);
 		} else if (depth) {
 			//log('pingProcessing tail call (' + delay + ')');
 			needProcessing = true;
@@ -1437,7 +1436,6 @@ var OGVPlayer = function(options) {
 				url: self.src,
 				bufferSize: 32768, //65536 * 4,
 				onstart: function() {
-					waitingOnInput = false;
 					loading = false;
 
 					// @todo handle failure / unrecognized type
@@ -1456,7 +1454,6 @@ var OGVPlayer = function(options) {
 				},
 				onread: function(data) {
 					log('got input');
-					waitingOnInput = false;
 
 					// Save chunk to pass into the codec's buffer
 					actionQueue.push(function doReceiveInput() {
@@ -1472,8 +1469,6 @@ var OGVPlayer = function(options) {
 					}
 				},
 				ondone: function() {
-					waitingOnInput = false;
-
 					// @todo record doneness in networkState
 					log('stream is at end!');
 					streamEnded = true;
@@ -1486,14 +1481,12 @@ var OGVPlayer = function(options) {
 					}
 				},
 				onerror: function(err) {
-					waitingOnInput = false;
 					// @todo handle failure to initialize
 					console.log("reading error: " + err);
 					stopPlayback();
 					state = State.ERROR;
 				}
 			});
-			waitingOnInput = true;
 		});
 		pingProcessing(0);
 	};
@@ -2030,7 +2023,7 @@ var OGVPlayer = function(options) {
 	Object.defineProperty(self, "networkState", {
 		get: function getNetworkState() {
 			if (stream) {
-				if (waitingOnInput) {
+				if (stream.waiting) {
 					return OGVPlayer.NETWORK_LOADING;
 				} else {
 					return OGVPlayer.NETWORK_IDLE;
