@@ -1093,7 +1093,7 @@ var OGVPlayer = function(options) {
 							} else if (codec.hasVideo && audioEndTimestamp - frameEndTimestamp > audioFeeder.bufferThreshold * 2) {
 								log('audio decode is ahead of video by a whopping ' + ((audioEndTimestamp - frameEndTimestamp) * 1000) + ' ms');
 								readyForAudioDecode = false;
-							} else if (pendingAudio > 8) {
+							} else if (pendingAudio >= 8) {
 								// We'll check in when done decoding
 								log('audio decode disabled: ' + pendingAudio + ' packets in flight');
 								readyForAudioDecode = false;
@@ -1119,8 +1119,10 @@ var OGVPlayer = function(options) {
 							readyForFrameDecode = !frameCompleteCallback && !pendingFrame && codec.frameReady;
 
 							var audioSyncThreshold = targetPerFrameTime;
-							if (prebufferingAudio && readyForFrameDecode) {
-								log('decoding a frame during prebuffering');
+							if (prebufferingAudio) {
+								if (readyForFrameDecode) {
+									log('decoding a frame during prebuffering');
+								}
 								readyForFrameDraw = false;
 							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
@@ -1261,7 +1263,7 @@ var OGVPlayer = function(options) {
 
 							pingProcessing();
 
-						} else if (yCbCrBuffer && !nextFrameTimer) {
+						} else if (yCbCrBuffer && !nextFrameTimer && !prebufferingAudio) {
 
 							if (frameDelay < timerMinimum) {
 								// Either we're very close or the frame rate is
