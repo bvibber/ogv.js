@@ -219,10 +219,18 @@ var OGVPlayer = function(options) {
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
-		//audioFeeder.bufferThreshold = 0.25; // buffer a quarter second of audio
-		//audioFeeder.bufferThreshold = 0.5; // buffer a half second of audio
-		//audioFeeder.bufferThreshold = 1; // buffer a full second of audio
-		audioFeeder.bufferThreshold = audioFeeder.bufferDuration * 2;
+
+		// At our requested 8192 buffer size, bufferDuration should be
+		// about 185ms at 44.1 kHz or 170ms at 48 kHz output, covering
+		// 4-6 frames at 24-30fps.
+		//
+		// 2 or 3 buffers' worth will be in flight at any given time;
+		// be warned that durationBuffered includes that in-flight stuff.
+		//
+		// Set our bufferThreshold to a full 1s for plenty of extra headroom,
+		// and make sure we've queued up twice that when we're operating.
+		audioFeeder.bufferThreshold = 1;
+
 		audioFeeder.volume = self.volume;
 		audioFeeder.muted = self.muted;
 
@@ -1083,7 +1091,6 @@ var OGVPlayer = function(options) {
 							}
 							droppedAudio = audioState.dropped;
 							delayedAudio = audioState.delayed;
-							//readyForAudioDecode = !pendingAudio && codec.audioReady && audioFeeder.durationBuffered <= audioFeeder.bufferThreshold;
 							
 							readyForAudioDecode = audioFeeder.durationBuffered <=
 								audioFeeder.bufferThreshold * 2;
