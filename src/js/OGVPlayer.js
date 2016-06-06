@@ -214,6 +214,7 @@ var OGVPlayer = function(options) {
 	var muted = false,
 		initialPlaybackPosition = 0.0,
 		initialPlaybackOffset = 0.0,
+		stoppedForLateAudio = false,
 		stoppedForLateFrame = false;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
@@ -266,6 +267,7 @@ var OGVPlayer = function(options) {
 			initialPlaybackOffset = offset;
 		}
 		// Clear the late flag if it was set.
+		stoppedForLateAudio = false;
 		stoppedForLateFrame = false;
 		log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 	}
@@ -276,8 +278,6 @@ var OGVPlayer = function(options) {
 		if (audioFeeder) {
 			audioFeeder.stop();
 		}
-		// Clear the late flag if it was set.
-		stoppedForLateFrame = false;
 	}
 
 	/**
@@ -286,7 +286,7 @@ var OGVPlayer = function(options) {
 	 * @return {number} seconds since file start
 	 */
 	function getPlaybackTime(state) {
-		if (stoppedForLateFrame || paused) {
+		if (stoppedForLateAudio || stoppedForLateFrame || paused) {
 			return initialPlaybackOffset;
 		} else {
 			var position;
@@ -346,6 +346,7 @@ var OGVPlayer = function(options) {
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
 		stoppedForLateFrame = false;
+		stoppedForLateAudio = false;
 
 		// Abort all queued actions
 		actionQueue.splice(0, actionQueue.length);
@@ -442,7 +443,8 @@ var OGVPlayer = function(options) {
 			//clockTime: wallClockTime
 			clockTime: actualPerFrameTime,
 
-			late: stoppedForLateFrame
+			late: stoppedForLateFrame,
+			lateAudio: stoppedForLateAudio
 		};
 		if (codec) {
 			timing.demuxerTime = (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
@@ -528,6 +530,8 @@ var OGVPlayer = function(options) {
 			// clear any queued input/seek-start
 			actionQueue.splice(0, actionQueue.length);
 			stopPlayback();
+			stoppedForLateAudio = false;
+			stoppedForLateFrame = false;
 			if (audioFeeder) {
 				audioFeeder.flush();
 			}
@@ -985,7 +989,12 @@ var OGVPlayer = function(options) {
 					state = State.PLAYING;
 					lastFrameTimestamp = getTimestamp();
 
-					startPlayback();
+					if (codec.hasAudio && audioFeeder) {
+						// Pre-queue audio before we start the clock
+						stoppedForLateAudio = true;
+					} else {
+						startPlayback();
+					}
 					pingProcessing(0);
 					fireEventAsync('play');
 					fireEventAsync('playing');
@@ -1054,8 +1063,20 @@ var OGVPlayer = function(options) {
 
 						if (codec.hasAudio && audioFeeder) {
 							// Drive on the audio clock!
+
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
+
+							if (!stoppedForLateAudio && (audioFeeder.durationBuffered == 0) && !dataEnded) {
+								log('late audio; stopping until we recover buffer headroom');
+								stopPlayback();
+								stoppedForLateAudio = true;
+							}
+							if (stoppedForLateAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
+								log('late audio recovery reached; buffer up to ' + audioFeeder.bufferThreshold);
+								startPlayback(playbackPosition);
+								stoppedForLateAudio = false;
+							}
 
 							if (audioState.dropped != droppedAudio) {
 								log('dropped ' + (audioState.dropped - droppedAudio));
@@ -1070,9 +1091,8 @@ var OGVPlayer = function(options) {
 							readyForAudioDecode = audioFeeder.durationBuffered <
 								audioFeeder.bufferThreshold;
 
-							// Check in when all audio runs out
 							if (!readyForAudioDecode) {
-								// just to skip the remaining debug items
+								// just to skip the remaining items in debug log
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
 								readyForAudioDecode = false;
@@ -1084,6 +1104,7 @@ var OGVPlayer = function(options) {
 								log('audio decode disabled: ' + pendingAudio + ' packets in flight');
 								readyForAudioDecode = false;
 							}
+
 						} else {
 							// No audio; drive on the general clock.
 							// @fixme account for dropped frame times...
@@ -1116,6 +1137,7 @@ var OGVPlayer = function(options) {
 								// catching up, ok if we were early
 								log('late frame recovery reached ' + frameDelay);
 								startPlayback(playbackPosition);
+								stoppedForLateFrame = false;
 								readyForFrameDraw = false; // go back through the loop again
 							} else if (readyForFrameDraw && stoppedForLateFrame) {
 								// draw asap
@@ -1308,6 +1330,8 @@ var OGVPlayer = function(options) {
 							} else {
 								log('ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
 								stopPlayback();
+								stoppedForLateFrame = false;
+								stoppedForLateAudio = false;
 								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
 								ended = true;
 								// @todo implement loop behavior
@@ -1644,6 +1668,8 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			stopPlayback();
+			stoppedForLateAudio = false;
+			stoppedForLateFrame = false;
 			paused = true;
 			fireEvent('pause');
 		}
