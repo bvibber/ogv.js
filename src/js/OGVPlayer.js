@@ -214,7 +214,7 @@ var OGVPlayer = function(options) {
 	var muted = false,
 		initialPlaybackPosition = 0.0,
 		initialPlaybackOffset = 0.0,
-		stoppedForLateAudio = false,
+		prebufferingAudio = false,
 		stoppedForLateFrame = false;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
@@ -267,7 +267,7 @@ var OGVPlayer = function(options) {
 			initialPlaybackOffset = offset;
 		}
 		// Clear the late flag if it was set.
-		stoppedForLateAudio = false;
+		prebufferingAudio = false;
 		stoppedForLateFrame = false;
 		log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 	}
@@ -286,7 +286,7 @@ var OGVPlayer = function(options) {
 	 * @return {number} seconds since file start
 	 */
 	function getPlaybackTime(state) {
-		if (stoppedForLateAudio || stoppedForLateFrame || paused) {
+		if (prebufferingAudio || stoppedForLateFrame || paused) {
 			return initialPlaybackOffset;
 		} else {
 			var position;
@@ -346,7 +346,7 @@ var OGVPlayer = function(options) {
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
 		stoppedForLateFrame = false;
-		stoppedForLateAudio = false;
+		prebufferingAudio = false;
 
 		// Abort all queued actions
 		actionQueue.splice(0, actionQueue.length);
@@ -443,8 +443,7 @@ var OGVPlayer = function(options) {
 			//clockTime: wallClockTime
 			clockTime: actualPerFrameTime,
 
-			late: stoppedForLateFrame,
-			lateAudio: stoppedForLateAudio
+			late: stoppedForLateFrame
 		};
 		if (codec) {
 			timing.demuxerTime = (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
@@ -530,7 +529,7 @@ var OGVPlayer = function(options) {
 			// clear any queued input/seek-start
 			actionQueue.splice(0, actionQueue.length);
 			stopPlayback();
-			stoppedForLateAudio = false;
+			prebufferingAudio = false;
 			stoppedForLateFrame = false;
 			if (audioFeeder) {
 				audioFeeder.flush();
@@ -991,7 +990,7 @@ var OGVPlayer = function(options) {
 
 					if (codec.hasAudio && audioFeeder) {
 						// Pre-queue audio before we start the clock
-						stoppedForLateAudio = true;
+						prebufferingAudio = true;
 					} else {
 						startPlayback();
 					}
@@ -1067,10 +1066,10 @@ var OGVPlayer = function(options) {
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
 
-							if (stoppedForLateAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
-								log('late audio recovery reached; buffer up to ' + audioFeeder.bufferThreshold);
+							if (prebufferingAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
+								log('prebuffering audio done; buffered to ' + audioFeeder.bufferThreshold);
 								startPlayback(playbackPosition);
-								stoppedForLateAudio = false;
+								prebufferingAudio = false;
 							}
 
 							if (audioState.dropped != droppedAudio) {
@@ -1120,7 +1119,10 @@ var OGVPlayer = function(options) {
 							readyForFrameDecode = !frameCompleteCallback && !pendingFrame && codec.frameReady;
 
 							var audioSyncThreshold = targetPerFrameTime;
-							if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
+							if (prebufferingAudio && readyForFrameDecode) {
+								log('decoding a frame during prebuffering');
+								readyForFrameDraw = false;
+							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
 								if (!stoppedForLateFrame) {
 									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
@@ -1326,7 +1328,7 @@ var OGVPlayer = function(options) {
 								log('ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
 								stopPlayback();
 								stoppedForLateFrame = false;
-								stoppedForLateAudio = false;
+								prebufferingAudio = false;
 								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
 								ended = true;
 								// @todo implement loop behavior
@@ -1663,7 +1665,7 @@ var OGVPlayer = function(options) {
 			clearTimeout(nextProcessingTimer);
 			nextProcessingTimer = null;
 			stopPlayback();
-			stoppedForLateAudio = false;
+			prebufferingAudio = false;
 			stoppedForLateFrame = false;
 			paused = true;
 			fireEvent('pause');
