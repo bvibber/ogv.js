@@ -221,7 +221,8 @@ var OGVPlayer = function(options) {
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
 		//audioFeeder.bufferThreshold = 0.25; // buffer a quarter second of audio
 		//audioFeeder.bufferThreshold = 0.5; // buffer a half second of audio
-		audioFeeder.bufferThreshold = 1; // buffer a full second of audio
+		//audioFeeder.bufferThreshold = 1; // buffer a full second of audio
+		audioFeeder.bufferThreshold = audioFeeder.bufferDuration * 2;
 		audioFeeder.volume = self.volume;
 		audioFeeder.muted = self.muted;
 
@@ -1068,8 +1069,8 @@ var OGVPlayer = function(options) {
 							playbackPosition = getPlaybackTime(audioState);
 							audioEnded = (dataEnded && audioFeeder.durationBuffered == 0);
 
-							if (prebufferingAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
-								log('prebuffering audio done; buffered to ' + audioFeeder.bufferThreshold);
+							if (prebufferingAudio && (audioFeeder.durationBuffered >= audioFeeder.bufferThreshold * 2 || dataEnded)) {
+								log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
 								startPlayback(playbackPosition);
 								prebufferingAudio = false;
 							}
@@ -1084,15 +1085,15 @@ var OGVPlayer = function(options) {
 							delayedAudio = audioState.delayed;
 							//readyForAudioDecode = !pendingAudio && codec.audioReady && audioFeeder.durationBuffered <= audioFeeder.bufferThreshold;
 							
-							readyForAudioDecode = audioFeeder.durationBuffered <
-								audioFeeder.bufferThreshold;
+							readyForAudioDecode = audioFeeder.durationBuffered <=
+								audioFeeder.bufferThreshold * 2;
 
 							if (!readyForAudioDecode) {
 								// just to skip the remaining items in debug log
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
 								readyForAudioDecode = false;
-							} else if (codec.hasVideo && audioEndTimestamp - frameEndTimestamp > audioFeeder.bufferThreshold * 2) {
+							} else if (codec.hasVideo && audioEndTimestamp - frameEndTimestamp > audioFeeder.bufferThreshold * 4) {
 								log('audio decode is ahead of video by a whopping ' + ((audioEndTimestamp - frameEndTimestamp) * 1000) + ' ms');
 								readyForAudioDecode = false;
 							} else if (pendingAudio >= 8) {
