@@ -1067,11 +1067,6 @@ var OGVPlayer = function(options) {
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
 
-							if (!stoppedForLateAudio && (audioFeeder.durationBuffered == 0) && !dataEnded) {
-								log('late audio; stopping until we recover buffer headroom');
-								stopPlayback();
-								stoppedForLateAudio = true;
-							}
 							if (stoppedForLateAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
 								log('late audio recovery reached; buffer up to ' + audioFeeder.bufferThreshold);
 								startPlayback(playbackPosition);
