@@ -121,7 +121,7 @@ function StreamFile(options) {
 			var xhr = internal.xhr = new XMLHttpRequest();
 			xhr.open("GET", getUrl);
 
-			internal.xhrStarted = false;
+			xhr.streamReaderStarted = false;
 			internal.setXHROptions(xhr);
 
 			var range = null;
@@ -140,7 +140,7 @@ function StreamFile(options) {
 			}
 
 			xhr.onprogress = function(event) {
-				if (xhr.readyState >= 2 && !internal.xhrStarted) {
+				if (xhr.readyState >= 2 && !xhr.streamReaderStarted) {
 					internal.onXHRStart(xhr, event);
 				} else if (xhr.readyState >= 3) {
 					internal.onXHRLoading(xhr, event);
@@ -183,7 +183,7 @@ function StreamFile(options) {
 		},
 
 		onXHRStart: function(xhr, event) {
-			internal.xhrStarted = true;
+			xhr.streamReaderStarted = true;
 			//console.log('status is ' + xhr.status + '; content range is ' + xhr.getResponseHeader('Content-Range') + ' (start at ' + seekPosition + ')');
 			if (xhr.status == 206) {
 				var foundPosition = internal.getXHRRangeStart(xhr);
@@ -468,7 +468,7 @@ function StreamFile(options) {
 			xhr.responseType = 'ms-stream';
 			// onprogress doesn't get fired with ms-stream?
 			xhr.onreadystatechange = function(event) {
-				if (xhr.readyState >= 2 && !internal.xhrStarted) {
+				if (xhr.readyState >= 2 && !xhr.streamReaderStarted) {
 					internal.onXHRStart(xhr, event);
 				} else if (xhr.readyState >= 3) {
 					internal.onXHRLoading(xhr, event);
@@ -547,9 +547,8 @@ function StreamFile(options) {
 		internal.setXHROptions = function(xhr) {
 			xhr.responseType = "text";
 			xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			xhr.streamReaderLastPosition = 0;
 		};
-
-		var lastPosition = 0;
 
 		// Is there a better way to do this conversion? :(
 		var stringToArrayBuffer = function(chunk) {
@@ -581,11 +580,6 @@ function StreamFile(options) {
 			callback(a, b);
 		};
 
-		internal.clearReadState = function() {
-			orig.clearReadState();
-			lastPosition = 0;
-		};
-
 		internal.onXHRLoading = function(xhr, event) {
 			var position;
 			if (typeof event.loaded === 'number') {
@@ -594,9 +588,9 @@ function StreamFile(options) {
 				// xhr.responseText is a binary string of entire file so far
 				position = xhr.responseText.length;
 			}
-			if (lastPosition < position) {
-				var buffer = new StringBufferWrapper(xhr, lastPosition, position);
-				lastPosition = position;
+			if (xhr.streamReaderLastPosition < position) {
+				var buffer = new StringBufferWrapper(xhr, xhr.streamReaderLastPosition, position);
+				xhr.streamReaderLastPosition = position;
 				internal.bufferData(buffer);
 			}
 		};
