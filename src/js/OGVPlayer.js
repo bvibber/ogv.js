@@ -887,13 +887,13 @@ var OGVPlayer = function(options) {
 				}
 			} else {
 				codec.process(function processInitial(more) {
-					if (!self.loadedMetadata && more) {
+					if (more) {
+						// Keep processing headers
+						pingProcessing();
+					} else {
 						// Read more data!
 						log('reading more cause we are out of data');
 						readBytesAndWait();
-					} else {
-						// Keep processing headers
-						pingProcessing();
 					}
 				});
 			}
@@ -1497,7 +1497,7 @@ var OGVPlayer = function(options) {
 					loadCodec(startProcessingVideo);
 				},
 				onread: function(data) {
-					log('got input');
+					log('got input ' + [data.byteLength]);
 
 					// Save chunk to pass into the codec's buffer
 					actionQueue.push(function doReceiveInput() {
