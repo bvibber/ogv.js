@@ -215,7 +215,7 @@ var OGVPlayer = function(options) {
 		initialPlaybackPosition = 0.0,
 		initialPlaybackOffset = 0.0,
 		prebufferingAudio = false,
-		stoppedForLateFrame = false;
+		frameIsLate = false;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
@@ -268,7 +268,7 @@ var OGVPlayer = function(options) {
 		}
 		// Clear the late flag if it was set.
 		prebufferingAudio = false;
-		stoppedForLateFrame = false;
+		frameIsLate = false;
 		log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 	}
 
@@ -286,7 +286,7 @@ var OGVPlayer = function(options) {
 	 * @return {number} seconds since file start
 	 */
 	function getPlaybackTime(state) {
-		if (prebufferingAudio || stoppedForLateFrame || paused) {
+		if (prebufferingAudio || paused) {
 			return initialPlaybackOffset;
 		} else {
 			var position;
@@ -345,7 +345,7 @@ var OGVPlayer = function(options) {
 		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
-		stoppedForLateFrame = false;
+		frameIsLate = false;
 		prebufferingAudio = false;
 
 		// Abort all queued actions
@@ -443,7 +443,7 @@ var OGVPlayer = function(options) {
 			//clockTime: wallClockTime
 			clockTime: actualPerFrameTime,
 
-			late: stoppedForLateFrame
+			late: frameIsLate
 		};
 		if (codec) {
 			timing.demuxerTime = (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
@@ -530,7 +530,7 @@ var OGVPlayer = function(options) {
 			actionQueue.splice(0, actionQueue.length);
 			stopPlayback();
 			prebufferingAudio = false;
-			stoppedForLateFrame = false;
+			frameIsLate = false;
 			if (audioFeeder) {
 				audioFeeder.flush();
 			}
@@ -1050,6 +1050,7 @@ var OGVPlayer = function(options) {
 
 						var audioState = null,
 							playbackPosition = 0,
+							audioDelay = 0,
 							readyForAudioDecode,
 							readyForFrameDraw,
 							frameDelay = 0,
@@ -1065,6 +1066,7 @@ var OGVPlayer = function(options) {
 
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
+							audioDelay = audioState.delay;
 
 							if (prebufferingAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
 								log('prebuffering audio done; buffered to ' + audioFeeder.bufferThreshold);
@@ -1126,19 +1128,19 @@ var OGVPlayer = function(options) {
 								readyForFrameDraw = false;
 							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
-								if (!stoppedForLateFrame) {
+								if (audioDelay == 0) {
 									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
 									lateFrames++;
-									stopPlayback();
-									stoppedForLateFrame = true;
+									audioFeeder.delay(-frameDelay / 1000);
+									//stopPlayback();
+									frameIsLate = true;
 								}
-							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
+							} else if (readyForFrameDraw && frameIsLate && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
 								// catching up, ok if we were early
 								log('late frame recovery reached ' + frameDelay);
-								startPlayback(playbackPosition);
-								stoppedForLateFrame = false;
-								readyForFrameDraw = false; // go back through the loop again
-							} else if (readyForFrameDraw && stoppedForLateFrame) {
+								//startPlayback(playbackPosition);
+								frameIsLate = false;
+							} else if (readyForFrameDraw && frameIsLate) {
 								// draw asap
 							} else if (readyForFrameDraw && frameDelay <= fudgeDelta) {
 								// on time! draw
@@ -1329,7 +1331,7 @@ var OGVPlayer = function(options) {
 							} else {
 								log('ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
 								stopPlayback();
-								stoppedForLateFrame = false;
+								frameIsLate = false;
 								prebufferingAudio = false;
 								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
 								ended = true;
@@ -1668,7 +1670,7 @@ var OGVPlayer = function(options) {
 			nextProcessingTimer = null;
 			stopPlayback();
 			prebufferingAudio = false;
-			stoppedForLateFrame = false;
+			frameIsLate = false;
 			paused = true;
 			fireEvent('pause');
 		}
