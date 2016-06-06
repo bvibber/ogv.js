@@ -1288,7 +1288,7 @@ var OGVPlayer = function(options) {
 						} else if (dataEnded && !(pendingAudio || pendingFrame || yCbCrBuffer)) {
 							log('playback reached end of data ' + [pendingAudio, pendingFrame, !!yCbCrBuffer]);
 							var finalDelay = 0;
-							if (codec.hasAudio) {
+							if (codec.hasAudio && audioFeeder) {
 								finalDelay = audioFeeder.durationBuffered * 1000;
 							}
 							if (finalDelay > 0) {
