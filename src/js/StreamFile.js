@@ -453,8 +453,10 @@ function StreamFile(options) {
 			}
 		};
 
-	} else if (internal.tryMethod('ms-stream')) {
+	} else if (options.useMSStream && internal.tryMethod('ms-stream')) {
 		// IE 10 supports returning a Stream from XHR.
+		// This seems unreliable in practice as the connections tend to die
+		// unexpectedly; recommend using the chunking even if it's primitive.
 
 		// Don't bother reading in chunks, MSStream handles it for us
 		chunkSize = 0;
