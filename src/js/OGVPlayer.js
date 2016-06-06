@@ -1071,18 +1071,18 @@ var OGVPlayer = function(options) {
 								audioFeeder.bufferThreshold;
 
 							// Check in when all audio runs out
-							if (pendingAudio > 8) {
-								// We'll check in when done decoding
-								readyForAudioDecode = false;
+							if (!readyForAudioDecode) {
+								// just to skip the remaining debug items
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
 								readyForAudioDecode = false;
-							} else {
-								// Check in when the audio buffer runs low again...
-								// wait for audioFeeder to ping us
-							}
-							if (!pendingAudio) {
-								log('audio checkin: ' + [readyForAudioDecode, audioFeeder.bufferThreshold, audioFeeder.durationBuffered, playbackPosition, frameEndTimestamp, audioEndTimestamp, codec.audioReady].join(', '))
+							} else if (codec.hasVideo && audioEndTimestamp - frameEndTimestamp > audioFeeder.bufferThreshold * 2) {
+								log('audio decode is ahead of video by a whopping ' + ((audioEndTimestamp - frameEndTimestamp) * 1000) + ' ms');
+								readyForAudioDecode = false;
+							} else if (pendingAudio > 8) {
+								// We'll check in when done decoding
+								log('audio decode disabled: ' + pendingAudio + ' packets in flight');
+								readyForAudioDecode = false;
 							}
 						} else {
 							// No audio; drive on the general clock.
