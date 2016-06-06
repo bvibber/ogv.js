@@ -1044,13 +1044,14 @@ var OGVPlayer = function(options) {
 
 				} else {
 
-					if ((!codec.hasAudio || codec.audioReady || pendingAudio) &&
-					 	(!codec.hasVideo || codec.frameReady || pendingFrame || yCbCrBuffer)
+					if ((!codec.hasAudio || codec.audioReady || pendingAudio || dataEnded) &&
+						(!codec.hasVideo || codec.frameReady || pendingFrame || yCbCrBuffer || dataEnded)
 					) {
 
 						var audioState = null,
 							playbackPosition = 0,
 							readyForAudioDecode,
+							audioEnded = false,
 							readyForFrameDraw,
 							frameDelay = 0,
 							readyForFrameDecode,
@@ -1065,6 +1066,7 @@ var OGVPlayer = function(options) {
 
 							audioState = audioFeeder.getPlaybackState();
 							playbackPosition = getPlaybackTime(audioState);
+							audioEnded = (dataEnded && audioFeeder.durationBuffered == 0);
 
 							if (prebufferingAudio && (audioFeeder.durationBuffered > audioFeeder.bufferThreshold || dataEnded)) {
 								log('prebuffering audio done; buffered to ' + audioFeeder.bufferThreshold);
@@ -1124,6 +1126,9 @@ var OGVPlayer = function(options) {
 									log('decoding a frame during prebuffering');
 								}
 								readyForFrameDraw = false;
+							} else if (readyForFrameDraw && dataEnded && audioEnded) {
+								// If audio timeline reached end, make sure the last frame draws
+								log('audio timeline ended? ready to draw frame');
 							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
 								if (!stoppedForLateFrame) {
@@ -1280,6 +1285,28 @@ var OGVPlayer = function(options) {
 								}, targetTimer);
 							}
 
+						} else if (dataEnded && !(pendingAudio || pendingFrame || yCbCrBuffer)) {
+							log('playback reached end of data ' + [pendingAudio, pendingFrame, !!yCbCrBuffer]);
+							var finalDelay = 0;
+							if (codec.hasAudio) {
+								finalDelay = audioFeeder.durationBuffered * 1000;
+							}
+							if (finalDelay > 0) {
+								log('ending pending ' + finalDelay + ' ms');
+								pingProcessing(Math.max(0, finalDelay));
+							} else {
+								log('ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
+								stopPlayback();
+								stoppedForLateFrame = false;
+								prebufferingAudio = false;
+								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
+								ended = true;
+								// @todo implement loop behavior
+								paused = true;
+								fireEventAsync('pause');
+								fireEventAsync('ended');
+							}
+
 						} else {
 
 							log('waiting on async/timers');
@@ -1309,35 +1336,11 @@ var OGVPlayer = function(options) {
 							// Ran out of buffered input
 							log('demuxer loading more data');
 							readBytesAndWait();
-						} else if (pendingAudio || pendingFrame || yCbCrBuffer) {
-							log('dexmuxer out but playback still decoding; check in again after');
-							dataEnded = true;
-						} else if (ended) {
-							log('demuxer unexpectedly processing after ended');
-							dataEnded = true;
 						} else {
 							// Ran out of stream!
-							log('demuxer reached end of stream');
+							log('demuxer reached end of data stream');
 							dataEnded = true;
-							var finalDelay = 0;
-							if (codec.hasAudio) {
-								finalDelay = audioFeeder.durationBuffered * 1000;
-							}
-							if (finalDelay > 0) {
-								log('ending pending ' + finalDelay + ' ms');
-								pingProcessing(Math.max(0, finalDelay));
-							} else {
-								log('ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
-								stopPlayback();
-								stoppedForLateFrame = false;
-								prebufferingAudio = false;
-								initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
-								ended = true;
-								// @todo implement loop behavior
-								paused = true;
-								fireEventAsync('pause');
-								fireEventAsync('ended');
-							}
+							pingProcessing();
 						}
 					}
 				});

@@ -1044,6 +1044,7 @@
 			//debugFilter = /waiting/;
 			//debugFilter = /late frame/;
 			//debugFilter = /setting a timer/;
+			//debugFilter = /ended|ending|end |demuxer/i;
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					debug: !!debugFilter,

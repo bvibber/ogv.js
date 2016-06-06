@@ -15,6 +15,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * pre-decode 1s of audio to smooth out beginning of playback a bit
  * IE/Edge now uses Range-based chunking instead of MSStream for better proxy compatibility
  * Fix for start of file when returned buffers are small
+ * Fix ended event for reals
 * 1.1.2-alpha.5 - 2016-06-04
  * updated audio-feeder to 0.4.2 with IE and Web Audio fixes
  * fix for hanging playback in certain threading conditions
