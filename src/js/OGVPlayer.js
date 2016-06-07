@@ -1097,9 +1097,6 @@ var OGVPlayer = function(options) {
 							} else if (!codec.audioReady) {
 								// NEED MOAR BUFFERS
 								readyForAudioDecode = false;
-							} else if (codec.hasVideo && audioEndTimestamp - frameEndTimestamp > audioFeeder.bufferThreshold * 4) {
-								log('audio decode is ahead of video by a whopping ' + ((audioEndTimestamp - frameEndTimestamp) * 1000) + ' ms');
-								readyForAudioDecode = false;
 							} else if (pendingAudio >= audioPipelineDepth) {
 								// We'll check in when done decoding
 								log('audio decode disabled: ' + pendingAudio + ' packets in flight');
@@ -1134,7 +1131,7 @@ var OGVPlayer = function(options) {
 							} else if (readyForFrameDraw && dataEnded && audioEnded) {
 								// If audio timeline reached end, make sure the last frame draws
 								log('audio timeline ended? ready to draw frame');
-							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
+							} else if (-frameDelay >= audioSyncThreshold) {
 								// late frame!
 								if (!stoppedForLateFrame) {
 									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
