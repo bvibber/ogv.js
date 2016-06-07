@@ -17,7 +17,8 @@
 		averageVideoDecodingTime = 0, // ms
 		averageAudioDecodingTime = 0, // ms
 		averageBufferTime = 0, // ms
-		averageDrawingTime = 0; // ms
+		averageDrawingTime = 0, // ms
+		averageProxyTime = 0; // ms
 
 	var benchmarkData = [],
 		benchmarkClockData = [],
@@ -162,17 +163,19 @@
 			averageAudioDecodingTime = info.audioDecodingTime / info.framesProcessed;
 			averageBufferTime = info.bufferTime / info.framesProcessed;
 			averageDrawingTime = info.drawingTime / info.framesProcessed;
+			averageProxyTime = info.proxyTime / info.framesProcessed;
 
 			var targetPerFrameTime = info.targetPerFrameTime;
 			benchmarkTargetFps = 1000 / targetPerFrameTime;
 			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime);
 			document.getElementById('bench-clock').textContent = round1_0(averagePlayTime);
-			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageVideoDecodingTime + averageAudioDecodingTime + averageBufferTime + averageDrawingTime);
+			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageBufferTime + averageDrawingTime + averageProxyTime);
 			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime);
 			document.getElementById('bench-video').textContent = round1_0(averageVideoDecodingTime);
 			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime);
 			document.getElementById('bench-buffer').textContent = round1_0(averageBufferTime);
 			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
+			document.getElementById('bench-proxy').textContent = round1_0(averageProxyTime);
 
 			document.getElementById('video-fps').textContent = round2(player.ogvjsVideoFrameRate);
 			document.getElementById('video-jitter').textContent = round2(info.jitter);

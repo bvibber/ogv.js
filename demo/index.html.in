@@ -138,7 +138,8 @@
 								<td class="bench-video">vid</td>
 								<td class="bench-audio">aud</td>
 								<td class="bench-buffer">buf</td>
-								<td class="bench-draw">draw</td>
+								<td class="bench-draw">drw</td>
+								<td class="bench-proxy">prx</td>
 							</tr>
 							<tr>
 								<td id="bench-target" class="bench-target"></td>
@@ -149,6 +150,7 @@
 								<td id="bench-audio" class="bench-audio"></td>
 								<td id="bench-buffer" class="bench-buffer"></td>
 								<td id="bench-draw" class="bench-draw"></td>
+								<td id="bench-proxy" class="bench-proxy"></td>
 							</tr>
 						</table>
 					</td>

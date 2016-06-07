@@ -335,6 +335,7 @@ var OGVPlayer = function(options) {
 		playTime = 0, // ms
 		bufferTime = 0, // ms
 		drawingTime = 0, // ms
+		proxyTime = 0, // ms
 		totalJitter = 0; // sum of ms we're off from expected frame delivery time
 	// Benchmark data that doesn't clear
 	var droppedAudio = 0, // number of times we were starved for audio
@@ -413,11 +414,13 @@ var OGVPlayer = function(options) {
 		lastFrameAudioCpuTime = 0,
 		lastFrameDemuxerCpuTime = 0,
 		lastFrameDrawingTime = 0,
-		lastFrameBufferTime = 0;
+		lastFrameBufferTime = 0,
+		lastFrameProxyTime = 0,
 		lastVideoCpuTime = 0,
 		lastAudioCpuTime = 0,
 		lastDemuxerCpuTime = 0,
 		lastBufferTime = 0,
+		lastProxyTime = 0,
 		lastDrawingTime = 0;
 	var lastFrameTimestamp = 0.0,
 		currentVideoCpuTime = 0.0;
@@ -445,6 +448,7 @@ var OGVPlayer = function(options) {
 			cpuTime: lastFrameDecodeTime,
 			drawingTime: drawingTime - lastFrameDrawingTime,
 			bufferTime: bufferTime - lastFrameBufferTime,
+			proxyTime: proxyTime - lastFrameProxyTime,
 			
 			demuxerTime: 0,
 			videoTime: 0,
@@ -473,13 +477,14 @@ var OGVPlayer = function(options) {
 		}
 		lastFrameDrawingTime = drawingTime;
 		lastFrameBufferTime = bufferTime;
+		lastFrameProxyTime = proxyTime;
 
 		function n(x) {
 			return Math.round(x * 10) / 10;
 		}
 		log('drew frame ' + frameEndTimestamp + ': ' +
 			'clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
-			'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ') ' +
+			'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ' proxy: ' + n(timing.proxyTime) + ') ' +
 			'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
 		fireEventAsync('framecallback', timing);
 
@@ -1167,7 +1172,6 @@ var OGVPlayer = function(options) {
 
 							log('ready to decode frame');
 
-							pendingFrame++;
 							if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
 								// WebM doesn't encode a frame rate
 								targetPerFrameTime = (codec.frameTimestamp - frameEndTimestamp) * 1000;
@@ -1177,7 +1181,6 @@ var OGVPlayer = function(options) {
 							
 							var nextFrameEndTimestamp = codec.frameTimestamp;
 							function onDecodeFrameComplete(ok) {
-								pendingFrame--;
 								frameEndTimestamp = nextFrameEndTimestamp;
 								currentVideoCpuTime = codec.videoCpuTime;
 								if (ok) {
@@ -1188,8 +1191,10 @@ var OGVPlayer = function(options) {
 									log('Bad video packet or something');
 								}
 							}
-							time(function() {
+							pendingFrame++;
+							var frameDecodeTime = time(function() {
 								codec.decodeFrame(function processingDecodeFrame(ok) {
+									pendingFrame--;
 									log('decoded frame');
 									if (frameCompleteCallback) {
 										throw new Error('Reentrancy error: decoded frames without drawing them');
@@ -1207,6 +1212,7 @@ var OGVPlayer = function(options) {
 							});
 							if (pendingFrame) {
 								// We can process something else while that's running
+								proxyTime += frameDecodeTime;
 								pingProcessing();
 							}
 
@@ -1216,7 +1222,7 @@ var OGVPlayer = function(options) {
 
 							pendingAudio++;
 							var nextAudioEndTimestamp = codec.audioTimestamp;
-							time(function() {
+							var audioDecodeTime = time(function() {
 								codec.decodeAudio(function processingDecodeAudio(ok) {
 									pendingAudio--;
 									log('decoded audio');
@@ -1242,6 +1248,7 @@ var OGVPlayer = function(options) {
 								});
 							});
 							if (pendingAudio) {
+								proxyTime += audioDecodeTime;
 								// We can process something else while that's running
 								pingProcessing();
 							}
@@ -1427,6 +1434,7 @@ var OGVPlayer = function(options) {
 		framesProcessed = 0;
 		bufferTime = 0;
 		drawingTime = 0;
+		proxyTime = 0;
 		started = true;
 		ended = false;
 
@@ -1436,10 +1444,12 @@ var OGVPlayer = function(options) {
 		lastDemuxerCpuTime = 0;
 		lastBufferTime = 0;
 		lastDrawingTime = 0;
+		lastProxyTime = 0;
 		lastFrameVideoCpuTime = 0;
 		lastFrameAudioCpuTime = 0;
 		lastFrameDemuxerCpuTime = 0;
 		lastFrameBufferTime = 0;
+		lastFrameProxyTime = 0;
 		lastFrameDrawingTime = 0;
 		currentVideoCpuTime = 0;
 		frameCompleteCallback = null;
@@ -1641,6 +1651,7 @@ var OGVPlayer = function(options) {
 			audioDecodingTime: codec ? (codec.audioCpuTime - lastAudioCpuTime) : 0,
 			bufferTime: bufferTime - lastBufferTime,
 			drawingTime: drawingTime - lastDrawingTime,
+			proxyTime: proxyTime - lastProxyTime,
 			droppedAudio: droppedAudio,
 			delayedAudio: delayedAudio,
 			jitter: totalJitter / framesProcessed,
@@ -1657,6 +1668,7 @@ var OGVPlayer = function(options) {
 		}
 		lastBufferTime = bufferTime;
 		lastDrawingTime = drawingTime;
+		lastProxyTime = proxyTime;
 		totalJitter = 0;
 		totalFrameTime = 0;
 		totalFrameCount = 0;
