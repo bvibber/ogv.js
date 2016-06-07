@@ -10,6 +10,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * 1.1.2-alpha.7 - 2016-06-??
  * use cleaner audio buffer thresholds
  * report time spent on worker proxy thread posting
+ * cleaned up order of ops in threading
+ * enforce a/v sync during slow frame decodes as well as at draw time
 * 1.1.2-alpha.6 - 2016-06-06
  * smoothed out CPU spikes from demuxer on slow machines (iPad 3)
  * use XHR progress events to avoid hitting xhr.responseText early
