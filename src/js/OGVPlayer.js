@@ -1131,7 +1131,7 @@ var OGVPlayer = function(options) {
 							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
 							readyForFrameDraw = !!yCbCrBuffer;
-							readyForFrameDecode = !frameCompleteCallback && !pendingFrame && codec.frameReady;
+							readyForFrameDecode = (pendingFrame == 0) && codec.frameReady;
 
 							var audioSyncThreshold = targetPerFrameTime;
 							if (prebufferingAudio) {
@@ -1181,6 +1181,7 @@ var OGVPlayer = function(options) {
 							
 							var nextFrameEndTimestamp = codec.frameTimestamp;
 							function onDecodeFrameComplete(ok) {
+								pendingFrame--;
 								frameEndTimestamp = nextFrameEndTimestamp;
 								currentVideoCpuTime = codec.videoCpuTime;
 								if (ok) {
@@ -1194,7 +1195,6 @@ var OGVPlayer = function(options) {
 							pendingFrame++;
 							var frameDecodeTime = time(function() {
 								codec.decodeFrame(function processingDecodeFrame(ok) {
-									pendingFrame--;
 									log('decoded frame');
 									if (frameCompleteCallback) {
 										throw new Error('Reentrancy error: decoded frames without drawing them');
