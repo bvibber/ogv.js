@@ -77,53 +77,53 @@
 			return Math.round((height - 1) - ms * (height - 1) / maxTime);
 		}
 
-		function drawBar(px, py, pwidth, pheight) {
-			ctx.globalAlpha = 0.33;
-			ctx.fillRect(px, py, pwidth, pheight);
-
-			ctx.globalAlpha = 0.99;
-			ctx.beginPath();
-			ctx.moveTo(px, py);
-			ctx.lineTo(px + pwidth - 1, py);
-			ctx.stroke();
+		var barX = [],
+			barWidth = [];
+		for (i = 0; i < maxItems; i++) {
+			barX[i] = x(i);
+			barWidth[i] = Math.max(x(i + 1) - barX[i], 1);
 		}
 
-		// CPU time
+		// Time bar graph
+		ctx.globalAlpha = 0.33;
+
+		// Wall clock time
+		ctx.fillStyle = 'darkviolet';
 		for (i = 0; i < maxItems; i++) {
-			var px = x(i),
-			    pwidth = Math.max(x(i + 1) - px, 1),
-				py,
-				pheight;
-			
-			// Wall clock time
 			if (lateData[i]) {
-				ctx.strokeStyle = 'darkviolet';
-				ctx.fillStyle = 'darkviolet';
-			} else {
-				ctx.strokeStyle = 'blue';
-				ctx.fillStyle = 'blue';
+				var py = y(clockData[i]),
+					pheight = y(fpsTarget) - py;
+				ctx.fillRect(barX[i], py, barWidth[i], pheight);
 			}
-			py = y(clockData[i]);
-			pheight = y(fpsTarget) - py;
-			drawBar(px, py, pwidth, pheight);
+		}
+		ctx.fillStyle = 'blue';
+		for (i = 0; i < maxItems; i++) {
+			if (!lateData[i]) {
+				var py = y(clockData[i]),
+					pheight = y(fpsTarget) - py;
+				ctx.fillRect(barX[i], py, barWidth[i], pheight);
+			}
+		}
 
-			// Main thread CPU time
-			ctx.strokeStyle = 'black';
-			ctx.fillStyle = 'black';
-			py = y(cpuData[i]);
-			drawBar(px, py, pwidth, height - py);
+		// Video decode thread
+		ctx.fillStyle = 'darkcyan';
+		for (i = 0; i < maxItems; i++) {
+			var py = y(videoData[i]);
+			ctx.fillRect(barX[i], py, barWidth[i], height - py);
+		}
 
-			// Video decode thread
-			ctx.strokeStyle = 'darkcyan';
-			ctx.fillStyle = 'darkcyan';
-			py = y(videoData[i]);
-			drawBar(px, py, pwidth, height - py);
+		// Audio decode thread
+		ctx.fillStyle = 'green';
+		for (i = 0; i < maxItems; i++) {
+			var py = y(audioData[i]);
+			ctx.fillRect(barX[i], py, barWidth[i], height - py);
+		}
 
-			// Audio decode thread
-			ctx.strokeStyle = 'green';
-			ctx.fillStyle = 'green';
-			py = y(audioData[i]);
-			drawBar(px, py, pwidth, height - py);
+		// Main thread CPU time
+		ctx.fillStyle = 'black';
+		for (i = 0; i < maxItems; i++) {
+			var py = y(cpuData[i]);
+			ctx.fillRect(barX[i], py, barWidth[i], height - py);
 		}
 
 		ctx.globalAlpha = 1;
@@ -182,7 +182,6 @@
 			document.getElementById('video-late').textContent = info.lateFrames;
 			document.getElementById('audio-drops').textContent = info.droppedAudio;
 			document.getElementById('audio-delayed').textContent = round1_0(info.delayedAudio);
-
 
 			// keep it a rolling average
 			player.resetPlaybackStats();
