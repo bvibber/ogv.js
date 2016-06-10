@@ -26,6 +26,13 @@
 
     this._context = context;
 
+
+    /*
+     * Optional audio node can be provided to connect the feeder to
+     * @type {AudioNode}
+     */
+    this.output = options.output || context.destination
+
     /**
      * Actual sample rate supported for output, in Hz
      * @type {number}
@@ -268,7 +275,7 @@
    */
   WebAudioBackend.prototype.start = function() {
     this._node.onaudioprocess = this._audioProcess.bind(this);
-    this._node.connect(this._context.destination);
+    this._node.connect(this.output);
     this._playbackTimeAtBufferTail = this._context.currentTime;
   };
 
@@ -380,7 +387,7 @@
 				}
 
 				// Don't actually run any audio, just start & stop the node
-				node.connect(context.destination);
+				node.connect(this.output);
 				node.disconnect();
 
         // So far so good. Keep it around!
