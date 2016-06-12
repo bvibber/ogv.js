@@ -16,6 +16,7 @@ and is suitable for use in custom audio and video playback.
 ## Updates
 * 0.4.3 - 2016-06-11
  * Flash: now works cross-domain
+ * Web Audio: `audioNode` option allows attaching to non-default destination
 * 0.4.2 - 2016-06-03
  * Flash: fixed sample count in cached playback data
  * Web Audio: partial fixes to `stop()`/`start()` buffered audio recovery
