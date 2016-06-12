@@ -136,13 +136,60 @@ var OGVVersion = __OGV_FULL_VERSION__;
 			}
 
 			var proxyClass = info.proxy,
-				workerScript = info.worker;
+				workerScript = info.worker,
+				codecUrl = urlForScript(scriptMap[className]),
+				workerUrl = urlForScript(workerScript),
+				codecResponse,
+				workerResponse,
+				blob,
+				worker,
+				codecLoaded = false,
+				workerLoaded = false;
 
+				// Load the codec
+				var getCodec = new XMLHttpRequest();
+					getCodec.open("GET", codecUrl, true);
+					getCodec.onreadystatechange = function() {
+						if(getCodec.readyState == 4 && getCodec.status == 200) {
+							codecResponse = getCodec.responseText;
+							// Update the codec response loaded flag
+							codecLoaded = true;
+						}
+					};
+					getCodec.send();
+
+				// Load the worker
+				var getWorker = new XMLHttpRequest();
+					getWorker.open("GET", workerUrl, true);
+					getWorker.onreadystatechange = function() {
+						if(getWorker.readyState == 4 && getWorker.status == 200) {
+							workerResponse = getWorker.responseText;
+							// Update the worker response loaded flag
+							workerLoaded = true;
+						}
+					};
+					getWorker.send();
+
+				var workerTimer = setInterval(function(){
+					if ((codecLoaded == true) && (workerLoaded == true)) {
+						// End the timer. The worker is ready
+						clearInterval(workerTimer); 
+						try {
+							blob = new Blob([codecResponse + " " + workerResponse], {type: 'application/javascript'});
+						} catch (e) { // Backwards-compatibility
+							window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
+							blob = new BlobBuilder();
+							blob.append(codecResponse + " " + workerResponse);
+							blob = blob.getBlob();
+						}
+						// Create the web worker
+						worker = new Worker(URL.createObjectURL(blob));
+						callback(construct);
+					}
+				}, 20);
 			var construct = function(options) {
-				var worker = new Worker(urlForScript(workerScript));
 				return new proxyClass(worker, className, options);
 			};
-			callback(construct);
 		}
 	};
 
