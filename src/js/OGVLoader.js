@@ -139,41 +139,26 @@ var OGVVersion = __OGV_FULL_VERSION__;
 				workerScript = info.worker,
 				codecUrl = urlForScript(scriptMap[className]),
 				workerUrl = urlForScript(workerScript),
-				codecResponse,
-				workerResponse,
-				blob,
-				worker,
-				codecLoaded = false,
-				workerLoaded = false;
+				worker;
 
-				// Load the codec
-				var getCodec = new XMLHttpRequest();
-					getCodec.open("GET", codecUrl, true);
-					getCodec.onreadystatechange = function() {
-						if(getCodec.readyState == 4 && getCodec.status == 200) {
-							codecResponse = getCodec.responseText;
-							// Update the codec response loaded flag
-							codecLoaded = true;
-						}
-					};
-					getCodec.send();
+			var construct = function(options) {
+				return new proxyClass(worker, className, options);
+			};
 
-				// Load the worker
-				var getWorker = new XMLHttpRequest();
-					getWorker.open("GET", workerUrl, true);
-					getWorker.onreadystatechange = function() {
-						if(getWorker.readyState == 4 && getWorker.status == 200) {
-							workerResponse = getWorker.responseText;
-							// Update the worker response loaded flag
-							workerLoaded = true;
-						}
-					};
-					getWorker.send();
+			if (workerUrl.match(/^https?:|\/\//i)) {
+				// Can't load workers natively cross-domain, but if CORS
+				// is set up we can fetch the worker stub and the desired
+				// class and load them from a blob.
+				var getCodec,
+					getWorker,
+					codecResponse,
+					workerResponse,
+					codecLoaded = false,
+					workerLoaded = false,
+					blob;
 
-				var workerTimer = setInterval(function(){
+				function completionCheck() {
 					if ((codecLoaded == true) && (workerLoaded == true)) {
-						// End the timer. The worker is ready
-						clearInterval(workerTimer); 
 						try {
 							blob = new Blob([codecResponse + " " + workerResponse], {type: 'application/javascript'});
 						} catch (e) { // Backwards-compatibility
@@ -186,10 +171,38 @@ var OGVVersion = __OGV_FULL_VERSION__;
 						worker = new Worker(URL.createObjectURL(blob));
 						callback(construct);
 					}
-				}, 20);
-			var construct = function(options) {
-				return new proxyClass(worker, className, options);
-			};
+				}
+
+				// Load the codec
+				getCodec = new XMLHttpRequest();
+				getCodec.open("GET", codecUrl, true);
+				getCodec.onreadystatechange = function() {
+					if(getCodec.readyState == 4 && getCodec.status == 200) {
+						codecResponse = getCodec.responseText;
+						// Update the codec response loaded flag
+						codecLoaded = true;
+						completionCheck();
+					}
+				};
+				getCodec.send();
+
+				// Load the worker
+				getWorker = new XMLHttpRequest();
+				getWorker.open("GET", workerUrl, true);
+				getWorker.onreadystatechange = function() {
+					if(getWorker.readyState == 4 && getWorker.status == 200) {
+						workerResponse = getWorker.responseText;
+						// Update the worker response loaded flag
+						workerLoaded = true;
+						completionCheck();
+					}
+				};
+				getWorker.send();
+			} else {
+				// Local URL; load it directly for simplicity.
+				worker = new Worker(workerUrl);
+				callback(construct);
+			}
 		}
 	};
 
