@@ -14,6 +14,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
  * enforce a/v sync during slow frame decodes as well as at draw time
  * use native object-fit when available, except on iOS
  * allow loading workers cross-domain, if CORS is set up for base dir
+ * allow loading Flash audio shim cross-domain for IE 11
 * 1.1.2-alpha.6 - 2016-06-06
  * smoothed out CPU spikes from demuxer on slow machines (iPad 3)
  * use XHR progress events to avoid hitting xhr.responseText early
@@ -219,7 +220,7 @@ Entry points:
 
 These entry points may be loaded directly from a script element, or concatenated into a larger project, or otherwise loaded as you like.
 
-Further code modules are loaded at runtime, which must be available with their defined names together in a directory. If the files are not hosted same-origin to the web page that includes them, you will need to set up appropriate CORS headers to allow loading of the worker modules -- be warned that currently the Flash audio shim for IE will not work correctly in this configuration.
+Further code modules are loaded at runtime, which must be available with their defined names together in a directory. If the files are not hosted same-origin to the web page that includes them, you will need to set up appropriate CORS headers to allow loading of the worker JS modules.
 
 Dynamically loaded assets:
 * `ogv-worker-audio.js` and `ogv-worker-video.js` are Worker entry points, used to run video and audio decoders in the background.
