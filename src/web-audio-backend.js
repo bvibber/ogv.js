@@ -387,7 +387,7 @@
 				}
 
 				// Don't actually run any audio, just start & stop the node
-				node.connect(this.output);
+				node.connect(context.destination);
 				node.disconnect();
 
         // So far so good. Keep it around!
