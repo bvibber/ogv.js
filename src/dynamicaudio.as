@@ -33,7 +33,7 @@ package {
             // If loaded cross-domain, we need to enable scripting access
             // to our public API methods. This should be safe as we only
             // do straight audio output, which any domain can do.
-            Security.allowDomain('*');
+            setupCrossDomain();
 
             objectId = loaderInfo.parameters.objectId;
             queue = new BufferQueue(logger);
@@ -49,6 +49,21 @@ package {
             ExternalInterface.addCallback('setBufferThreshold', setBufferThreshold);
 
             triggerCallback('ready');
+        }
+
+        private function setupCrossDomain():void {
+            if (loaderInfo.url !== loaderInfo.loaderURL) {
+                // If another SWF loaded us, don't enable cross-domain access.
+                // It might, or might not, be unsafe.
+                return;
+            }
+            if (Security.pageDomain === loaderInfo.url.substr(0, Security.pageDomain.length)) {
+                // We're same-domain. No need to enable cross-domain access.
+                return;
+            }
+            // We're cross-domain, but loaded directly into an HTML environment,
+            // so this should only be enabling script access over ExternalInterface.
+            Security.allowDomain('*');
         }
 
         // Called from JavaScript to add samples to the buffer
