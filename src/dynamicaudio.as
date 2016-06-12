@@ -5,6 +5,7 @@ package {
     import flash.media.Sound;
     import flash.media.SoundChannel;
     import flash.utils.setTimeout;
+    import flash.system.Security;
 
     public class dynamicaudio extends Sprite implements ILogger {
         private var bufferSize:Number = 4096; // In samples
@@ -28,6 +29,11 @@ package {
         public function dynamicaudio() {
             // Uncomment this to spew some debug logs to the web side
             //logger = this;
+
+            // If loaded cross-domain, we need to enable scripting access
+            // to our public API methods. This should be safe as we only
+            // do straight audio output, which any domain can do.
+            Security.allowDomain('*');
 
             objectId = loaderInfo.parameters.objectId;
             queue = new BufferQueue(logger);
@@ -181,7 +187,7 @@ package {
             }
         }
 
-        public function triggerCallback(eventName:String):void {
+        private function triggerCallback(eventName:String):void {
             if (objectId !== null) {
                 ExternalInterface.call('AudioFeederFlashBackendCallback' + objectId, eventName);
             }
