@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-* 1.1.2-alpha.7 - 2016-06-??
+* 1.1.2-alpha.7 - 2016-06-21
  * use cleaner audio buffer thresholds
  * report time spent on worker proxy thread posting
  * cleaned up order of ops in threading
@@ -364,3 +364,5 @@ libogg, libvorbis, libtheora, libopus, nestegg, and libvpx are available under t
 Based on build scripts from https://github.com/devongovett/ogg.js
 
 [AudioFeeder](https://github.com/brion/audio-feeder)'s dynamicaudio.as and other Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman.
+
+See [AUTHORS.md](https://github.com/brion/ogv.js/blob/master/AUTHORS.md) and/or the git history for a list of contributors.
