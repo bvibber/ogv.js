@@ -1593,7 +1593,11 @@ var OGVPlayer = function(options) {
 
 			paused = false;
 
-			if (started && codec && codec.loadedMetadata) {
+			if (state == State.SEEKING) {
+
+				// Seeking? Just make sure we know to pick up after.
+
+			} else if (started && codec && codec.loadedMetadata) {
 
 				if (ended && stream && byteLength) {
 

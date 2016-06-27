@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.1.3 - 2016-06027
+* fix play-during-seek bug that interacted with video.js badly
+
 1.1.2 - 2016-06-27
 * better a/v sync
 * muted autoplay works on iOS
