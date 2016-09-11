@@ -1,5 +1,4 @@
-var WebGLFrameSink = require('./WebGLFrameSink.js');
-var FrameSink = require('./FrameSink.js');
+var YUVCanvas = require('yuv-canvas');
 
 // -- OGVLoader.js
 var OGVLoader = require("./OGVLoader.js");
@@ -65,13 +64,13 @@ var OGVPlayer = function(options) {
 	var codecClass = null,
 		codecType = null;
 
-	var webGLdetected = WebGLFrameSink.isAvailable();
-	var useWebGL = (options.webGL !== false) && webGLdetected;
+	var canvasOptions = {};
+	if (options.webGL !== undefined) {
+		// @fixme confirm format of webGL option
+		canvasOptions.webGL = options.webGL;
+	}
 	if(!!options.forceWebGL) {
-		useWebGL = true;
-		if(!webGLdetected) {
-			console.log("No support for WebGL detected, but WebGL forced on!");
-		}
+		canvasOptions.webGL = 'required';
 	}
 
 	// Experimental options
@@ -801,11 +800,7 @@ var OGVPlayer = function(options) {
 		});
 		OGVPlayer.updatePositionOnResize();
 
-		if (useWebGL) {
-			frameSink = new WebGLFrameSink(canvas, videoInfo);
-		} else {
-			frameSink = new FrameSink(canvas, videoInfo);
-		}
+		frameSink = YUVCanvas.attach(canvas);
 	}
 
 	var depth = 0,

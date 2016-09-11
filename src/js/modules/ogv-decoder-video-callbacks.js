@@ -5,23 +5,23 @@
 mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_init_video: function(frameWidth, frameHeight,
-	                                    hdec, vdec,
+	                                    chromaWidth, chromaHeight,
                                         fps,
                                         picWidth, picHeight,
                                         picX, picY,
                                         displayWidth, displayHeight) {
 		Module.videoFormat = {
-			frameWidth: frameWidth,
-			frameHeight: frameHeight,
-			hdec: hdec,
-			vdec: vdec,
-			fps: fps,
-			picWidth: picWidth,
-			picHeight: picHeight,
-			picX: picX,
-			picY: picY,
+			width: frameWidth,
+			height: frameHeight,
+			chromaWidth: chromaWidth,
+			chromaHeight: chromaHeight,
+			cropLeft: picX,
+			cropTop: picY,
+			cropWidth: picWidth,
+			cropHeight: picHeight,
 			displayWidth: displayWidth,
-			displayHeight: displayHeight
+			displayHeight: displayHeight,
+			fps: fps
 		};
 		Module.loadedMetadata = true;
 	},
@@ -30,31 +30,42 @@ mergeInto(LibraryManager.library, {
 	                               bufferCb, strideCb,
 	                               bufferCr, strideCr,
 	                               width, height,
-	                               hdec, vdec) {
+	                               chromaWidth, chromaHeight) {
 
 		// Create typed array views of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
-			widthColor = width >> hdec,
-			heightColor = height >> vdec,
+			format = Module.videoFormat,
 			countBytesY = strideY * height,
-			countBytesCb = strideCb * heightColor,
-			countBytesCr = strideCr * heightColor,
-			bytesY = HEAPU8.subarray(bufferY, bufferY + countBytesY),
-			bytesCb = HEAPU8.subarray(bufferCb, bufferCb + countBytesCb),
-			bytesCr = HEAPU8.subarray(bufferCr, bufferCr + countBytesCr);
+			countBytesCb = strideCb * chromaHeight,
+			countBytesCr = strideCr * chromaHeight;
 
 		// And queue up the output buffer!
 		Module.frameBuffer = {
-			bytesY: bytesY,
-			bytesCb: bytesCb,
-			bytesCr: bytesCr,
-			strideY: strideY,
-			strideCb: strideCb,
-			strideCr: strideCr,
-			width: width,
-			height: height,
-			hdec: hdec,
-			vdec: vdec
+			// @fixme what to do about the crop coordinates if resolution changes? can this happen in webm land? what about if ogv gets a new steam?
+			format: {
+				width: width,
+				height: height,
+				chromaWidth: chromaWidth,
+				chromaHeight: chromaHeight,
+				cropLeft: format.cropLeft,
+				cropTop: format.cropTop,
+				cropWidth: format.cropWidth,
+				cropHeight: format.cropHeight,
+				displayWidth: format.displayWidth,
+				displayHeight: format.displayHeight
+			},
+			y: {
+				bytes: HEAPU8.subarray(bufferY, bufferY + countBytesY),
+				stride:strideY
+			},
+			u: {
+				bytes: HEAPU8.subarray(bufferCb, bufferCb + countBytesCb),
+				stride: strideCb
+			},
+			v: {
+				bytes: HEAPU8.subarray(bufferCr, bufferCr + countBytesCr),
+				stride: strideCr
+			}
 		};
 	}
 

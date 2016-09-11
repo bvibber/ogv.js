@@ -53,7 +53,7 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 							 image->planes[1], image->stride[1],
 							 image->planes[2], image->stride[2],
 							 image->w, image->d_h,
-							 1, 1); // @todo pixel format
+							 image->w >> 1, image->d_h >> 1); // @todo pixel format
 	}
 	return foundImage;
 }

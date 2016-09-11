@@ -2,7 +2,7 @@
 extern void ogvjs_callback_init_audio(int channels, int rate);
 
 extern void ogvjs_callback_init_video(int frameWidth, int frameHeight,
-                                      int hdec, int vdec,
+                                      int chromaWidth, int chromaHeight,
                                       double fps,
                                       int picWidth, int picHeight,
                                       int picX, int picY,

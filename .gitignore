@@ -4,7 +4,6 @@ npm-debug.log
 build
 dist
 zip
-src/js/generated
 a.out.js
 .libs
 

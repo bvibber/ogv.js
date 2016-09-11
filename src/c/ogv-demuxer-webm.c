@@ -235,7 +235,7 @@ static int processBegin() {
 			hasVideo = 0;
 		} else {
 			ogvjs_callback_init_video(videoParams.width, videoParams.height,
-			                          1, 1, // @todo assuming 4:2:0
+			                          videoParams.width >> 1, videoParams.height >> 1, // @todo assuming 4:2:0
 			                          0, // @todo get fps
 			                          videoParams.width - videoParams.crop_left - videoParams.crop_right,
 			                          videoParams.height - videoParams.crop_top - videoParams.crop_bottom,

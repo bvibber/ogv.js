@@ -4,23 +4,23 @@
 mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_init_video: function(frameWidth, frameHeight,
-	                                    hdec, vdec,
+	                                    chromaWidth, chromaHeight,
                                         fps,
                                         picWidth, picHeight,
                                         picX, picY,
                                         displayWidth, displayHeight) {
 		Module.videoFormat = {
-			frameWidth: frameWidth,
-			frameHeight: frameHeight,
-			hdec: hdec,
-			vdec: vdec,
-			fps: fps,
-			picWidth: picWidth,
-			picHeight: picHeight,
-			picX: picX,
-			picY: picY,
+			width: frameWidth,
+			height: frameHeight,
+			chromaWidth: chromaWidth,
+			chromaHeight: chromaHeight,
+			cropLeft: picX,
+			cropTop: picY,
+			cropWidth: picWidth,
+			cropHeight: picHeight,
 			displayWidth: displayWidth,
-			displayHeight: displayHeight
+			displayHeight: displayHeight,
+			fps: fps
 		};
 	},
 

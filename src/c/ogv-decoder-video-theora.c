@@ -54,7 +54,7 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 			display_width = display_width * theoraInfo.aspect_numerator / theoraInfo.aspect_denominator;
 		}
 		ogvjs_callback_init_video(theoraInfo.frame_width, theoraInfo.frame_height,
-		                          hdec, vdec,
+		                          theoraInfo.frame_width >> hdec, theoraInfo.frame_height >> vdec,
 		                          (float) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
 		                          theoraInfo.pic_width, theoraInfo.pic_height,
 		                          theoraInfo.pic_x, theoraInfo.pic_y,
@@ -86,7 +86,7 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 							 ycbcr[1].data, ycbcr[1].stride,
 							 ycbcr[2].data, ycbcr[2].stride,
 							 theoraInfo.frame_width, theoraInfo.frame_height,
-							 hdec, vdec);
+							 theoraInfo.frame_width >> hdec, theoraInfo.frame_height >> vdec);
         return 1;
     } else {
         //printf("Theora decoder failed mysteriously? %d\n", ret);
