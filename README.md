@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.2.0alpha0 - 2016-09-11-??
+* Separated software and WebGL paths to yuv-canvas package
+
 1.1.3 - 2016-06-27
 * fix play-during-seek bug that interacted with video.js badly
 
@@ -193,12 +196,7 @@ Note that at these lower resolutions, Vorbis audio and Theora video decoding are
 
 *WebGL drawing acceleration*
 
-Accelerated YCbCr->RGB conversion and drawing is done using WebGL on supporting browsers (Firefox, Chrome, IE 11, Edge, and Safari for iOS 8 & OS X 10.9), and is enabled by default if available.
-
-WebGL noticeably improves playback performance at HD and SD resolutions.
-
-Early versions of IE 11 do not support luminance or alpha textures, and in IE 11 update 1 and Edge they are still unexpectedly slow on Windows (in all browsers so far). As a workaround, on Windows the data is packed into RGBA textures for faster texture upload and unpacked in the shader. See [GPU acceleration page](https://github.com/brion/ogv.js/wiki/GPU-acceleration) for more info.
-
+Accelerated YCbCr->RGB conversion and drawing is done using WebGL on supporting browsers, or through software CPU conversion if not. This is abstracted in the [yuv-canvas](https://github.com/brion/yuv-canvas) package, now separately installable.
 
 It may be possible to do further acceleration of actual decoding operations using WebGL shaders, but this could be ... tricky. WebGL is also only available on the main thread, and there are no compute shaders yet so would have to use fragment shaders.
 
