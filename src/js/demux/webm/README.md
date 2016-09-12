@@ -37,6 +37,10 @@ __Example of Element spread across 2 buffers__
 
 ![Alt](./EBML.png)
 
+__Closeup of Vint or Element ID__
+
+![Alt](./vint.png)
+
 # API
 
 ## Properties
