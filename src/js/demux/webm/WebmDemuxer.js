@@ -33,6 +33,21 @@ class DataInterface{
         this.tempVintWidth = null;
         this.tempResult = null;
         this.tempCounter = null;
+        this.usingBufferedRead = false;
+        
+        /**
+         * Returns the bytes left in the current buffer
+         */
+        Object.defineProperty(this, 'remainingBytes' , {
+
+            get: function () {
+                if (this.dataBuffers.length === 0)
+                    return 0;
+                else
+                    return this.dataBuffers[0].byteLength - this.internalPointer;
+            }
+        });
+        
         
     }
     
@@ -116,7 +131,7 @@ class DataInterface{
     }
     
     readVint() {
-        
+        console.warn("here");
         if(this.dataBuffers.length === 0)
             return null; //Nothing to parse
   
@@ -134,6 +149,22 @@ class DataInterface{
                 this.popBuffer();
 
         }
+        
+        if(this.usingBufferedRead ||  this.remainingBytes < (this.tempOctetWidth - 1)){
+            this.usingBufferedRead = true;
+            var result = this.bufferedReadVint();
+            return (!result) ? null : result; 
+        }else{
+            
+            return this.forceReadVint();
+        }
+       
+        
+        
+        
+    }
+    
+    bufferedReadVint(){
         
         //We will have at least one byte to read
         var tempByte;
@@ -168,17 +199,65 @@ class DataInterface{
         this.tempOctet = null;
         this.tempByteBuffer = 0;
         this.tempByteCounter = 0;
+        this.usingBufferedRead = false;
         
         return result;
         
     }
     
-    bufferedReadVint(){
+    forceReadVint() {
         
-    }
-    
-    forceReadVint(){
-        
+        var result;
+        switch (this.tempOctetWidth) {
+            case 1:
+                result = this.tempOctet & 0x7F;
+                break;
+            case 2:
+                result = this.tempOctet & 0x3F;
+                result = (result << 8) | this.currentBuffer.getUint8(this.internalPointer);
+                this.incrementPointers();
+                break;
+            case 3:
+                result = this.tempOctet & 0x1F;
+                result = (result << 16) | this.currentBuffer.getUint16(this.internalPointer);
+                this.incrementPointers(2);
+                break;
+            case 4:
+                result = this.tempOctet & 0x0F;
+                result = (result << 16) | this.currentBuffer.getUint16(this.internalPointer);
+                this.incrementPointers(2);
+                result = (result << 8) | this.currentBuffer.getUint8(this.internalPointer);
+                this.incrementPointers();
+                break;
+            case 5:
+                console.warn("finish this");
+                break;
+            case 6:
+                /* fix this */
+                console.warn("finish this");
+                break;
+            case 7:
+                /* fix this */
+                console.warn("finish this");
+                break;
+            case 8:
+                result = this.tempOctet & 0x00;
+                //Largest allowable integer in javascript is 2^53-1 so gonna have to use one less bit for now
+                result = (result << 8) | this.currentBuffer.getUint8(this.internalPointer);
+                this.incrementPointers();
+                result = (result << 16) | this.currentBuffer.getUint16(this.internalPointer);
+                this.incrementPointers(2);
+                result = (result << 32) | this.currentBuffer.getUint32(this.internalPointer);
+                this.incrementPointers(4);
+                break;
+        }
+
+        if (this.getRemainingBytes() === 0)
+            this.popBuffer();
+
+        this.tempOctetWidth = null;
+        this.tempOctet = null;
+        return result;
     }
     
     bufferedReadId(){
@@ -380,85 +459,6 @@ class ElementHeader{
     
 }
 
-class VINT {
-
-    constructor(raw, width, data) {
-        this.raw = raw; //used for easily getting id
-        this.width = width;
-        this.data = data;
-    }
-
-
-    static read(dataview, offset) {
-
-        var tempOctet = dataview.getUint8(offset);
-
-        var leadingZeroes = 0;
-        var zeroMask = 0x80;
-        do {
-            if (tempOctet & zeroMask)
-                break;
-
-            zeroMask = zeroMask >> 1;
-            leadingZeroes++;
-
-        } while (leadingZeroes < 8);
-
-        //Set the width of the octet
-        var vint_width = leadingZeroes + 1;
-        var vint_data;
-        var vint_raw;
-
-
-        switch (vint_width) {
-            case 1:
-                vint_raw = tempOctet;
-                vint_data = tempOctet & 0x7F;
-                break;
-            case 2:
-                vint_raw = dataview.getUint16(offset);
-                vint_data = vint_raw & 0x3FFF;
-                break;
-            case 3:
-                vint_raw = dataview.getUint32(offset) >> 8;
-                vint_data = vint_raw & 0x1FFFFF;
-                break;
-            case 4:
-                vint_raw = dataview.getUint32(offset);
-                vint_data = vint_raw & 0x0FFFFFFF;
-                break;
-            case 5:
-                vint_raw = dataview.getUint32(offset);
-                var secondInt = dataview.getUint8(offset + 4);
-                vint_raw = (firstInt << 8) | secondInt;
-                vint_data = vint_raw & 0x07FFFFFFFF;
-                break;
-            case 6:
-                vint_raw = dataview.getUint32(offset);
-                var secondInt = dataview.getUint16(offset + 4);
-                vint_raw = (firstInt << 16) | secondInt;
-                vint_data = vint_raw & 0x01FFFFFFFFFF;
-                break;
-            case 7:
-                vint_raw = dataview.getUint32(offset);
-                var secondInt = dataview.getUint32(offset + 4) & 0xFFFFFF;
-                vint_raw = (firstInt << 24) | secondInt;
-                vint_data = vint_raw & 0x01FFFFFFFFFFFF;
-                break;
-            case 8:
-                //Largest allowable integer in javascript is 2^53-1 so gonna have to use one less bit for now
-                vint_raw = dataview.getFloat64(offset);
-                var firstInt = dataview.getUint32(offset) & 0x000FFFFF;
-                var secondInt = dataview.getUint32(offset + 4);
-                vint_data = (firstInt << 32) | secondInt;
-                break;
-        }
-
-        return new VINT(vint_raw, vint_width, vint_data);
-
-    }
-
-}
 
 
 class OGVDemuxerWebM {

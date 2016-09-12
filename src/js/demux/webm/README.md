@@ -1,4 +1,4 @@
-# FlareWebmDemuxer
+# Webm Demuxer
 A javascript implementation of the Webm Demuxer (matroska).
 
 Building for the OGV.js project.
