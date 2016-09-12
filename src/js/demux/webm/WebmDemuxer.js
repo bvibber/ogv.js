@@ -19,65 +19,67 @@ class OGVDemuxerWebM {
         this.segmentDataOffset;
         this.headerIsLoaded = false;
         this.currentElement = null;
-        
+
         //Only need this property cause nest egg has it
 ////
-        Object.defineProperty(this, 'videoCodec' , {
-            
-            get : function(){
+        Object.defineProperty(this, 'videoCodec', {
+
+            get: function () {
                 var codecID;
-               //Multiple video tracks are allowed, for now just return the first one
-                for(var i in this.tracks.trackEntries){
+                //Multiple video tracks are allowed, for now just return the first one
+                for (var i in this.tracks.trackEntries) {
                     var trackEntry = this.tracks.trackEntries[i];
-                    if(trackEntry instanceof VideoTrack){
+                    if (trackEntry instanceof VideoTrack) {
                         codecID = trackEntry.info.codecID;
                         break;
                     }
-                        
-                        
+
+
                 }
                 var codecName;
-                switch(codecID){
+                switch (codecID) {
                     case "V_VP8" :
-                        codecName =  "vp8";
+                        codecName = "vp8";
                         break;
                     default:
                         codecName = null;
                         break;
-                };
-                
+                }
+                ;
+
                 return codecName;
-                        
+
             }
         });
-        
-        
-        Object.defineProperty(this, 'audioCodec' , {
-            
-            get : function(){
+
+
+        Object.defineProperty(this, 'audioCodec', {
+
+            get: function () {
                 var codecID;
-               //Multiple video tracks are allowed, for now just return the first one
-                for(var i in this.tracks.trackEntries){
+                //Multiple video tracks are allowed, for now just return the first one
+                for (var i in this.tracks.trackEntries) {
                     var trackEntry = this.tracks.trackEntries[i];
-                    if(trackEntry instanceof AudioTrack){
+                    if (trackEntry instanceof AudioTrack) {
                         codecID = trackEntry.info.codecID;
                         break;
                     }
-                        
-                        
+
+
                 }
                 var codecName;
-                switch(codecID){
+                switch (codecID) {
                     case "A_VORBIS" :
-                        codecName =  "vorbis";
+                        codecName = "vorbis";
                         break;
                     default:
                         codecName = null;
                         break;
-                };
-                
+                }
+                ;
+
                 return codecName;
-                        
+
             }
         });
     }
@@ -88,80 +90,80 @@ class OGVDemuxerWebM {
     }
 
     receiveInput(data, callback) {
-        
+
         //this.bufferQueue.push(new DataView(data));
         this.dataInterface.recieveInput(data);
         callback();
-        
+
     }
 
     process(callback) {
+
         this.processing = true;
-        console.log("processing!");
-        if(!this.headerIsLoaded){
-       
+        if (!this.headerIsLoaded) {
+
             this.loadHeader();
-            
+
             callback();
 
-        }else{
+        } else {
             console.log(this);
         }
-        
-        if(!this.segmentIsLoaded){
+
+        if (!this.segmentIsLoaded) {
             //this.loadSegment();
         }
-        
+
         //this.tempParse();
         //if (this.state === 0) {
-            
-            //this.parseHeader();
-            //this.parse();
-            //this.loadedMetadata = true;
-            //this.state = 1;
+
+        //this.parseHeader();
+        //this.parse();
+        //this.loadedMetadata = true;
+        //this.state = 1;
         //}
         this.processing = false;
         //callback();
-        
-        
+
+
     }
-    
-    loadSegment(){
-        
-        
+
+    loadSegment() {
+
+
         this.segmentIsLoaded = true;
     }
-    
-    loadHeader(){
+
+    loadHeader() {
         //Header is small so we can read the whole thing in one pass or just wait for more data if necessary
-        
-        
+
+
         //only load it if we didnt already load it
-        if(!this.elementEBML){
+        if (!this.elementEBML) {
             this.elementEBML = this.dataInterface.peekElement();
             if (!this.elementEBML)
                 return null;
-            
+
             if (this.elementEBML.id !== 0x1A45DFA3) { //EBML 
                 //If the header has not loaded and the first element is not the header, do not continue
                 console.warn('INVALID PARSE, HEADER NOT LOCATED');
             }
         }
-            
-        
-        if(!this.dataInterface.markerIsSet)
+
+
+        if (!this.dataInterface.markerIsSet)
             this.dataInterface.setMarker();
-        
+
         while (this.dataInterface.markerBytesRead < this.elementEBML.size) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
                     return null;
             }
-            console.log("id check");
-    
+
+
             switch (this.currentElement.id) {
-                
+
                 case 0x4286: //EBMLVersion
                     var version = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (version !== null)
@@ -169,120 +171,120 @@ class OGVDemuxerWebM {
                     else
                         return null;
                     break;
-                    
+
                 case 0x42F7: //EBMLReadVersion 
                     var readVersion = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (readVersion !== null)
-                        this.readVersion  = readVersion;
+                        this.readVersion = readVersion;
                     else
                         return null;
                     break;
-                    
+
                 case 0x42F2: //EBMLMaxIDLength
                     var maxIdLength = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (maxIdLength !== null)
-                        this.maxIdLength  = maxIdLength;
+                        this.maxIdLength = maxIdLength;
                     else
                         return null;
                     break;
-                    
+
                 case 0x42F3: //EBMLMaxSizeLength
                     var maxSizeLength = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (maxSizeLength !== null)
-                        this.maxSizeLength  = maxSizeLength;
+                        this.maxSizeLength = maxSizeLength;
                     else
                         return null;
                     break;
-                    
+
                 case 0x4282: //DocType
                     var docType = this.dataInterface.readString(this.currentElement.size);
                     if (docType !== null)
-                        this.docType  = docType;
+                        this.docType = docType;
                     else
                         return null;
                     break;
-                    
+
                 case 0x4287: //DocTypeVersion //worked
                     var docTypeVersion = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (docTypeVersion !== null)
-                        this.docTypeVersion  = docTypeVersion;
+                        this.docTypeVersion = docTypeVersion;
                     else
                         return null;
                     break;
-                    
+
                 case 0x4285: //DocTypeReadVersion //worked
                     var docTypeReadVersion = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (docTypeReadVersion !== null)
-                        this.docTypeReadVersion  = docTypeReadVersion;
+                        this.docTypeReadVersion = docTypeReadVersion;
                     else
                         return null;
                     break;
                 default:
                     console.warn("Header element not found, skipping");
                     break;
-                    
+
             }
-            
+
             this.currentElement = null;
         }
         this.dataInterface.removeMarker();
         this.headerIsLoaded = true;
-        
+
     }
-    
-    tempParse(){
-        
+
+    tempParse() {
+
         //Only pull a new header if we don't already have one
-        if(!this.currentElement)
+        if (!this.currentElement)
             this.currentElement = this.dataInterface.peekElement();
-        
-        
-        
-        while(this.currentElement){
-            
+
+
+
+        while (this.currentElement) {
+
         }
-   
+
         //Possibly for it to return false multiple times if needs a lot of chunks for each block or something
-        if(this.currentElement){
+        if (this.currentElement) {
             //only do work if we can pull an element header
-            switch(this.currentElement.id){
+            switch (this.currentElement.id) {
                 case 0x1A45DFA3: //EBML HEADER
                     this.loadHeader();
             }
             /*
-            if(!this.headerHasLoaded){
-                //if our header has not loaded, must load first
-                if (this.currentElement.id !== 0x1A45DFA3) { //EBML code
-                    //If the header has not loaded and the first element is not the header, do not continue
-                    console.warn('INVALID PARSE, HEADER NOT LOCATED');
-                }
-                
-                if(this.dataInterface.peekBytes(this.currentElement.size)){
-                    //We are safe to read entire element
-                    this.loadHeader();
-                }
-                
-            }else{
-                //Doing work here
-                
-            }
-                                                            */
-        
+             if(!this.headerHasLoaded){
+             //if our header has not loaded, must load first
+             if (this.currentElement.id !== 0x1A45DFA3) { //EBML code
+             //If the header has not loaded and the first element is not the header, do not continue
+             console.warn('INVALID PARSE, HEADER NOT LOCATED');
+             }
+             
+             if(this.dataInterface.peekBytes(this.currentElement.size)){
+             //We are safe to read entire element
+             this.loadHeader();
+             }
+             
+             }else{
+             //Doing work here
+             
+             }
+             */
+
         }
-        
+
         console.log(element);
     }
-    
-    parse(){
-        
+
+    parse() {
+
         var dataView = this.bufferQueue[0];
         var offset = this.headerSize;
-        
+
         var end = offset + dataView.byteLength;
         var elementId;
         var elementSize;
         var elementOffset;
-        
+
 
         elementId = VINT.read(dataView, offset);
         offset += elementId.width;
@@ -293,12 +295,12 @@ class OGVDemuxerWebM {
         if (elementId.raw !== 0x18538067) { //segment code
             console.warn('INVALID Segment');
         }
-         
-        
+
+
 
 
         while (offset < end) {
-            
+
             //console.log(offset +","+ end);
             elementOffset = offset;
             elementId = VINT.read(dataView, offset);
@@ -317,7 +319,7 @@ class OGVDemuxerWebM {
                     info.parse();
                     this.segmentInfo.push(info);
                     break;
-                
+
                 case 0x1654AE6B: //Tracks
                     this.tracks = new Tracks(dataView);
                     this.tracks.offset = elementOffset;
@@ -330,7 +332,7 @@ class OGVDemuxerWebM {
                     this.cues.offset = elementOffset;
                     this.cues.size = elementSize.data;
                     this.cues.dataOffset = offset;
-                    break; 
+                    break;
                 case 0x114D9B74: //SeekHead
                     this.seekHead = new SeekHead(dataView);
                     this.seekHead.offset = elementOffset;
@@ -338,41 +340,41 @@ class OGVDemuxerWebM {
                     this.seekHead.dataOffset = offset;
                     this.seekHead.parse();
                     break;
-                    
+
                 case 0x1043A770: // Chapters
                     console.log("found chapters");
                     /*
-                    this.chapters = new Chapters(this.dataView);
-                    this.chapters.offset = elementOffset;
-                    this.chapters.size = elementSize.data;
-                    this.chapters.dataOffset = offset;
-                    this.chapters.parse();
-                                            */
+                     this.chapters = new Chapters(this.dataView);
+                     this.chapters.offset = elementOffset;
+                     this.chapters.size = elementSize.data;
+                     this.chapters.dataOffset = offset;
+                     this.chapters.parse();
+                     */
                     break;
                 case 0x1254C367: //Tags
                     console.log("found tags");
                     /*
-                    this.tags = new Tags(this.dataView);
-                    this.tags.offset = elementOffset;
-                    this.tags.size = elementSize.data;
-                    this.tags.dataOffset = offset;
-                    this.tags.parse();
-                                                */
+                     this.tags = new Tags(this.dataView);
+                     this.tags.offset = elementOffset;
+                     this.tags.size = elementSize.data;
+                     this.tags.dataOffset = offset;
+                     this.tags.parse();
+                     */
                     break;
-                //For now just load cluster data here    
+                    //For now just load cluster data here    
                 case 0x1F43B675: //Cluster
                     var cluster;
                     console.log("found cluster");
                     /*
-                    cluster = new Cluster(this.dataView);
-                    cluster.offset = elementOffset;
-                    cluster.size = elementSize.data;
-                    cluster.dataOffset = offset;
-                    cluster.parse();
-                    this.cluster = cluster;
-                                                    */
+                     cluster = new Cluster(this.dataView);
+                     cluster.offset = elementOffset;
+                     cluster.size = elementSize.data;
+                     cluster.dataOffset = offset;
+                     cluster.parse();
+                     this.cluster = cluster;
+                     */
                     break;
-                  
+
                 case 0xEC: //Void
                     //skip it
                     break;
@@ -382,37 +384,37 @@ class OGVDemuxerWebM {
 
 
             }
-            
-        
-            
+
+
+
 
 
             offset += elementSize.data;
-            
+
         }
     }
-    
-    parseInfo(){
-        
+
+    parseInfo() {
+
     }
 
     parseHeader() {
-        
+
         var dataView = this.bufferQueue[0];
         var offset = 0;//assume header starts at 0 for now
         var headerOffset = offset;
         var elementId;
         var elementSize;
-        
+
         elementId = VINT.read(dataView, offset);
         offset += elementId.width;
         elementSize = VINT.read(dataView, offset);
         offset += elementSize.width;
-        
+
         if (elementId.raw !== 0x1A45DFA3) { //EBML code
-           // console.warn('INVALID HEADER');
+            // console.warn('INVALID HEADER');
         }
-        
+
 
 
         var end = headerOffset + elementId.width + elementSize.width + elementSize.data; //total header size
@@ -450,9 +452,9 @@ class OGVDemuxerWebM {
                 default:
                     console.warn("not found");
                     break;
-                   
+
             }
-             offset += elementSize.data;
+            offset += elementSize.data;
         }
 
         if (offset !== end) {
@@ -470,21 +472,21 @@ class OGVDemuxerWebM {
                 this.maxSizeLength > 8) {
             console.warn("invalid file format");
         }
-        
+
         this.state = 1; //Set State To Decode Ready
         console.log(this);
 
     }
-    
+
     static readFloat(dataView, offset, size) {
         //need to fix overflow for 64bit unsigned int
-        if (offset < 0 && (size === 4  || size === 8)) {
+        if (offset < 0 && (size === 4 || size === 8)) {
             console.warn("invalid float size");
         }
 
-        if (size === 4){
+        if (size === 4) {
             return dataView.getFloat32(offset);
-        }else{
+        } else {
             return dataView.getFloat64(offset);
         }
 
@@ -525,12 +527,13 @@ class OGVDemuxerWebM {
         }
         return tempString;
     }
-};
+}
+;
 
 
-class Cues{
-    
-    constructor(dataView){
+class Cues {
+
+    constructor(dataView) {
         this.dataView = dataView;
         this.offset;
         this.dataOffset;
@@ -541,47 +544,47 @@ class Cues{
         this.preloadCount;
         //this.position;
     }
-    
-    getCount(){
+
+    getCount() {
         return this.cuePoints.length;
     }
-    
-    init(){
-        
+
+    init() {
+
     }
-    
-    preloadCuePoint(){
-        
+
+    preloadCuePoint() {
+
     }
-    
-    find(){
-        
+
+    find() {
+
     }
-    
-    getFirst(){
-        
+
+    getFirst() {
+
     }
-    
-    getLast(){
-        
+
+    getLast() {
+
     }
-    
-    getNext(){
-        
+
+    getNext() {
+
     }
-    
-    getBlock(){
-        
+
+    getBlock() {
+
     }
-    
-    findOrPreloadCluster(){
-        
+
+    findOrPreloadCluster() {
+
     }
-    
+
 }
 
 class SegmentInfo {
-    
+
     constructor(dataView) {
         this.dataView = dataView;
         this.offset;
@@ -595,20 +598,20 @@ class SegmentInfo {
         this.duration;
 
     }
-    
-    parse(){
+
+    parse() {
         console.log("parsing segment info");
         var end = this.dataOffset + this.size;
         var offset = this.dataOffset;
-        
+
         var elementId;
         var elementSize;
         var elementOffset;
         this.timecodeScale = 1000000;
         this.duration = -1;
-                
+
         while (offset < end) {
-            
+
             elementOffset = offset;
             elementId = VINT.read(this.dataView, offset);
             offset += elementId.width;
@@ -617,26 +620,26 @@ class SegmentInfo {
 
 
             switch (elementId.raw) {
-                
+
                 case 0x2AD7B1: // TimecodeScale
-                    this.timecodeScale = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementSize.data );
+                    this.timecodeScale = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementSize.data);
                     if (this.timecodeScale <= 0)
-                    console.warn("Invalid timecode scale");
+                        console.warn("Invalid timecode scale");
                     break;
                 case 0x4489: // Duration
-                    this.duration = OGVDemuxerWebM.readFloat(this.dataView, offset, elementSize.data );
+                    this.duration = OGVDemuxerWebM.readFloat(this.dataView, offset, elementSize.data);
                     if (this.duration <= 0)
-                    console.warn("Invalid duration");
-                    break;    
+                        console.warn("Invalid duration");
+                    break;
                 case 0x4D80: // MuxingApp
-                    this.muxingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data );             
+                    this.muxingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
                     break;
                 case 0x5741: //WritingApp
-                    this.writingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data );
-                    
+                    this.writingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
+
                     break;
                 case 0x7BA9:  //Title                   
-                    this.title = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data );
+                    this.title = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
                     break;
                 default:
                     console.warn("segment info element not found");
@@ -648,19 +651,16 @@ class SegmentInfo {
 
 
             offset += elementSize.data;
-            
+
         }
-        
+
     }
-    
-    
-    
-    
+
 }
 
-class Tracks{
-    
-    constructor(dataView){
+class Tracks {
+
+    constructor(dataView) {
         this.dataView = dataView;
         this.segment;
         this.offset;
@@ -668,11 +668,9 @@ class Tracks{
         this.size;
         this.trackEntries;
         this.trackEntriesEnd;
-        
+
     }
-    
-    
-    
+
     parse() {
         console.log("parsing tracks");
         this.trackEntries = null;
@@ -706,7 +704,7 @@ class Tracks{
         if (count < 0) {
             return;//done
         }
-        
+
         this.trackEntries = [];//new array(count);
         //this.trackEntriesEnd = this.trackEntries;
 
@@ -733,10 +731,9 @@ class Tracks{
             offset += elementWidth.data;
         }
     }
-    
-    
-    ParseTrackEntry(dataOffset, size){
-        
+
+    ParseTrackEntry(dataOffset, size) {
+
         var trackEntry;// = new Track();
         var trackInfo = new TrackInfo();
         var videoSettings = new TrackSettings();
@@ -744,14 +741,14 @@ class Tracks{
         var encodingSettings = new TrackSettings();
         var lacing = 1;
 
-        
+
         var end = dataOffset + size;
         var offset = dataOffset;
         var elementId;
         var elementWidth;
         var elementOffset;
         var lacing;
-        
+
         while (offset < end) {
             //5621
             elementOffset = offset;
@@ -761,8 +758,8 @@ class Tracks{
             offset += elementWidth.width;
 
 
-            switch(elementId.raw){
-                case 0xE0 : // Video
+            switch (elementId.raw) {
+                case 0xE0: // Video
                     videoSettings.offset = elementOffset;
                     videoSettings.dataOffset = offset;
                     videoSettings.size = elementWidth.data;
@@ -781,28 +778,28 @@ class Tracks{
                     //need to get uid
                     break;
                 case 0xD7 : //TrackNumber
-                    trackInfo.number = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+                    trackInfo.number = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x83 : //TrackType
-                    trackInfo.type = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+                    trackInfo.type = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x536E : //Name
-                    trackInfo.name = OGVDemuxerWebM.readString(this.dataView,offset, elementWidth.data);
+                    trackInfo.name = OGVDemuxerWebM.readString(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x258688 : //CodecName
-                    trackInfo.codecName = OGVDemuxerWebM.readString(this.dataView,offset, elementWidth.data);
+                    trackInfo.codecName = OGVDemuxerWebM.readString(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x22B59C: //Language
-                    trackInfo.language = OGVDemuxerWebM.readString(this.dataView,offset, elementWidth.data);
+                    trackInfo.language = OGVDemuxerWebM.readString(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x23E383 : //DefaultDuration
-                    trackInfo.defaultDuration = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+                    trackInfo.defaultDuration = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x86 : //CodecID
-                    trackInfo.codecID = OGVDemuxerWebM.readString(this.dataView,offset, elementWidth.data);
+                    trackInfo.codecID = OGVDemuxerWebM.readString(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x9C : //FlagLacing
-                    lacing = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+                    lacing = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     if ((lacing < 0) || (lacing > 1))
                         console.warn("invalid lacing");
                     break;
@@ -810,23 +807,23 @@ class Tracks{
                     //need to fill binary
                     break;
                 case 0x258688 : //CodecName
-                    trackInfo.codecName = OGVDemuxerWebM.readString(this.dataView,offset, elementWidth.data);
+                    trackInfo.codecName = OGVDemuxerWebM.readString(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x56AA: //CodecDelay
-                    trackInfo.codecDelay = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+                    trackInfo.codecDelay = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     break;
                 case 0x56BB : //SeekPreRoll
-                    trackInfo.seekPreRoll = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+                    trackInfo.seekPreRoll = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     break;
                 default:
                     console.warn("track type not found id:" + elementId.raw);
                     break;
             }
-            
-            
+
+
             offset += elementWidth.data;
         }
-        
+
         if (offset !== end)
             console.warn("invalid track");
 
@@ -842,45 +839,45 @@ class Tracks{
         trackInfo.lacing = (lacing > 0) ? true : false;
         console.log("NOT UPDATING");
 
-        
-        if(trackInfo.type === 1){ // 1 for video track
+
+        if (trackInfo.type === 1) { // 1 for video track
             console.log("loading video track");
             if (videoSettings.offset < 0 || audioSettings.offset >= 0)
                 console.warn("invalid video settings");
             trackInfo.settings = videoSettings;
             trackEntry = new VideoTrack(this.dataView, trackInfo);
             trackEntry.parse();
-            
-        }else if(trackInfo.type === 2){ // 2 for audio track
+
+        } else if (trackInfo.type === 2) { // 2 for audio track
             console.log("creating audio track");
             if (audioSettings.offset < 0 || videoSettings.offset >= 0)
                 console.warn("invalid audio settings");
             trackInfo.settings = audioSettings;
             trackEntry = new AudioTrack(this.dataView, trackInfo);
             trackEntry.parse();
-            
-        }else{
+
+        } else {
             console.log("probably subtitles");
         }
-     
-        
+
+
         //console.log(trackInfo);
         return trackEntry;
-        
+
     }
 
 }
 
-class TrackSettings{
-    constructor(){
+class TrackSettings {
+    constructor() {
         this.offset = -1;
         this.size = -1;
     }
 }
 
 
-class Track{
-    constructor(dataView){
+class Track {
+    constructor(dataView) {
         this.dataView = dataView;
         this.offset;
         this.dataOffset;
@@ -888,9 +885,9 @@ class Track{
     }
 }
 
-class VideoTrack extends Track{
-    
-    constructor(dataView , info){
+class VideoTrack extends Track {
+
+    constructor(dataView, info) {
         super(dataView);
         this.width = 0;
         this.height = 0;
@@ -907,8 +904,8 @@ class VideoTrack extends Track{
         this.size = this.settings.size;
         this.color;
     }
-    
-    parse(){
+
+    parse() {
         //5197
 
         var end = this.dataOffset + this.size;
@@ -917,7 +914,7 @@ class VideoTrack extends Track{
         var elementWidth;
         var elementOffset;
 
-        
+
         while (offset < end) {
             elementOffset = offset;
             elementId = VINT.read(this.dataView, offset);
@@ -926,8 +923,8 @@ class VideoTrack extends Track{
             offset += elementWidth.width;
 
 
-            switch(elementId.raw){
-                case 0xB0 : //PixelWidth
+            switch (elementId.raw) {
+                case 0xB0: //PixelWidth
                     this.width = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
                     break;
                 case 0xBA : //PixelHeight
@@ -956,39 +953,39 @@ class VideoTrack extends Track{
                     console.log("video meta not found, id : " + elementId.raw);
                     break;
             }
-            
-            
+
+
             offset += elementWidth.data;
         }
-        
+
         //console.log(this);
     }
-    
+
 }
 
 
-class AudioTrack extends Track{
+class AudioTrack extends Track {
     //5426
-    constructor(dataView , info){
+    constructor(dataView, info) {
         super(dataView);
         //this.width = 0;
         //this.height = 0;
         //5434
-        
+
         this.info = info;
         this.settings = info.settings;
         this.dataOffset = this.settings.dataOffset;
         this.offset = this.settings.offset;
         this.size = this.settings.size;
-        
+
         this.rate = 8000.0;  // MKV default
         this.channels = 1;
         this.bitDepth = 0;
-  
-        
+
+
     }
-    
-    parse(){
+
+    parse() {
         //5197
 
         var end = this.dataOffset + this.size;
@@ -997,7 +994,7 @@ class AudioTrack extends Track{
         var elementWidth;
         var elementOffset;
 
-        
+
         while (offset < end) {
             elementOffset = offset;
             elementId = VINT.read(this.dataView, offset);
@@ -1021,17 +1018,17 @@ class AudioTrack extends Track{
                     console.warn("audio meta not found , id: " + elementId.raw);
                     break;
             }
-            
-            
+
+
             offset += elementWidth.data;
         }
-        
+
         //console.log(this);
     }
-    
+
 }
 
-class TrackInfo{
+class TrackInfo {
     constructor() {
         this.type = 0;
         this.number = 0;
@@ -1044,9 +1041,9 @@ class TrackInfo{
 }
 
 
-class SeekHead{
-    
-    constructor(dataView){
+class SeekHead {
+
+    constructor(dataView) {
         this.dataView = dataView;
         this.offset;
         this.dataOffset;
@@ -1056,8 +1053,8 @@ class SeekHead{
         this.voidElements = [];
         this.voidElementCount = 0;
     }
-    
-    parse(){
+
+    parse() {
         //1495
         console.log("parsing seek head");
         this.entryCount = 0;
@@ -1067,50 +1064,50 @@ class SeekHead{
         var elementId;
         var elementWidth;
         var elementOffset;
-        
+
         while (offset < end) {
-            
+
             //console.log(offset +","+ end);
             elementOffset = offset;
             elementId = VINT.read(this.dataView, offset);
             offset += elementId.width;
             elementWidth = VINT.read(this.dataView, offset);
             offset += elementWidth.width;
-           
-           if(elementId.raw === 0x4DBB){ //Seek
-               var entry = new Entry(this.dataView);
-               entry.dataOffset = offset;
-               entry.offset = elementOffset;
-               entry.size = elementWidth.data;
-               entry.parse();
-               this.entries.push(entry);
-           }else if (elementId.raw === 0xEC){ // Void
-               
-           }
+
+            if (elementId.raw === 0x4DBB) { //Seek
+                var entry = new Entry(this.dataView);
+                entry.dataOffset = offset;
+                entry.offset = elementOffset;
+                entry.size = elementWidth.data;
+                entry.parse();
+                this.entries.push(entry);
+            } else if (elementId.raw === 0xEC) { // Void
+
+            }
 
             offset += elementWidth.data;
-            
+
         }
-        
+
         this.entryCount = this.entries.length;
         this.voidElementCount = this.voidElements.length;
-        
+
     }
-    
+
 }
 
-class Entry{
-    
-    constructor(dataView){
+class Entry {
+
+    constructor(dataView) {
         this.dataView = dataView;
         this.offset;
         this.dataOffset;
         this.size;
         this.id;
-        
+
     }
-    
-    parse(){
+
+    parse() {
         //1732
         //meeds to start with seek id
         this.voidElementCount = 0;
@@ -1119,33 +1116,33 @@ class Entry{
         var elementId;
         var elementWidth;
         var elementOffset;
-        
+
         elementOffset = offset;
         elementId = VINT.read(this.dataView, offset);
-        if(elementId.raw !== 0x53AB){ // SeekID
+        if (elementId.raw !== 0x53AB) { // SeekID
             console.warn("Seek ID not found");
         }
-        
+
         offset += elementId.width;
         elementWidth = VINT.read(this.dataView, offset);
         offset += elementWidth.width;
         this.id = VINT.read(this.dataView, offset).data;
         //this.id = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
         offset += elementWidth.data;
-        
-        
+
+
         elementId = VINT.read(this.dataView, offset);
-        if(elementId.raw !== 0x53AC){ // SeekPosition
+        if (elementId.raw !== 0x53AC) { // SeekPosition
             console.warn("Seek Position not found");
         }
         offset += elementId.width;
         elementWidth = VINT.read(this.dataView, offset);
         offset += elementWidth.width;
-        this.seekPosition = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
+        this.seekPosition = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
         offset += elementWidth.data;
 
     }
-    
+
 }
 
 

@@ -1,6 +1,4 @@
 'use strict';
-//http://localhost:8888/ogv.js/build/demo/#file=Curiosity's_Seven_Minutes_of_Terror.ogv&size=720p.webm
-
 /**
  * @classdesc This class keeps a queue of arraybuffers in order for demuxer to read continuously without having to overwrite anything
  * 
