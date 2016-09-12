@@ -58,6 +58,8 @@ var OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
  */
 var OGVPlayer = function(options) {
+        
+
 	options = options || {};
 
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
@@ -1238,7 +1240,6 @@ var OGVPlayer = function(options) {
 							}
 
 						} else if (readyForFrameDraw) {
-
 							log('play loop: ready to draw frame');
 
 							if (nextFrameTimer) {
@@ -1374,6 +1375,7 @@ var OGVPlayer = function(options) {
 	}
 
 	function readBytesAndWait() {
+                console.log("reading bytes");
 		stream.readBytes();
 	}
 
@@ -1509,7 +1511,7 @@ var OGVPlayer = function(options) {
 				},
 				onread: function(data) {
 					log('got input ' + [data.byteLength]);
-
+                                        console.log('got input ' + [data.byteLength]);
 					// Save chunk to pass into the codec's buffer
 					actionQueue.push(function doReceiveInput() {
 						codec.receiveInput(data, function() {

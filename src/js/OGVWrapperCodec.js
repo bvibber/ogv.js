@@ -8,6 +8,7 @@
  * @license MIT-style
  */
 var OGVLoader = require("./OGVLoader.js");
+var OGVDemuxerWebM = require("./demux/webm/WebmDemuxer.js");
 
 var OGVWrapperCodec = (function(options) {
 	options = options || {};
@@ -153,7 +154,23 @@ var OGVWrapperCodec = (function(options) {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		processing = true;
-		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
+                
+                if(demuxerClassName === 'OGVDemuxerWebM'){
+                    
+                    demuxer = new OGVDemuxerWebM();
+                    demuxer.onseek = function(offset) {
+				if (self.onseek) {
+					self.onseek(offset);
+				}
+		    };
+                    window.demuxer = demuxer;//testing only
+	            demuxer.init(function() {
+				processing = false;
+				callback();
+		    });
+                        
+                }else{
+                  OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
 			demuxer.onseek = function(offset) {
 				if (self.onseek) {
@@ -164,7 +181,9 @@ var OGVWrapperCodec = (function(options) {
 				processing = false;
 				callback();
 			});
-		});
+		});  
+                }
+		
 	};
 
 	self.close = function() {
@@ -183,6 +202,7 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.receiveInput = function(data, callback) {
+            console.log("getting input");
 		demuxer.receiveInput(data, callback);
 	};
 
@@ -191,8 +211,11 @@ var OGVWrapperCodec = (function(options) {
 		opus: 'OGVDecoderAudioOpus'
 	};
 	function loadAudioCodec(callback) {
+            
 		if (demuxer.audioCodec) {
+                    
 			var className = audioClassMap[demuxer.audioCodec];
+                        console.log("got audio classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(audioCodecClass) {
 				var audioOptions = {};
@@ -221,6 +244,7 @@ var OGVWrapperCodec = (function(options) {
 	function loadVideoCodec(callback) {
 		if (demuxer.videoCodec) {
 			var className = videoClassMap[demuxer.videoCodec];
+                        console.log("got video classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(videoCodecClass) {
 				var videoOptions = {};

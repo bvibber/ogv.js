@@ -21,7 +21,7 @@ function StreamFile(options) {
 		onread = options.onread || function(){},
 		ondone = options.ondone || function(){},
 		onerror = options.onerror || function(){},
-		bufferSize = options.bufferSize || 8192,
+		bufferSize = 10;//options.bufferSize || 8192,
 		seekPosition = options.seekPosition || 0,
 		bufferPosition = seekPosition,
 		chunkSize = options.chunkSize || 1024 * 1024, // read/buffer up to a megabyte at a time
