@@ -163,7 +163,15 @@ class OGVDemuxerWebM {
                     this.seekHead.load();
                     if (!this.seekHead.loaded)
                         return;
+                    break;
+                case 0xEC: //VOid
+                    if (!this.dataInterface.peekBytes(this.currentElement.size))
+                        return;
+                    else
+                        console.warn("bytes Peeked");
+                        this.dataInterface.skipBytes(this.currentElement.size);
                     this.state = META_LOADED;//testing
+                    console.log("FOUND VOID, SKIPPING");
                     break;
                 default:
                     console.warn("body element not found, skipping");

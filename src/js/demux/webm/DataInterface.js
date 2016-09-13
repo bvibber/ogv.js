@@ -331,20 +331,40 @@ class DataInterface{
      * @returns {boolean} has enough bytes to read
      */
     peekBytes(n){
+        console.warn("Peeking bytes");
+        if(this.dataBuffers.length === 0)
+            return false; //No bytes
+        //
         //First check if the first buffer has enough remaining bytes, don't need to loop if this is the case
-        var currentBufferBytes = this.dataBuffers[0].byteLength - this.internalPointer - n;
+        var currentBufferBytes = this.currentBuffer.byteLength - this.internalPointer - n;
         //If we have enough in this buffer just return true
-        if(currentBufferBytes > 0)
+        if(currentBufferBytes === 0)
             return true;
         
-        if((this.getTotalBytes() - this.internalPointer - n) > 0)
+        var totalBytes = this.getTotalBytes();
+        if((totalBytes - this.internalPointer - n) === 0)
             return true;
         else 
             return false;
     }
     
+    /**
+     * Skips set amount of bytes
+     * TODO: Make this more efficient with skipping over different buffers, add stricter checking
+     * @param {number} bytesToSkip
+     */
+    skipBytes(bytesToSkip){
+        for (var i =0; i < bytesToSkip; i++){
+            this.readByte();
+            
+            if (this.remainingBytes === 0)
+                this.popBuffer();
+        }
+        
+    }
+    
     getTotalBytes(){
-        var totalBytes;
+        var totalBytes = 0;
         for(var i in this.dataBuffers){
             totalBytes += this.dataBuffers[i].byteLength;
         }
