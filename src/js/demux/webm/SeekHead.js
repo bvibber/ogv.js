@@ -1,6 +1,5 @@
 'use strict';
-var DataInterface = require('./DataInterface.js');
-var NO_MARKER = -1;
+const NO_MARKER = -1;
 
 class SeekHead {
 

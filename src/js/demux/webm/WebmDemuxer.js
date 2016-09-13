@@ -2,6 +2,8 @@
 
 var DataInterface = require('./DataInterface.js');
 var SeekHead = require('./SeekHead.js');
+var SegmentInfo = require('./SegmentInfo.js');
+
 //States
 const INITIAL_STATE = 0;
 const HEADER_LOADED = 1;
@@ -31,6 +33,7 @@ class OGVDemuxerWebM {
         this.currentElement = null;
         this.markerIsSet = false;
         this.marker = NO_MARKER;
+        this.segmentInfo = null; // assuming 1 for now
 
         //Only need this property cause nest egg has it
 
@@ -164,15 +167,25 @@ class OGVDemuxerWebM {
                     if (!this.seekHead.loaded)
                         return;
                     break;
+                    
                 case 0xEC: //VOid
                     if (!this.dataInterface.peekBytes(this.currentElement.size))
                         return;
                     else
-                        console.warn("bytes Peeked");
                         this.dataInterface.skipBytes(this.currentElement.size);
-                    this.state = META_LOADED;//testing
+                    
                     console.log("FOUND VOID, SKIPPING");
                     break;
+                    
+                case 0x1549A966: //Info
+                    if (!this.segmentInfo)
+                        this.segmentInfo = new SegmentInfo(this.currentElement, this.dataInterface);
+                    this.segmentInfo.load();
+                    if (!this.segmentInfo.loaded)
+                        return;
+                    this.state = META_LOADED;//testing
+                    break;    
+                    
                 default:
                     console.warn("body element not found, skipping");
                     break;
@@ -623,81 +636,6 @@ class Cues {
     }
 
     findOrPreloadCluster() {
-
-    }
-
-}
-
-class SegmentInfo {
-
-    constructor(dataView) {
-        this.dataView = dataView;
-        this.offset;
-        this.size;
-        this.dataOffset;
-        this.muxingApp;
-        this.writingApp;
-        this.title;
-        this.dataOffset;
-        this.timecodeScale;
-        this.duration;
-
-    }
-
-    parse() {
-        console.log("parsing segment info");
-        var end = this.dataOffset + this.size;
-        var offset = this.dataOffset;
-
-        var elementId;
-        var elementSize;
-        var elementOffset;
-        this.timecodeScale = 1000000;
-        this.duration = -1;
-
-        while (offset < end) {
-
-            elementOffset = offset;
-            elementId = VINT.read(this.dataView, offset);
-            offset += elementId.width;
-            elementSize = VINT.read(this.dataView, offset);
-            offset += elementSize.width;
-
-
-            switch (elementId.raw) {
-
-                case 0x2AD7B1: // TimecodeScale
-                    this.timecodeScale = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementSize.data);
-                    if (this.timecodeScale <= 0)
-                        console.warn("Invalid timecode scale");
-                    break;
-                case 0x4489: // Duration
-                    this.duration = OGVDemuxerWebM.readFloat(this.dataView, offset, elementSize.data);
-                    if (this.duration <= 0)
-                        console.warn("Invalid duration");
-                    break;
-                case 0x4D80: // MuxingApp
-                    this.muxingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
-                    break;
-                case 0x5741: //WritingApp
-                    this.writingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
-
-                    break;
-                case 0x7BA9:  //Title                   
-                    this.title = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
-                    break;
-                default:
-                    console.warn("segment info element not found");
-                    break;
-
-            }
-
-
-
-
-            offset += elementSize.data;
-
-        }
 
     }
 
