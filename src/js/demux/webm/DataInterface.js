@@ -61,12 +61,12 @@ class DataInterface{
     
     setNewMarker(){
         var markerId = Date.now();
-        this.markers.markerId = 0;
+        this.markers[markerId] = 0;
         return markerId;
     }
     
     removeMarker(markerId){
-        delete this.markers.markerId;
+        delete this.markers[markerId];
     }
     
     clearTemp() {
@@ -387,11 +387,11 @@ class DataInterface{
     }
     
     getMarkerOffset(markerId){
-        return this.markers.markerId;
+        return this.markers[markerId];
     }
     
     readUnsignedInt(size){
-
+        
         if (!this.currentBuffer)// if we run out of data return null
                 return null; //Nothing to parse
             
@@ -407,31 +407,31 @@ class DataInterface{
 
         if (this.tempCounter === null)
             this.tempCounter = 0;
-        
+
         var b;
 
-        for (var i = this.tempCounter; i < size; i++) {
-            
+        while (this.tempCounter < size) {
+
             if (!this.currentBuffer)// if we run out of data return null
                 return null; //Nothing to parse
 
             b = this.readByte();
-            
-            if(b === null)
+
+            if (b === null)
                 return null;
-            
+
             if (this.tempCounter === 0 && b < 0) {
                 console.warn("invalid integer value");
             }
-            
+
 
             this.tempResult <<= 8;
             this.tempResult |= b;
 
             if (this.remainingBytes === 0)
                 this.popBuffer();
-
-             
+            
+            this.tempCounter++;
         }
 
         //clear the temp resut

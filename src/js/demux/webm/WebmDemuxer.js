@@ -111,9 +111,9 @@ class OGVDemuxerWebM {
 
     process(callback) {
         this.processing = true;
-        console.log("processing");
+        console.warn("processing");
 
-        
+
         switch (this.state) {
             case INITIAL_STATE:
                 this.loadHeader();
@@ -127,9 +127,9 @@ class OGVDemuxerWebM {
                 this.loadMeta();
                 if (this.state !== META_LOADED)
                     break;
-            default:  
-            
-                if(this.shown === false && this.state === META_LOADED){
+            default:
+
+                if (this.shown === false && this.state === META_LOADED) {
                     console.log(this);
                     this.shown = true;
                     return;
@@ -141,15 +141,8 @@ class OGVDemuxerWebM {
 
 
     }
-    
-    loadMeta() {
-        this.state = META_LOADED;
-        return;
-        if (!this.currentElement)
-            this.currentElement = this.dataInterface.peekElement();
 
-        if (!this.currentElement)
-            return null;
+    loadMeta() {
 
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
@@ -166,12 +159,12 @@ class OGVDemuxerWebM {
 
                 case 0x114D9B74: //Seek Head
                     if (!this.seekHead)
-                        this.seekHead = new SeekHead(seekHead);
+                        this.seekHead = new SeekHead(this.currentElement, this.dataInterface);
                     this.seekHead.load();
                     if (!this.seekHead.loaded)
                         return;
+                    this.state = META_LOADED;//testing
                     break;
-                    
                 default:
                     console.warn("body element not found, skipping");
                     break;
@@ -180,7 +173,7 @@ class OGVDemuxerWebM {
 
             this.currentElement = null;
         }
-        
+
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.state = META_LOADED;
@@ -189,20 +182,20 @@ class OGVDemuxerWebM {
     loadSegment() {
         if (!this.currentElement)
             this.currentElement = this.dataInterface.peekElement();
-        
+
         if (!this.currentElement)
             return null;
 
-   
+
         switch (this.currentElement.id) {
-            
+
             case 0x18538067: // Segment
-                    console.log("segment found");
-                    this.segment = this.currentElement;
-                    //this.segmentOffset = segmentOffset;
-                    break;
+                console.log("segment found");
+                this.segment = this.currentElement;
+                //this.segmentOffset = segmentOffset;
+                break;
             case 0xEC: // void
-                    console.log("void found");
+                console.log("void found");
                 if (this.dataInterface.peekBytes(this.currentElement.size))
                     this.dataInterface.skipBytes();
                 else
@@ -211,7 +204,7 @@ class OGVDemuxerWebM {
             default:
                 console.warn("Global element not found, id: " + this.currentElement.id);
         }
-    
+
 
         this.currentElement = null;
         this.segmentIsLoaded = true;
@@ -311,14 +304,13 @@ class OGVDemuxerWebM {
 
             this.currentElement = null;
         }
-        
+
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.headerIsLoaded = true;
         this.state = HEADER_LOADED;
 
     }
-
 
     parse() {
 
@@ -1087,55 +1079,6 @@ class TrackInfo {
 
 
 
-
-class Entry {
-
-    constructor(dataView) {
-        this.dataView = dataView;
-        this.offset;
-        this.dataOffset;
-        this.size;
-        this.id;
-
-    }
-
-    parse() {
-        //1732
-        //meeds to start with seek id
-        this.voidElementCount = 0;
-        var offset = this.dataOffset;
-        var end = this.dataOffset + this.size;
-        var elementId;
-        var elementWidth;
-        var elementOffset;
-
-        elementOffset = offset;
-        elementId = VINT.read(this.dataView, offset);
-        if (elementId.raw !== 0x53AB) { // SeekID
-            console.warn("Seek ID not found");
-        }
-
-        offset += elementId.width;
-        elementWidth = VINT.read(this.dataView, offset);
-        offset += elementWidth.width;
-        this.id = VINT.read(this.dataView, offset).data;
-        //this.id = OGVDemuxerWebM.readUnsignedInt(this.dataView,offset, elementWidth.data);
-        offset += elementWidth.data;
-
-
-        elementId = VINT.read(this.dataView, offset);
-        if (elementId.raw !== 0x53AC) { // SeekPosition
-            console.warn("Seek Position not found");
-        }
-        offset += elementId.width;
-        elementWidth = VINT.read(this.dataView, offset);
-        offset += elementWidth.width;
-        this.seekPosition = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementWidth.data);
-        offset += elementWidth.data;
-
-    }
-
-}
 
 
 module.exports = OGVDemuxerWebM;

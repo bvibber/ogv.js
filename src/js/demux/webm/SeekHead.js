@@ -1,65 +1,125 @@
 'use strict';
 var DataInterface = require('./DataInterface.js');
+var NO_MARKER = -1;
 
 class SeekHead {
 
-    constructor(seekHeadHeader) {
-        this.id = seekHeadHeader.id;
+    constructor(seekHeadHeader , dataInterface) {
+        this.dataInterface = dataInterface;
         this.offset = seekHeadHeader.offset;
-        this.dataOffset;
         this.size = seekHeadHeader.size;
         this.entries = [];
         this.entryCount = 0;
         this.voidElements = [];
         this.voidElementCount = 0;
-        this.loaded = false;
-        
+        this.loaded = false;  
+        this.marker = NO_MARKER;
+        this.tempEntry = null;
+        this.currentElement = null;
     }
     
-    load(){
+    load() {
         console.log("Loading Seek Head");
-    }
 
-    parse() {
-        //1495
-        console.log("parsing seek head");
-        this.entryCount = 0;
-        this.voidElementCount = 0;
-        var offset = this.dataOffset;
-        var end = this.dataOffset + this.size;
-        var elementId;
-        var elementWidth;
-        var elementOffset;
+        if (this.marker === NO_MARKER)
+            this.marker = this.dataInterface.setNewMarker();
 
-        while (offset < end) {
-
-            //console.log(offset +","+ end);
-            elementOffset = offset;
-            elementId = VINT.read(this.dataView, offset);
-            offset += elementId.width;
-            elementWidth = VINT.read(this.dataView, offset);
-            offset += elementWidth.width;
-
-            if (elementId.raw === 0x4DBB) { //Seek
-                var entry = new Entry(this.dataView);
-                entry.dataOffset = offset;
-                entry.offset = elementOffset;
-                entry.size = elementWidth.data;
-                entry.parse();
-                this.entries.push(entry);
-            } else if (elementId.raw === 0xEC) { // Void
-
+        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+            console.log(this.dataInterface.getMarkerOffset(this.marker));
+            if (!this.currentElement) {
+                this.currentElement = this.dataInterface.peekElement();
+                if (this.currentElement === null)
+                    return null;
             }
 
-            offset += elementWidth.data;
 
+            switch (this.currentElement.id) {
+
+                case 0x4DBB: //Seek
+                    if (!this.tempEntry)
+                        this.tempEntry = new Seek(this.currentElement, this.dataInterface);
+                    this.tempEntry.load();
+                    if (!this.tempEntry.loaded)
+                        return;
+                    else 
+                        this.entries.push(this.tempEntry);
+                    break;
+                    //TODO, ADD VOID
+                default:
+                    console.warn("Seek Head element not found");
+                    break;
+
+            }
+            
+            this.tempEntry = null;
+            this.currentElement = null;
+            console.log(this.dataInterface.getMarkerOffset(this.marker));
         }
 
-        this.entryCount = this.entries.length;
-        this.voidElementCount = this.voidElements.length;
-
+        //Cleanup Marker
+        this.dataInterface.removeMarker(this.marker);
+        this.marker = NO_MARKER;
+        this.loaded = true;
     }
 
 }
 
+class Seek{
+    
+    constructor(seekHeader, dataInterface) {
+        this.size = seekHeader.size;
+        this.offset = seekHeader.offset;
+        this.dataInterface = dataInterface;
+        this.loaded = false;
+        this.marker = NO_MARKER;
+        this.currentElement = null;
+        this.seekId = -1;
+        this.seekPosition = -1;
+    }
+    
+    load(){
+        if (this.marker === NO_MARKER)
+            this.marker = this.dataInterface.setNewMarker();
+
+        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+            if (!this.currentElement) {
+                this.currentElement = this.dataInterface.peekElement();
+                if (this.currentElement === null)
+                    return null;
+            }
+
+
+            switch (this.currentElement.id) {
+
+                case 0x53AB: //SeekId
+                    var seekId = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    if (seekId !== null)
+                        this.seekId = seekId;
+                    else
+                        return null;
+                    break;
+
+                case 0x53AC: //SeekPosition 
+                    var seekPosition = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    if (seekPosition !== null)
+                        this.seekPosition = seekPosition;
+                    else
+                        return null;
+                    break;
+ 
+                default:
+                    console.warn("Seek element not found, skipping");
+                    break;
+
+            }
+
+            this.currentElement = null;
+        }
+        
+        this.dataInterface.removeMarker(this.marker);
+        this.marker = NO_MARKER;
+        this.loaded = true;
+    }
+    
+}
 module.exports = SeekHead;
