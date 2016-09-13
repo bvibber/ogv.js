@@ -111,7 +111,7 @@ class OGVDemuxerWebM {
 
     process(callback) {
         this.processing = true;
-        console.warn("processing");
+        console.info("processing");
 
 
         switch (this.state) {

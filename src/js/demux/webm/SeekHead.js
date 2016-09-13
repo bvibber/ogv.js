@@ -25,7 +25,6 @@ class SeekHead {
             this.marker = this.dataInterface.setNewMarker();
 
         while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
-            console.log(this.dataInterface.getMarkerOffset(this.marker));
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -53,7 +52,6 @@ class SeekHead {
             
             this.tempEntry = null;
             this.currentElement = null;
-            console.log(this.dataInterface.getMarkerOffset(this.marker));
         }
 
         //Cleanup Marker
