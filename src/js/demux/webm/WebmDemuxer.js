@@ -1,27 +1,39 @@
 'use strict';
 
 var DataInterface = require('./DataInterface.js');
+var SeekHead = require('./SeekHead.js');
+//States
+const INITIAL_STATE = 0;
+const HEADER_LOADED = 1;
+const SEGMENT_LOADED = 2;
+const META_LOADED = 3;
+const NO_MARKER = -1;
+
 
 class OGVDemuxerWebM {
 
     constructor() {
+        this.shown = false; // for testin
         this.bufferQueue = [];
         this.segmentInfo = [];
-        this.state = 0;
+        this.state = INITIAL_STATE;
         this.videoPackets = [];
         this.audioPackets = [];
         this.loadedMetadata = false;
         this.seekable = false;
         this.dataInterface = new DataInterface();
+        this.segment = null;
         this.currentElement = null; // placeholder for last element
         this.segmentIsLoaded = false; // have we found the segment position
-        this.segmentOffset;
+        //this.segmentOffset;
         this.segmentDataOffset;
         this.headerIsLoaded = false;
         this.currentElement = null;
+        this.markerIsSet = false;
+        this.marker = NO_MARKER;
 
         //Only need this property cause nest egg has it
-////
+
         Object.defineProperty(this, 'videoCodec', {
 
             get: function () {
@@ -98,40 +110,112 @@ class OGVDemuxerWebM {
     }
 
     process(callback) {
-
         this.processing = true;
-        if (!this.headerIsLoaded) {
+        console.log("processing");
 
-            this.loadHeader();
-
-            callback();
-
-        } else {
-            console.log(this);
+        
+        switch (this.state) {
+            case INITIAL_STATE:
+                this.loadHeader();
+                if (this.state !== HEADER_LOADED)
+                    break;
+            case HEADER_LOADED:
+                this.loadSegment();
+                if (this.state !== SEGMENT_LOADED)
+                    break;
+            case SEGMENT_LOADED:
+                this.loadMeta();
+                if (this.state !== META_LOADED)
+                    break;
+            default:  
+            
+                if(this.shown === false && this.state === META_LOADED){
+                    console.log(this);
+                    this.shown = true;
+                    return;
+                }
         }
 
-        if (!this.segmentIsLoaded) {
-            //this.loadSegment();
-        }
-
-        //this.tempParse();
-        //if (this.state === 0) {
-
-        //this.parseHeader();
-        //this.parse();
-        //this.loadedMetadata = true;
-        //this.state = 1;
-        //}
         this.processing = false;
-        //callback();
+        callback();
 
 
     }
+    
+    loadMeta() {
+        this.state = META_LOADED;
+        return;
+        if (!this.currentElement)
+            this.currentElement = this.dataInterface.peekElement();
+
+        if (!this.currentElement)
+            return null;
+
+        if (this.marker === NO_MARKER)
+            this.marker = this.dataInterface.setNewMarker();
+
+        while (this.dataInterface.getMarkerOffset(this.marker) < this.segment.size) {
+            if (!this.currentElement) {
+                this.currentElement = this.dataInterface.peekElement();
+                if (this.currentElement === null)
+                    return null;
+            }
+
+
+            switch (this.currentElement.id) {
+
+                case 0x114D9B74: //Seek Head
+                    if (!this.seekHead)
+                        this.seekHead = new SeekHead(seekHead);
+                    this.seekHead.load();
+                    if (!this.seekHead.loaded)
+                        return;
+                    break;
+                    
+                default:
+                    console.warn("body element not found, skipping");
+                    break;
+
+            }
+
+            this.currentElement = null;
+        }
+        
+        this.dataInterface.removeMarker(this.marker);
+        this.marker = NO_MARKER;
+        this.state = META_LOADED;
+    }
 
     loadSegment() {
+        if (!this.currentElement)
+            this.currentElement = this.dataInterface.peekElement();
+        
+        if (!this.currentElement)
+            return null;
 
+   
+        switch (this.currentElement.id) {
+            
+            case 0x18538067: // Segment
+                    console.log("segment found");
+                    this.segment = this.currentElement;
+                    //this.segmentOffset = segmentOffset;
+                    break;
+            case 0xEC: // void
+                    console.log("void found");
+                if (this.dataInterface.peekBytes(this.currentElement.size))
+                    this.dataInterface.skipBytes();
+                else
+                    return null;
+                break;
+            default:
+                console.warn("Global element not found, id: " + this.currentElement.id);
+        }
+    
 
+        this.currentElement = null;
         this.segmentIsLoaded = true;
+        this.state = SEGMENT_LOADED;
     }
 
     loadHeader() {
@@ -151,10 +235,10 @@ class OGVDemuxerWebM {
         }
 
 
-        if (!this.dataInterface.markerIsSet)
-            this.dataInterface.setMarker();
+        if (this.marker === NO_MARKER)
+            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.markerBytesRead < this.elementEBML.size) {
+        while (this.dataInterface.getMarkerOffset(this.marker) < this.elementEBML.size) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -227,53 +311,14 @@ class OGVDemuxerWebM {
 
             this.currentElement = null;
         }
-        this.dataInterface.removeMarker();
+        
+        this.dataInterface.removeMarker(this.marker);
+        this.marker = NO_MARKER;
         this.headerIsLoaded = true;
+        this.state = HEADER_LOADED;
 
     }
 
-    tempParse() {
-
-        //Only pull a new header if we don't already have one
-        if (!this.currentElement)
-            this.currentElement = this.dataInterface.peekElement();
-
-
-
-        while (this.currentElement) {
-
-        }
-
-        //Possibly for it to return false multiple times if needs a lot of chunks for each block or something
-        if (this.currentElement) {
-            //only do work if we can pull an element header
-            switch (this.currentElement.id) {
-                case 0x1A45DFA3: //EBML HEADER
-                    this.loadHeader();
-            }
-            /*
-             if(!this.headerHasLoaded){
-             //if our header has not loaded, must load first
-             if (this.currentElement.id !== 0x1A45DFA3) { //EBML code
-             //If the header has not loaded and the first element is not the header, do not continue
-             console.warn('INVALID PARSE, HEADER NOT LOCATED');
-             }
-             
-             if(this.dataInterface.peekBytes(this.currentElement.size)){
-             //We are safe to read entire element
-             this.loadHeader();
-             }
-             
-             }else{
-             //Doing work here
-             
-             }
-             */
-
-        }
-
-        console.log(element);
-    }
 
     parse() {
 
@@ -1041,60 +1086,7 @@ class TrackInfo {
 }
 
 
-class SeekHead {
 
-    constructor(dataView) {
-        this.dataView = dataView;
-        this.offset;
-        this.dataOffset;
-        this.size;
-        this.entries = [];
-        this.entryCount = 0;
-        this.voidElements = [];
-        this.voidElementCount = 0;
-    }
-
-    parse() {
-        //1495
-        console.log("parsing seek head");
-        this.entryCount = 0;
-        this.voidElementCount = 0;
-        var offset = this.dataOffset;
-        var end = this.dataOffset + this.size;
-        var elementId;
-        var elementWidth;
-        var elementOffset;
-
-        while (offset < end) {
-
-            //console.log(offset +","+ end);
-            elementOffset = offset;
-            elementId = VINT.read(this.dataView, offset);
-            offset += elementId.width;
-            elementWidth = VINT.read(this.dataView, offset);
-            offset += elementWidth.width;
-
-            if (elementId.raw === 0x4DBB) { //Seek
-                var entry = new Entry(this.dataView);
-                entry.dataOffset = offset;
-                entry.offset = elementOffset;
-                entry.size = elementWidth.data;
-                entry.parse();
-                this.entries.push(entry);
-            } else if (elementId.raw === 0xEC) { // Void
-
-            }
-
-            offset += elementWidth.data;
-
-        }
-
-        this.entryCount = this.entries.length;
-        this.voidElementCount = this.voidElements.length;
-
-    }
-
-}
 
 class Entry {
 

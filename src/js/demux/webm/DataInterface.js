@@ -13,6 +13,7 @@ class DataInterface{
         this.currentBuffer = null;
         this.markerPointer = 0;
         this.markerIsSet = false;
+        this.markers = {};
         
         Object.defineProperty(this, 'markerBytesRead' , {
             get: function(){
@@ -20,7 +21,15 @@ class DataInterface{
             }
         });
         
+        Object.defineProperty(this, 'offset' , {
+            get: function(){
+                return this.overallPointer;
+            }
+        });
+        
         this.tempId = null;
+        this.tempElementOffset = null;
+        this.tempElementDataOffset = null;
         this.tempSize = null;
         this.tempOctetWidth = null;
         this.tempOctet = null;
@@ -44,9 +53,20 @@ class DataInterface{
                 else
                     return this.currentBuffer.byteLength - this.internalPointer;
             }
+            
         });
         
         
+    }
+    
+    setNewMarker(){
+        var markerId = Date.now();
+        this.markers.markerId = 0;
+        return markerId;
+    }
+    
+    removeMarker(markerId){
+        delete this.markers.markerId;
     }
     
     clearTemp() {
@@ -85,6 +105,7 @@ class DataInterface{
             if (!this.currentBuffer)// if we run out of data return null
                 return null; //Nothing to parse
             
+            this.tempElementOffset = this.overallPointer; // Save the element offset
             this.tempOctet = this.currentBuffer.getUint8(this.internalPointer);
             this.incrementPointers();
             this.tempOctetWidth = this.calculateOctetWidth();
@@ -292,11 +313,12 @@ class DataInterface{
                 return null;
         }
         
-        var element = new ElementHeader(this.tempElementId , this.tempElementSize);
+        var element = new ElementHeader(this.tempElementId , this.tempElementSize, this.tempElementOffset);
         
         //clear the temp holders
         this.tempElementId = null;
         this.tempElementSize = null;
+        this.tempElementOffset = null;
         
         
         return element;
@@ -337,11 +359,7 @@ class DataInterface{
         this.markerIsSet = true;
         this.markerPointer = 0;
     }
-    
-    removeMarker(){
-        this.markerIsSet = false;
-    }
-    
+     
     calculateOctetWidth(){
         var leadingZeroes = 0;
         var zeroMask = 0x80;
@@ -362,7 +380,14 @@ class DataInterface{
         var bytesToAdd = n || 1;
         this.internalPointer += bytesToAdd;
         this.overallPointer += bytesToAdd;
-        this.markerPointer += bytesToAdd;
+        //this.markerPointer += bytesToAdd;
+        for (var key in this.markers){
+            this.markers[key] += bytesToAdd;
+        }
+    }
+    
+    getMarkerOffset(markerId){
+        return this.markers.markerId;
     }
     
     readUnsignedInt(size){
@@ -449,11 +474,11 @@ class DataInterface{
 
 class ElementHeader{
     
-    constructor(id, size){
+    constructor(id, size , offset){
         this.id = id;
         this.size = size;
         this.headerSize;
-        this.offset;
+        this.offset = offset;
     }
     
 }
