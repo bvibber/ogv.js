@@ -118,8 +118,6 @@ class OGVDemuxerWebM {
 
     process(callback) {
         this.processing = true;
-        console.info("processing");
-
 
         switch (this.state) {
             case INITIAL_STATE:

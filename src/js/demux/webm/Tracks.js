@@ -258,6 +258,11 @@ class Tracks {
 
 }
 
+/**
+ * @classdesc The TrackLoader class is a helper class to load the Track subelement types. Since the layout
+ * of the Track entries is a little odd, it needs to parse the current 
+ * level data plus the track container which can be either audio video, content encodings, and maybe subtitles.
+ */
 class TrackLoader {
 
     constructor() {
@@ -273,7 +278,7 @@ class TrackLoader {
         this.trackData.name = null;
         this.trackData.codecName = null;
         this.trackData.defaultDuration = null;
-        this.trackData.codecId = null;
+        this.trackData.codecID = null;
         this.trackData.lacing = null;
         this.trackData.codecPrivate = null;
         this.trackData.codecDelay = null;
@@ -293,11 +298,12 @@ class TrackLoader {
         this.trackData.name = null;
         this.trackData.codecName = null;
         this.trackData.defaultDuration = null;
-        this.trackData.codecId = null;
+        this.trackData.codecID = null;
         this.trackData.lacing = null;
         this.trackData.codecPrivate = null;
         this.trackData.codecDelay = null;
         this.trackData.seekPreRoll = null;
+        this.trackData.trackUID = null;
         this.tempTrack = null;
     }
 
@@ -397,7 +403,7 @@ class TrackLoader {
                     break;
 
                 case 0x63A2: //Codec Private 
-                    var codecPrivate = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    var codecPrivate = this.dataInterface.readString(this.currentElement.size);
                     if (codecPrivate !== null)
                         this.trackData.codecPrivate = codecPrivate;
                     else
@@ -420,12 +426,20 @@ class TrackLoader {
                         return null;
                     break;
 
+                case 0x73C5: //Track UID
+                    var trackUID = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    if (trackUID !== null)
+                        this.trackData.trackUID = trackUID;
+                    else
+                        return null;
+                    break;
+
                 default:
                     console.warn("track data element not found, skipping");
                     break;
 
             }
-            this.tempTrack = null;
+
             this.currentElement = null;
         }
 
@@ -444,8 +458,20 @@ class TrackLoader {
 
 }
 
-class VideoTrack {
+class Track {
+    
+    loadMeta(meta) {
+        for (var key in meta) {
+            this[key] = meta[key];
+        }
+    }
+    
+}
+
+class VideoTrack extends Track{
+    
     constructor(trackHeader, dataInterface) {
+        super();
         this.dataInterface = dataInterface;
         this.offset = trackHeader.offset;
         this.size = trackHeader.size;
@@ -461,7 +487,7 @@ class VideoTrack {
     }
 
     load() {
-        console.log("audio track loading");
+        console.log("video track loading");
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
 
@@ -547,16 +573,12 @@ class VideoTrack {
         this.loaded = true;
     }
 
-    loadMeta(meta) {
-        for(var key in meta){
-            this[key] = meta[key];
-        }
-    }
-    
 }
 
-class AudioTrack {
+class AudioTrack extends Track{
+    
     constructor(trackHeader, dataInterface) {
+        super();
         this.dataInterface = dataInterface;
         this.offset = trackHeader.offset;
         this.size = trackHeader.size;
@@ -582,7 +604,7 @@ class AudioTrack {
 
             switch (this.currentElement.id) {
                 //TODO add duration and title
-                case 0xB5: //Sample Frequency
+                case 0xB5: //Sample Frequency //TODO: MAKE FLOAT
                     var rate = this.dataInterface.readUnsignedInt(this.currentElement.size);
                     if (rate !== null)
                         this.rate = rate;
@@ -619,13 +641,7 @@ class AudioTrack {
         this.marker = NO_MARKER;
         this.loaded = true;
     }
-    
-    loadMeta(meta) {
-        for(var key in meta){
-            this[key] = meta[key];
-        }
-    }
-    
+
 }
 
 class TrackSettings {
@@ -636,14 +652,7 @@ class TrackSettings {
 }
 
 
-class Track {
-    constructor(dataView) {
-        this.dataView = dataView;
-        this.offset;
-        this.dataOffset;
-        this.size;
-    }
-}
+
 
 class VideoTrack2 extends Track {
 
