@@ -186,11 +186,9 @@ class OGVDemuxerWebM {
                         this.segmentInfo = new SegmentInfo(this.currentElement, this.dataInterface);
                     this.segmentInfo.load();
                     if (!this.segmentInfo.loaded)
-                        return;
-                    this.state = META_LOADED;//testing
-                    return;
+                        return;                    
                     break;    
-                    /*
+                    
                 case 0x1654AE6B: //Tracks
                     if (!this.tracks)
                         this.tracks = new Tracks(this.currentElement, this.dataInterface);
@@ -199,7 +197,7 @@ class OGVDemuxerWebM {
                         return;
                     this.state = META_LOADED;//testing
                     break;  
-                    */
+                    
                 default:
                     console.error("body element not found, skipping, id = " + this.currentElement.id);
                     break;
@@ -212,7 +210,7 @@ class OGVDemuxerWebM {
         
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
-        //this.state = META_LOADED;
+        this.state = META_LOADED;
     }
 
     loadSegment() {
