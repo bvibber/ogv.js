@@ -382,7 +382,6 @@ class DataInterface{
      * @returns {boolean} has enough bytes to read
      */
     peekBytes(n){
-        console.warn("Peeking bytes");
         if(this.dataBuffers.length === 0)
             return false; //No bytes
         //
@@ -513,7 +512,6 @@ class DataInterface{
     
     
     readString(size) {
-        console.log("reading string");
         if (!this.tempString)
             this.tempString = '';
         

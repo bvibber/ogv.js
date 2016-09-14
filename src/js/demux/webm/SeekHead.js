@@ -18,8 +18,6 @@ class SeekHead {
     }
     
     load() {
-        console.log("Loading Seek Head");
-
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
 
@@ -51,7 +49,6 @@ class SeekHead {
             
             this.tempEntry = null;
             this.currentElement = null;
-            console.log(this.dataInterface.getMarkerOffset(this.marker));
         }
         
 

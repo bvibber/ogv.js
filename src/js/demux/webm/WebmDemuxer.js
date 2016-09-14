@@ -193,10 +193,11 @@ class OGVDemuxerWebM {
                     this.tracks.load();
                     if (!this.tracks.loaded)
                         return;
-                    this.state = META_LOADED;//testing
                     break;  
                     
                 default:
+                    this.state = META_LOADED;//testing
+                    return;
                     console.error("body element not found, skipping, id = " + this.currentElement.id);
                     break;
 
@@ -225,12 +226,10 @@ class OGVDemuxerWebM {
         switch (this.currentElement.id) {
 
             case 0x18538067: // Segment
-                console.log("segment found");
                 this.segment = this.currentElement;
                 //this.segmentOffset = segmentOffset;
                 break;
             case 0xEC: // void
-                console.log("void found");
                 if (this.dataInterface.peekBytes(this.currentElement.size))
                     this.dataInterface.skipBytes();
                 else

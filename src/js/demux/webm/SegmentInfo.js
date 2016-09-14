@@ -21,12 +21,11 @@ class SegmentInfo {
     }
 
     load() {
-        console.warn("loading segment info");
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
-var test;
+
         while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
-            test = this.dataInterface.getMarkerOffset(this.marker);
+
             
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
@@ -90,7 +89,7 @@ var test;
                     break; 
 
             }
-            test = this.dataInterface.getMarkerOffset(this.marker);
+
             this.currentElement = null;
         }
 
@@ -103,7 +102,6 @@ var test;
     }
 
     parse() {
-        console.log("parsing segment info");
         var end = this.dataOffset + this.size;
         var offset = this.dataOffset;
 
