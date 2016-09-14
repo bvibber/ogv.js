@@ -325,6 +325,9 @@
 		if (sourceMode == 'shortlist') {
 			baseUrl = 'https://media-streaming.wmflabs.org';
 		}
+		if (sourceMode == 'shortlist-cbr') {
+			baseUrl = 'https://media-streaming.wmflabs.org/cbr-soft';
+		}
 		return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
 	}
 
@@ -430,7 +433,7 @@
 						}
 					}
 				}
-			} else if (sourceMode == 'shortlist') {
+			} else if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
 				var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
 					widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
 					formats = ['ogv', 'webm'];
@@ -643,7 +646,7 @@
 				}
 			}
 			selection = list.reverse().slice(0, max);
-		} else if (sourceMode == 'shortlist') {
+		} else if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
 			var shortlist = [
 				// Blender movies
 				[
