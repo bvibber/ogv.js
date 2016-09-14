@@ -1156,9 +1156,10 @@ var OGVPlayer = function(options) {
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
-							if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
+							var endy = decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : frameEndTimestamp;
+							if (videoInfo.fps == 0 && (codec.frameTimestamp - endy) > 0) {
 								// WebM doesn't encode a frame rate
-								targetPerFrameTime = (codec.frameTimestamp - frameEndTimestamp) * 1000;
+								targetPerFrameTime = (codec.frameTimestamp - endy) * 1000;
 							}
 							totalFrameTime += targetPerFrameTime;
 							totalFrameCount++;
