@@ -51,9 +51,17 @@ class SeekHead {
             
             this.tempEntry = null;
             this.currentElement = null;
+            console.log(this.dataInterface.getMarkerOffset(this.marker));
         }
+        
 
+        if (this.dataInterface.getMarkerOffset(this.marker) !== this.size){
+            console.log(this);
+            throw "INVALID SEEKHEAD FORMATTING"
+        }
+        
         //Cleanup Marker
+        console.log("SEEK HEAD LOADED");
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;
@@ -109,9 +117,12 @@ class Seek{
                     break;
 
             }
-
+            
             this.currentElement = null;
         }
+        
+        if(this.dataInterface.getMarkerOffset(this.marker) !== this.size)
+            console.error("Invalid Seek Formatting");
         
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;

@@ -93,6 +93,9 @@ var test;
             this.currentElement = null;
         }
 
+        if(this.dataInterface.getMarkerOffset(this.marker) !== this.size)
+            console.error("Invalid SegmentInfo Formatting");
+            
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;

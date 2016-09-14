@@ -60,7 +60,10 @@ class DataInterface{
     }
     
     setNewMarker(){
-        var markerId = Date.now();
+        var markerId = Math.random();
+        while(this.markers[markerId]){
+            markerId = Math.random();
+        }
         this.markers[markerId] = 0;
         return markerId;
     }
@@ -145,7 +148,10 @@ class DataInterface{
         var result = this.tempByteBuffer;
         
         
-        this.clearTemps();
+        this.tempOctet = null;
+        this.tempByteCounter = null;
+        this.tempByteBuffer = null;
+        this.tempOctetWidth = null;
         
         return result;       
     }
@@ -482,9 +488,6 @@ class DataInterface{
                 return null; //Nothing to parse
 
             b = this.readByte();
-
-            if (b === null)
-                return null;
 
             if (this.tempCounter === 0 && b < 0) {
                 console.warn("invalid integer value");

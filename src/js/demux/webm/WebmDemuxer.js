@@ -12,6 +12,7 @@ const HEADER_LOADED = 1;
 const SEGMENT_LOADED = 2;
 const META_LOADED = 3;
 const NO_MARKER = -1;
+const EXIT_OK = 666;
 
 
 class OGVDemuxerWebM {
@@ -208,12 +209,16 @@ class OGVDemuxerWebM {
             this.currentElement = null;
         }
 
+        
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
-        this.state = META_LOADED;
+        //this.state = META_LOADED;
     }
 
     loadSegment() {
+        if(this.state !== HEADER_LOADED)
+            console.error("HEADER NOT LOADED");
+        
         if (!this.currentElement)
             this.currentElement = this.dataInterface.peekElement();
 
@@ -338,7 +343,7 @@ class OGVDemuxerWebM {
 
             this.currentElement = null;
         }
-
+        console.log("HEADER LOADED");
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.headerIsLoaded = true;
