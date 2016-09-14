@@ -15,14 +15,19 @@ class SegmentInfo {
         this.duration = -1;
         this.loaded = false;
         this.marker = NO_MARKER;
+        this.segmentUID = null;
+        this.duration = null;
+
     }
 
     load() {
         console.warn("loading segment info");
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
-
+var test;
         while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+            test = this.dataInterface.getMarkerOffset(this.marker);
+            
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -55,12 +60,36 @@ class SegmentInfo {
                         return null;
                     break;
 
-                default:
-                    console.warn("Ifno element not found, skipping");
+                case 0x7BA9: //title
+                    var title = this.dataInterface.readString(this.currentElement.size);
+                    if (title !== null)
+                        this.title = title;
+                    else
+                        return null;
                     break;
+                    
+                case 0x73A4: //segmentUID
+                    var segmentUID = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    if (segmentUID !== null)
+                        this.segmentUID = segmentUID;
+                    else
+                        return null;
+                    break;
+                    
+                case 0x4489: //duration MUST BE FLOAT
+                    var duration = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    if (duration !== null)
+                        this.duration = duration;
+                    else
+                        return null;
+                    break;
+                    
+                default:
+                    console.error("Ifno element not found, skipping : " + this.currentElement.id);
+                    break; 
 
             }
-
+            test = this.dataInterface.getMarkerOffset(this.marker);
             this.currentElement = null;
         }
 
