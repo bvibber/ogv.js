@@ -69,7 +69,8 @@ var test;
                     break;
                     
                 case 0x73A4: //segmentUID
-                    var segmentUID = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    //TODO, LOAD THIS AS A BINARY ARRAY, SHOULD BE 128 BIT UNIQUE ID
+                    var segmentUID = this.dataInterface.readString(this.currentElement.size);
                     if (segmentUID !== null)
                         this.segmentUID = segmentUID;
                     else

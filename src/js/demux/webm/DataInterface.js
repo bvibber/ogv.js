@@ -60,6 +60,7 @@ class DataInterface{
     }
     
     setNewMarker(){
+        //TODO Make a more efficient id system
         var markerId = Math.random();
         while(this.markers[markerId]){
             markerId = Math.random();
