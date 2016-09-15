@@ -14,6 +14,9 @@ class DataInterface{
         this.markerPointer = 0;
         this.markerIsSet = false;
         this.markers = {};
+        this.tempFloat64 = new DataView(new ArrayBuffer(8));
+        this.tempFloat32 = new DataView(new ArrayBuffer(4));
+        this.tempBinaryBuffer = null;
         
         Object.defineProperty(this, 'markerBytesRead' , {
             get: function(){
@@ -338,10 +341,27 @@ class DataInterface{
     
     
     readByte(){
-        if(!this.currentBuffer)
-            console.error('READING OUT OF BOUNDS');
+        if(!this.currentBuffer){
+            console.error("READING OUT OF BOUNDS");
+    
+        }
+            
         var byteToRead = this.currentBuffer.getUint8(this.internalPointer);
         this.incrementPointers();
+        if (this.remainingBytes === 0)
+                this.popBuffer();
+            
+        return byteToRead;
+    }
+    
+    readSignedByte(){
+        if(!this.currentBuffer)
+            console.error('READING OUT OF BOUNDS');
+        var byteToRead = this.currentBuffer.getInt8(this.internalPointer);
+        this.incrementPointers();
+        if (this.remainingBytes === 0)
+                this.popBuffer();
+            
         return byteToRead;
     }
     
@@ -509,7 +529,54 @@ class DataInterface{
         this.tempCounter = null;
         return result;
     }
-    
+
+    readSignedInt(size) {
+        
+        if (!this.currentBuffer)// if we run out of data return null
+                return null; //Nothing to parse
+            
+        //need to fix overflow for 64bit unsigned int
+        if ( size <= 0 || size > 8) {
+            console.warn("invalid file size");
+        }
+           
+        if(this.tempResult === null)
+            this.tempResult = 0;
+
+        if (this.tempCounter === null)
+            this.tempCounter = 0;
+
+        var b;
+
+        while (this.tempCounter < size) {
+
+            if (!this.currentBuffer)// if we run out of data return null
+                return null; //Nothing to parse
+
+            
+
+            if (this.tempCounter === 0)
+                b = this.readByte();
+            else
+                b = this.readSignedByte();
+
+
+
+            this.tempResult <<= 8;
+            this.tempResult |= b;
+
+            if (this.remainingBytes === 0)
+                this.popBuffer();
+            
+            this.tempCounter++;
+        }
+
+        //clear the temp resut
+        var result = this.tempResult;
+        this.tempResult = null;
+        this.tempCounter = null;
+        return result;
+    }
     
     readString(size) {
         if (!this.tempString)
@@ -538,7 +605,111 @@ class DataInterface{
         return tempString;
     }
     
+    readFloat(size) {
+
+        if (size === 8) {
+            console.warn("hello");
+            
+            if (this.tempCounter === null)
+                this.tempCounter = 0;
+
+            if (this.tempResult === null){
+                this.tempResult = 0;
+                this.tempFloat64.setFloat64(0, 0);
+            }
+                
+
+            var b;
+
+            while (this.tempCounter < size) {
+
+                if (!this.currentBuffer)// if we run out of data return null
+                    return null; //Nothing to parse
+
+
+
+                b = this.readByte();
+
+                this.tempFloat64.setUint8(this.tempCounter, b);
+
+                if (this.remainingBytes === 0)
+                    this.popBuffer();
+
+                this.tempCounter++;
+            }
+            
+            this.tempResult = this.tempFloat64.getFloat64(0);
+
+
+        } else if (size === 4) {
+            throw "implement this!";
+        } else {
+            throw "INVALID FLOAT LENGTH";
+        }
+
+        //clear the temp resut
+        var result = this.tempResult;
+        this.tempResult = null;
+        this.tempCounter = null;
+        return result;
+    }
+    
+    /**
+     * Returns a new buffer with the length of data starting at the current byte buffer
+     * @param {number} length Length of bytes to read
+     * @returns {ArrayBuffer} the read data
+     */
+    getBinary(length){
+        //No buffers
+        if (!this.currentBuffer)
+            return null;
+        
+        //Entire element contained in 1 array
+        if(this.remainingBytes >= length){
+            
+            var newBuffer = this.currentBuffer.buffer.slice(this.internalPointer, this.internalPointer + length);
+            this.incrementPointers(length);
+            if (this.remainingBytes <= 0)
+                this.popBuffer();
+            return newBuffer;
+            
+        } 
+
+        //data is broken up across different arrays
+        //TODO: VERY SLOW, FIX THIS!!!!!!!!!!
+        if(!this.tempBinaryBuffer)
+            this.tempBinaryBuffer = new DataView( new ArrayBuffer(length));
+        
+        if (this.tempCounter === null)
+            this.tempCounter = 0;
+        console.warn("SPLITTING");
+        var b;
+        while (this.tempCounter < length) {
+
+            if (!this.currentBuffer)// if we run out of data return null
+                return null; //Nothing to parse
+
+            b = this.readByte();
+            this.tempBinaryBuffer.setUint8(this.tempCounter, b);
+
+            if (this.remainingBytes === 0)
+                this.popBuffer();
+
+            this.tempCounter++;
+        }
+        
+        
+        var tempBinaryBuffer = this.tempBinaryBuffer;
+        this.tempBinaryBuffer = null;
+        this.tempCounter = null;
+        return tempBinaryBuffer.buffer;
+
+        
+    }
+    
 }
+
+
 
 class ElementHeader{
     

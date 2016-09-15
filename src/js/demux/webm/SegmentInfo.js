@@ -77,7 +77,7 @@ class SegmentInfo {
                     break;
                     
                 case 0x4489: //duration MUST BE FLOAT
-                    var duration = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    var duration = this.dataInterface.readFloat(this.currentElement.size);
                     if (duration !== null)
                         this.duration = duration;
                     else

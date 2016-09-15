@@ -4,6 +4,7 @@ var DataInterface = require('./DataInterface.js');
 var SeekHead = require('./SeekHead.js');
 var SegmentInfo = require('./SegmentInfo.js');
 var Tracks = require('./Tracks.js');
+var Cluster = require('./Cluster.js');
 
 
 //States
@@ -19,7 +20,7 @@ class OGVDemuxerWebM {
 
     constructor() {
         this.shown = false; // for testin
-        this.bufferQueue = [];
+        this.clusters = [];
         this.segmentInfo = [];
         this.state = INITIAL_STATE;
         this.videoPackets = [];
@@ -38,7 +39,139 @@ class OGVDemuxerWebM {
         this.marker = NO_MARKER;
         this.segmentInfo = null; // assuming 1 for now
         this.tracks = null;
+        this.currentCluster = null;
+        
+        Object.defineProperty(this, 'duration', {
+            
+            get : function(){   
+                return this.segmentInfo.duration;
+            }
+            
+        });
 
+        Object.defineProperty(this, 'frameReady', {
+
+            get: function () {
+                return (this.videoPackets.length > 0) ? 1 : 0;
+            }
+
+        });
+        
+        Object.defineProperty(this, 'hasAudio', {
+	get: function() {
+		if(this.loadedMetadata && this.audioCodec){
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+        });
+        
+        Object.defineProperty(this, 'audioFormat', {
+	get: function() {
+            
+            if(!this.hasAudio)
+                return;
+            
+            var channels;
+            var rate;
+            for (var i in this.tracks.trackEntries) {
+                    var trackEntry = this.tracks.trackEntries[i];
+                    if (trackEntry.trackType === 2) { // audio track
+                        channels = trackEntry.channels;
+                        rate = trackEntry.rate;
+                        break;
+                    }
+                }
+                
+                return {
+                    channels: channels,
+                    rate: rate
+                };
+            }
+        });
+        
+        Object.defineProperty(this, 'videoFormat', {
+            get: function () {
+                var tempTrack;
+                for (var i in this.tracks.trackEntries) {
+                    var trackEntry = this.tracks.trackEntries[i];
+                    if (trackEntry.trackType === 1) { // video track
+                        tempTrack = trackEntry;
+                        break;
+                    }
+                }
+/*
+ * ogvjs_callback_init_video(videoParams.width, videoParams.height,
+			                          1, 1, // @todo assuming 4:2:0
+			                          0, // @todo get fps
+			                          videoParams.width - videoParams.crop_left - videoParams.crop_right,
+			                          videoParams.height - videoParams.crop_top - videoParams.crop_bottom,
+                                      videoParams.crop_left, videoParams.crop_top,
+                                      videoParams.display_width, videoParams.display_height
+ */
+                return {
+                    frameWidth: tempTrack.width,
+                    frameHeight: tempTrack.height,
+                    hdec: 1,
+                    vdec: 1,
+                    fps: 0,
+                    picWidth: tempTrack.picWidth,
+                    picHeight: tempTrack.picHeight,
+                    picX: tempTrack.picX,
+                    picY: tempTrack.picY,
+                    displayWidth: tempTrack.displayWidth,
+                    displayHeight: tempTrack.displayHeight
+                }
+            }
+        });
+        
+        Object.defineProperty(this, 'audioReady', {
+            get: function () {
+                return this.audioPackets.length > 0;
+            }
+        });
+        
+        Object.defineProperty(this, 'audioTimestamp', {
+            get: function () {
+                if (this.audioPackets.length > 0) {
+                    return this.audioPackets[0].timestamp;
+                } else {
+                    return -1;
+                }
+            }
+        });
+        
+        Object.defineProperty(this, 'frameTimestamp', {
+	get: function() {
+		if (this.videoPackets.length > 0) {
+			return this.videoPackets[0].timestamp;
+		} else {
+			return -1;
+		}
+            }
+        });
+        
+        Object.defineProperty(this, 'keyframeTimestamp', {
+            get: function () {
+                if (this.videoPackets.length > 0) {
+                    return this.videoPackets[0].keyframeTimestamp;
+                } else {
+                    return -1;
+                }
+            }
+        });
+
+        Object.defineProperty(this, 'hasVideo', {
+            get: function () {
+                if(this.loadedMetadata && this.videoCodec){
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+        });
+        
         //Only need this property cause nest egg has it
 
         Object.defineProperty(this, 'videoCodec', {
@@ -48,8 +181,8 @@ class OGVDemuxerWebM {
                 //Multiple video tracks are allowed, for now just return the first one
                 for (var i in this.tracks.trackEntries) {
                     var trackEntry = this.tracks.trackEntries[i];
-                    if (trackEntry instanceof VideoTrack) {
-                        codecID = trackEntry.info.codecID;
+                    if (trackEntry.trackType === 1) { // video track
+                        codecID = trackEntry.codecID;
                         break;
                     }
 
@@ -79,8 +212,8 @@ class OGVDemuxerWebM {
                 //Multiple video tracks are allowed, for now just return the first one
                 for (var i in this.tracks.trackEntries) {
                     var trackEntry = this.tracks.trackEntries[i];
-                    if (trackEntry instanceof AudioTrack) {
-                        codecID = trackEntry.info.codecID;
+                    if (trackEntry.trackType === 2) {
+                        codecID = trackEntry.codecID;
                         break;
                     }
 
@@ -117,7 +250,7 @@ class OGVDemuxerWebM {
     }
 
     process(callback) {
-        this.processing = true;
+        //this.processing = true;
 
         switch (this.state) {
             case INITIAL_STATE:
@@ -137,12 +270,13 @@ class OGVDemuxerWebM {
                 if (this.shown === false && this.state === META_LOADED) {
                     console.log(this);
                     this.shown = true;
-                    return;
+                    
                 }
         }
 
         this.processing = false;
-        callback();
+        //console.log(this);
+        callback(true);
 
 
     }
@@ -195,6 +329,16 @@ class OGVDemuxerWebM {
                         return;
                     break;  
                     
+                case 0x1F43B675: //Cluster
+                    if (!this.currentCluster)
+                        this.currentCluster = new Cluster(this.currentElement, this.dataInterface, this);
+                    this.currentCluster.load();
+                    if (!this.currentCluster.loaded)
+                        return;
+                    this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
+                    this.currentCluster = null;
+                    break; 
+                    
                 default:
                     this.state = META_LOADED;//testing
                     return;
@@ -212,6 +356,9 @@ class OGVDemuxerWebM {
         this.state = META_LOADED;
     }
 
+    /**
+     * finds the beginnign of the segment. Should modify to allow level 0 voids, apparantly they are possible 
+     */
     loadSegment() {
         if(this.state !== HEADER_LOADED)
             console.error("HEADER NOT LOADED");
@@ -465,8 +612,24 @@ class OGVDemuxerWebM {
         }
     }
 
-    parseInfo() {
-
+    dequeueAudioPacket(callback){
+        console.warn("Dequeing audio");
+        if (this.audioPackets.length) {
+		var packet = this.audioPackets.shift().data;
+		callback(packet);
+	} else {
+		callback(null);
+	}
+    }
+    
+    dequeueVideoPacket(callback){
+        console.warn("Dequeing video");
+        if (this.videoPackets.length) {
+		var packet = this.videoPackets.shift().data;
+		callback(packet);
+	} else {
+		callback(null);
+	}
     }
 
     parseHeader() {
@@ -598,61 +761,9 @@ class OGVDemuxerWebM {
         }
         return tempString;
     }
-}
-;
+};
 
 
-class Cues {
-
-    constructor(dataView) {
-        this.dataView = dataView;
-        this.offset;
-        this.dataOffset;
-        this.size;
-        this.segment;
-        this.cuePoints = [];
-        this.count;
-        this.preloadCount;
-        //this.position;
-    }
-
-    getCount() {
-        return this.cuePoints.length;
-    }
-
-    init() {
-
-    }
-
-    preloadCuePoint() {
-
-    }
-
-    find() {
-
-    }
-
-    getFirst() {
-
-    }
-
-    getLast() {
-
-    }
-
-    getNext() {
-
-    }
-
-    getBlock() {
-
-    }
-
-    findOrPreloadCluster() {
-
-    }
-
-}
 
 
 
