@@ -15,11 +15,16 @@ const META_LOADED = 3;
 const NO_MARKER = -1;
 const EXIT_OK = 666;
 
+
+const STATE_BEGIN = 0;
+const STATE_DECODING = 1;
+const STATE_SEEKING = 2;
+
 var getTimestamp;
 if (typeof performance === 'undefined' || typeof performance.now === 'undefined') {
-	getTimestamp = Date.now;
+    getTimestamp = Date.now;
 } else {
-	getTimestamp = performance.now.bind(performance);
+    getTimestamp = performance.now.bind(performance);
 }
 
 
@@ -48,13 +53,16 @@ class OGVDemuxerWebM {
         this.tracks = null;
         this.currentCluster = null;
         this.cpuTime = 0;
-        
+
         Object.defineProperty(this, 'duration', {
-            
-            get : function(){   
-                return this.segmentInfo.duration;
+
+            get: function () {
+                console.warn("GETTING DURATION");
+                if(this.segmentInfo.duration < 0)
+                    return -1;
+                return this.segmentInfo.duration / 1000;// / 1000000000.0; ;
             }
-            
+
         });
 
         Object.defineProperty(this, 'frameReady', {
@@ -64,26 +72,26 @@ class OGVDemuxerWebM {
             }
 
         });
-        
+
         Object.defineProperty(this, 'hasAudio', {
-	get: function() {
-		if(this.loadedMetadata && this.audioCodec){
+            get: function () {
+                if (this.loadedMetadata && this.audioCodec) {
                     return true;
-                }else{
+                } else {
                     return false;
                 }
             }
         });
-        
+
         Object.defineProperty(this, 'audioFormat', {
-	get: function() {
-            
-            if(!this.hasAudio)
-                return;
-            
-            var channels;
-            var rate;
-            for (var i in this.tracks.trackEntries) {
+            get: function () {
+
+                if (!this.hasAudio)
+                    return;
+
+                var channels;
+                var rate;
+                for (var i in this.tracks.trackEntries) {
                     var trackEntry = this.tracks.trackEntries[i];
                     if (trackEntry.trackType === 2) { // audio track
                         channels = trackEntry.channels;
@@ -91,14 +99,14 @@ class OGVDemuxerWebM {
                         break;
                     }
                 }
-                
+
                 return {
                     channels: channels,
                     rate: rate
                 };
             }
         });
-        
+
         Object.defineProperty(this, 'videoFormat', {
             get: function () {
                 var tempTrack;
@@ -109,7 +117,7 @@ class OGVDemuxerWebM {
                         break;
                     }
                 }
-                
+
                 return {
                     frameWidth: tempTrack.width,
                     frameHeight: tempTrack.height,
@@ -125,13 +133,13 @@ class OGVDemuxerWebM {
                 };
             }
         });
-        
+
         Object.defineProperty(this, 'audioReady', {
             get: function () {
                 return this.audioPackets.length > 0;
             }
         });
-        
+
         Object.defineProperty(this, 'audioTimestamp', {
             get: function () {
                 if (this.audioPackets.length > 0) {
@@ -141,17 +149,17 @@ class OGVDemuxerWebM {
                 }
             }
         });
-        
+
         Object.defineProperty(this, 'frameTimestamp', {
-	get: function() {
-		if (this.videoPackets.length > 0) {
-			return this.videoPackets[0].timestamp;
-		} else {
-			return -1;
-		}
+            get: function () {
+                if (this.videoPackets.length > 0) {
+                    return this.videoPackets[0].timestamp;
+                } else {
+                    return -1;
+                }
             }
         });
-        
+
         Object.defineProperty(this, 'keyframeTimestamp', {
             get: function () {
                 if (this.videoPackets.length > 0) {
@@ -164,14 +172,14 @@ class OGVDemuxerWebM {
 
         Object.defineProperty(this, 'hasVideo', {
             get: function () {
-                if(this.loadedMetadata && this.videoCodec){
+                if (this.loadedMetadata && this.videoCodec) {
                     return true;
-                }else{
+                } else {
                     return false;
                 }
             }
         });
-        
+
         //Only need this property cause nest egg has it
 
         Object.defineProperty(this, 'videoCodec', {
@@ -247,7 +255,7 @@ class OGVDemuxerWebM {
     }
 
     init(callback) {
-        this.time(function() {
+        this.time(function () {
             console.warn("initializing demuxer webm");
         }.bind(this));
         callback();
@@ -289,8 +297,11 @@ class OGVDemuxerWebM {
             }
 
             this.processing = false;
+            //return 1;
             //console.log(this);
         }.bind(this));
+        
+        //console.warn("PROCESSING DONE");
         callback(!!ret);
 
 
@@ -318,32 +329,32 @@ class OGVDemuxerWebM {
                     if (!this.seekHead.loaded)
                         return;
                     break;
-                    
+
                 case 0xEC: //VOid
                     if (!this.dataInterface.peekBytes(this.currentElement.size))
                         return;
                     else
                         this.dataInterface.skipBytes(this.currentElement.size);
-                    
+
                     console.log("FOUND VOID, SKIPPING");
                     break;
-                    
+
                 case 0x1549A966: //Info
                     if (!this.segmentInfo)
                         this.segmentInfo = new SegmentInfo(this.currentElement, this.dataInterface);
                     this.segmentInfo.load();
                     if (!this.segmentInfo.loaded)
-                        return;                    
-                    break;    
-                    
+                        return;
+                    break;
+
                 case 0x1654AE6B: //Tracks
                     if (!this.tracks)
                         this.tracks = new Tracks(this.currentElement, this.dataInterface);
                     this.tracks.load();
                     if (!this.tracks.loaded)
                         return;
-                    break;  
-                    
+                    break;
+
                 case 0x1F43B675: //Cluster
                     if (!this.currentCluster)
                         this.currentCluster = new Cluster(this.currentElement, this.dataInterface, this);
@@ -352,8 +363,8 @@ class OGVDemuxerWebM {
                         return;
                     this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
                     this.currentCluster = null;
-                    break; 
-                    
+                    break;
+
                 default:
                     this.state = META_LOADED;//testing
                     return;
@@ -365,7 +376,7 @@ class OGVDemuxerWebM {
             this.currentElement = null;
         }
 
-        
+
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.state = META_LOADED;
@@ -375,9 +386,9 @@ class OGVDemuxerWebM {
      * finds the beginnign of the segment. Should modify to allow level 0 voids, apparantly they are possible 
      */
     loadSegment() {
-        if(this.state !== HEADER_LOADED)
+        if (this.state !== HEADER_LOADED)
             console.error("HEADER NOT LOADED");
-        
+
         if (!this.currentElement)
             this.currentElement = this.dataInterface.peekElement();
 
@@ -508,29 +519,38 @@ class OGVDemuxerWebM {
 
     }
 
-    dequeueAudioPacket(callback){
+    dequeueAudioPacket(callback) {
         //console.warn("Dequeing audio");
         if (this.audioPackets.length) {
-		var packet = this.audioPackets.shift().data;
-		callback(packet);
-	} else {
-		callback(null);
-	}
+            var packet = this.audioPackets.shift().data;
+            callback(packet);
+        } else {
+            callback(null);
+        }
     }
-    
-    dequeueVideoPacket(callback){
+
+    dequeueVideoPacket(callback) {
         //console.warn("Dequeing video");
         if (this.videoPackets.length) {
-		var packet = this.videoPackets.shift().data;
-		callback(packet);
-	} else {
-		callback(null);
-	}
+            var packet = this.videoPackets.shift().data;
+            callback(packet);
+        } else {
+            callback(null);
+        }
     }
-    
-    flush(callback){
+
+    flush(callback) {
         console.warn("flushing");
     }
+    
+    getKeypointOffset(timeSeconds, callback) {
+        var offset = this.time(function () {
+            //return Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
+            console.warn("need this");
+        }.bind(this));
+        callback(offset);
+    }
+    
 
     parseHeader() {
 
@@ -612,56 +632,11 @@ class OGVDemuxerWebM {
 
     }
 
-    static readFloat(dataView, offset, size) {
-        //need to fix overflow for 64bit unsigned int
-        if (offset < 0 && (size === 4 || size === 8)) {
-            console.warn("invalid float size");
-        }
-
-        if (size === 4) {
-            return dataView.getFloat32(offset);
-        } else {
-            return dataView.getFloat64(offset);
-        }
 
 
-    }
 
-    static readUnsignedInt(dataView, offset, size) {
-        //need to fix overflow for 64bit unsigned int
-        if (offset < 0 || size <= 0 || size > 8) {
-            console.warn("invalid file size");
-        }
-
-
-        var result = 0;
-        var b;
-
-        for (var i = 0; i < size; i++) {
-
-
-            b = dataView.getUint8(offset);
-            if (i === 0 && b < 0) {
-                console.warn("invalid integer value");
-            }
-
-            result <<= 8;
-            result |= b;
-
-            offset++;
-        }
-
-        return result;
-    }
-
-    static readString(dataView, offset, size) {
-        var tempString = '';
-        for (var i = 0; i < size; i++) {
-            tempString += String.fromCharCode(dataView.getUint8(offset + i));
-        }
-        return tempString;
-    }
-};
+}
+;
 
 
 

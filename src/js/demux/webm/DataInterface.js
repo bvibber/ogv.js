@@ -611,7 +611,7 @@ class DataInterface{
     readFloat(size) {
 
         if (size === 8) {
-            console.warn("hello");
+            
             
             if (this.tempCounter === null)
                 this.tempCounter = 0;

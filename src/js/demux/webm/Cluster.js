@@ -136,7 +136,7 @@ class SimpleBlock{
         }
         
         if (!this.timeCode) {
-            this.timeCode = this.dataInterface.readSignedInt(2);
+            this.timeCode = this.dataInterface.readUnsignedInt(2);//Be signed for some reason?
             if (this.timeCode === null)
                 return null;
         }
@@ -243,20 +243,29 @@ class SimpleBlock{
                 if(this.dataInterface.usingBufferedRead === true)
                     throw "SHOULD NOT BE BUFFERED READ";
                 
-             
+                var fullTimeCode = this.timeCode + this.cluster.timeCode;
+                //var fullTimeCode = this.cluster.timeCode;
+                var timeStamp = fullTimeCode / 1000;
+                if(timeStamp < 0){
+                   throw "INVALID TIMESTAMP"; 
+                }
+                
+                
                 if (this.track.trackType === 1) {
                     this.cluster.demuxer.videoPackets.push({//This could be improved
                         data: tempFrame,
-                        timestamp: this.timeCode + this.cluster.timeCode,
-                        keyframeTimestamp: this.timeCode + this.cluster.timeCode
+                        timestamp: timeStamp,
+                        keyframeTimestamp: timeStamp
                     });
                 } else if (this.track.trackType === 2) {
                     this.cluster.demuxer.audioPackets.push({//This could be improved
                         data: tempFrame,
-                        timestamp: this.timeCode + this.cluster.timeCode
+                        timestamp: timeStamp
                     });
                 }
 
+                tempFrame = null;
+                
                 break;
             default:
                 console.log(this);

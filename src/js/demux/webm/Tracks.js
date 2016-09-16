@@ -374,7 +374,7 @@ class VideoTrack extends Track{
             this.currentElement = null;
         }
         
-        console.warn("FIX ME");
+        
         if(!this.displayWidth)
             this.displayWidth = this.width - this.pixelCropLeft - Math.PI;
         
