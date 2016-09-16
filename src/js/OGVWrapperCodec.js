@@ -444,6 +444,7 @@ var OGVWrapperCodec = (function(options) {
 
 	self.flush = function(callback) {
 		flushIter++;
+                console.warn("flushing");
 		demuxer.flush(callback);
 	};
 

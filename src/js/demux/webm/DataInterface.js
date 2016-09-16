@@ -94,11 +94,14 @@ class DataInterface{
     }
     
     popBuffer(){
+        if(this.dataBuffers.length === 0)
+            return;
         this.dataBuffers.shift();
+        this.internalPointer = 0;
         //this.internalPointer = 0;
         if(this.dataBuffers.length !== 0){
             this.currentBuffer = this.dataBuffers[0];
-            this.internalPointer = 0;
+            
         }else{
             this.currentBuffer = null;
         }
@@ -348,8 +351,8 @@ class DataInterface{
             
         var byteToRead = this.currentBuffer.getUint8(this.internalPointer);
         this.incrementPointers();
-        if (this.remainingBytes === 0)
-                this.popBuffer();
+        //if (this.remainingBytes === 0)
+          //      this.popBuffer();
             
         return byteToRead;
     }
@@ -660,48 +663,87 @@ class DataInterface{
      * @returns {ArrayBuffer} the read data
      */
     getBinary(length){
-        //No buffers
-        if (!this.currentBuffer)
-            return null;
         
+        if (length < 0)
+            throw "INVALID SIZE";
+        
+        /*
+        if(this.usingBufferedRead)
+            console.warn("using read buffer");
+        
+        
+        if(this.remainingBytes >= length && !this.usingBufferedRead){
+           //console.warn("FITS IN 1"); 
+        }else if(this.peekBytes(length) && !this.usingBufferedRead){
+            //console.warn("FITS WITHOUT RETURNING");
+        }else if(this.usingBufferedRead) {
+            //console.warn("FITS IN 1 + ALREADY STARTED");
+        }else{
+            //console.warn("Split across multiple buffers");
+        }
+        */
+        
+        if(this.usingBufferedRead && this.tempCounter === null){
+            throw "COUNTER WAS ERASED";
+        }
         //Entire element contained in 1 array
-        if(this.remainingBytes >= length){
+        if(this.remainingBytes >= length && !this.usingBufferedRead){
             
             var newBuffer = this.currentBuffer.buffer.slice(this.internalPointer, this.internalPointer + length);
+            
+            if(newBuffer.byteLength !== length)
+                throw "INVALID NEW BUFFER!";
+            
             this.incrementPointers(length);
-            if (this.remainingBytes <= 0)
+            if (this.remainingBytes === 0)
                 this.popBuffer();
             return newBuffer;
             
         } 
+        
+        console.warn("SPLITTING");
+        
+        var test = this.offset;
+        var tempRemainingBytes = this.remainingBytes
 
+        if (this.usingBufferedRead === false && this.tempCounter > 0)
+            throw "INVALID BUFFERED READ";//at this point should be true
+        
         //data is broken up across different arrays
         //TODO: VERY SLOW, FIX THIS!!!!!!!!!!
-        if(!this.tempBinaryBuffer)
-            this.tempBinaryBuffer = new DataView( new ArrayBuffer(length));
+        this.usingBufferedRead = true;
         
-        if (this.tempCounter === null)
+        if(!this.tempBinaryBuffer)
+            this.tempBinaryBuffer = new DataView(new ArrayBuffer(length));
+        
+        if (!this.tempCounter)
             this.tempCounter = 0;
-        console.warn("SPLITTING");
+        
         var b;
         while (this.tempCounter < length) {
 
-            if (!this.currentBuffer)// if we run out of data return null
+            if (!this.currentBuffer) {
+                if (this.usingBufferedRead === false)
+                    throw "INVALID return  case";//at this point should be true
                 return null; //Nothing to parse
+            }
+
 
             b = this.readByte();
             this.tempBinaryBuffer.setUint8(this.tempCounter, b);
 
-            if (this.remainingBytes === 0)
+            if (this.remainingBytes === 0){
                 this.popBuffer();
+            }
+                
 
             this.tempCounter++;
         }
         
-        
         var tempBinaryBuffer = this.tempBinaryBuffer;
         this.tempBinaryBuffer = null;
         this.tempCounter = null;
+        this.usingBufferedRead = false;
         return tempBinaryBuffer.buffer;
 
         

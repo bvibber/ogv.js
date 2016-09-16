@@ -109,7 +109,10 @@ class SimpleBlock{
         this.track = null;
         this.frameLength = null;
         this.isLaced = false;
-
+        this.dataOffset = null;
+        this.stop = this.offset + this.size;
+        
+        this.testMarker = NO_MARKER;
     }
     
     loadTrack(){
@@ -118,6 +121,10 @@ class SimpleBlock{
     }
     
     load() {
+        //6323
+        if(this.loaded)
+            throw "ALREADY LOADED";
+        
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
         
@@ -134,26 +141,29 @@ class SimpleBlock{
                 return null;
         }
         
-        if (!this.flags) {
+        if (this.flags === null) {/// FIX THIS
             this.flags = this.dataInterface.readUnsignedInt(1);
             if (this.flags === null)
                 return null;
+
+            this.keyframe = (((this.flags >> 7) & 0x01) === 0) ? false : true;
+            this.invisible = (((this.flags >> 2) & 0x01) === 0) ? false : true;
+            this.lacing = ((this.flags & 0x06) >> 1);
+            if (this.lacing > 3 || this.lacing < 0)
+                throw "INVALID LACING";
         }
         
-        this.keyframe = (((this.flags >> 7) & 0x01) === 0) ? false : true;
-        this.invisible = (((this.flags >> 3) & 0x03) === 0) ? false : true;
-        this.lacing = ((this.flags >> 1) & 0x03);
-        if(this.lacing > 3 || this.lacing < 0)
-            throw "INVALID LACING";
+        
         
         
         if (this.lacing === XIPH_LACING || this.lacing === EBML_LACING) {
+            console.warn("DETECTING LACING");
             if (!this.lacedFrameCount) {
                 this.lacedFrameCount = this.dataInterface.readByte();
                 if (this.lacedFrameCount === null)
                     return null;
                 
-                this.lacedFrameCount-=1;
+                this.lacedFrameCount++;
             }
             
             if (!this.tempCounter)
@@ -177,21 +187,68 @@ class SimpleBlock{
         
         switch (this.lacing) {
             
-            case NO_LACING:
+            
             case XIPH_LACING:
             case FIXED_LACING:
             case EBML_LACING:
-                if (!this.frameLength)
-                    this.frameLength = this.size - this.headerSize;
-                var tempFrame = this.dataInterface.getBinary(this.frameLength);
-                if (!tempFrame)
-                    return null;
+            case NO_LACING:
+                /*
+                if(this.lacing === FIXED_LACING){
+                   console.warn("FIXED_LACING");
+                }
+                if(this.lacing === EBML_LACING){
+                   console.warn("EBML_LACING");
+                }
+                if(this.lacing === XIPH_LACING){
+                   console.warn("XIPH_LACING");
+                }
+                if(this.lacing === NO_LACING){
+                   console.warn("NO_LACING");
+                }
+                            */
                 
+                if (!this.frameLength){
+                    this.frameLength = this.size - this.headerSize;
+                    if(this.frameLength <= 0)
+                        throw "INVALID FRAME LENGTH " + this.frameLength;
+                }
+                    
+                if (!this.tempMarker)
+                    this.tempMarker = this.dataInterface.offset;
+
+                var tempFrame = this.dataInterface.getBinary(this.frameLength);
+                
+                if (tempFrame === null){
+                    if(this.dataInterface.usingBufferedRead === false)
+                        throw "SHOULD BE BUFFERED READ";
+                    //console.warn("frame has been split");
+                    return null;
+                }else{
+                    if(this.dataInterface.usingBufferedRead === true)
+                    throw "SHOULD NOT BE BUFFERED READ";
+                
+                    if(tempFrame.byteLength !== this.frameLength)
+                        throw "INVALID FRAME";
+                    
+                    if((this.dataInterface.offset - this.tempMarker) !== this.frameLength){
+                      console.warn((this.dataInterface.offset - this.tempMarker));
+                        throw "OFFSET ERROR";  
+                    }
+                        
+                
+                    //console.warn("frame complete");
+                }
+                
+               
+                if(this.dataInterface.usingBufferedRead === true)
+                    throw "SHOULD NOT BE BUFFERED READ";
+                
+             
                 if (this.track.trackType === 1) {
                     this.cluster.demuxer.videoPackets.push({//This could be improved
                         data: tempFrame,
                         timestamp: this.timeCode + this.cluster.timeCode,
-                        keyframeTimestamp: this.timeCode + this.cluster.timeCode,
+                        keyframeTimestamp: this.timeCode + this.cluster.timeCode
                     });
                 } else if (this.track.trackType === 2) {
                     this.cluster.demuxer.audioPackets.push({//This could be improved
@@ -213,11 +270,20 @@ class SimpleBlock{
         else
             this.dataInterface.skipBytes(this.size);
             */
+
+        if( this.size !== this.dataInterface.getMarkerOffset(this.marker)){
+            console.log(this);
+            throw "INVALID BLOCK SIZE";
+        }
+            
+
         this.loaded = true;
         this.headerSize = null;
         this.tempFrame = null;
         this.tempCounter = null;
+        this.frameLength = null;
         this.dataInterface.removeMarker(this.marker);
+        this.marker = NO_MARKER;
     }
     
 }

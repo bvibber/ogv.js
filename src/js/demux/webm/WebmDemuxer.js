@@ -276,7 +276,7 @@ class OGVDemuxerWebM {
 
         this.processing = false;
         //console.log(this);
-        callback(true);
+        callback(false);
 
 
     }
@@ -613,7 +613,7 @@ class OGVDemuxerWebM {
     }
 
     dequeueAudioPacket(callback){
-        console.warn("Dequeing audio");
+        //console.warn("Dequeing audio");
         if (this.audioPackets.length) {
 		var packet = this.audioPackets.shift().data;
 		callback(packet);
@@ -623,13 +623,17 @@ class OGVDemuxerWebM {
     }
     
     dequeueVideoPacket(callback){
-        console.warn("Dequeing video");
+        //console.warn("Dequeing video");
         if (this.videoPackets.length) {
 		var packet = this.videoPackets.shift().data;
 		callback(packet);
 	} else {
 		callback(null);
 	}
+    }
+    
+    flush(callback){
+        console.warn("flushing");
     }
 
     parseHeader() {
@@ -762,8 +766,6 @@ class OGVDemuxerWebM {
         return tempString;
     }
 };
-
-
 
 
 
