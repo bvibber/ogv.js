@@ -16,7 +16,11 @@ class Cluster {
         this.timeCode = null;
         this.tempBlock = null;
         this.blocks = [];
+        
+        
+        //this should go somewhere else!!
         this.demuxer.loadedMetadata = true; // Testing only
+        return 0; // Exit OK signal meta is done loading
     }
     
 load() {
@@ -47,9 +51,10 @@ load() {
                     this.tempBlock.load();
                     if (!this.tempBlock.loaded)
                         return null;
-                    else
-                        this.blocks.push(this.tempBlock); //Later save positions for seeking
+                    //else
+                    //  this.blocks.push(this.tempBlock); //Later save positions for seeking
                     this.tempBlock = null;
+                    return 1;
                     break;
                     
                     //TODO, ADD VOID
@@ -77,6 +82,7 @@ load() {
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;
+        return 0;
     }
 }
 

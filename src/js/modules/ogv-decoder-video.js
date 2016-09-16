@@ -108,7 +108,6 @@ Module.processFrame = function(data, callback) {
 
 		return Module._ogv_video_decoder_process_frame(buffer, len)
 	});
-        console.warn("frame processed");
 	callback(ret);
 };
 

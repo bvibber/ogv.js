@@ -272,7 +272,7 @@ class OGVDemuxerWebM {
     process(callback) {
         var ret = this.time(function () {
             //this.processing = true;
-
+         
             switch (this.state) {
                 case INITIAL_STATE:
                     this.loadHeader();
@@ -283,7 +283,7 @@ class OGVDemuxerWebM {
                     if (this.state !== SEGMENT_LOADED)
                         break;
                 case SEGMENT_LOADED:
-                    this.loadMeta();
+                    var status = this.loadMeta();
                     if (this.state !== META_LOADED)
                         break;
                 default:
@@ -293,17 +293,15 @@ class OGVDemuxerWebM {
                         this.shown = true;
 
                     }
+                    return 0;
             }
 
             this.processing = false;
-            return false; // not sure what to return yet...
-            //console.log(this);
+            return status || 0;
+
         }.bind(this));
         
-        //console.warn("PROCESSING DONE");
         callback(!!ret);
-
-
     }
 
     loadMeta() {
@@ -357,7 +355,9 @@ class OGVDemuxerWebM {
                 case 0x1F43B675: //Cluster
                     if (!this.currentCluster)
                         this.currentCluster = new Cluster(this.currentElement, this.dataInterface, this);
-                    this.currentCluster.load();
+                    var status = this.currentCluster.load();
+                    if (status === 0)
+                        return 0;
                     if (!this.currentCluster.loaded)
                         return;
                     this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something

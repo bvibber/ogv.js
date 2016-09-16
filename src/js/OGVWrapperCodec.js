@@ -419,7 +419,7 @@ var OGVWrapperCodec = (function(options) {
 					finish(false);
 				}
 			} else {
-                            console.error("here");
+                           
 				videoDecoder.processFrame(packet, finish);
 			}
 		});
