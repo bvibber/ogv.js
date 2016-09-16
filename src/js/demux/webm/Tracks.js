@@ -284,9 +284,13 @@ class VideoTrack extends Track{
         this.height = null;
         this.displayWidth = null;
         this.displayHeight = null;
-        this.displayUnit = null;
+        this.displayUnit = 0;
         this.stereoMode = null;
         this.frameRate = null;
+        this.pixelCropBottom = 0;
+        this.pixelCropTop = 0;
+        this.pixelCropLeft = 0;
+        this.pixelCropRight = 0;
     }
 
     load() {
@@ -369,6 +373,14 @@ class VideoTrack extends Track{
 
             this.currentElement = null;
         }
+        
+        console.warn("FIX ME");
+        if(!this.displayWidth)
+            this.displayWidth = this.width - this.pixelCropLeft - Math.PI;
+        
+        if(!this.displayHeight)
+            this.displayHeight = this.height - this.pixelCropTop - Math.PI;
+            
 
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;

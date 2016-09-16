@@ -1178,6 +1178,7 @@ var OGVPlayer = function(options) {
 									pendingFrame--;
 									if (ok) {
 										// Save the buffer until it's time to draw
+                                                                                console.warn("pushing frames");
 										decodedFrames.push({
 											yCbCrBuffer: codec.frameBuffer,
 											videoCpuTime: codec.videoCpuTime,
@@ -1186,6 +1187,7 @@ var OGVPlayer = function(options) {
 									} else {
 										// Bad packet or something.
 										log('Bad video packet or something');
+                                                                                console.warn('Bad video packet or something');
 									}
 									pingProcessing();
 								});

@@ -701,10 +701,10 @@ class DataInterface{
             
         } 
         
-        console.warn("SPLITTING");
+        //console.warn("SPLITTING");
         
         var test = this.offset;
-        var tempRemainingBytes = this.remainingBytes
+        var tempRemainingBytes = this.remainingBytes;
 
         if (this.usingBufferedRead === false && this.tempCounter > 0)
             throw "INVALID BUFFERED READ";//at this point should be true
