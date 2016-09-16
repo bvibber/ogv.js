@@ -57,7 +57,6 @@ class OGVDemuxerWebM {
         Object.defineProperty(this, 'duration', {
 
             get: function () {
-                console.warn("GETTING DURATION");
                 if(this.segmentInfo.duration < 0)
                     return -1;
                 return this.segmentInfo.duration / 1000;// / 1000000000.0; ;
@@ -297,7 +296,7 @@ class OGVDemuxerWebM {
             }
 
             this.processing = false;
-            //return 1;
+            return false; // not sure what to return yet...
             //console.log(this);
         }.bind(this));
         
