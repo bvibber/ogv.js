@@ -549,93 +549,9 @@ class OGVDemuxerWebM {
         }.bind(this));
         callback(offset);
     }
-    
-
-    parseHeader() {
-
-        var dataView = this.bufferQueue[0];
-        var offset = 0;//assume header starts at 0 for now
-        var headerOffset = offset;
-        var elementId;
-        var elementSize;
-
-        elementId = VINT.read(dataView, offset);
-        offset += elementId.width;
-        elementSize = VINT.read(dataView, offset);
-        offset += elementSize.width;
-
-        if (elementId.raw !== 0x1A45DFA3) { //EBML code
-            // console.warn('INVALID HEADER');
-        }
-
-
-
-        var end = headerOffset + elementId.width + elementSize.width + elementSize.data; //total header size
-        this.headerSize = end - 0;
-
-        while (offset < end) {
-            elementId = VINT.read(dataView, offset);
-            offset += elementId.width;
-            elementSize = VINT.read(dataView, offset);
-            offset += elementSize.width;
-
-
-            switch (elementId.raw) {
-                case 0x4286: //EBMLVersion
-                    this.version = OGVDemuxerWebM.readUnsignedInt(dataView, offset, elementSize.data);
-                    break;
-                case 0x42F7: //EBMLReadVersion
-                    this.readVersion = OGVDemuxerWebM.readUnsignedInt(dataView, offset, elementSize.data);
-                    break;
-                case 0x42F2: //EBMLMaxIDLength
-                    this.maxIdLength = OGVDemuxerWebM.readUnsignedInt(dataView, offset, elementSize.data);
-                    break;
-                case 0x42F3: //EBMLMaxSizeLength
-                    this.maxSizeLength = OGVDemuxerWebM.readUnsignedInt(dataView, offset, elementSize.data);
-                    break;
-                case 0x4282: //DocType
-                    this.docType = OGVDemuxerWebM.readString(dataView, offset, elementSize.data);
-                    break;
-                case 0x4287: //DocTypeVersion
-                    this.docTypeVersion = OGVDemuxerWebM.readUnsignedInt(dataView, offset, elementSize.data);
-                    break;
-                case 0x4285: //DocTypeReadVersion
-                    this.docTypeReadVersion = OGVDemuxerWebM.readUnsignedInt(dataView, offset, elementSize.data);
-                    break;
-                default:
-                    console.warn("not found");
-                    break;
-
-            }
-            offset += elementSize.data;
-        }
-
-        if (offset !== end) {
-            console.warn("invalid file format");
-        }
-
-
-
-        if (this.docType === null || this.docTypeReadVersion <= 0 || this.docTypeVersion <= 0) {
-            console.warn("invalid file format");
-        }
-
-        // Make sure EBMLMaxIDLength and EBMLMaxSizeLength are valid.
-        if (this.maxIdLength <= 0 || this.maxIdLength > 4 || this.maxSizeLength <= 0 ||
-                this.maxSizeLength > 8) {
-            console.warn("invalid file format");
-        }
-
-        this.state = 1; //Set State To Decode Ready
-        console.log(this);
-
-    }
-
-
-
 
 }
-;
+
 
 
 
