@@ -77,6 +77,7 @@ clean:
 	rm -rf build
 	rm -rf dist
 	rm -f libogg/configure
+	rm -f liboggz/configure
 	rm -f libvorbis/configure
 	rm -f libtheora/configure
 	rm -f libopus/configure
