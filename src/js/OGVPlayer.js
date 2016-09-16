@@ -807,8 +807,8 @@ var OGVPlayer = function(options) {
 		needProcessing = false,
 		pendingFrame = 0,
 		pendingAudio = 0,
-		framePipelineDepth = 1,
-		audioPipelineDepth = 2;
+		framePipelineDepth = 3,
+		audioPipelineDepth = 3;
 
 	function doProcessing() {
 		nextProcessingTimer = null;
@@ -1131,8 +1131,16 @@ var OGVPlayer = function(options) {
 								if (!stoppedForLateFrame) {
 									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
 									lateFrames++;
-									stopPlayback();
-									stoppedForLateFrame = true;
+									if (decodedFrames.length > 1) {
+										log('late frame has a neighbor; skipping to next frame');
+										decodedFrames.shift();
+										frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+										framesProcessed++; // pretend!
+										doFrameComplete();
+									} else {
+										stopPlayback();
+										stoppedForLateFrame = true;
+									}
 								}
 							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
 								// catching up, ok if we were early
