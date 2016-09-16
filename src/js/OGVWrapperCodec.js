@@ -154,7 +154,7 @@ var OGVWrapperCodec = (function(options) {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		processing = true;
-                /*
+                
                 if(demuxerClassName === 'OGVDemuxerWebM'){
                     
                     demuxer = new OGVDemuxerWebM();
@@ -170,7 +170,7 @@ var OGVWrapperCodec = (function(options) {
 		    });
                         
                 }else{
-                */
+                
                   OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
 			demuxer.onseek = function(offset) {
@@ -183,7 +183,7 @@ var OGVWrapperCodec = (function(options) {
 				callback();
 			});
 		});  
-                //}
+                }
 		
 	};
 
@@ -419,7 +419,6 @@ var OGVWrapperCodec = (function(options) {
 					finish(false);
 				}
 			} else {
-                            console.error("here");
 				videoDecoder.processFrame(packet, finish);
 			}
 		});
