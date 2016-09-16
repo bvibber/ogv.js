@@ -1377,7 +1377,6 @@ var OGVPlayer = function(options) {
 	}
 
 	function readBytesAndWait() {
-                console.log("reading bytes");
 		stream.readBytes();
 	}
 

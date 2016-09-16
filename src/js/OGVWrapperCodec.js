@@ -203,7 +203,6 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.receiveInput = function(data, callback) {
-            console.log("getting input");
 		demuxer.receiveInput(data, callback);
 	};
 

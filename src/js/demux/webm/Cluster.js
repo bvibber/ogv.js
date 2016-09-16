@@ -17,6 +17,7 @@ class Cluster {
         this.tempBlock = null;
         this.blocks = [];
         this.demuxer.loadedMetadata = true; // Testing only
+        return true;
     }
     
 load() {
@@ -46,10 +47,14 @@ load() {
                         this.tempBlock = new SimpleBlock(this.currentElement, this.dataInterface, this);
                     this.tempBlock.load();
                     if (!this.tempBlock.loaded)
-                        return null;
+                        return 0;
                     else
-                        this.blocks.push(this.tempBlock); //Later save positions for seeking
+                        this.blocks.push(this.tempBlock); //Later save positions for seeking and debugging
                     this.tempBlock = null;
+                    
+                    this.tempEntry = null;
+                    this.currentElement = null;
+                    return true;
                     break;
                     
                     //TODO, ADD VOID
@@ -64,6 +69,8 @@ load() {
             
             this.tempEntry = null;
             this.currentElement = null;
+            return false;
+            //return 1;
         }
         
 
