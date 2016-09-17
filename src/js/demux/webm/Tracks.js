@@ -376,10 +376,10 @@ class VideoTrack extends Track{
         
         
         if(!this.displayWidth)
-            this.displayWidth = this.width - this.pixelCropLeft - Math.PI;
+            this.displayWidth = this.width - this.pixelCropLeft;// - Math.PI;
         
         if(!this.displayHeight)
-            this.displayHeight = this.height - this.pixelCropTop - Math.PI;
+            this.displayHeight = this.height - this.pixelCropTop;// - Math.PI;
             
 
         this.dataInterface.removeMarker(this.marker);
