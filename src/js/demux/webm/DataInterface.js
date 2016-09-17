@@ -716,13 +716,13 @@ class DataInterface{
         this.usingBufferedRead = true;
         
         if(!this.tempBinaryBuffer)
-            this.tempBinaryBuffer = new DataView(new ArrayBuffer(length));
+            this.tempBinaryBuffer = new Uint8Array(new ArrayBuffer(length));
         
         if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
         
-        //var bytesFromCurrentBuffer = length -
         
+        /*
         var b;
         while (this.tempCounter < length) {
 
@@ -742,6 +742,38 @@ class DataInterface{
                 
 
             this.tempCounter++;
+        }*/
+        var bytesToCopy = 0;       
+        var tempBuffer;
+        while (this.tempCounter < length) {
+
+            if (!this.currentBuffer) {
+                if (this.usingBufferedRead === false)
+                    throw "INVALID return  case";//at this point should be true
+                return null; //Nothing to parse
+            }
+
+            if((length - this.tempCounter) > this.remainingBytes){
+                bytesToCopy = this.remainingBytes
+            }else{
+                bytesToCopy = length - this.tempCounter;
+            }
+           
+            tempBuffer = new Uint8Array(this.currentBuffer.buffer , this.internalPointer, bytesToCopy);
+            this.tempBinaryBuffer.set(tempBuffer , this.tempCounter);
+            this.incrementPointers(bytesToCopy);
+            //b = this.readByte();
+            
+            //this.tempBinaryBuffer.setUint8(this.tempCounter, b);
+
+
+
+            if (this.remainingBytes === 0) {
+                this.popBuffer();
+            }
+
+
+            this.tempCounter += bytesToCopy;
         }
         
         var tempBinaryBuffer = this.tempBinaryBuffer;
