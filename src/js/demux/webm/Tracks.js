@@ -71,6 +71,8 @@ class Tracks {
                             data: headerParser.buffer.slice(start, end),
                             timestamp: -1
                         });
+                        
+                        trackEntry.codecPrivate = null; //won't need it anymore
                     }
                     break;
                 default:

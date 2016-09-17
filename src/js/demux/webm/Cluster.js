@@ -81,7 +81,6 @@ load() {
         }
         
         //Cleanup Marker
-        console.log("CLUSTER LOADED");
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;
