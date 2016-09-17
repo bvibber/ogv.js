@@ -82,6 +82,7 @@ class OGVDemuxerWebM {
             }
         });
 
+
         Object.defineProperty(this, 'audioFormat', {
             get: function () {
 
@@ -105,7 +106,6 @@ class OGVDemuxerWebM {
                 };
             }
         });
-
         Object.defineProperty(this, 'videoFormat', {
             get: function () {
                 var tempTrack;
@@ -271,7 +271,7 @@ class OGVDemuxerWebM {
 
     process(callback) {
         var ret = this.time(function () {
-            var status;
+            var status = false;
             //this.processing = true;
 
             switch (this.state) {
@@ -297,19 +297,27 @@ class OGVDemuxerWebM {
             }
 
             //this.processing = false;
-            return status || false; // not sure what to return yet...
-            //console.log(this);
+            
+            //return status;
+            if(status === 1 || status === true){
+                return 1;
+            }else{
+                return 0;
+            }
+            //return status || false; // not sure what to return yet...
+            //console.war(this);
         }.bind(this));
         
-        console.warn("PROCESSING DONE");
-
+        //console.warn("PROCESSING DONE v: " + this.videoPackets.length + " a " + this.audioPackets.length);
+        //console.log(this);
+        //console.warn(ret);
         callback(!!ret);
 
 
     }
 
     loadMeta() {
-
+        var status = false;
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
 
@@ -328,12 +336,12 @@ class OGVDemuxerWebM {
                         this.seekHead = new SeekHead(this.currentElement, this.dataInterface);
                     this.seekHead.load();
                     if (!this.seekHead.loaded)
-                        return;
+                        return false;
                     break;
 
                 case 0xEC: //VOid
                     if (!this.dataInterface.peekBytes(this.currentElement.size))
-                        return;
+                        return false;
                     else
                         this.dataInterface.skipBytes(this.currentElement.size);
 
@@ -345,7 +353,7 @@ class OGVDemuxerWebM {
                         this.segmentInfo = new SegmentInfo(this.currentElement, this.dataInterface);
                     this.segmentInfo.load();
                     if (!this.segmentInfo.loaded)
-                        return;
+                        return false;
                     break;
 
                 case 0x1654AE6B: //Tracks
@@ -353,18 +361,21 @@ class OGVDemuxerWebM {
                         this.tracks = new Tracks(this.currentElement, this.dataInterface);
                     this.tracks.load();
                     if (!this.tracks.loaded)
-                        return;
+                        return false;
                     break;
 
                 case 0x1F43B675: //Cluster
                     if (!this.currentCluster){
+                        var metaWasLoaded = this.loadedMetadata; 
                         this.currentCluster = new Cluster(this.currentElement, this.dataInterface, this);
-                        if(!this.loadedMetadata)
+                        if(this.loadedMetadata && !metaWasLoaded)
                             return true;
                     }
-                    var status = this.currentCluster.load();
-                    if (!this.currentCluster.loaded)
-                        return;
+                    status = this.currentCluster.load();
+                    if (!this.currentCluster.loaded){
+                       return status;                      
+                    }
+                        
                     this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
                     this.currentCluster = null;
                     break;
@@ -384,7 +395,7 @@ class OGVDemuxerWebM {
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.state = META_LOADED;
-        return status || false;
+        return status;
     }
 
     /**
@@ -526,6 +537,7 @@ class OGVDemuxerWebM {
 
     dequeueAudioPacket(callback) {
         //console.warn("Dequeing audio");
+        
         if (this.audioPackets.length) {
             var packet = this.audioPackets.shift().data;
             callback(packet);
@@ -535,7 +547,7 @@ class OGVDemuxerWebM {
     }
 
     dequeueVideoPacket(callback) {
-        //console.warn("Dequeing video");
+        //console.error("Dequeing video");
         if (this.videoPackets.length) {
             var packet = this.videoPackets.shift().data;
             callback(packet);

@@ -147,10 +147,15 @@ Module.process = function(callback) {
 	var ret = time(function() {
 		return Module._ogv_demuxer_process();
 	});
+        console.warn("PROCESSING DONE v: " + Module.videoPackets.length + " a: " + Module.audioPackets.length);
+        console.warn(ret);      
+        console.log(this);
 	callback(!!ret);
 };
 
 Module.dequeueVideoPacket = function(callback) {
+        console.error("dequing video packet");
+
 	if (Module.videoPackets.length) {
 		var packet = Module.videoPackets.shift().data;
 		callback(packet);

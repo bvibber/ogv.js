@@ -21,6 +21,7 @@ class Cluster {
     }
     
 load() {
+        var status = false;
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
 
@@ -69,7 +70,7 @@ load() {
             
             this.tempEntry = null;
             this.currentElement = null;
-            return false;
+            return status;
             //return 1;
         }
         

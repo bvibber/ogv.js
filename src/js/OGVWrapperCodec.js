@@ -156,7 +156,7 @@ var OGVWrapperCodec = (function(options) {
 		processing = true;
                 
                 if(demuxerClassName === 'OGVDemuxerWebM'){
-                    
+                    console.info("loading javascript demux");
                     demuxer = new OGVDemuxerWebM();
                     demuxer.onseek = function(offset) {
 				if (self.onseek) {
@@ -278,7 +278,7 @@ var OGVWrapperCodec = (function(options) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
 		processing = true;
-
+                console.warn("process loop");
 		var videoPacketCount = demuxer.videoPackets.length,
 			audioPacketCount = demuxer.audioPackets.length,
 			start = (window.performance ? performance.now() : Date.now());
@@ -323,7 +323,7 @@ var OGVWrapperCodec = (function(options) {
 				finish(true);
 
 			} else if (demuxer.audioReady) {
-
+                                console.warn("PROCESING AUDIO HEADERS");
 				demuxer.dequeueAudioPacket(function(packet) {
 					audioDecoder.processHeader(packet, function(ret) {
 						finish(true);
@@ -426,6 +426,7 @@ var OGVWrapperCodec = (function(options) {
 	self.decodeAudio = function(callback) {
 		var cb = flushSafe(callback);
 		demuxer.dequeueAudioPacket(function(packet) {
+                        //Bug is here
 			audioDecoder.processAudio(packet, cb);
 		});
 	}

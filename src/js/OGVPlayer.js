@@ -1042,6 +1042,7 @@ var OGVPlayer = function(options) {
 		} else if (state == State.PLAYING) {
 
 			function doProcessPlay() {
+                               
 
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
@@ -1078,6 +1079,8 @@ var OGVPlayer = function(options) {
 
 							if (prebufferingAudio && (audioFeeder.durationBuffered >= audioFeeder.bufferThreshold * 2 || dataEnded)) {
 								log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
+                                                                console.log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
+                                                                console.warn(audioFeeder);
 								startPlayback(playbackPosition);
 								prebufferingAudio = false;
 							}
@@ -1160,6 +1163,7 @@ var OGVPlayer = function(options) {
 						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
 
 						if (readyForFrameDecode) {
+                                                    console.log('readyForFrameDecode');
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
@@ -1187,7 +1191,7 @@ var OGVPlayer = function(options) {
 									} else {
 										// Bad packet or something.
 										log('Bad video packet or something');
-                                                                                //console.warn('Bad video packet or something');
+                                                                                console.warn('Bad video packet or something');
 									}
 									pingProcessing();
 								});
@@ -1208,6 +1212,7 @@ var OGVPlayer = function(options) {
 								codec.decodeAudio(function processingDecodeAudio(ok) {
 									pendingAudio--;
 									log('play loop callback: decoded audio');
+                                                                        //console.warn('play loop callback: decoded audio');
 									audioEndTimestamp = nextAudioEndTimestamp;
 
 									if (ok) {

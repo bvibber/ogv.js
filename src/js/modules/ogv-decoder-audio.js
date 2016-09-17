@@ -89,6 +89,7 @@ Module.processHeader = function(data, callback) {
 
 		return Module._ogv_audio_decoder_process_header(buffer, len);
 	});
+        console.warn("PROCESSED AUDIO HEADER + " + ret);
 	callback(ret);
 };
 
