@@ -430,6 +430,7 @@ class DataInterface{
      * @param {number} bytesToSkip
      */
     skipBytes(bytesToSkip){
+ 
         for (var i =0; i < bytesToSkip; i++){
             this.incrementPointers();
             
@@ -670,22 +671,6 @@ class DataInterface{
         if (length < 0)
             throw "INVALID SIZE";
         
-        /*
-        if(this.usingBufferedRead)
-            console.warn("using read buffer");
-        
-        
-        if(this.remainingBytes >= length && !this.usingBufferedRead){
-           //console.warn("FITS IN 1"); 
-        }else if(this.peekBytes(length) && !this.usingBufferedRead){
-            //console.warn("FITS WITHOUT RETURNING");
-        }else if(this.usingBufferedRead) {
-            //console.warn("FITS IN 1 + ALREADY STARTED");
-        }else{
-            //console.warn("Split across multiple buffers");
-        }
-        */
-        
         if(this.usingBufferedRead && this.tempCounter === null){
             throw "COUNTER WAS ERASED";
         }
@@ -721,28 +706,6 @@ class DataInterface{
         if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
         
-        
-        /*
-        var b;
-        while (this.tempCounter < length) {
-
-            if (!this.currentBuffer) {
-                if (this.usingBufferedRead === false)
-                    throw "INVALID return  case";//at this point should be true
-                return null; //Nothing to parse
-            }
-
-
-            b = this.readByte();
-            this.tempBinaryBuffer.setUint8(this.tempCounter, b);
-
-            if (this.remainingBytes === 0){
-                this.popBuffer();
-            }
-                
-
-            this.tempCounter++;
-        }*/
         var bytesToCopy = 0;       
         var tempBuffer;
         while (this.tempCounter < length) {
