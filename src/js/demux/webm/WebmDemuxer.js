@@ -67,7 +67,7 @@ class OGVDemuxerWebM {
         Object.defineProperty(this, 'frameReady', {
 
             get: function () {
-                return (this.videoPackets.length > 0) ? 1 : 0;
+                return this.videoPackets.length > 0;
             }
 
         });

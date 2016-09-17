@@ -418,7 +418,7 @@ class AudioTrack extends Track{
             switch (this.currentElement.id) {
                 //TODO add duration and title
                 case 0xB5: //Sample Frequency //TODO: MAKE FLOAT
-                    var rate = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    var rate = this.dataInterface.readFloat(this.currentElement.size);
                     if (rate !== null)
                         this.rate = rate;
                     else
