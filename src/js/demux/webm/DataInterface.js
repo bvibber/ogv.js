@@ -4,7 +4,7 @@
  * 
  */
 
-const INITIAL_COUNTER = -1;
+var INITIAL_COUNTER = -1;
 
 class DataInterface{
     

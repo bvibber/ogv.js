@@ -8,17 +8,17 @@ var Cluster = require('./Cluster.js');
 
 
 //States
-const INITIAL_STATE = 0;
-const HEADER_LOADED = 1;
-const SEGMENT_LOADED = 2;
-const META_LOADED = 3;
-const NO_MARKER = -1;
-const EXIT_OK = 666;
+var INITIAL_STATE = 0;
+var HEADER_LOADED = 1;
+var SEGMENT_LOADED = 2;
+var META_LOADED = 3;
+var NO_MARKER = -1;
+var EXIT_OK = 666;
 
 
-const STATE_BEGIN = 0;
-const STATE_DECODING = 1;
-const STATE_SEEKING = 2;
+var STATE_BEGIN = 0;
+var STATE_DECODING = 1;
+var STATE_SEEKING = 2;
 
 var getTimestamp;
 if (typeof performance === 'undefined' || typeof performance.now === 'undefined') {

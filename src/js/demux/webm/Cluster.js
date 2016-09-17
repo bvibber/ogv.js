@@ -1,6 +1,6 @@
 'use strict';
-const NO_MARKER = -1;
-const UNSET = -1;
+var NO_MARKER = -1;
+var UNSET = -1;
 
 class Cluster {
 
@@ -87,10 +87,10 @@ load() {
     }
 }
 
-const NO_LACING = 0;
-const XIPH_LACING = 1;
-const FIXED_LACING = 2;
-const EBML_LACING = 3;
+var NO_LACING = 0;
+var XIPH_LACING = 1;
+var FIXED_LACING = 2;
+var EBML_LACING = 3;
 
 class SimpleBlock{
     

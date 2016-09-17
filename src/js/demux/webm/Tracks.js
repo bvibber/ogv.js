@@ -1,5 +1,5 @@
 'use strict';
-const NO_MARKER = -1;
+var NO_MARKER = -1;
 
 class Tracks {
 
