@@ -1079,8 +1079,6 @@ var OGVPlayer = function(options) {
 
 							if (prebufferingAudio && (audioFeeder.durationBuffered >= audioFeeder.bufferThreshold * 2 || dataEnded)) {
 								log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
-                                                                console.log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
-                                                                console.warn(audioFeeder);
 								startPlayback(playbackPosition);
 								prebufferingAudio = false;
 							}
@@ -1163,7 +1161,7 @@ var OGVPlayer = function(options) {
 						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
 
 						if (readyForFrameDecode) {
-                                                    console.log('readyForFrameDecode');
+                                                
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
@@ -1517,7 +1515,7 @@ var OGVPlayer = function(options) {
 				},
 				onread: function(data) {
 					log('got input ' + [data.byteLength]);
-                                        console.log('got input ' + [data.byteLength]);
+                                        
 					// Save chunk to pass into the codec's buffer
 					actionQueue.push(function doReceiveInput() {
 						codec.receiveInput(data, function() {
@@ -1592,7 +1590,6 @@ var OGVPlayer = function(options) {
 	 * HTMLMediaElement play method
 	 */
 	self.play = function() {
-            console.log('playing');
 		if (!muted && !audioOptions.audioContext) {
 			OGVPlayer.initSharedAudioContext();
 		}

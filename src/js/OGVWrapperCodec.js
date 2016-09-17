@@ -212,13 +212,17 @@ var OGVWrapperCodec = (function(options) {
 	};
 	function loadAudioCodec(callback) {
             
+                  
 		if (demuxer.audioCodec) {
+                    //console.log(this);
+                    //throw "FORMAT";
                     
 			var className = audioClassMap[demuxer.audioCodec];
-                        console.log("got audio classname + " + className);
+                        //console.log("got audio classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(audioCodecClass) {
 				var audioOptions = {};
+                                //console.warn(demuxer.audioFormat);
 				if (demuxer.audioFormat) {
 					audioOptions.audioFormat = demuxer.audioFormat;
 				}
@@ -244,7 +248,7 @@ var OGVWrapperCodec = (function(options) {
 	function loadVideoCodec(callback) {
 		if (demuxer.videoCodec) {
 			var className = videoClassMap[demuxer.videoCodec];
-                        console.log("got video classname + " + className);
+                        //console.log("got video classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(videoCodecClass) {
 				var videoOptions = {};
@@ -278,7 +282,7 @@ var OGVWrapperCodec = (function(options) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
 		processing = true;
-                console.warn("process loop");
+                //console.warn("process loop");
 		var videoPacketCount = demuxer.videoPackets.length,
 			audioPacketCount = demuxer.audioPackets.length,
 			start = (window.performance ? performance.now() : Date.now());
@@ -323,7 +327,7 @@ var OGVWrapperCodec = (function(options) {
 				finish(true);
 
 			} else if (demuxer.audioReady) {
-                                console.warn("PROCESING AUDIO HEADERS");
+                            
 				demuxer.dequeueAudioPacket(function(packet) {
 					audioDecoder.processHeader(packet, function(ret) {
 						finish(true);

@@ -85,10 +85,7 @@ class OGVDemuxerWebM {
 
         Object.defineProperty(this, 'audioFormat', {
             get: function () {
-
-                if (!this.hasAudio)
-                    return;
-
+                  
                 var channels;
                 var rate;
                 for (var i in this.tracks.trackEntries) {
@@ -99,7 +96,9 @@ class OGVDemuxerWebM {
                         break;
                     }
                 }
-
+                //console.error("channels : " + channels + "rate : " + rate);
+                var test;
+                return test;
                 return {
                     channels: channels,
                     rate: rate
@@ -255,7 +254,7 @@ class OGVDemuxerWebM {
 
     init(callback) {
         this.time(function () {
-            console.warn("initializing demuxer webm");
+            
         }.bind(this));
         callback();
     }
@@ -288,12 +287,7 @@ class OGVDemuxerWebM {
                     if (this.state !== META_LOADED)
                         break;
                 default:
-
-                    if (this.shown === false && this.state === META_LOADED) {
-                        console.log(this);
-                        this.shown = true;
-
-                    }
+                    //fill this out
             }
 
             //this.processing = false;
@@ -308,9 +302,7 @@ class OGVDemuxerWebM {
             //console.war(this);
         }.bind(this));
         
-        //console.warn("PROCESSING DONE v: " + this.videoPackets.length + " a " + this.audioPackets.length);
-        //console.log(this);
-        //console.warn(ret);
+
         callback(!!ret);
 
 
@@ -358,7 +350,7 @@ class OGVDemuxerWebM {
 
                 case 0x1654AE6B: //Tracks
                     if (!this.tracks)
-                        this.tracks = new Tracks(this.currentElement, this.dataInterface);
+                        this.tracks = new Tracks(this.currentElement, this.dataInterface, this);
                     this.tracks.load();
                     if (!this.tracks.loaded)
                         return false;
@@ -527,7 +519,7 @@ class OGVDemuxerWebM {
 
             this.currentElement = null;
         }
-        console.log("HEADER LOADED");
+        //console.log("HEADER LOADED");
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.headerIsLoaded = true;

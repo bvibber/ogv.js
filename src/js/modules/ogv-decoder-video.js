@@ -89,7 +89,6 @@ Module.processHeader = function(data, callback) {
 
 		return Module._ogv_video_decoder_process_header(buffer, len);
 	});
-        console.warn("header packet processed");
 	callback(ret);
 };
 
@@ -108,9 +107,6 @@ Module.processFrame = function(data, callback) {
 
 		return Module._ogv_video_decoder_process_frame(buffer, len)
 	});
-        
-        console.error("frame processed" + ret);
-        
 	callback(ret);
 };
 
