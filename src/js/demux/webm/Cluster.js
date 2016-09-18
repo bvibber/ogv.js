@@ -16,6 +16,9 @@ class Cluster {
         this.timeCode = null;
         this.tempBlock = null;
         this.blocks = [];
+        
+        
+        //this should go somewhere else!!
         this.demuxer.loadedMetadata = true; // Testing only
         return true;
     }
@@ -84,6 +87,7 @@ load() {
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;
+        return 0;
     }
 }
 
