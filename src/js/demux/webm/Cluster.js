@@ -1,6 +1,6 @@
 'use strict';
-const NO_MARKER = -1;
-const UNSET = -1;
+var NO_MARKER = -1;
+var UNSET = -1;
 
 class Cluster {
 
@@ -20,10 +20,11 @@ class Cluster {
         
         //this should go somewhere else!!
         this.demuxer.loadedMetadata = true; // Testing only
-        return 0; // Exit OK signal meta is done loading
+        return true;
     }
     
 load() {
+        var status = false;
         if (this.marker === NO_MARKER)
             this.marker = this.dataInterface.setNewMarker();
 
@@ -50,11 +51,14 @@ load() {
                         this.tempBlock = new SimpleBlock(this.currentElement, this.dataInterface, this);
                     this.tempBlock.load();
                     if (!this.tempBlock.loaded)
-                        return null;
-                    //else
-                    //  this.blocks.push(this.tempBlock); //Later save positions for seeking
+                        return 0;
+                    else
+                        this.blocks.push(this.tempBlock); //Later save positions for seeking and debugging
                     this.tempBlock = null;
-                    return 1;
+                    
+                    this.tempEntry = null;
+                    this.currentElement = null;
+                    return true;
                     break;
                     
                     //TODO, ADD VOID
@@ -69,6 +73,8 @@ load() {
             
             this.tempEntry = null;
             this.currentElement = null;
+            return status;
+            //return 1;
         }
         
 
@@ -78,7 +84,6 @@ load() {
         }
         
         //Cleanup Marker
-        console.log("CLUSTER LOADED");
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;
@@ -86,10 +91,10 @@ load() {
     }
 }
 
-const NO_LACING = 0;
-const XIPH_LACING = 1;
-const FIXED_LACING = 2;
-const EBML_LACING = 3;
+var NO_LACING = 0;
+var XIPH_LACING = 1;
+var FIXED_LACING = 2;
+var EBML_LACING = 3;
 
 class SimpleBlock{
     

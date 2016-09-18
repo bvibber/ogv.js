@@ -1042,6 +1042,7 @@ var OGVPlayer = function(options) {
 		} else if (state == State.PLAYING) {
 
 			function doProcessPlay() {
+                               
 
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
@@ -1160,6 +1161,7 @@ var OGVPlayer = function(options) {
 						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
 
 						if (readyForFrameDecode) {
+                                                
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
@@ -1187,7 +1189,7 @@ var OGVPlayer = function(options) {
 									} else {
 										// Bad packet or something.
 										log('Bad video packet or something');
-                                                                                //console.warn('Bad video packet or something');
+                                                                                console.warn('Bad video packet or something');
 									}
 									pingProcessing();
 								});
@@ -1208,6 +1210,7 @@ var OGVPlayer = function(options) {
 								codec.decodeAudio(function processingDecodeAudio(ok) {
 									pendingAudio--;
 									log('play loop callback: decoded audio');
+                                                                        //console.warn('play loop callback: decoded audio');
 									audioEndTimestamp = nextAudioEndTimestamp;
 
 									if (ok) {
@@ -1377,7 +1380,6 @@ var OGVPlayer = function(options) {
 	}
 
 	function readBytesAndWait() {
-                console.log("reading bytes");
 		stream.readBytes();
 	}
 
@@ -1513,7 +1515,7 @@ var OGVPlayer = function(options) {
 				},
 				onread: function(data) {
 					log('got input ' + [data.byteLength]);
-                                        console.log('got input ' + [data.byteLength]);
+                                        
 					// Save chunk to pass into the codec's buffer
 					actionQueue.push(function doReceiveInput() {
 						codec.receiveInput(data, function() {
@@ -1622,6 +1624,7 @@ var OGVPlayer = function(options) {
 			} else if (loading) {
 
 				log('.play() while loading');
+                                
 
 			} else {
 

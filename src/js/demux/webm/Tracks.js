@@ -1,9 +1,10 @@
 'use strict';
-const NO_MARKER = -1;
+var NO_MARKER = -1;
 
 class Tracks {
 
-    constructor(seekHeadHeader, dataInterface) {
+    constructor(seekHeadHeader, dataInterface, demuxer) {
+        this.demuxer = demuxer;
         this.dataInterface = dataInterface;
         this.offset = seekHeadHeader.offset;
         this.size = seekHeadHeader.size;
@@ -36,7 +37,43 @@ class Tracks {
                     if (!this.trackLoader.loaded)
                         return;
                     else
-                        this.trackEntries.push(this.trackLoader.getTrackEntry());
+                        var trackEntry = this.trackLoader.getTrackEntry()
+                        this.trackEntries.push(trackEntry);
+                        
+                        
+                    //Push the initializer on automatically
+                    //put this in a vorbis class
+                    if (trackEntry.trackType === 2) {
+                        var headerParser = new DataView(trackEntry.codecPrivate);
+                        var packetCount = headerParser.getUint8(0);
+                        var firstLength = headerParser.getUint8(1);
+                        var secondLength = headerParser.getUint8(2);
+                        var thirdLength = headerParser.byteLength - firstLength - secondLength -1;
+                        if(packetCount !== 2)
+                            throw "INVALID VORBIS HEADER";
+                        //throw "last length  = " + thirdLength;
+                        var start = 3;
+                        var end = start + firstLength;
+                        this.demuxer.audioPackets.push({//This could be improved
+                            data: headerParser.buffer.slice(start, end),
+                            timestamp: -1
+                        });
+                        start = end;
+                        end = start + secondLength;
+                        
+                        this.demuxer.audioPackets.push({//This could be improved
+                            data: headerParser.buffer.slice(start, end),
+                            timestamp: -1
+                        });
+                        start = end;
+                        end = start + thirdLength;
+                        this.demuxer.audioPackets.push({//This could be improved
+                            data: headerParser.buffer.slice(start, end),
+                            timestamp: -1
+                        });
+                        
+                        trackEntry.codecPrivate = null; //won't need it anymore
+                    }
                     break;
                 default:
                     console.warn("TRACK BUG");
@@ -206,11 +243,14 @@ class TrackLoader {
                     break;
 
                 case 0x63A2: //Codec Private 
-                    var codecPrivate = this.dataInterface.readString(this.currentElement.size);
-                    if (codecPrivate !== null)
+                    var codecPrivate = this.dataInterface.getBinary(this.currentElement.size);
+                    if (codecPrivate !== null){
                         this.trackData.codecPrivate = codecPrivate;
-                    else
+                        //this must be pushed onto the queue!
+                        
+                    }else{
                         return null;
+                    }
                     break;
 
                 case 0x56AA: //Codec Delay 
@@ -246,6 +286,8 @@ class TrackLoader {
             this.currentElement = null;
         }
 
+        
+                
         this.dataInterface.removeMarker(this.marker);
         this.marker = NO_MARKER;
         this.loaded = true;
@@ -256,6 +298,8 @@ class TrackLoader {
         var tempTrack = this.tempTrack;
         this.tempTrack = null;
         this.loading = false;
+        
+        
         return tempTrack;
     }
 
@@ -376,10 +420,10 @@ class VideoTrack extends Track{
         
         
         if(!this.displayWidth)
-            this.displayWidth = this.width - this.pixelCropLeft - Math.PI;
+            this.displayWidth = this.width - this.pixelCropLeft;// - Math.PI;
         
         if(!this.displayHeight)
-            this.displayHeight = this.height - this.pixelCropTop - Math.PI;
+            this.displayHeight = this.height - this.pixelCropTop;// - Math.PI;
             
 
         this.dataInterface.removeMarker(this.marker);
@@ -418,7 +462,7 @@ class AudioTrack extends Track{
             switch (this.currentElement.id) {
                 //TODO add duration and title
                 case 0xB5: //Sample Frequency //TODO: MAKE FLOAT
-                    var rate = this.dataInterface.readUnsignedInt(this.currentElement.size);
+                    var rate = this.dataInterface.readFloat(this.currentElement.size);
                     if (rate !== null)
                         this.rate = rate;
                     else

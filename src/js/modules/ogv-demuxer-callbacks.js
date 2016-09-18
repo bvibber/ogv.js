@@ -25,6 +25,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	ogvjs_callback_init_audio: function(channels, rate) {
+            console.warn("AUDIO FORMAT INIT");
 		Module.audioFormat = {
 			channels: channels,
 			rate: rate

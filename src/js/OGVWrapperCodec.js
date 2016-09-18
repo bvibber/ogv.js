@@ -154,9 +154,9 @@ var OGVWrapperCodec = (function(options) {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		processing = true;
-                /*
+                
                 if(demuxerClassName === 'OGVDemuxerWebM'){
-                    
+                    console.info("loading javascript demux");
                     demuxer = new OGVDemuxerWebM();
                     demuxer.onseek = function(offset) {
 				if (self.onseek) {
@@ -170,7 +170,7 @@ var OGVWrapperCodec = (function(options) {
 		    });
                         
                 }else{
-                */
+                
                   OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
 			demuxer.onseek = function(offset) {
@@ -183,7 +183,7 @@ var OGVWrapperCodec = (function(options) {
 				callback();
 			});
 		});  
-                //}
+                }
 		
 	};
 
@@ -203,7 +203,6 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	self.receiveInput = function(data, callback) {
-            console.log("getting input");
 		demuxer.receiveInput(data, callback);
 	};
 
@@ -213,13 +212,17 @@ var OGVWrapperCodec = (function(options) {
 	};
 	function loadAudioCodec(callback) {
             
+                  
 		if (demuxer.audioCodec) {
+                    //console.log(this);
+                    //throw "FORMAT";
                     
 			var className = audioClassMap[demuxer.audioCodec];
-                        console.log("got audio classname + " + className);
+                        //console.log("got audio classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(audioCodecClass) {
 				var audioOptions = {};
+                                //console.warn(demuxer.audioFormat);
 				if (demuxer.audioFormat) {
 					audioOptions.audioFormat = demuxer.audioFormat;
 				}
@@ -245,7 +248,7 @@ var OGVWrapperCodec = (function(options) {
 	function loadVideoCodec(callback) {
 		if (demuxer.videoCodec) {
 			var className = videoClassMap[demuxer.videoCodec];
-                        console.log("got video classname + " + className);
+                        //console.log("got video classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(videoCodecClass) {
 				var videoOptions = {};
@@ -279,7 +282,7 @@ var OGVWrapperCodec = (function(options) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
 		processing = true;
-
+                //console.warn("process loop");
 		var videoPacketCount = demuxer.videoPackets.length,
 			audioPacketCount = demuxer.audioPackets.length,
 			start = (window.performance ? performance.now() : Date.now());
@@ -324,7 +327,7 @@ var OGVWrapperCodec = (function(options) {
 				finish(true);
 
 			} else if (demuxer.audioReady) {
-
+                            
 				demuxer.dequeueAudioPacket(function(packet) {
 					audioDecoder.processHeader(packet, function(ret) {
 						finish(true);
@@ -419,7 +422,6 @@ var OGVWrapperCodec = (function(options) {
 					finish(false);
 				}
 			} else {
-                           
 				videoDecoder.processFrame(packet, finish);
 			}
 		});
@@ -428,6 +430,7 @@ var OGVWrapperCodec = (function(options) {
 	self.decodeAudio = function(callback) {
 		var cb = flushSafe(callback);
 		demuxer.dequeueAudioPacket(function(packet) {
+                        //Bug is here
 			audioDecoder.processAudio(packet, cb);
 		});
 	}

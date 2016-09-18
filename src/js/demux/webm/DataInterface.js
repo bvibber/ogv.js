@@ -3,6 +3,9 @@
  * @classdesc This class keeps a queue of arraybuffers in order for demuxer to read continuously without having to overwrite anything
  * 
  */
+
+var INITIAL_COUNTER = -1;
+
 class DataInterface{
     
     constructor(){
@@ -30,7 +33,7 @@ class DataInterface{
             }
         });
         
-        this.tempId = null;
+ 
         this.tempElementOffset = null;
         this.tempElementDataOffset = null;
         this.tempSize = null;
@@ -42,7 +45,7 @@ class DataInterface{
         this.tempElementSize = null;
         this.tempVintWidth = null;
         this.tempResult = null;
-        this.tempCounter = null;
+        this.tempCounter = INITIAL_COUNTER;
         this.usingBufferedRead = false;
         
         /**
@@ -427,8 +430,9 @@ class DataInterface{
      * @param {number} bytesToSkip
      */
     skipBytes(bytesToSkip){
+ 
         for (var i =0; i < bytesToSkip; i++){
-            this.readByte();
+            this.incrementPointers();
             
             if (this.remainingBytes === 0)
                 this.popBuffer();
@@ -500,7 +504,7 @@ class DataInterface{
         if(this.tempResult === null)
             this.tempResult = 0;
 
-        if (this.tempCounter === null)
+        if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
 
         var b;
@@ -529,7 +533,7 @@ class DataInterface{
         //clear the temp resut
         var result = this.tempResult;
         this.tempResult = null;
-        this.tempCounter = null;
+        this.tempCounter = INITIAL_COUNTER;
         return result;
     }
 
@@ -546,7 +550,7 @@ class DataInterface{
         if(this.tempResult === null)
             this.tempResult = 0;
 
-        if (this.tempCounter === null)
+        if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
 
         var b;
@@ -577,7 +581,7 @@ class DataInterface{
         //clear the temp resut
         var result = this.tempResult;
         this.tempResult = null;
-        this.tempCounter = null;
+        this.tempCounter = INITIAL_COUNTER;
         return result;
     }
     
@@ -585,7 +589,7 @@ class DataInterface{
         if (!this.tempString)
             this.tempString = '';
         
-        if (this.tempCounter === null)
+        if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
         
 
@@ -604,7 +608,7 @@ class DataInterface{
         
         var tempString = this.tempString;
         this.tempString = null;
-        this.tempCounter = null;
+        this.tempCounter = INITIAL_COUNTER;
         return tempString;
     }
     
@@ -613,7 +617,7 @@ class DataInterface{
         if (size === 8) {
             
             
-            if (this.tempCounter === null)
+            if (this.tempCounter === INITIAL_COUNTER)
                 this.tempCounter = 0;
 
             if (this.tempResult === null){
@@ -653,7 +657,7 @@ class DataInterface{
         //clear the temp resut
         var result = this.tempResult;
         this.tempResult = null;
-        this.tempCounter = null;
+        this.tempCounter = INITIAL_COUNTER;
         return result;
     }
     
@@ -666,22 +670,6 @@ class DataInterface{
         
         if (length < 0)
             throw "INVALID SIZE";
-        
-        /*
-        if(this.usingBufferedRead)
-            console.warn("using read buffer");
-        
-        
-        if(this.remainingBytes >= length && !this.usingBufferedRead){
-           //console.warn("FITS IN 1"); 
-        }else if(this.peekBytes(length) && !this.usingBufferedRead){
-            //console.warn("FITS WITHOUT RETURNING");
-        }else if(this.usingBufferedRead) {
-            //console.warn("FITS IN 1 + ALREADY STARTED");
-        }else{
-            //console.warn("Split across multiple buffers");
-        }
-        */
         
         if(this.usingBufferedRead && this.tempCounter === null){
             throw "COUNTER WAS ERASED";
@@ -701,7 +689,6 @@ class DataInterface{
             
         } 
         
-        //console.warn("SPLITTING");
         
         var test = this.offset;
         var tempRemainingBytes = this.remainingBytes;
@@ -714,12 +701,13 @@ class DataInterface{
         this.usingBufferedRead = true;
         
         if(!this.tempBinaryBuffer)
-            this.tempBinaryBuffer = new DataView(new ArrayBuffer(length));
+            this.tempBinaryBuffer = new Uint8Array(new ArrayBuffer(length));
         
-        if (!this.tempCounter)
+        if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
         
-        var b;
+        var bytesToCopy = 0;       
+        var tempBuffer;
         while (this.tempCounter < length) {
 
             if (!this.currentBuffer) {
@@ -728,21 +716,32 @@ class DataInterface{
                 return null; //Nothing to parse
             }
 
+            if((length - this.tempCounter) > this.remainingBytes){
+                bytesToCopy = this.remainingBytes
+            }else{
+                bytesToCopy = length - this.tempCounter;
+            }
+           
+            tempBuffer = new Uint8Array(this.currentBuffer.buffer , this.internalPointer, bytesToCopy);
+            this.tempBinaryBuffer.set(tempBuffer , this.tempCounter);
+            this.incrementPointers(bytesToCopy);
+            //b = this.readByte();
+            
+            //this.tempBinaryBuffer.setUint8(this.tempCounter, b);
 
-            b = this.readByte();
-            this.tempBinaryBuffer.setUint8(this.tempCounter, b);
 
-            if (this.remainingBytes === 0){
+
+            if (this.remainingBytes === 0) {
                 this.popBuffer();
             }
-                
 
-            this.tempCounter++;
+
+            this.tempCounter += bytesToCopy;
         }
         
         var tempBinaryBuffer = this.tempBinaryBuffer;
         this.tempBinaryBuffer = null;
-        this.tempCounter = null;
+        this.tempCounter = INITIAL_COUNTER;
         this.usingBufferedRead = false;
         return tempBinaryBuffer.buffer;
 
