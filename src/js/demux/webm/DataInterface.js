@@ -390,7 +390,7 @@ class DataInterface{
                 return null;
         }
         
-        var element = new ElementHeader(this.tempElementId , this.tempElementSize, this.tempElementOffset);
+        var element = new ElementHeader(this.tempElementId , this.tempElementSize, this.tempElementOffset, this.overallPointer);
         
         //clear the temp holders
         this.tempElementId = null;
@@ -479,10 +479,6 @@ class DataInterface{
         var bytesToAdd = n || 1;
         this.internalPointer += bytesToAdd;
         this.overallPointer += bytesToAdd;
-        //this.markerPointer += bytesToAdd;
-        for (var key in this.markers){
-            this.markers[key] += bytesToAdd;
-        }
     }
     
     getMarkerOffset(markerId){
@@ -751,14 +747,25 @@ class DataInterface{
 }
 
 
-
+/**
+ * @classdesc A class to handle managment of matroska elements
+ */
 class ElementHeader{
     
-    constructor(id, size , offset){
+    /**
+     * 
+     * @param {number} id the element id
+     * @param {number} size the size of the payload
+     * @param {number} offset the offset in the file
+     * @param {number} dataOffset the offset of the payload
+     */
+    constructor(id, size , offset, dataOffset){
         this.id = id;
         this.size = size;
         this.headerSize;
         this.offset = offset;
+        this.dataOffset = dataOffset;
+        this.end = dataOffset + size;
     }
     
 }

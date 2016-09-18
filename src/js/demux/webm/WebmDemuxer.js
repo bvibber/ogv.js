@@ -12,7 +12,6 @@ var INITIAL_STATE = 0;
 var HEADER_LOADED = 1;
 var SEGMENT_LOADED = 2;
 var META_LOADED = 3;
-var NO_MARKER = -1;
 var EXIT_OK = 666;
 
 
@@ -38,38 +37,31 @@ class OGVDemuxerWebM {
         this.videoPackets = [];
         this.audioPackets = [];
         this.loadedMetadata = false;
-        this.seekable = false;
+        this.seekable = true;
         this.dataInterface = new DataInterface();
         this.segment = null;
         this.currentElement = null; // placeholder for last element
         this.segmentIsLoaded = false; // have we found the segment position
-        //this.segmentOffset;
         this.segmentDataOffset;
         this.headerIsLoaded = false;
         this.currentElement = null;
-        this.markerIsSet = false;
-        this.marker = NO_MARKER;
         this.segmentInfo = null; // assuming 1 for now
         this.tracks = null;
         this.currentCluster = null;
         this.cpuTime = 0;
 
         Object.defineProperty(this, 'duration', {
-
             get: function () {
                 if(this.segmentInfo.duration < 0)
                     return -1;
                 return this.segmentInfo.duration / 1000;// / 1000000000.0; ;
             }
-
         });
 
         Object.defineProperty(this, 'frameReady', {
-
             get: function () {
                 return this.videoPackets.length > 0;
             }
-
         });
 
         Object.defineProperty(this, 'hasAudio', {
@@ -84,8 +76,7 @@ class OGVDemuxerWebM {
 
 
         Object.defineProperty(this, 'audioFormat', {
-            get: function () {
-                  
+            get: function () {                  
                 var channels;
                 var rate;
                 for (var i in this.tracks.trackEntries) {
@@ -105,6 +96,7 @@ class OGVDemuxerWebM {
                 };
             }
         });
+        
         Object.defineProperty(this, 'videoFormat', {
             get: function () {
                 var tempTrack;
@@ -181,7 +173,6 @@ class OGVDemuxerWebM {
         //Only need this property cause nest egg has it
 
         Object.defineProperty(this, 'videoCodec', {
-
             get: function () {
                 var codecID;
                 //Multiple video tracks are allowed, for now just return the first one
@@ -212,7 +203,6 @@ class OGVDemuxerWebM {
 
 
         Object.defineProperty(this, 'audioCodec', {
-
             get: function () {
                 var codecID;
                 //Multiple video tracks are allowed, for now just return the first one
@@ -298,8 +288,6 @@ class OGVDemuxerWebM {
             }else{
                 return 0;
             }
-            //return status || false; // not sure what to return yet...
-            //console.war(this);
         }.bind(this));
         
 
@@ -308,10 +296,8 @@ class OGVDemuxerWebM {
 
     loadMeta() {
         var status = false;
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.segment.size) {
+        while (this.dataInterface.offset < this.segment.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -381,9 +367,6 @@ class OGVDemuxerWebM {
             this.currentElement = null;
         }
 
-
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
         this.state = META_LOADED;
         return status;
     }
@@ -440,11 +423,7 @@ class OGVDemuxerWebM {
             }
         }
 
-
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
-
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.elementEBML.size) {
+        while (this.dataInterface.offset < this.elementEBML.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -517,12 +496,9 @@ class OGVDemuxerWebM {
 
             this.currentElement = null;
         }
-        //console.log("HEADER LOADED");
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
+
         this.headerIsLoaded = true;
         this.state = HEADER_LOADED;
-
     }
 
     dequeueAudioPacket(callback) {
@@ -537,7 +513,6 @@ class OGVDemuxerWebM {
     }
 
     dequeueVideoPacket(callback) {
-        //console.error("Dequeing video");
         if (this.videoPackets.length) {
             var packet = this.videoPackets.shift().data;
             callback(packet);
@@ -546,8 +521,18 @@ class OGVDemuxerWebM {
         }
     }
 
+    /**
+     * Clear the current packet buffers and reset the pointers for new read position
+     * @param {function} callback after flush complete
+     */
     flush(callback) {
+        //Note: was wrapped in a time function but the callback doesnt seem to take that param
         console.warn("flushing");
+        this.audioPackets = [];
+        this.videoPackets = [];
+        console.log(this);
+        throw "TEST";
+        callback();
     }
     
     getKeypointOffset(timeSeconds, callback) {

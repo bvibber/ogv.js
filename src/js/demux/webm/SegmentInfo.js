@@ -1,5 +1,4 @@
 'use strict';
-var NO_MARKER = -1;
 
 class SegmentInfo {
 
@@ -7,6 +6,7 @@ class SegmentInfo {
         this.dataInterface = dataInterface;
         this.offset = infoHeader.offset;
         this.size = infoHeader.size;
+        this.end = infoHeader.end;
         this.muxingApp = null;
         this.writingApp = null;
         this.title = null;
@@ -14,17 +14,14 @@ class SegmentInfo {
         this.timecodeScale = 1000000;
         this.duration = -1;
         this.loaded = false;
-        this.marker = NO_MARKER;
         this.segmentUID = null;
         this.duration = null;
 
     }
 
     load() {
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
 
             
             if (!this.currentElement) {
@@ -93,68 +90,11 @@ class SegmentInfo {
             this.currentElement = null;
         }
 
-        if(this.dataInterface.getMarkerOffset(this.marker) !== this.size)
+        if(this.dataInterface.offset !== this.end)
             console.error("Invalid SegmentInfo Formatting");
             
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
+
         this.loaded = true;
-    }
-
-    parse() {
-        var end = this.dataOffset + this.size;
-        var offset = this.dataOffset;
-
-        var elementId;
-        var elementSize;
-        var elementOffset;
-        this.timecodeScale = 1000000;
-        this.duration = -1;
-
-        while (offset < end) {
-
-            elementOffset = offset;
-            elementId = VINT.read(this.dataView, offset);
-            offset += elementId.width;
-            elementSize = VINT.read(this.dataView, offset);
-            offset += elementSize.width;
-
-
-            switch (elementId.raw) {
-
-                case 0x2AD7B1: // TimecodeScale
-                    this.timecodeScale = OGVDemuxerWebM.readUnsignedInt(this.dataView, offset, elementSize.data);
-                    if (this.timecodeScale <= 0)
-                        console.warn("Invalid timecode scale");
-                    break;
-                case 0x4489: // Duration
-                    this.duration = OGVDemuxerWebM.readFloat(this.dataView, offset, elementSize.data);
-                    if (this.duration <= 0)
-                        console.warn("Invalid duration");
-                    break;
-                case 0x4D80: // MuxingApp
-                    this.muxingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
-                    break;
-                case 0x5741: //WritingApp
-                    this.writingApp = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
-
-                    break;
-                case 0x7BA9:  //Title                   
-                    this.title = OGVDemuxerWebM.readString(this.dataView, offset, elementSize.data);
-                    break;
-                default:
-                    console.warn("segment info element not found");
-                    break;
-
-            }
-
-
-
-
-            offset += elementSize.data;
-
-        }
-
     }
 
 }

@@ -1,5 +1,4 @@
 'use strict';
-var NO_MARKER = -1;
 var UNSET = -1;
 
 class Cluster {
@@ -9,8 +8,8 @@ class Cluster {
         this.dataInterface = dataInterface;
         this.offset = clusterHeader.offset;
         this.size = clusterHeader.size;
+        this.end = clusterHeader.end;
         this.loaded = false;  
-        this.marker = NO_MARKER;
         this.tempEntry = null;
         this.currentElement = null;
         this.timeCode = null;
@@ -25,10 +24,8 @@ class Cluster {
     
 load() {
         var status = false;
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -78,14 +75,12 @@ load() {
         }
         
 
-        if (this.dataInterface.getMarkerOffset(this.marker) !== this.size){
+        if (this.dataInterface.offset !== this.end){
             console.log(this);
             throw "INVALID CLUSTER FORMATTING";
         }
         
-        //Cleanup Marker
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
+
         this.loaded = true;
         return 0;
     }
@@ -99,12 +94,14 @@ var EBML_LACING = 3;
 class SimpleBlock{
     
     constructor(blockHeader , dataInterface, cluster) {
+        
         this.cluster = cluster;
         this.dataInterface = dataInterface;
         this.offset = blockHeader.offset;
+        this.dataOffset = blockHeader.dataOffset;
         this.size = blockHeader.size;
+        this.end = blockHeader.end;
         this.loaded = false;  
-        this.marker = NO_MARKER;
         this.trackNumber = null;
         this.timeCode = null;
         this.flags = null;
@@ -120,10 +117,9 @@ class SimpleBlock{
         this.track = null;
         this.frameLength = null;
         this.isLaced = false;
-        this.dataOffset = null;
         this.stop = this.offset + this.size;
-        
-        this.testMarker = NO_MARKER;
+
+
     }
     
     loadTrack(){
@@ -136,8 +132,6 @@ class SimpleBlock{
         if(this.loaded)
             throw "ALREADY LOADED";
         
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
         
         if (!this.trackNumber) {
             this.trackNumber = this.dataInterface.readVint();
@@ -192,9 +186,10 @@ class SimpleBlock{
         }
         
   
-        
+        //console.warn(this);
         if(!this.headerSize)
-            this.headerSize = this.dataInterface.getMarkerOffset(this.marker);
+            this.headerSize = this.dataInterface.offset - this.dataOffset;
+ 
         
         switch (this.lacing) {
             
@@ -224,8 +219,6 @@ class SimpleBlock{
                         throw "INVALID FRAME LENGTH " + this.frameLength;
                 }
                     
-                if (!this.tempMarker)
-                    this.tempMarker = this.dataInterface.offset;
 
                 var tempFrame = this.dataInterface.getBinary(this.frameLength);
                 
@@ -241,10 +234,11 @@ class SimpleBlock{
                     if(tempFrame.byteLength !== this.frameLength)
                         throw "INVALID FRAME";
                     
+                    /*
                     if((this.dataInterface.offset - this.tempMarker) !== this.frameLength){
                       console.warn((this.dataInterface.offset - this.tempMarker));
                         throw "OFFSET ERROR";  
-                    }
+                    }*/
                         
                 
                     //console.warn("frame complete");
@@ -283,16 +277,10 @@ class SimpleBlock{
                 console.warn("LACED ELEMENT FOUND");
                 throw "STOP HERE";
         }
-        
-        /*
-        if (!this.dataInterface.peekBytes(this.size))
-            return;
-        else
-            this.dataInterface.skipBytes(this.size);
-            */
 
-        if( this.size !== this.dataInterface.getMarkerOffset(this.marker)){
-            console.log(this);
+        if( this.end !== this.dataInterface.offset){
+            
+            console.error(this);
             throw "INVALID BLOCK SIZE";
         }
             
@@ -302,8 +290,6 @@ class SimpleBlock{
         this.tempFrame = null;
         this.tempCounter = null;
         this.frameLength = null;
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
     }
     
 }

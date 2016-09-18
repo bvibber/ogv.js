@@ -1,5 +1,5 @@
 'use strict';
-var NO_MARKER = -1;
+
 
 class SeekHead {
 
@@ -7,21 +7,19 @@ class SeekHead {
         this.dataInterface = dataInterface;
         this.offset = seekHeadHeader.offset;
         this.size = seekHeadHeader.size;
+        this.end = seekHeadHeader.end;
         this.entries = [];
         this.entryCount = 0;
         this.voidElements = [];
         this.voidElementCount = 0;
         this.loaded = false;  
-        this.marker = NO_MARKER;
         this.tempEntry = null;
         this.currentElement = null;
     }
     
     load() {
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -52,15 +50,12 @@ class SeekHead {
         }
         
 
-        if (this.dataInterface.getMarkerOffset(this.marker) !== this.size){
+        if (this.dataInterface.offset !== this.end){
             console.log(this);
             throw "INVALID SEEKHEAD FORMATTING"
         }
         
-        //Cleanup Marker
-        console.log("SEEK HEAD LOADED");
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
+
         this.loaded = true;
     }
 
@@ -71,19 +66,17 @@ class Seek{
     constructor(seekHeader, dataInterface) {
         this.size = seekHeader.size;
         this.offset = seekHeader.offset;
+        this.end = seekHeader.end;
         this.dataInterface = dataInterface;
         this.loaded = false;
-        this.marker = NO_MARKER;
         this.currentElement = null;
         this.seekId = -1;
         this.seekPosition = -1;
     }
     
     load(){
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -118,11 +111,9 @@ class Seek{
             this.currentElement = null;
         }
         
-        if(this.dataInterface.getMarkerOffset(this.marker) !== this.size)
+        if(this.dataInterface.offset !== this.end)
             console.error("Invalid Seek Formatting");
-        
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
+
         this.loaded = true;
     }
     

@@ -1,5 +1,4 @@
 'use strict';
-var NO_MARKER = -1;
 
 class Tracks {
 
@@ -8,19 +7,17 @@ class Tracks {
         this.dataInterface = dataInterface;
         this.offset = seekHeadHeader.offset;
         this.size = seekHeadHeader.size;
+        this.end = seekHeadHeader.end;
         this.trackEntries = [];
         this.loaded = false;
-        this.marker = NO_MARKER;
         this.tempEntry = null;
         this.currentElement = null;
         this.trackLoader = new TrackLoader();
     }
 
     load() {
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -86,9 +83,6 @@ class Tracks {
             this.currentElement = null;
         }
 
-        //Cleanup Marker
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
         this.loaded = true;
     }
 
@@ -110,9 +104,9 @@ class TrackLoader {
         this.dataInterface = null;
         this.offset = null;
         this.size = null;
+        this.end = null;
         this.loaded = false;
         this.loading = false;
-        this.marker = NO_MARKER;
         this.trackData = {};
         this.trackData.trackNumber = null;
         this.trackData.trackType = null;
@@ -131,9 +125,9 @@ class TrackLoader {
         this.dataInterface = dataInterface;
         this.offset = trackheader.offset;
         this.size = trackheader.size;
+        this.end = trackheader.end;
         this.loaded = false;
         this.loading = true;
-        this.marker = NO_MARKER;
         this.trackData.trackNumber = null;
         this.trackData.trackType = null;
         this.trackData.name = null;
@@ -149,10 +143,8 @@ class TrackLoader {
     }
 
     load() {
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -286,10 +278,6 @@ class TrackLoader {
             this.currentElement = null;
         }
 
-        
-                
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
         this.loaded = true;
     }
 
@@ -322,8 +310,8 @@ class VideoTrack extends Track{
         this.dataInterface = dataInterface;
         this.offset = trackHeader.offset;
         this.size = trackHeader.size;
+        this.end = trackHeader.end;
         this.loaded = false;
-        this.marker = NO_MARKER;
         this.width = null;
         this.height = null;
         this.displayWidth = null;
@@ -338,10 +326,7 @@ class VideoTrack extends Track{
     }
 
     load() {
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
-
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -425,9 +410,6 @@ class VideoTrack extends Track{
         if(!this.displayHeight)
             this.displayHeight = this.height - this.pixelCropTop;// - Math.PI;
             
-
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
         this.loaded = true;
     }
 
@@ -440,18 +422,16 @@ class AudioTrack extends Track{
         this.dataInterface = dataInterface;
         this.offset = trackHeader.offset;
         this.size = trackHeader.size;
+        this.end = trackHeader.end;
         this.loaded = false;
-        this.marker = NO_MARKER;
         this.rate = null;
         this.channel = null;
         this.bitDepth = null;
     }
 
     load() {
-        if (this.marker === NO_MARKER)
-            this.marker = this.dataInterface.setNewMarker();
 
-        while (this.dataInterface.getMarkerOffset(this.marker) < this.size) {
+        while (this.dataInterface.offset < this.end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)
@@ -494,8 +474,6 @@ class AudioTrack extends Track{
             this.currentElement = null;
         }
 
-        this.dataInterface.removeMarker(this.marker);
-        this.marker = NO_MARKER;
         this.loaded = true;
     }
 
