@@ -7,11 +7,13 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.2.0alpha0 - 2016-09-19-??
+1.2.0 - 2016-09-19
 * Separated software and WebGL paths to yuv-canvas package
 * fixed regression in WebM frame rate handling
+* buffer up to 3 decoded frames for smoother playback
 * smoother audio in the face of short delays (drop late frame if next one is already decoded)
 * fixed regression in seeking non-indexed Ogg files
+* updated libvpx
 
 1.1.3 - 2016-06-27
 * fix play-during-seek bug that interacted with video.js badly
