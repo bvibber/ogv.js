@@ -5,6 +5,7 @@ var SeekHead = require('./SeekHead.js');
 var SegmentInfo = require('./SegmentInfo.js');
 var Tracks = require('./Tracks.js');
 var Cluster = require('./Cluster.js');
+var Cues = require('./Cues.js');
 
 
 //States
@@ -49,6 +50,9 @@ class OGVDemuxerWebM {
         this.tracks = null;
         this.currentCluster = null;
         this.cpuTime = 0;
+        this.seekHead = null;
+        this.cuesLoaded = false;
+        this.isSeeking = false;
 
         Object.defineProperty(this, 'duration', {
             get: function () {
@@ -249,7 +253,7 @@ class OGVDemuxerWebM {
 
     receiveInput(data, callback) {
         var ret = this.time(function () {
-            //this.bufferQueue.push(new DataView(data));
+            console.log("got input");
             this.dataInterface.recieveInput(data);
         }.bind(this));
         callback();
@@ -257,6 +261,7 @@ class OGVDemuxerWebM {
     }
 
     process(callback) {
+        console.info("processing");
         var start = getTimestamp();
         var status = false;
         //this.processing = true;
@@ -350,8 +355,16 @@ class OGVDemuxerWebM {
                        return status;                      
                     }
                         
-                    this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
+                    //this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
                     this.currentCluster = null;
+                    break;
+                    
+                case 0x1C53BB6B: //Cues
+                    if (!this.cues)
+                        this.cues = new Cues(this.currentElement, this.dataInterface);
+                    this.cues.load();
+                    if (!this.cues.loaded)
+                        return false;
                     break;
 
                 default:
@@ -524,21 +537,60 @@ class OGVDemuxerWebM {
      * @param {function} callback after flush complete
      */
     flush(callback) {
+        if(this.isSeeking)
+            return;
+        
         //Note: was wrapped in a time function but the callback doesnt seem to take that param
         console.warn("flushing");
         this.audioPackets = [];
         this.videoPackets = [];
-        console.log(this);
-        throw "TEST";
+        this.dataInterface.flush();
+        this.currentElement = null; 
+        //console.log(this);
+        //throw "TEST";
         callback();
     }
     
     getKeypointOffset(timeSeconds, callback) {
         var offset = this.time(function () {
-            //return Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
-            console.warn("need this");
+            
+            return -1; // because reasons?
+            
         }.bind(this));
+        
         callback(offset);
+    }
+
+    seekToKeypoint(timeSeconds, callback) {
+        var ret = this.time(function () {
+            this.isSeeking = true;
+            //seek to time in seconds * 1000
+            console.warn("seeking to " + timeSeconds*1000);
+            //if the cues are not loaded, look in the seek head
+            if(!this.cuesLoaded){
+                console.warn(this.segment.dataOffset);
+                
+                var length = this.seekHead.entries.length;
+                var entries = this.seekHead.entries;
+                console.warn(this.seekHead);
+                var seekOffset;
+                for (var i = 0; i < length ; i ++){
+                    if(entries[i].seekId === 0x1C53BB6B) // cues
+                        seekOffset =  entries[i].seekPosition + this.segment.dataOffset; // its the offset from data offset
+                }
+                this.dataInterface.offset = seekOffset;
+                this.onseek(seekOffset);
+                return 1;
+                
+            }
+            
+        }.bind(this));
+        if (ret) {
+            //flush?
+            
+        }
+        
+        callback(!!ret);
     }
 
 }
