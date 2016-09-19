@@ -243,9 +243,7 @@ class OGVDemuxerWebM {
     }
 
     init(callback) {
-        this.time(function () {
-            
-        }.bind(this));
+
         callback();
     }
 
@@ -259,39 +257,39 @@ class OGVDemuxerWebM {
     }
 
     process(callback) {
-        var ret = this.time(function () {
-            var status = false;
-            //this.processing = true;
-         
-            switch (this.state) {
-                case INITIAL_STATE:
-                    this.loadHeader();
-                    if (this.state !== HEADER_LOADED)
-                        break;
-                case HEADER_LOADED:
-                    this.loadSegment();
-                    if (this.state !== SEGMENT_LOADED)
-                        break;
-                case SEGMENT_LOADED:
-                    status = this.loadMeta();
-                    if (this.state !== META_LOADED)
-                        break;
-                default:
-                    //fill this out
-            }
+        var start = getTimestamp();
+        var status = false;
+        //this.processing = true;
 
-            //this.processing = false;
-            
-            //return status;
-            if(status === 1 || status === true){
-                return 1;
-            }else{
-                return 0;
-            }
-        }.bind(this));
-        
+        switch (this.state) {
+            case INITIAL_STATE:
+                this.loadHeader();
+                if (this.state !== HEADER_LOADED)
+                    break;
+            case HEADER_LOADED:
+                this.loadSegment();
+                if (this.state !== SEGMENT_LOADED)
+                    break;
+            case SEGMENT_LOADED:
+                status = this.loadMeta();
+                if (this.state !== META_LOADED)
+                    break;
+            default:
+            //fill this out
+        }
 
-        callback(!!ret);
+        //this.processing = false;
+        var delta = (getTimestamp() - start);
+        this.cpuTime += delta;
+        var result;
+        //return status;
+        if (status === 1 || status === true) {
+            result = 1;
+        } else {
+            result = 0;
+        }
+
+        callback(!!result);
     }
 
     loadMeta() {
