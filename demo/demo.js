@@ -403,7 +403,28 @@
 
 			// Build entries for the transcodes
 			var sourceMode = document.querySelector('#media-source').value;
-			if (sourceMode == 'motd') {
+			if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
+				var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
+					widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
+					formats = ['ogv', 'webm'];
+				sizes.forEach(function(size, i) {
+					formats.forEach(function(format) {
+						// fixme: tweak if necessary
+						var width = widths[i],
+							aspect = imageinfo.width / imageinfo.height,
+							height = Math.round(width / aspect);
+						if (width <= imageinfo.width) {
+							sources.push({
+								key: size + 'p.' + format,
+								format: format,
+								width: width,
+								height: height,
+								url: transcodeUrl(imageinfo.url, size, format),
+							});
+						}
+					});
+				});
+			} else {
 				for (var key in transcodestatus) {
 					if (transcodestatus.hasOwnProperty(key)) {
 						var transcode = transcodestatus[key];
@@ -433,29 +454,6 @@
 						}
 					}
 				}
-			} else if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
-				var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
-					widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
-					formats = ['ogv', 'webm'];
-				sizes.forEach(function(size, i) {
-					formats.forEach(function(format) {
-						// fixme: tweak if necessary
-						var width = widths[i],
-							aspect = imageinfo.width / imageinfo.height,
-							height = Math.round(width / aspect);
-						if (width <= imageinfo.width) {
-							sources.push({
-								key: size + 'p.' + format,
-								format: format,
-								width: width,
-								height: height,
-								url: transcodeUrl(imageinfo.url, size, format),
-							});
-						}
-					});
-				});
-			} else {
-				throw new Error('unexpected source mode');
 			}
 
 			callback(mediaInfo, sources);
@@ -635,6 +633,20 @@
 		var selection = [],
 			frameRates = {},
 			descriptions = {};
+		
+		function processList(shortlist) {
+			shortlist.forEach(function(item) {
+				var title = item[0],
+					format = item[1],
+					desc = item[2];
+				if (passFilter(title) || passFilter(format) || passFilter(desc)) {
+					selection.push(title);
+					var bits = format.split(/p/);
+					frameRates[title] = parseFloat(bits[1]);
+					descriptions[title] = desc;
+				}
+			});
+		}
 		if (sourceMode == 'motd') {
 			var max = 40, list = [];
 			for (var day in motd) {
@@ -646,6 +658,82 @@
 				}
 			}
 			selection = list.reverse().slice(0, max);
+		} else if (sourceMode == 'blender') {
+			processList([
+				[
+					"File:Caminandes- Llama Drama - Short Movie.ogv",
+					'1080p24',
+					'3d animation'
+				],
+				[
+					"File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
+					'1080p24',
+					'3d animated'
+				],
+				[
+					"File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
+					'2160p24',
+					'2d animation'
+				],
+				[
+					"File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+					'2160p24',
+					'live action + CG effects'
+				],
+				[
+					"File:Cosmos Laundromat - First Cycle - Official Blender Foundation release.webm",
+					'1152p24',
+					'3d animation'
+				],
+				[
+					"File:Sintel movie 4K.webm",
+					'2304p24',
+					'3d animation (has 1000fps bug)'
+				],
+				[
+					"File:Big Buck Bunny 4K.webm",
+					'2250p60',
+					'3d animation (has 1000fps bug)'
+				],
+				[
+					"File:Elephants Dream (2006) 1080p24.webm",
+					'1080p24',
+					'3d animation'
+				]
+			]);
+		} else if (sourceMode == 'highfps') {
+			processList([
+				[
+					"File:Spectator Mode for Job Simulator - a new way to display social VR footage.webm",
+					'1080p60',
+					'VR game footage'
+				],
+				[
+					"File:ManifoldGarden BRoll01 E3 V01.webm",
+					'1080p60',
+					'game footage'
+				],
+				[
+					"File:Big Buck Bunny 4K.webm",
+					'2250p60',
+					'animation (has 1000fps bug)'
+				],
+				[
+					"File:Stugl,aerial video.webm",
+					'1080p60',
+					'aerial drone footage'
+				],
+				[
+					"File:A Moment with Astronaut Kjell Lindgren.webm",
+					'1080p59.94',
+					'live action'
+				],
+				[
+					"File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
+					'1080p59.94',
+					'live action'
+				]
+			]);
 		} else if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
 			var shortlist = [
 				// Blender movies
@@ -776,17 +864,7 @@
 					'high fps, high motion'
 				]
 			];
-			shortlist.forEach(function(item) {
-				var title = item[0],
-					format = item[1],
-					desc = item[2];
-				if (passFilter(title) || passFilter(format) || passFilter(desc)) {
-					selection.push(title);
-					var bits = format.split(/p/);
-					frameRates[title] = parseFloat(bits[1]);
-					descriptions[title] = desc;
-				}
-			});
+			processList(shortlist);
 		} else {
 			throw new Error('unexpected sourceMode');
 		}
