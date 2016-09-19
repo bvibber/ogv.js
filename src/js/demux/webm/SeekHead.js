@@ -18,8 +18,8 @@ class SeekHead {
     }
     
     load() {
-
-        while (this.dataInterface.offset < this.end) {
+        var end = this.end;
+        while (this.dataInterface.offset < end) {
             if (!this.currentElement) {
                 this.currentElement = this.dataInterface.peekElement();
                 if (this.currentElement === null)

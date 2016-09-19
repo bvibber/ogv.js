@@ -20,8 +20,8 @@ class SegmentInfo {
     }
 
     load() {
-
-        while (this.dataInterface.offset < this.end) {
+        var end = this.end;
+        while (this.dataInterface.offset < end) {
 
             
             if (!this.currentElement) {

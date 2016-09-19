@@ -15,8 +15,6 @@ class DataInterface{
         this.dataBuffers = [];
         this.currentBuffer = null;
         this.markerPointer = 0;
-        this.markerIsSet = false;
-        this.markers = {};
         this.tempFloat64 = new DataView(new ArrayBuffer(8));
         this.tempFloat32 = new DataView(new ArrayBuffer(4));
         this.tempBinaryBuffer = null;
@@ -63,28 +61,6 @@ class DataInterface{
         });
         
         
-    }
-    
-    setNewMarker(){
-        //TODO Make a more efficient id system
-        var markerId = Math.random();
-        while(this.markers[markerId]){
-            markerId = Math.random();
-        }
-        this.markers[markerId] = 0;
-        return markerId;
-    }
-    
-    removeMarker(markerId){
-        delete this.markers[markerId];
-    }
-    
-    clearTemp() {
-        this.tempId = null;
-        this.tempSize = null;
-        this.tempOctetWidth = null;
-        this.tempOctet = null;
-        this.tempByteBuffer = null;
     }
     
     recieveInput(data){
@@ -216,20 +192,6 @@ class DataInterface{
         this.tempByteCounter = null;
         this.tempByteBuffer = null;
         return result;
-                //this.clearTemps();
-        //return (!result) ? null : result; 
-        /*
-        if(this.usingBufferedRead ||  this.remainingBytes < (this.tempOctetWidth - 1)){
-            this.usingBufferedRead = true;
-            var result = this.bufferedReadVint();
-            return (!result) ? null : result; 
-        }else{
-            
-            return this.forceReadVint();
-        }
-       */
-        
-        
         
     }
     
@@ -474,11 +436,6 @@ class DataInterface{
             return 0;
         return this.currentBuffer.byteLength - this.internalPointer;
     }
-    
-    setMarker(){
-        this.markerIsSet = true;
-        this.markerPointer = 0;
-    }
      
     calculateOctetWidth(){
         var leadingZeroes = 0;
@@ -502,10 +459,6 @@ class DataInterface{
         this.overallPointer += bytesToAdd;
     }
     
-    getMarkerOffset(markerId){
-        return this.markers[markerId];
-    }
-    
     readUnsignedInt(size){
         
         if (!this.currentBuffer)// if we run out of data return null
@@ -515,9 +468,7 @@ class DataInterface{
         if ( size <= 0 || size > 8) {
             console.warn("invalid file size");
         }
-
-        var dataView = this.dataBuffers[0];
-           
+  
         if(this.tempResult === null)
             this.tempResult = 0;
 
@@ -526,32 +477,39 @@ class DataInterface{
 
         var b;
 
-        while (this.tempCounter < size) {
+        var tempCounter = this.tempCounter;
+        var tempResult = this.tempResult;
+        
+        while (tempCounter < size) {
 
-            if (!this.currentBuffer)// if we run out of data return null
+            if (!this.currentBuffer){// if we run out of data return null
+                //save progress;
+                this.tempCounter = tempCounter;
+                this.tempResult = tempResult;
                 return null; //Nothing to parse
+            }
 
             b = this.readByte();
 
-            if (this.tempCounter === 0 && b < 0) {
+            if (tempCounter === 0 && b < 0) {
                 console.warn("invalid integer value");
             }
 
 
-            this.tempResult <<= 8;
-            this.tempResult |= b;
+            tempResult <<= 8;
+            tempResult |= b;
 
             if (this.remainingBytes === 0)
                 this.popBuffer();
             
-            this.tempCounter++;
+            tempCounter++;
         }
 
         //clear the temp resut
-        var result = this.tempResult;
+        //var result = this.tempResult;
         this.tempResult = null;
         this.tempCounter = INITIAL_COUNTER;
-        return result;
+        return tempResult;
     }
 
     readSignedInt(size) {
@@ -609,21 +567,25 @@ class DataInterface{
         if (this.tempCounter === INITIAL_COUNTER)
             this.tempCounter = 0;
         
-
+        var tempString = '';
         while (this.tempCounter < size) {
 
-            if (!this.currentBuffer)// if we run out of data return null
+            if (!this.currentBuffer){// if we run out of data return null
+                //save progress
+                this.tempString = tempString;
                 return null; //Nothing to parse
+            }
 
-            this.tempString += String.fromCharCode(this.readByte());
-
+            //this.tempString += String.fromCharCode(this.readByte());
+            tempString += String.fromCharCode(this.readByte());
+            
             if (this.remainingBytes <= 0)
                 this.popBuffer();
 
             this.tempCounter++;
         }
         
-        var tempString = this.tempString;
+        //var tempString = this.tempString;
         this.tempString = null;
         this.tempCounter = INITIAL_COUNTER;
         return tempString;
