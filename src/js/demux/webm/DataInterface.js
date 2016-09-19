@@ -429,20 +429,41 @@ class DataInterface{
      * TODO: Make this more efficient with skipping over different buffers, add stricter checking
      * @param {number} bytesToSkip
      */
-    skipBytes(bytesToSkip){
- 
-        for (var i =0; i < bytesToSkip; i++){
-            this.incrementPointers();
-            
-            if (this.remainingBytes === 0)
+    skipBytes(bytesToSkip) {
+
+        var chunkToErase = 0;
+        var counter = 0;
+        while (counter < bytesToSkip) {
+
+            if (!this.currentBuffer)
+                throw "Invalid Skip Length";
+
+
+            if ((bytesToSkip - counter) > this.remainingBytes) {
+                chunkToErase = this.remainingBytes;
+            } else {
+                chunkToErase = bytesToSkip - counter;
+            }
+
+
+            this.incrementPointers(chunkToErase);
+
+
+            if (this.remainingBytes === 0) {
                 this.popBuffer();
+            }
+
+
+            counter += chunkToErase;
+
         }
-        
+
     }
     
-    getTotalBytes(){
+    getTotalBytes() {
         var totalBytes = 0;
-        for(var i in this.dataBuffers){
+        var length = this.dataBuffers.length;
+        for (var i = 0; i < length; i++) {
             totalBytes += this.dataBuffers[i].byteLength;
         }
         return totalBytes;
@@ -713,7 +734,7 @@ class DataInterface{
             }
 
             if((length - this.tempCounter) > this.remainingBytes){
-                bytesToCopy = this.remainingBytes
+                bytesToCopy = this.remainingBytes;
             }else{
                 bytesToCopy = length - this.tempCounter;
             }
