@@ -513,6 +513,7 @@ var OGVPlayer = function(options) {
 					lastFrameSkipped = false;
 					codec.flush(function() {
 						stream.seek(position);
+						readBytesAndWait();
 					});
 					return true;
 				}
