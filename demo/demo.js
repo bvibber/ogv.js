@@ -268,22 +268,22 @@
 	 * @param function(jsonData) callback
 	 */
 	function commonsApi(params, callback) {
-		var callbackId = 'jsonpCallback' + (Math.random() + '').replace('.', '');
-		window[callbackId] = function(data) {
-			window[callbackId] = undefined;
-			callback(data);
-		};
 		var baseUrl = 'https://commons.wikimedia.org/w/api.php';
-		var url = baseUrl + '?' + arrayToCgi(params) + '&format=json&callback=' + callbackId;
+		var url = baseUrl + '?&origin=*'; // anonymous CORS
+		var payload = arrayToCgi(params) + '&format=json';
 
-		// Whee jsonp load
-		var script = document.createElement('script');
-		script.addEventListener('error', function(event) {
-			console.log('an error happened in JSONP!');
-			callback({error: 'failed to load JSONP request'});
-		});
-		script.src = url;
-		document.querySelector('head').appendChild(script);
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', url);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4) {
+				if (xhr.status >= 400) {
+					throw new Error('Unexpected error ' + xhr.status + 'from Commons API');
+				}
+				var data = JSON.parse(xhr.responseText);
+				callback(data);
+			}
+		};
+		xhr.send(payload);
 	}
 
 
