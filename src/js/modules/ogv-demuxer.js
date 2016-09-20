@@ -154,8 +154,6 @@ Module.process = function(callback) {
 };
 
 Module.dequeueVideoPacket = function(callback) {
-        console.error("dequing video packet");
-
 	if (Module.videoPackets.length) {
 		var packet = Module.videoPackets.shift().data;
 		callback(packet);
