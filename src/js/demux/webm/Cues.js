@@ -6,7 +6,7 @@
 
 class Cues {
 
-    constructor(cuesHeader, dataInterface) {
+    constructor(cuesHeader, dataInterface, demuxer) {
         this.dataInterface = dataInterface;
         this.offset = cuesHeader.offset;
         this.size = cuesHeader.size;

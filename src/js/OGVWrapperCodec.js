@@ -449,7 +449,6 @@ var OGVWrapperCodec = (function(options) {
 
 	self.flush = function(callback) {
 		flushIter++;
-                console.warn("flushing");
 		demuxer.flush(callback);
 	};
 
@@ -462,6 +461,14 @@ var OGVWrapperCodec = (function(options) {
 	}
 
 	self.onseek = null;
+        
+        /*
+         * Notify demuxer that scrubbing is complete, temp hack for now
+         * Change this to scrub.
+         */
+        self.seekEnd = function(){
+            demuxer.onScrubEnd();
+        };
 
 	Object.defineProperty(self, "demuxerCpuTime", {
 		get: function() {

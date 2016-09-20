@@ -1474,6 +1474,13 @@ var OGVPlayer = function(options) {
 		codecClass = OGVWrapperCodec;
 		callback();
 	}
+        
+        /**
+         * Temp hack for now, notifies demuxer that scrubbing has ended and want to reinit stream
+         */
+        self.seekEnd = function(){
+            codec.seekEnd();
+        };
 
 	/**
 	 * HTMLMediaElement load method
@@ -1754,7 +1761,7 @@ var OGVPlayer = function(options) {
 			}
 		}
 	});
-
+        
 	/**
 	 * HTMLMediaElement currentTime property
 	 */
