@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var querystring = require('querystring');
 
@@ -15,10 +16,9 @@ function commonsApi(params, callback) {
 	var baseUrl = 'https://commons.wikimedia.org/w/api.php';
 	params.format = 'json';
 	var data = querystring.stringify(params);
-	var post = http.request({
+	var post = https.request({
 		hostname: 'commons.wikimedia.org',
 		path: '/w/api.php',
-		port: 80,
 		method: 'POST',
 		headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -31,7 +31,13 @@ function commonsApi(params, callback) {
 			result += chunk;
 		});
 		response.on('end', function() {
-			callback(JSON.parse(result));
+			try {
+				var data = JSON.parse(result);
+			} catch (e) {
+				console.log(result);
+				throw e;
+			}
+			callback(data);
 		});
 	});
 	post.write(data);

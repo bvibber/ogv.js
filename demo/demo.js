@@ -471,8 +471,8 @@
 
 		var today = new Date(),
 			year = 2016,
-			month = 05,
-			day = 22; // where we left off in motd.js, @fixme use live info
+			month = 09,
+			day = 20; // where we left off in motd.js, @fixme use live info
 
 		var input = '';
 		while (true) {
