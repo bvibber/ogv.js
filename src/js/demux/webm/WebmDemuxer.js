@@ -556,7 +556,8 @@ class OGVDemuxerWebM {
     }
 
     /**
-     * Clear the current packet buffers and reset the pointers for new read position
+     * Clear the current packet buffers and reset the pointers for new read position.
+     * Should only need to do this once right before we send a seek request.
      * 
      * Needs to be cleaned up, Don't call so many times
      * @param {function} callback after flush complete
@@ -600,10 +601,22 @@ class OGVDemuxerWebM {
      */
     seekToKeypoint(timeSeconds, callback) {
         var ret = this.time(function () {
-            //If we are already cue loading and seeking
-            //if(!this.cuesLoaded && this.isSeeking){
-              //  console.warn("still seeking");
-              //  return 0;
+            
+            /*
+             * idea: Use to seek directly to point
+             * -check if cues loaded
+             * -- if not initCues
+             * 
+             * -calculate keypoint offset
+             * -flush
+             * -Seek to keypoint
+             * -continue loading as usual
+             * 
+             */
+            
+            
+            //Don't pay attention to rest for now
+            return 0;
             //}
             if(!this.isSeeking){
                 console.warn("seek already initialized");
@@ -622,6 +635,7 @@ class OGVDemuxerWebM {
                 var entries = this.seekHead.entries;
                 console.warn(this.seekHead);
                 var seekOffset;
+                //Todo : make this less messy
                 for (var i = 0; i < length ; i ++){
                     if(entries[i].seekId === 0x1C53BB6B) // cues
                         seekOffset =  entries[i].seekPosition + this.segment.dataOffset; // its the offset from data offset
@@ -649,25 +663,49 @@ class OGVDemuxerWebM {
     }
 
     /**
-     * Called when the user begins dragging the slider
+     * Called when the user drags the slider, can init the seek loading.
+     * Use this for scrubbing, can have a different preview algorithm
+     * check if cues loaded, if not do cues init
      * @param {number} timeSeconds
      * @param {function} callback
      */
-    onScrubStart(timeSeconds, callback){
+    onScrub(timeSeconds, callback){
     }
     
     /**
+     * If cues are not yet loaded at this point (should have been at least started to load)
+     * Save the desired location anyway, on the next process call when the cues are loaded jump to it
+     * @param {number} timeSeconds
+     * @param {function} callback
      * When done scrubbing, reinitialize the stream here.
      */
-    onScrubEnd(){
+    onScrubEnd(timeSeconds, callback){
         console.warn("End seek triggered");
      
             //should flush before restarting
             var seekOffset = 4452; //hardcoded testing
-            this.dataInterface.offset = seekOffset;
+            //this.dataInterface.offset = seekOffset;
             this.isSeeking = false;
             this.onseek(seekOffset);
             console.log(this);
+    }
+    
+    /**
+     * Possibly use this to initialize cues if not loaded, can be called from onScrub or seekTo
+     * Send seek request to cues, then make it keep reading bytes and waiting until cues are loaded
+     * @returns {undefined}
+     */
+    initCues(){
+        
+    }
+    
+    /**
+     * Get the offset based off the seconds, probably use binary search and have to parse the keypoints to numbers
+     * @param {number} timeSeconds
+     * @returns {number} offset in bytes relative to cluster, or file, doesnt matter since we save the cluster offset anyway.
+     */
+    calculateKeypointOffset(timeSeconds){
+        
     }
 
 }

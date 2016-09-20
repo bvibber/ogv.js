@@ -154,7 +154,10 @@ var OGVWrapperCodec = (function(options) {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		processing = true;
-                
+                /**
+                 * Temp hack just to load the test javascript demuxer, need a better loader
+                 */
+                /*
                 if(demuxerClassName === 'OGVDemuxerWebM'){
                     console.info("loading javascript demux");
                     demuxer = new OGVDemuxerWebM();
@@ -170,7 +173,7 @@ var OGVWrapperCodec = (function(options) {
 		    });
                         
                 }else{
-                
+                */
                   OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
 			demuxer.onseek = function(offset) {
@@ -183,7 +186,7 @@ var OGVWrapperCodec = (function(options) {
 				callback();
 			});
 		});  
-                }
+                //}
 		
 	};
 
