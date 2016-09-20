@@ -5,6 +5,7 @@ var SeekHead = require('./SeekHead.js');
 var SegmentInfo = require('./SegmentInfo.js');
 var Tracks = require('./Tracks.js');
 var Cluster = require('./Cluster.js');
+var Cues = require('./Cues.js');
 
 
 //States
@@ -26,7 +27,9 @@ if (typeof performance === 'undefined' || typeof performance.now === 'undefined'
     getTimestamp = performance.now.bind(performance);
 }
 
-
+/**
+ * @classdesc Wrapper class to handle webm demuxing
+ */
 class OGVDemuxerWebM {
 
     constructor() {
@@ -49,6 +52,10 @@ class OGVDemuxerWebM {
         this.tracks = null;
         this.currentCluster = null;
         this.cpuTime = 0;
+        this.seekHead = null;
+        this.cuesLoaded = false;
+        this.isSeeking = false;
+        this.tempSeekPosition = -1;
 
         Object.defineProperty(this, 'duration', {
             get: function () {
@@ -232,6 +239,9 @@ class OGVDemuxerWebM {
         });
     }
 
+    /**
+     * Times a function call
+     */
     time(func) {
         var start = getTimestamp(),
                 ret;
@@ -242,6 +252,10 @@ class OGVDemuxerWebM {
         return ret;
     }
 
+    /**
+     * 
+     * @param {function} callback
+     */
     init(callback) {
 
         callback();
@@ -249,7 +263,7 @@ class OGVDemuxerWebM {
 
     receiveInput(data, callback) {
         var ret = this.time(function () {
-            //this.bufferQueue.push(new DataView(data));
+            console.log("got input");
             this.dataInterface.recieveInput(data);
         }.bind(this));
         callback();
@@ -257,8 +271,11 @@ class OGVDemuxerWebM {
     }
 
     process(callback) {
+        
         var start = getTimestamp();
         var status = false;
+  
+        
         //this.processing = true;
 
         switch (this.state) {
@@ -288,10 +305,15 @@ class OGVDemuxerWebM {
         } else {
             result = 0;
         }
-
+        
+        console.info("processing return : " + result);
         callback(!!result);
     }
 
+    /**
+     * General process loop, 
+     * TODO, refactor this!!!!!
+     */
     loadMeta() {
         var status = false;
 
@@ -350,8 +372,17 @@ class OGVDemuxerWebM {
                        return status;                      
                     }
                         
-                    this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
+                    //this.clusters.push(this.currentCluster); //TODO: Don't overwrite this, make id's to keep track or something
                     this.currentCluster = null;
+                    break;
+                    
+                case 0x1C53BB6B: //Cues
+                    if (!this.cues)
+                        this.cues = new Cues(this.currentElement, this.dataInterface , this);
+                    this.cues.load();
+                    if (!this.cues.loaded)
+                        return false;
+                    this.cuesLoaded = true;
                     break;
 
                 default:
@@ -373,6 +404,7 @@ class OGVDemuxerWebM {
      * finds the beginnign of the segment. Should modify to allow level 0 voids, apparantly they are possible 
      */
     loadSegment() {
+        console.log("loading seg");
         if (this.state !== HEADER_LOADED)
             console.error("HEADER NOT LOADED");
 
@@ -510,6 +542,10 @@ class OGVDemuxerWebM {
         }
     }
 
+    /**
+     * Dequeue and return a packet off the video queue
+     * @param {function} callback after packet removal complete
+     */
     dequeueVideoPacket(callback) {
         if (this.videoPackets.length) {
             var packet = this.videoPackets.shift().data;
@@ -520,25 +556,156 @@ class OGVDemuxerWebM {
     }
 
     /**
-     * Clear the current packet buffers and reset the pointers for new read position
+     * Clear the current packet buffers and reset the pointers for new read position.
+     * Should only need to do this once right before we send a seek request.
+     * 
+     * Needs to be cleaned up, Don't call so many times
      * @param {function} callback after flush complete
      */
     flush(callback) {
+        console.error("flushing");
+        if (!this.isSeeking) {
+            
+            this.audioPackets = [];
+            this.videoPackets = [];
+            this.dataInterface.flush();
+            this.currentElement = null; 
+        }
+           
+        
         //Note: was wrapped in a time function but the callback doesnt seem to take that param
-        console.warn("flushing");
-        this.audioPackets = [];
-        this.videoPackets = [];
-        console.log(this);
-        throw "TEST";
+         
+        //console.log(this);
+        //throw "TEST";
         callback();
     }
     
+    /**
+     * Depreciated, don't use!
+     * @param {number} timeSeconds
+     * @param {function} callback
+     */
     getKeypointOffset(timeSeconds, callback) {
         var offset = this.time(function () {
-            //return Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
-            console.warn("need this");
+            
+            return -1; // not used
+            
         }.bind(this));
+        
         callback(offset);
+    }
+
+    /*
+     * @param {number} timeSeconds seconds to jump to
+     * @param {function} callback 
+     */
+    seekToKeypoint(timeSeconds, callback) {
+        var ret = this.time(function () {
+            
+            /*
+             * idea: Use to seek directly to point
+             * -check if cues loaded
+             * -- if not initCues
+             * 
+             * -calculate keypoint offset
+             * -flush
+             * -Seek to keypoint
+             * -continue loading as usual
+             * 
+             */
+            
+            
+            //Don't pay attention to rest for now
+            return 0;
+            //}
+            if(!this.isSeeking){
+                console.warn("seek already initialized");
+                return 1;
+            }
+            
+            this.isSeeking = true;
+            this.tempSeekPosition = timeSeconds;
+            //seek to time in seconds * 1000
+            console.warn("seeking to " + timeSeconds*1000);
+            //if the cues are not loaded, look in the seek head
+            if(!this.cuesLoaded){
+                console.warn(this.segment.dataOffset);
+                
+                var length = this.seekHead.entries.length;
+                var entries = this.seekHead.entries;
+                console.warn(this.seekHead);
+                var seekOffset;
+                //Todo : make this less messy
+                for (var i = 0; i < length ; i ++){
+                    if(entries[i].seekId === 0x1C53BB6B) // cues
+                        seekOffset =  entries[i].seekPosition + this.segment.dataOffset; // its the offset from data offset
+                }
+                this.dataInterface.offset = seekOffset;
+                this.onseek(seekOffset);
+                
+                
+            }
+            
+            return 1; // always return 1?
+        }.bind(this));
+
+        callback(!!ret);
+    }
+    
+    /**
+     * Immedietly seek to position, used for restarting stream or when switching resolutions.
+     * I think this might be the fast seek
+     * @param {number} timeSeconds
+     * @param {function} callback
+     */
+    seekTo(timeSeconds, callback) {
+
+    }
+
+    /**
+     * Called when the user drags the slider, can init the seek loading.
+     * Use this for scrubbing, can have a different preview algorithm
+     * check if cues loaded, if not do cues init
+     * @param {number} timeSeconds
+     * @param {function} callback
+     */
+    onScrub(timeSeconds, callback){
+    }
+    
+    /**
+     * If cues are not yet loaded at this point (should have been at least started to load)
+     * Save the desired location anyway, on the next process call when the cues are loaded jump to it
+     * @param {number} timeSeconds
+     * @param {function} callback
+     * When done scrubbing, reinitialize the stream here.
+     */
+    onScrubEnd(timeSeconds, callback){
+        console.warn("End seek triggered");
+     
+            //should flush before restarting
+            var seekOffset = 4452; //hardcoded testing
+            //this.dataInterface.offset = seekOffset;
+            this.isSeeking = false;
+            this.onseek(seekOffset);
+            console.log(this);
+    }
+    
+    /**
+     * Possibly use this to initialize cues if not loaded, can be called from onScrub or seekTo
+     * Send seek request to cues, then make it keep reading bytes and waiting until cues are loaded
+     * @returns {undefined}
+     */
+    initCues(){
+        
+    }
+    
+    /**
+     * Get the offset based off the seconds, probably use binary search and have to parse the keypoints to numbers
+     * @param {number} timeSeconds
+     * @returns {number} offset in bytes relative to cluster, or file, doesnt matter since we save the cluster offset anyway.
+     */
+    calculateKeypointOffset(timeSeconds){
+        
     }
 
 }

@@ -154,7 +154,10 @@ var OGVWrapperCodec = (function(options) {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		processing = true;
-                
+                /**
+                 * Temp hack just to load the test javascript demuxer, need a better loader
+                 */
+                /*
                 if(demuxerClassName === 'OGVDemuxerWebM'){
                     console.info("loading javascript demux");
                     demuxer = new OGVDemuxerWebM();
@@ -170,7 +173,7 @@ var OGVWrapperCodec = (function(options) {
 		    });
                         
                 }else{
-                
+                */
                   OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
 			demuxer.onseek = function(offset) {
@@ -183,7 +186,7 @@ var OGVWrapperCodec = (function(options) {
 				callback();
 			});
 		});  
-                }
+                //}
 		
 	};
 
@@ -449,7 +452,6 @@ var OGVWrapperCodec = (function(options) {
 
 	self.flush = function(callback) {
 		flushIter++;
-                console.warn("flushing");
 		demuxer.flush(callback);
 	};
 
@@ -462,6 +464,14 @@ var OGVWrapperCodec = (function(options) {
 	}
 
 	self.onseek = null;
+        
+        /*
+         * Notify demuxer that scrubbing is complete, temp hack for now
+         * Change this to scrub.
+         */
+        self.seekEnd = function(){
+            demuxer.onScrubEnd();
+        };
 
 	Object.defineProperty(self, "demuxerCpuTime", {
 		get: function() {

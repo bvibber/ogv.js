@@ -28,6 +28,10 @@ class DataInterface{
         Object.defineProperty(this, 'offset' , {
             get: function(){
                 return this.overallPointer;
+            },
+            
+            set: function(offset){
+                this.overallPointer = offset;
             }
         });
         
@@ -61,6 +65,23 @@ class DataInterface{
         });
         
         
+    }
+    
+    flush(){
+        this.dataBuffers = [];
+        this.tempElementOffset = null;
+        this.tempElementDataOffset = null;
+        this.tempSize = null;
+        this.tempOctetWidth = null;
+        this.tempOctet = null;
+        this.tempByteBuffer = 0;
+        this.tempByteCounter = 0;
+        this.tempElementId = null;
+        this.tempElementSize = null;
+        this.tempVintWidth = null;
+        this.tempResult = null;
+        this.tempCounter = INITIAL_COUNTER;
+        this.usingBufferedRead = false;
     }
     
     recieveInput(data){
@@ -726,6 +747,8 @@ class DataInterface{
 
         
     }
+    
+    
     
 }
 
