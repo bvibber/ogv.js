@@ -69,9 +69,9 @@ function OGVWorkerSupport(propList, handlers) {
 			return null;
 		} else {
 			var copy = copyObject(buffer);
-			copy.bytesY = copyByteArray(buffer.bytesY);
-			copy.bytesCb = copyByteArray(buffer.bytesCb);
-			copy.bytesCr = copyByteArray(buffer.bytesCr);
+			copy.y.bytes = copyByteArray(buffer.y.bytes);
+			copy.u.bytes = copyByteArray(buffer.u.bytes);
+			copy.v.bytes = copyByteArray(buffer.v.bytes);
 			return copy;
 		}
 	}
@@ -129,9 +129,9 @@ function OGVWorkerSupport(propList, handlers) {
 							propVal = copyFrameBuffer(propVal);
 							props[propName] = propVal;
 							if (propVal) {
-								transfers.push(propVal.bytesY.buffer);
-								transfers.push(propVal.bytesCb.buffer);
-								transfers.push(propVal.bytesCr.buffer);
+								transfers.push(propVal.y.bytes.buffer);
+								transfers.push(propVal.u.bytes.buffer);
+								transfers.push(propVal.v.bytes.buffer);
 							}
 						} else {
 							props[propName] = propVal;

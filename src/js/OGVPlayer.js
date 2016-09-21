@@ -1,5 +1,4 @@
-var WebGLFrameSink = require('./WebGLFrameSink.js');
-var FrameSink = require('./FrameSink.js');
+var YUVCanvas = require('yuv-canvas');
 
 // -- OGVLoader.js
 var OGVLoader = require("./OGVLoader.js");
@@ -67,13 +66,13 @@ var OGVPlayer = function(options) {
 	var codecClass = null,
 		codecType = null;
 
-	var webGLdetected = WebGLFrameSink.isAvailable();
-	var useWebGL = (options.webGL !== false) && webGLdetected;
+	var canvasOptions = {};
+	if (options.webGL !== undefined) {
+		// @fixme confirm format of webGL option
+		canvasOptions.webGL = options.webGL;
+	}
 	if(!!options.forceWebGL) {
-		useWebGL = true;
-		if(!webGLdetected) {
-			console.log("No support for WebGL detected, but WebGL forced on!");
-		}
+		canvasOptions.webGL = 'required';
 	}
 
 	// Experimental options
@@ -516,6 +515,7 @@ var OGVPlayer = function(options) {
 					lastFrameSkipped = false;
 					codec.flush(function() {
 						stream.seek(position);
+						readBytesAndWait();
 					});
 					return true;
 				}
@@ -803,19 +803,15 @@ var OGVPlayer = function(options) {
 		});
 		OGVPlayer.updatePositionOnResize();
 
-		if (useWebGL) {
-			frameSink = new WebGLFrameSink(canvas, videoInfo);
-		} else {
-			frameSink = new FrameSink(canvas, videoInfo);
-		}
+		frameSink = YUVCanvas.attach(canvas);
 	}
 
 	var depth = 0,
 		needProcessing = false,
 		pendingFrame = 0,
 		pendingAudio = 0,
-		framePipelineDepth = 1,
-		audioPipelineDepth = 2;
+		framePipelineDepth = 3,
+		audioPipelineDepth = 3;
 
 	function doProcessing() {
 		nextProcessingTimer = null;
@@ -1139,8 +1135,16 @@ var OGVPlayer = function(options) {
 								if (!stoppedForLateFrame) {
 									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
 									lateFrames++;
-									stopPlayback();
-									stoppedForLateFrame = true;
+									if (decodedFrames.length > 1) {
+										log('late frame has a neighbor; skipping to next frame');
+										decodedFrames.shift();
+										frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+										framesProcessed++; // pretend!
+										doFrameComplete();
+									} else {
+										stopPlayback();
+										stoppedForLateFrame = true;
+									}
 								}
 							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
 								// catching up, ok if we were early
@@ -1165,9 +1169,10 @@ var OGVPlayer = function(options) {
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
-							if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
+							var endy = decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : frameEndTimestamp;
+							if (videoInfo.fps == 0 && (codec.frameTimestamp - endy) > 0) {
 								// WebM doesn't encode a frame rate
-								targetPerFrameTime = (codec.frameTimestamp - frameEndTimestamp) * 1000;
+								targetPerFrameTime = (codec.frameTimestamp - endy) * 1000;
 							}
 							totalFrameTime += targetPerFrameTime;
 							totalFrameCount++;

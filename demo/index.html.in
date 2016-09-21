@@ -169,7 +169,10 @@
 		<div id=media-source-block>
 			<select id=media-source>
 				<option value=motd>Wikimedia Commons Media of the Day</option>
+				<option value=blender>Blender open movies</option>
+				<option value=highfps>60fps high frame rate</option>
 				<option value=shortlist>VBR transcode tests</option>
+				<option value=shortlist-cbr>CBR/soft-target tests</option>
 			</select>
 		</div>
 		<div id="media-list">
