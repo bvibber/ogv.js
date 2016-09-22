@@ -149,8 +149,11 @@ static int processDecoding(oggz_packet *packet, long serialno) {
 	float keyframeTimestamp = calc_keyframe_timestamp(packet, serialno);
 
     if (serialno == videoStream) {
-    	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
-		return OGGZ_STOP_OK;
+			if (packet->op.bytes > 0) {
+				// Skip 0-byte Theora packets, they're dupe frames.
+				ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
+				return OGGZ_STOP_OK;
+			}
     }
 
     if (serialno == audioStream) {
