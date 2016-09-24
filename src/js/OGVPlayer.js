@@ -1718,7 +1718,10 @@ var OGVPlayer = function(options) {
 		set: function setSrc(val) {
 			self.setAttribute('src', val);
 			loading = false; // just in case?
-			self.load();
+			stopVideo();
+			if (self.preload !== 'none') {
+				self.load();
+			}
 		}
 	});
 
@@ -2054,14 +2057,13 @@ var OGVPlayer = function(options) {
 	});
 	/**
  	 * @property preload {string}
-	 * @todo implement
 	 */
 	Object.defineProperty(self, "preload", {
 		get: function getPreload() {
-			return 'auto';
+			return self.getAttribute('preload') || '';
 		},
 		set: function setPreload(val) {
-			// ignore
+			self.setAttribute('preload', val);
 		}
 	});
 
