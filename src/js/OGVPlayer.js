@@ -1267,12 +1267,9 @@ var OGVPlayer = function(options) {
 							frameEndTimestamp = frame.frameEndTimestamp;
 							currentVideoCpuTime = frame.videoCpuTime;
 
-							var dupe = frame.yCbCrBuffer.duplicate;
-							if (!dupe) {
-								drawingTime += time(function() {
-									frameSink.drawFrame(frame.yCbCrBuffer);
-								});
-							}
+							drawingTime += time(function() {
+								frameSink.drawFrame(frame.yCbCrBuffer);
+							});
 
 							framesProcessed++;
 							framesPlayed++;

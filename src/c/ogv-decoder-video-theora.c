@@ -54,8 +54,8 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 			display_width = display_width * theoraInfo.aspect_numerator / theoraInfo.aspect_denominator;
 		}
 		ogvjs_callback_init_video(theoraInfo.frame_width, theoraInfo.frame_height,
-		                          hdec, vdec,
-		                          (float) theoraInfo.fps_numerator / theoraInfo.fps_denominator,
+		                          theoraInfo.frame_width >> hdec, theoraInfo.frame_height >> vdec,
+		                          0.0f, // don't expose fixed fps; we pretend it's variable to handle dupe frames more cleanly
 		                          theoraInfo.pic_width, theoraInfo.pic_height,
 		                          theoraInfo.pic_x, theoraInfo.pic_y,
 		                          display_width, display_height);
