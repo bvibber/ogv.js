@@ -1477,17 +1477,13 @@ var OGVPlayer = function(options) {
 	 * https://www.w3.org/TR/html5/embedded-content-0.html#concept-media-load-algorithm
 	 */
 	self.load = function() {
+		prepForLoad();
+	};
+
+	function prepForLoad(preload) {
 		stopVideo();
 
-		// @todo networkState = self.NETWORK_NO_SOURCE;
-		// @todo show poster
-		// @todo set 'delay load event flag'
-
-		currentSrc = '';
-		loading = true;
-
-		actionQueue.push(function() {
-
+		function doLoad() {
 			// @todo networkState == NETWORK_LOADING
 			stream = new StreamFile({
 				url: self.src,
@@ -1544,9 +1540,21 @@ var OGVPlayer = function(options) {
 					state = State.ERROR;
 				}
 			});
+		}
+
+		// @todo networkState = self.NETWORK_NO_SOURCE;
+		// @todo show poster
+		// @todo set 'delay load event flag'
+
+		currentSrc = '';
+		loading = true;
+		actionQueue.push(function() {
+			if (!preload || self.preload !== 'none') {
+				doLoad();
+			}
 		});
 		pingProcessing(0);
-	};
+	}
 
 	/**
 	 * HTMLMediaElement canPlayType method
@@ -1718,10 +1726,7 @@ var OGVPlayer = function(options) {
 		set: function setSrc(val) {
 			self.setAttribute('src', val);
 			loading = false; // just in case?
-			stopVideo();
-			if (self.preload !== 'none') {
-				self.load();
-			}
+			prepForLoad("interactive");
 		}
 	});
 
