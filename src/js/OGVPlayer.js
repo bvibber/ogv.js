@@ -1549,7 +1549,10 @@ var OGVPlayer = function(options) {
 		currentSrc = '';
 		loading = true;
 		actionQueue.push(function() {
-			if (!preload || self.preload !== 'none') {
+			if (preload && self.preload === 'none') {
+				// Done for now, we'll pick up if someone hits play() or load()
+				loading = false;
+			} else {
 				doLoad();
 			}
 		});
