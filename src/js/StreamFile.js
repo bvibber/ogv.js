@@ -25,6 +25,8 @@ function StreamFile(options) {
 		seekPosition = options.seekPosition || 0,
 		bufferPosition = seekPosition,
 		chunkSize = options.chunkSize || 1024 * 1024, // read/buffer up to a megabyte at a time
+		userAgent = navigator ? navigator.userAgent : '',
+		useMSStream = options.useMSStream || !!userAgent.match(/MSIE 10\./),
 		waitingForInput = false,
 		doneBuffering = false,
 		bytesTotal = 0,
@@ -453,7 +455,7 @@ function StreamFile(options) {
 			}
 		};
 
-	} else if (options.useMSStream && internal.tryMethod('ms-stream')) {
+	} else if (useMSStream && internal.tryMethod('ms-stream')) {
 		// IE 10 supports returning a Stream from XHR.
 		// This seems unreliable in practice as the connections tend to die
 		// unexpectedly; recommend using the chunking even if it's primitive.
