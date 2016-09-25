@@ -86,7 +86,7 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 							 ycbcr[1].data, ycbcr[1].stride,
 							 ycbcr[2].data, ycbcr[2].stride,
 							 theoraInfo.frame_width, theoraInfo.frame_height,
-							 theoraInfo.frame_width >> hdec, theoraInfo.frame_height >> vdec);
+							 hdec, vdec);
         return 1;
     } else {
         //printf("Theora decoder failed mysteriously? %d\n", ret);

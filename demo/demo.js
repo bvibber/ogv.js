@@ -1537,6 +1537,7 @@
 					seekTarget = fraction * player.duration;
 					thumbSeeking = false;
 					player.currentTime = seekTarget;
+                                        //player.seekEnd(); //Need something like this
 					updateProgress();
 
 					document.removeEventListener('mousemove', onmove);

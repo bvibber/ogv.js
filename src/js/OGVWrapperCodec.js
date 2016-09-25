@@ -8,6 +8,7 @@
  * @license MIT-style
  */
 var OGVLoader = require("./OGVLoader.js");
+var OGVDemuxerWebM = require("./demux/webm/WebmDemuxer.js");
 
 var OGVWrapperCodec = (function(options) {
 	options = options || {};
@@ -153,7 +154,27 @@ var OGVWrapperCodec = (function(options) {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		processing = true;
-		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
+                /**
+                 * Temp hack just to load the test javascript demuxer, need a better loader
+                 */
+                /*
+                if(demuxerClassName === 'OGVDemuxerWebM'){
+                    console.info("loading javascript demux");
+                    demuxer = new OGVDemuxerWebM();
+                    demuxer.onseek = function(offset) {
+				if (self.onseek) {
+					self.onseek(offset);
+				}
+		    };
+                    window.demuxer = demuxer;//testing only
+	            demuxer.init(function() {
+				processing = false;
+				callback();
+		    });
+                        
+                }else{
+                */
+                  OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxer = new demuxerClass();
 			demuxer.onseek = function(offset) {
 				if (self.onseek) {
@@ -164,7 +185,9 @@ var OGVWrapperCodec = (function(options) {
 				processing = false;
 				callback();
 			});
-		});
+		});  
+                //}
+		
 	};
 
 	self.close = function() {
@@ -191,11 +214,18 @@ var OGVWrapperCodec = (function(options) {
 		opus: 'OGVDecoderAudioOpus'
 	};
 	function loadAudioCodec(callback) {
+            
+                  
 		if (demuxer.audioCodec) {
+                    //console.log(this);
+                    //throw "FORMAT";
+                    
 			var className = audioClassMap[demuxer.audioCodec];
+                        //console.log("got audio classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(audioCodecClass) {
 				var audioOptions = {};
+                                //console.warn(demuxer.audioFormat);
 				if (demuxer.audioFormat) {
 					audioOptions.audioFormat = demuxer.audioFormat;
 				}
@@ -221,6 +251,7 @@ var OGVWrapperCodec = (function(options) {
 	function loadVideoCodec(callback) {
 		if (demuxer.videoCodec) {
 			var className = videoClassMap[demuxer.videoCodec];
+                        //console.log("got video classname + " + className);
 			processing = true;
 			OGVLoader.loadClass(className, function(videoCodecClass) {
 				var videoOptions = {};
@@ -254,7 +285,7 @@ var OGVWrapperCodec = (function(options) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
 		processing = true;
-
+                //console.warn("process loop");
 		var videoPacketCount = demuxer.videoPackets.length,
 			audioPacketCount = demuxer.audioPackets.length,
 			start = (window.performance ? performance.now() : Date.now());
@@ -299,7 +330,7 @@ var OGVWrapperCodec = (function(options) {
 				finish(true);
 
 			} else if (demuxer.audioReady) {
-
+                            
 				demuxer.dequeueAudioPacket(function(packet) {
 					audioDecoder.processHeader(packet, function(ret) {
 						finish(true);
@@ -375,6 +406,7 @@ var OGVWrapperCodec = (function(options) {
 	self.decodeAudio = function(callback) {
 		var cb = flushSafe(callback);
 		demuxer.dequeueAudioPacket(function(packet) {
+                        //Bug is here
 			audioDecoder.processAudio(packet, cb);
 		});
 	}
@@ -405,6 +437,14 @@ var OGVWrapperCodec = (function(options) {
 	}
 
 	self.onseek = null;
+        
+        /*
+         * Notify demuxer that scrubbing is complete, temp hack for now
+         * Change this to scrub.
+         */
+        self.seekEnd = function(){
+            demuxer.onScrubEnd();
+        };
 
 	Object.defineProperty(self, "demuxerCpuTime", {
 		get: function() {

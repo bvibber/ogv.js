@@ -79,7 +79,7 @@ int ogv_audio_decoder_process_audio(const char *data, size_t data_len) {
 
 		vorbis_synthesis_read(&vorbisDspState, sampleCount);
 	} else {
-		//printf("Vorbis decoder failed mysteriously? %d", ret);
+		printf("Vorbis decoder failed mysteriously? %d", ret);
 	}
 
 	return foundSome;

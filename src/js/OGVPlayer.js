@@ -57,6 +57,8 @@ var OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
  */
 var OGVPlayer = function(options) {
+        
+
 	options = options || {};
 
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
@@ -1036,6 +1038,7 @@ var OGVPlayer = function(options) {
 		} else if (state == State.PLAYING) {
 
 			function doProcessPlay() {
+                               
 
 				//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
@@ -1162,6 +1165,7 @@ var OGVPlayer = function(options) {
 						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
 
 						if (readyForFrameDecode) {
+                                                
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
@@ -1181,6 +1185,7 @@ var OGVPlayer = function(options) {
 									pendingFrame--;
 									if (ok) {
 										// Save the buffer until it's time to draw
+                                                                                //console.warn("pushing frames");
 										decodedFrames.push({
 											yCbCrBuffer: codec.frameBuffer,
 											videoCpuTime: codec.videoCpuTime,
@@ -1189,6 +1194,7 @@ var OGVPlayer = function(options) {
 									} else {
 										// Bad packet or something.
 										log('Bad video packet or something');
+                                                                                console.warn('Bad video packet or something');
 									}
 									pingProcessing();
 								});
@@ -1209,6 +1215,7 @@ var OGVPlayer = function(options) {
 								codec.decodeAudio(function processingDecodeAudio(ok) {
 									pendingAudio--;
 									log('play loop callback: decoded audio');
+                                                                        //console.warn('play loop callback: decoded audio');
 									audioEndTimestamp = nextAudioEndTimestamp;
 
 									if (ok) {
@@ -1243,7 +1250,6 @@ var OGVPlayer = function(options) {
 							}
 
 						} else if (readyForFrameDraw) {
-
 							log('play loop: ready to draw frame');
 
 							if (nextFrameTimer) {
@@ -1470,6 +1476,13 @@ var OGVPlayer = function(options) {
 		codecClass = OGVWrapperCodec;
 		callback();
 	}
+        
+        /**
+         * Temp hack for now, notifies demuxer that scrubbing has ended and want to reinit stream
+         */
+        self.seekEnd = function(){
+            codec.seekEnd();
+        };
 
 	/**
 	 * HTMLMediaElement load method
@@ -1507,7 +1520,7 @@ var OGVPlayer = function(options) {
 				},
 				onread: function(data) {
 					log('got input ' + [data.byteLength]);
-
+                                        
 					// Save chunk to pass into the codec's buffer
 					actionQueue.push(function doReceiveInput() {
 						codec.receiveInput(data, function() {
@@ -1631,6 +1644,7 @@ var OGVPlayer = function(options) {
 			} else if (loading) {
 
 				log('.play() while loading');
+                                
 
 			} else {
 
@@ -1760,7 +1774,7 @@ var OGVPlayer = function(options) {
 			}
 		}
 	});
-
+        
 	/**
 	 * HTMLMediaElement currentTime property
 	 */
