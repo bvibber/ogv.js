@@ -148,7 +148,10 @@ var OGVWrapperCodec = (function(options) {
 	self.init = function(callback) {
 		var demuxerClassName;
 		if (options.type === 'video/webm') {
-			demuxerClassName = 'OGVDemuxerWebM';
+                        if(options.demuxer === 'nestegg')
+                            demuxerClassName = 'OGVDemuxerWebM';
+                        else
+                            demuxerClassName = 'FlareWebmDemuxer';
 		} else {
 			demuxerClassName = 'OGVDemuxerOgg';
 		}
