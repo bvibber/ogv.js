@@ -7,9 +7,11 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.2.1 - 2016-09-22?
+1.2.1 - 2016-09-24
 * Performance fixed for playback of Ogg Theora with many duplicate frames ("1000fps" files from ffmpeg)
 * Report actual fps (ignoring dupe frames) for Ogg Theora
+* Delay loading when using preload="none"
+* Fix regression in IE 10 network layer
 
 1.2.0 - 2016-09-19
 * Separated software and WebGL paths to yuv-canvas package

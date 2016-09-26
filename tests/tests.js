@@ -542,5 +542,79 @@ doubleAsyncTest('switching sources works', function(assert, player) {
 	player.play();
 });
 
+doubleAsyncTest('preload set via property', function(assert, player) {
+	player.preload = 'none';
+	assert.equal(player.preload, 'none', 'preload property reflects setting');
+	assert.equal(player.getAttribute('preload'), 'none', 'preload attribute reflects setting');
+	QUnit.start();
+});
+
+doubleAsyncTest('preload set via attribute', function(assert, player) {
+	player.setAttribute('preload', 'none');
+	assert.equal(player.preload, 'none', 'preload property reflects setting');
+	assert.equal(player.getAttribute('preload'), 'none', 'preload attribute reflects setting');
+	QUnit.start();
+});
+
+doubleAsyncTest('preload set to "none" should not load anything', function(assert, player) {
+	var timeout = setTimeout(function() {
+		assert.ok(true, 'nothing happened');
+		QUnit.start();
+	}, 1000);
+	player.onerror = function() {
+		clearTimeout(timeout);
+		assert.ok(false, 'got error');
+		QUnit.start();
+	}
+	player.onloadedmetadata = function() {
+		clearTimeout(timeout);
+		assert.ok(false, 'got metadata');
+		QUnit.start();
+	}
+
+	player.preload = 'none';
+	player.src = 'media/1second.ogv';
+});
+
+doubleAsyncTest('preload set to "none" should not load anything in other order', function(assert, player) {
+	var timeout = setTimeout(function() {
+		assert.ok(true, 'nothing happened');
+		QUnit.start();
+	}, 1000);
+	player.onerror = function() {
+		clearTimeout(timeout);
+		assert.ok(false, 'got error');
+		QUnit.start();
+	}
+	player.onloadedmetadata = function() {
+		clearTimeout(timeout);
+		assert.ok(false, 'got metadata');
+		QUnit.start();
+	}
+
+	player.src = 'media/1second.ogv';
+	player.preload = 'none';
+});
+
+doubleAsyncTest('preload set to "none" should load stuff when load() called', function(assert, player) {
+	var timeout = setTimeout(function() {
+		assert.ok(false, 'nothing happened');
+		QUnit.start();
+	}, 1000);
+	player.onerror = function() {
+		clearTimeout(timeout);
+		assert.ok(false, 'got error');
+		QUnit.start();
+	}
+	player.onloadedmetadata = function() {
+		clearTimeout(timeout);
+		assert.ok(true, 'got metadata');
+		QUnit.start();
+	}
+
+	player.preload = 'none';
+	player.src = 'media/1second.ogv';
+	player.load();
+});
 
 // @todo implement and test seeking while *not* playing
