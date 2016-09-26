@@ -1,5 +1,5 @@
 var OGVVersion = __OGV_FULL_VERSION__;
-//////
+
 (function() {
 	var global = this;
 
