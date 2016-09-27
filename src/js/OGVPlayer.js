@@ -111,6 +111,11 @@ var OGVPlayer = function(options) {
 		// And to the worker thread, so it can load the codec JS
 		codecOptions.base = options.base;
 	}
+        if (typeof options.demuxer === 'string') {
+		//Select demuxer type
+
+		codecOptions.demuxer = options.demuxer;
+	}
 	if (typeof options.audioContext !== 'undefined') {
 		// Try passing a pre-created audioContext in?
 		audioOptions.audioContext = options.audioContext;

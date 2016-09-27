@@ -98,6 +98,7 @@ dist: js README.md COPYING
 	      build/ogv-decoder-audio-vorbis.js \
 	      build/ogv-decoder-video-theora.js \
 	      build/ogv-decoder-video-vp8.js \
+	      build/flare-webm-demuxer.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      build/dynamicaudio.swf \

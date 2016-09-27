@@ -72,4 +72,13 @@ module.exports = [
     },
     plugins: plugins
   },
+  {
+    entry: './src/js/modules/flare-webm-demuxer.js',
+    output: {
+      path: path.resolve(__dirname, BUILD_DIR),
+      publicPath: publicPath(),
+      filename: 'flare-webm-demuxer.js'
+    },
+    plugins: plugins
+  },
 ];

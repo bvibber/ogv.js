@@ -529,6 +529,7 @@
 		selectedUrl = null,
 		skipAudio = false,
 		playerBackend = 'js',
+                demuxer = 'nestegg',
 		muted = false,
 		startTime = 0,
 		autoplay = false;
@@ -540,6 +541,7 @@
 		if (document.location.hash.length > 1) {
 			var title;
 			playerBackend = 'js';
+                        demuxer = 'nestegg';
 			document.location.hash.slice(1).split('&').forEach(function(pair) {
 				var parts = pair.split('='),
 					name = decodeURIComponent(parts[0]),
@@ -564,6 +566,9 @@
 					playerBackend = value;
 				} else if (name == 'source') {
 					document.querySelector('#media-source').value = value;
+				} else if (name == 'demuxer') {
+					document.querySelector('#demuxer').value = value;
+                                        demuxer = value;
 				}
 			});
 			if (title) {
@@ -939,9 +944,10 @@
 		var oldTitle = selectedTitle,
 			oldFilter = filter.value,
 			oldSize = preferredKey,
+                        oldDemuxer = demuxer,
 			oldPlayer = playerBackend;
 		selectedTitle = getDefault();
-		if (oldTitle != selectedTitle || oldSize != preferredKey || oldPlayer != playerBackend) {
+		if (oldTitle != selectedTitle || oldSize != preferredKey || oldPlayer != playerBackend || oldDemuxer !== demuxer) {
 			stopVideo();
 			startTime = 0;
 			autoplay = false;
@@ -1011,6 +1017,10 @@
 		if (playerBackend != 'js') {
 			hash += '&player=' + encodeURIComponent(playerBackend);
 		}
+                
+                if (demuxer) {
+			hash += '&demuxer=' + encodeURIComponent(demuxer);
+		}
 
 		var sizeKey = document.getElementById('video-preferred-size').value;
 		hash += '&size=' + sizeKey;
@@ -1046,6 +1056,12 @@
 		showVideo();
 	});
 
+        document.querySelector('#demuxer').addEventListener('change', function() {
+		stopVideo();
+		demuxer = this.value;
+		setHash();
+		showVideo();
+	});
 
 	function showVideo() {
 		window.scrollTo(0, 0);
@@ -1129,12 +1145,15 @@
 			//debugFilter = /setting a timer/;
 			//debugFilter = /ended|ending|end |demuxer/i;
 			//debugFilter = /play loop.*(draw|frame)/;
+
+                        
 			if (playerBackend == 'js') {
 				player = new OGVPlayer({
 					debug: !!debugFilter,
 					debugFilter: debugFilter,
 					memoryLimit: maxmem,
-					enableWebM: true // experimental
+					enableWebM: true, // experimental
+                                        demuxer : demuxer
 				});
 			} else if (playerBackend == 'js-cpu') {
 				player = new OGVPlayer({
@@ -1142,7 +1161,8 @@
 					debugFilter: debugFilter,
 					memoryLimit: maxmem,
 					webGL: false, // force 2d canvas
-					enableWebM: true // experimental
+					enableWebM: true, // experimental
+                                        demuxer : demuxer
 				});
 			} else if (playerBackend == 'js-noworker') {
 				player = new OGVPlayer({
@@ -1150,7 +1170,8 @@
 					debugFilter: debugFilter,
 					memoryLimit: maxmem,
 					worker: false, // experimental
-					enableWebM: true // experimental
+					enableWebM: true, // experimental
+                                        demuxer : demuxer
 				});
 			} else if (playerBackend == 'webgl') {
 				player = new OGVPlayer({
@@ -1158,7 +1179,8 @@
 					debugFilter: debugFilter,
 					memoryLimit: maxmem,
 					forceWebGL: true,
-					enableWebM: true // experimental
+					enableWebM: true, // experimental
+                                        demuxer : demuxer
 				});
 			} else if (playerBackend == 'cortado') {
 				player = new CortadoPlayer();
@@ -1172,8 +1194,12 @@
 			} else {
 				throw new Error('unknown player backend');
 			}
-
-
+                        
+                        if(selected.format !== "webm")
+                            document.getElementById('demuxer').disabled = true;
+                        else
+                            document.getElementById('demuxer').disabled = false;
+                        
 			document.getElementById('video-fps').textContent = '';
 			document.getElementById('video-pic-width').textContent = '';
 			document.getElementById('video-pic-height').textContent = '';

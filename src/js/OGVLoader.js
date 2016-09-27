@@ -6,6 +6,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 	var scriptMap = {
 		OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
 		OGVDemuxerWebM: 'ogv-demuxer-webm.js',
+                FlareWebmDemuxer: 'flare-webm-demuxer.js',
 		OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',
 		OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
 		OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',

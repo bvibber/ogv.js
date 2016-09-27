@@ -106,6 +106,15 @@
 						</div>
 					</td>
 				</tr>
+                                <tr>
+                                        <td>
+                                                        Webm Demuxer:
+							<select height=1 id="demuxer">
+								<option value="nestegg">Nestegg (Cross Compiled)</option>
+								<option value="flare">Flare (Native Js)</option>
+							</select>
+                                        </td>
+                                </tr>
 				<tr>
 					<td>
 						<div>

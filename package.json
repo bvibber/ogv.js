@@ -54,6 +54,7 @@
     "file-loader": "^0.8.5",
     "node-static": "^0.7.7",
     "webpack": "^1.12.2",
-    "webpack-dev-server": "^1.12.1"
+    "webpack-dev-server": "^1.12.1",
+    "flare-webm-demuxer" : "^0.0.1"
   }
 }
