@@ -49,11 +49,11 @@
   "homepage": "https://github.com/brion/ogv.js#readme",
   "devDependencies": {
     "audio-feeder": "^0.4.5",
-    "yuv-canvas": "^1.0.0",
     "eslint": "^1.7.3",
     "file-loader": "^0.8.5",
     "node-static": "^0.7.7",
     "webpack": "^1.12.2",
-    "webpack-dev-server": "^1.12.1"
+    "webpack-dev-server": "^1.12.1",
+    "yuv-canvas": "^1.0.0"
   }
 }

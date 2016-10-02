@@ -336,7 +336,7 @@ static int processSeeking()
     } else {
         appState = STATE_DECODING;
         printf("is seeking processing... LOOKS ROLL OVER\n");
-        return 1;
+        return 0;
     }
 }
 
