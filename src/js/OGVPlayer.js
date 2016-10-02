@@ -4,7 +4,7 @@ var YUVCanvas = require('yuv-canvas');
 var OGVLoader = require("./OGVLoader.js");
 
 // -- StreamFile.js
-var StreamFile = require("./StreamFile.js");
+var StreamFile = require('stream-file');
 
 // -- AudioFeeder.js
 var AudioFeeder = require("audio-feeder"),
@@ -238,7 +238,7 @@ var OGVPlayer = function(options) {
 		// without any throttling.
 		audioFeeder.onbufferlow = function audioCallback() {
 			log('onbufferlow');
-			if ((stream && stream.waiting) || pendingAudio) {
+			if ((stream && (stream.buffering || stream.seeking)) || pendingAudio) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
 			} else {
@@ -312,6 +312,9 @@ var OGVPlayer = function(options) {
 	var currentSrc = '',
 		stream,
 		streamEnded = false,
+		seekCancel = {},
+		readCancel = {},
+		errorMessage = null,
 		dataEnded = false,
 		byteLength = 0,
 		duration = null,
@@ -500,11 +503,31 @@ var OGVPlayer = function(options) {
 		lastFrameSkipped,
 		seekBisector;
 
+	function Cancel(msg) {
+		Error.call(this, msg);
+	}
+	Cancel.prototype = Object.create(Error);
+
+	function seekStream(offset) {
+		if (stream.seeking) {
+			seekCancel.cancel(new Cancel('cancel for new seek'));
+		}
+		if (stream.buffering) {
+			readCancel.cancel(new Cancel('cancel for new seek'));
+		}
+		streamEnded = false;
+		dataEnded = false;
+		ended = false;
+		stream.seek(offset, seekCancel).then(function() {
+			setTimeout(readBytesAndWait, 0);
+		}).catch(onStreamError);
+	}
+
 	function startBisection(targetTime) {
 		bisectTargetTime = targetTime;
 		seekBisector = new Bisector({
 			start: 0,
-			end: stream.bytesTotal - 1,
+			end: stream.length - 1,
 			process: function(start, end, position) {
 				if (position == lastSeekPosition) {
 					return false;
@@ -512,8 +535,7 @@ var OGVPlayer = function(options) {
 					lastSeekPosition = position;
 					lastFrameSkipped = false;
 					codec.flush(function() {
-						stream.seek(position);
-						readBytesAndWait();
+						seekStream(position);
 					});
 					return true;
 				}
@@ -524,12 +546,15 @@ var OGVPlayer = function(options) {
 
 	function seek(toTime) {
 		log('requested seek to ' + toTime);
-		if (stream.bytesTotal === 0) {
+		if (!stream.seekable) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
 		function prepForSeek(callback) {
-			if (stream) { //} && stream.waiting) {
-				stream.abort();
+			if (stream && stream.buffering) {
+				readCancel.cancel(new Cancel('cancel for new seek'));
+			}
+			if (stream && stream.seeking) {
+				seekCancel.cancel(new Cancel('cancel for new seek'));
 			}
 			// clear any queued input/seek-start
 			actionQueue.splice(0, actionQueue.length);
@@ -578,11 +603,8 @@ var OGVPlayer = function(options) {
 					if (seeking) {
 						seekState = SeekState.LINEAR_TO_TARGET;
 						fireEventAsync('seeking');
-						if (isProcessing()) {
-							// wait for i/o
-						} else {
-							pingProcessing();
-						}
+
+						// wait for i/o to trigger readBytesAndWait
 						return;
 					}
 					// Use the old interface still implemented on ogg demuxer
@@ -593,8 +615,7 @@ var OGVPlayer = function(options) {
 							// Start at the keypoint, then decode forward to the desired time.
 							//
 							seekState = SeekState.LINEAR_TO_TARGET;
-							stream.seek(offset);
-							readBytesAndWait();
+							seekStream(offset);
 						} else {
 							// No index.
 							//
@@ -874,8 +895,7 @@ var OGVPlayer = function(options) {
 						state = State.SEEKING_END;
 						lastSeenTimestamp = -1;
 						codec.flush(function() {
-							stream.seek(Math.max(0, stream.bytesTotal - 65536 * 2));
-							readBytesAndWait();
+							seekStream(Math.max(0, stream.length - 65536 * 2));
 						});
 					} else {
 						// Stream not seekable and no x-content-duration; assuming infinite stream.
@@ -922,7 +942,7 @@ var OGVPlayer = function(options) {
 						pingProcessing();
 					} else {
 						// Read more data!
-						if (stream.bytesRead < stream.bytesTotal) {
+						if (!stream.eof) {
 							readBytesAndWait();
 						} else {
 							// We are at the end!
@@ -934,10 +954,9 @@ var OGVPlayer = function(options) {
 							// Ok, seek back to the beginning and resync the streams.
 							state = State.LOADED;
 							codec.flush(function() {
-								stream.seek(0);
 								streamEnded = false;
 								dataEnded = false;
-								readBytesAndWait();
+								seekStream(0);
 							});
 						}
 					}
@@ -1372,11 +1391,49 @@ var OGVPlayer = function(options) {
 	 * Are we waiting on an async operation that will return later?
 	 */
 	function isProcessing() {
-		return (stream && stream.waiting) || (codec && codec.processing);
+		return (stream && (stream.buffering || stream.seeking)) || (codec && codec.processing);
 	}
 
 	function readBytesAndWait() {
-		stream.readBytes();
+		if (stream.buffering || stream.seeking) {
+			log('readBytesAndWait during i/o');
+			return;
+		}
+		stream.read(32768, readCancel).then(function(data) {
+			log('got input ' + [data.byteLength]);
+
+			if (data.byteLength) {
+				// Save chunk to pass into the codec's buffer
+				actionQueue.push(function doReceiveInput() {
+					codec.receiveInput(data, function() {
+						pingProcessing();
+					});
+				});
+			}
+			if (stream.eof) {
+				// @todo record doneness in networkState
+				log('stream is at end!');
+				streamEnded = true;
+			}
+			if (isProcessing()) {
+				// We're waiting on the codec already...
+			} else {
+				// Let the read/decode/draw loop know we're out!
+				pingProcessing();
+			}
+		}).catch(onStreamError);
+	}
+
+	function onStreamError(err) {
+		if (err instanceof Cancel) {
+			// do nothing
+			log('i/o promise canceled; ignoring');
+		} else {
+			log("i/o error: " + err);
+			errorMessage = 'i/o error: ' + err;
+			state = State.ERROR;
+			stopPlayback();
+		}
 	}
 
 	function pingProcessing(delay) {
@@ -1448,8 +1505,7 @@ var OGVPlayer = function(options) {
 		codec.onseek = function(offset) {
 			if (stream) {
 				console.log('SEEKING TO', offset);
-				stream.seek(offset);
-				//readBytesAndWait();
+				seekStream(offset);
 			}
 		};
 		codec.init(function() {
@@ -1487,59 +1543,25 @@ var OGVPlayer = function(options) {
 			// @todo networkState == NETWORK_LOADING
 			stream = new StreamFile({
 				url: self.src,
-				bufferSize: 32768, //65536 * 4,
-				onstart: function() {
-					loading = false;
-
-					// @todo handle failure / unrecognized type
-
-					currentSrc = self.src;
-
-					// Fire off the read/decode/draw loop...
-					byteLength = stream.bytesTotal;
-
-					// If we get X-Content-Duration, that's as good as an explicit hint
-					var durationHeader = stream.getResponseHeader('X-Content-Duration');
-					if (typeof durationHeader === 'string') {
-						duration = parseFloat(durationHeader);
-					}
-					loadCodec(startProcessingVideo);
-				},
-				onread: function(data) {
-					log('got input ' + [data.byteLength]);
-
-					// Save chunk to pass into the codec's buffer
-					actionQueue.push(function doReceiveInput() {
-						codec.receiveInput(data, function() {
-							pingProcessing();
-						});
-					});
-
-					if (isProcessing()) {
-						// We're waiting on the codec already...
-					} else {
-						pingProcessing();
-					}
-				},
-				ondone: function() {
-					// @todo record doneness in networkState
-					log('stream is at end!');
-					streamEnded = true;
-
-					if (isProcessing()) {
-						// We're waiting on the codec already...
-					} else {
-						// Let the read/decode/draw loop know we're out!
-						pingProcessing();
-					}
-				},
-				onerror: function(err) {
-					// @todo handle failure to initialize
-					console.log("reading error: " + err);
-					stopPlayback();
-					state = State.ERROR;
-				}
+				cacheSize: 16 * 1024 * 1024,
 			});
+			stream.load().then(function() {
+				loading = false;
+
+				// @todo handle failure / unrecognized type
+
+				currentSrc = self.src;
+
+				// Fire off the read/decode/draw loop...
+				byteLength = stream.seekable ? stream.length : 0;
+
+				// If we get X-Content-Duration, that's as good as an explicit hint
+				var durationHeader = stream.headers['x-content-duration'];
+				if (typeof durationHeader === 'string') {
+					duration = parseFloat(durationHeader);
+				}
+				loadCodec(startProcessingVideo);
+			}).catch(onStreamError);
 		}
 
 		// @todo networkState = self.NETWORK_NO_SOURCE;
@@ -1738,13 +1760,17 @@ var OGVPlayer = function(options) {
 	 */
 	Object.defineProperty(self, "buffered", {
 		get: function getBuffered() {
-			var estimatedBufferTime;
+			var ranges;
 			if (stream && byteLength && duration) {
-				estimatedBufferTime = (stream.bytesBuffered / byteLength) * duration;
+				ranges = stream.getBufferedRanges().map(function(range) {
+					return range.map(function(offset) {
+						return (offset / stream.length) * duration;
+					});
+				});
 			} else {
-				estimatedBufferTime = 0;
+				ranges = [[0, 0]];
 			}
-			return new OGVTimeRanges([[0, estimatedBufferTime]]);
+			return new OGVTimeRanges(ranges);
 		}
 	});
 
@@ -2057,7 +2083,11 @@ var OGVPlayer = function(options) {
 	Object.defineProperty(self, "error", {
 		get: function getError() {
 			if (state === State.ERROR) {
-				return "error occurred in media procesing";
+				if (errorMessage) {
+					return errorMessage;
+				} else {
+					return "error occurred in media procesing";
+				}
 			} else {
 				return null;
 			}

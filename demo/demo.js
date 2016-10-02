@@ -205,9 +205,17 @@
 			var total = player.duration,
 				processed = player.currentTime,
 				thumb = (thumbSeeking ? seekTarget : processed),
-				buffered = 0;
-			if (player.buffered.length) {
-				buffered = player.buffered.end(0);
+				buffered = 0,
+				ranges = player.buffered;
+			if (ranges.length) {
+				// hack -- find the range that contains current, if any
+				// would be better to show the actual multi ranges :D
+				for (var i = 0; i < ranges.length; i++) {
+					if (processed >= ranges.start(i) && processed <= ranges.end(i)) {
+						buffered = ranges.end(i);
+						break;
+					}
+				}
 			}
 
 			function percent(val) {
