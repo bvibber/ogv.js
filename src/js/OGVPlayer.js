@@ -1,3 +1,5 @@
+require('es6-promise').polyfill();
+
 var YUVCanvas = require('yuv-canvas');
 
 // -- OGVLoader.js
@@ -114,6 +116,10 @@ var OGVPlayer = function(options) {
 	if (typeof options.audioContext !== 'undefined') {
 		// Try passing a pre-created audioContext in?
 		audioOptions.audioContext = options.audioContext;
+	}
+	if (typeof options.audioDestination !== 'undefined') {
+		// Try passing a pre-created audioContext in?
+		audioOptions.output = options.audioDestination;
 	}
 	// Buffer in largeish chunks to survive long CPU spikes on slow CPUs (eg, 32-bit iOS)
 	audioOptions.bufferSize = 8192;
