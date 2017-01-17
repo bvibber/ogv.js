@@ -11,3 +11,11 @@ Module = {
 if (options['memoryLimit']) {
 	Module['TOTAL_MEMORY'] = options['memoryLimit'];
 }
+
+// hack for https://github.com/brion/ogv.js/issues/448
+var OGVDemuxerOgg = Module;
+var OGVDemuxerWebM = Module;
+var OGVDecoderVideoTheora = Module;
+var OGVDecoderVideoVP8 = Module;
+var OGVDecoderAudioVorbis = Module;
+var OGVDecoderAudioOpus = Module;
