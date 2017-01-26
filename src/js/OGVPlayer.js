@@ -786,7 +786,11 @@ var OGVPlayer = function(options) {
 				// wait for new data to come in
 			} else {
 				log('close enough (left)');
-				seekTargetTime = codec.frameTimestamp;
+
+				// We're having trouble finding a new packet position;
+				// likely it's an audio file with lots of small packets.
+				// Since we can't find an earlier packet, just continue here.
+				seekTargetTime = timestamp;
 				continueSeekedPlayback();
 			}
 		} else if (timestamp + frameDuration / 2 < bisectTargetTime) {
@@ -794,8 +798,12 @@ var OGVPlayer = function(options) {
 				// wait for new data to come in
 			} else {
 				log('close enough (right)');
-				seekTargetTime = codec.frameTimestamp;
-				continueSeekedPlayback();
+
+				// We're having trouble finding a new packet position;
+				// likely it's an audio file with lots of small packets.
+				// Switch to linear mode to find the final target.
+				seekState = SeekState.LINEAR_TO_TARGET;
+				pingProcessing();
 			}
 		} else {
 			// Reached the bisection target!
