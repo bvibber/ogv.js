@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.3.0 - 2017-??-??
+1.3.0 - 2017-02-08
 * Separated XHR and caching out to stream-file package
 * more aggressive in-memory buffering should improve audio seek performance
 * improved seek precision on audio files
