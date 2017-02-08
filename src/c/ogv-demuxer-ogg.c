@@ -20,16 +20,19 @@ static BufferQueue *bufferQueue;
 /* Ogg and codec state for demux/decode */
 OGGZ *oggz;
 
+int hasVideo = 0;
 long videoStream;
 OggzStreamContent videoCodec;
 int videoHeadersComplete;
 char *videoCodecName = NULL;
 
+int hasAudio = 0;
 long audioStream;
 OggzStreamContent audioCodec;
 int audioHeadersComplete;
 char *audioCodecName = NULL;
 
+int hasSkeleton = 0;
 long skeletonStream;
 OggSkeleton *skeleton;
 int skeletonHeadersComplete;
@@ -50,7 +53,7 @@ static int processBegin(oggz_packet *packet, long serialno)
     //int bos = (packet->op.packetno == 0);
     if (!bos) {
         // Not a bitstream start -- move on to header decoding...
-		if (skeletonStream) {
+		if (hasSkeleton) {
 	        appState = STATE_SKELETON;
 	        return processSkeleton(packet, serialno);
 	    } else {
@@ -62,7 +65,8 @@ static int processBegin(oggz_packet *packet, long serialno)
 
     OggzStreamContent content = oggz_stream_get_content(oggz, serialno);
 
-    if (!videoStream && content == OGGZ_CONTENT_THEORA) {
+    if (!hasVideo && content == OGGZ_CONTENT_THEORA) {
+        hasVideo = 1;
         videoCodec = content;
         videoCodecName = "theora";
         videoStream = serialno;
@@ -70,7 +74,8 @@ static int processBegin(oggz_packet *packet, long serialno)
         return OGGZ_CONTINUE;
     }
 
-    if (!audioStream && content == OGGZ_CONTENT_VORBIS) {
+    if (!hasAudio && content == OGGZ_CONTENT_VORBIS) {
+        hasAudio = 1;
         audioCodec = content;
         audioCodecName = "vorbis";
         audioStream = serialno;
@@ -78,7 +83,8 @@ static int processBegin(oggz_packet *packet, long serialno)
         return OGGZ_CONTINUE;
     }
 
-    if (!audioStream && content == OGGZ_CONTENT_OPUS) {
+    if (!hasAudio && content == OGGZ_CONTENT_OPUS) {
+        hasAudio = 1;
         audioCodec = content;
         audioCodecName = "opus";
         audioStream = serialno;
@@ -86,7 +92,8 @@ static int processBegin(oggz_packet *packet, long serialno)
         return OGGZ_CONTINUE;
     }
 
-    if (!skeletonStream && content == OGGZ_CONTENT_SKELETON) {
+    if (!hasSkeleton && content == OGGZ_CONTENT_SKELETON) {
+        hasSkeleton = 1;
         skeletonStream = serialno;
 
         int ret = oggskel_decode_header(skeleton, &packet->op);
@@ -120,7 +127,7 @@ static int processSkeleton(oggz_packet *packet, long serialno)
 	float timestamp = oggz_tell_units(oggz) / 1000.0;
 	float keyframeTimestamp = calc_keyframe_timestamp(packet, serialno);
 
-    if (skeletonStream == serialno) {
+    if (hasSkeleton && skeletonStream == serialno) {
         int ret = oggskel_decode_header(skeleton, &packet->op);
         if (ret < 0) {
             printf("Error processing skeleton packet: %d\n", ret);
@@ -133,11 +140,11 @@ static int processSkeleton(oggz_packet *packet, long serialno)
         }
     }
 
-    if (serialno == videoStream) {
+    if (hasVideo && serialno == videoStream) {
     	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
     }
 
-    if (serialno == audioStream) {
+    if (hasAudio && serialno == audioStream) {
     	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp);
     }
 
@@ -148,7 +155,7 @@ static int processDecoding(oggz_packet *packet, long serialno) {
 	float timestamp = oggz_tell_units(oggz) / 1000.0;
 	float keyframeTimestamp = calc_keyframe_timestamp(packet, serialno);
 
-    if (serialno == videoStream) {
+    if (hasVideo && serialno == videoStream) {
 			if (packet->op.bytes > 0) {
 				// Skip 0-byte Theora packets, they're dupe frames.
 				ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
@@ -156,7 +163,7 @@ static int processDecoding(oggz_packet *packet, long serialno) {
 			}
     }
 
-    if (serialno == audioStream) {
+    if (hasAudio && serialno == audioStream) {
     	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp);
 		return OGGZ_STOP_OK;
     }
@@ -349,9 +356,9 @@ long ogv_demuxer_keypoint_offset(long time_ms)
     if (skeletonHeadersComplete) {
         ogg_int32_t serial_nos[2];
         size_t nstreams = 0;
-        if (videoStream) {
+        if (hasVideo) {
             serial_nos[nstreams++] = videoStream;
-        } else if (audioStream) {
+        } else if (hasAudio) {
 			serial_nos[nstreams++] = audioStream;
 		}
         oggskel_get_keypoint_offset(skeleton, serial_nos, nstreams, time_ms, &offset);

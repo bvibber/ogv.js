@@ -11,6 +11,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * Separated XHR and caching out to stream-file package
 * more aggressive in-memory buffering should improve audio seek performance
 * improved seek precision on audio files
+* fix for Ogg files with stream id of 0
 
 1.2.1 - 2016-09-24
 * Performance fixed for playback of Ogg Theora with many duplicate frames ("1000fps" files from ffmpeg)
