@@ -271,9 +271,6 @@ var OGVWrapperCodec = (function(options) {
 		}
 
 		function doProcessData() {
-			videoPacketCount = demuxer.videoPackets.length,
-			audioPacketCount = demuxer.audioPackets.length,
-			start = (window.performance ? performance.now() : Date.now());
 			demuxer.process(finish);
 		}
 
