@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.3.1 - 2017-02-24
+* Fix for seeking before load completes
+* Fix for bisection seeking in very short Ogg files
+
 1.3.0 - 2017-02-08
 * Separated XHR and caching out to stream-file package
 * more aggressive in-memory buffering should improve audio seek performance

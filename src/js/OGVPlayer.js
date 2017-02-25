@@ -220,7 +220,8 @@ var OGVPlayer = function(options) {
 		initialPlaybackPosition = 0.0,
 		initialPlaybackOffset = 0.0,
 		prebufferingAudio = false,
-		stoppedForLateFrame = false;
+		stoppedForLateFrame = false,
+		initialSeekTime = 0.0;
 	function initAudioFeeder() {
 		audioFeeder = new AudioFeeder( audioOptions );
 		audioFeeder.init(audioInfo.channels, audioInfo.rate);
@@ -404,6 +405,7 @@ var OGVPlayer = function(options) {
 		if (decodedFrames) {
 			decodedFrames.splice(0, decodedFrames.length);
 		}
+		initialSeekTime = 0.0;
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
 		initialPlaybackPosition = 0;
 		initialPlaybackOffset = 0;
@@ -530,10 +532,13 @@ var OGVPlayer = function(options) {
 	}
 
 	function startBisection(targetTime) {
+		// leave room for potentially long Ogg page syncing
+		var endPoint = Math.max(0, stream.length - 65536);
+
 		bisectTargetTime = targetTime;
 		seekBisector = new Bisector({
 			start: 0,
-			end: stream.length - 1,
+			end: endPoint,
 			process: function(start, end, position) {
 				if (position == lastSeekPosition) {
 					return false;
@@ -552,9 +557,17 @@ var OGVPlayer = function(options) {
 
 	function seek(toTime) {
 		log('requested seek to ' + toTime);
+
+		if (self.readyState == self.HAVE_NOTHING) {
+			log('not yet loaded; saving seek position for later');
+			initialSeekTime = toTime;
+			return;
+		}
+
 		if (!stream.seekable) {
 			throw new Error('Cannot bisect a non-seekable stream');
 		}
+
 		function prepForSeek(callback) {
 			if (stream && stream.buffering) {
 				readCancel.cancel(new Cancel('cancel for new seek'));
@@ -592,50 +605,54 @@ var OGVPlayer = function(options) {
 		actionQueue.push(function() {
 			// Just in case another async task stopped us...
 			prepForSeek(function() {
-				streamEnded = false;
-				dataEnded = false;
-				ended = false;
-				state = State.SEEKING;
-				seekTargetTime = toTime;
-				seekTargetKeypoint = -1;
-				lastFrameSkipped = false;
-				lastSeekPosition = -1;
+				doSeek(toTime)
+			});
+		});
+	}
 
-				decodedFrames.splice(0, decodedFrames.length);
-				pendingFrame = 0;
-				pendingAudio = 0;
+	function doSeek(toTime) {
+		streamEnded = false;
+		dataEnded = false;
+		ended = false;
+		state = State.SEEKING;
+		seekTargetTime = toTime;
+		seekTargetKeypoint = -1;
+		lastFrameSkipped = false;
+		lastSeekPosition = -1;
 
-				codec.seekToKeypoint(toTime, function(seeking) {
-					if (seeking) {
-						seekState = SeekState.LINEAR_TO_TARGET;
-						fireEventAsync('seeking');
+		decodedFrames.splice(0, decodedFrames.length);
+		pendingFrame = 0;
+		pendingAudio = 0;
 
-						// wait for i/o to trigger readBytesAndWait
-						return;
-					}
-					// Use the old interface still implemented on ogg demuxer
-					codec.getKeypointOffset(toTime, function(offset) {
-						if (offset > 0) {
-							// This file has an index!
-							//
-							// Start at the keypoint, then decode forward to the desired time.
-							//
-							seekState = SeekState.LINEAR_TO_TARGET;
-							seekStream(offset);
-						} else {
-							// No index.
-							//
-							// Bisect through the file finding our target time, then we'll
-							// have to do it again to reach the keypoint, and *then* we'll
-							// have to decode forward back to the desired time.
-							//
-							seekState = SeekState.BISECT_TO_TARGET;
-							startBisection(seekTargetTime);
-						}
+		codec.seekToKeypoint(toTime, function(seeking) {
+			if (seeking) {
+				seekState = SeekState.LINEAR_TO_TARGET;
+				fireEventAsync('seeking');
 
-						fireEvent('seeking');
-					});
-				});
+				// wait for i/o to trigger readBytesAndWait
+				return;
+			}
+			// Use the old interface still implemented on ogg demuxer
+			codec.getKeypointOffset(toTime, function(offset) {
+				if (offset > 0) {
+					// This file has an index!
+					//
+					// Start at the keypoint, then decode forward to the desired time.
+					//
+					seekState = SeekState.LINEAR_TO_TARGET;
+					seekStream(offset);
+				} else {
+					// No index.
+					//
+					// Bisect through the file finding our target time, then we'll
+					// have to do it again to reach the keypoint, and *then* we'll
+					// have to decode forward back to the desired time.
+					//
+					seekState = SeekState.BISECT_TO_TARGET;
+					startBisection(seekTargetTime);
+				}
+
+				fireEvent('seeking');
 			});
 		});
 	}
@@ -702,7 +719,16 @@ var OGVPlayer = function(options) {
 				// wait
 			} else if (!codec.frameReady) {
 				// Haven't found a frame yet, process more data
-				pingProcessing();
+				codec.process(function(more) {
+					if (more) {
+						// need more packets
+						pingProcessing();
+					} else if (streamEnded) {
+						throw new Error('stream ended during linear seeking');
+					} else {
+						readBytesAndWait();
+					}
+				});
 				return;
 			} else if (codec.frameTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
@@ -728,7 +754,16 @@ var OGVPlayer = function(options) {
 				return;
 			} if (!codec.audioReady) {
 				// Haven't found an audio packet yet, process more data
-				pingProcessing();
+				codec.process(function(more) {
+					if (more) {
+						// need more packets
+						pingProcessing();
+					} else if (streamEnded) {
+						throw new Error('stream ended during linear seeking');
+					} else {
+						readBytesAndWait();
+					}
+				});
 				return;
 			} else if (codec.audioTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
@@ -748,19 +783,9 @@ var OGVPlayer = function(options) {
 		var frameDuration,
 			timestamp;
 		if (codec.hasVideo) {
-			if (!codec.frameReady) {
-				// Haven't found a frame yet, process more data
-				pingProcessing();
-				return;
-			}
 			timestamp = codec.frameTimestamp;
 			frameDuration = targetPerFrameTime / 1000;
 		} else if (codec.hasAudio) {
-			if (!codec.audioReady) {
-				// Haven't found an audio packet yet, process more data
-				pingProcessing();
-				return;
-			}
 			timestamp = codec.audioTimestamp;
 			frameDuration = 1 / 256; // approximate packet audio size, fake!
 		} else {
@@ -768,19 +793,24 @@ var OGVPlayer = function(options) {
 		}
 
 		if (timestamp < 0) {
-			// Haven't found a time yet.
-			// Decode in case we're at our keyframe or a following intraframe...
-			if (codec.frameReady) {
-				codec.decodeFrame(function() {
+			// Haven't found a packet yet.
+			codec.process(function(more) {
+				if (more) {
+					// need more data
 					pingProcessing();
-				});
-			} else if (codec.audioReady) {
-				codec.decodeAudio(function() {
-					pingProcessing();
-				});
-			} else {
-				pingProcessing();
-			}
+				} else if (streamEnded) {
+					log('stream ended during bisection seek');
+					// We may have to go back further to find packets.
+					if (seekBisector.right()) {
+						// wait for new data to come in
+					} else {
+						log('failed going back');
+						throw new Error('not sure what to do');
+					}
+				} else {
+					readBytesAndWait();
+				}
+			});
 		} else if (timestamp - frameDuration / 2 > bisectTargetTime) {
 			if (seekBisector.left()) {
 				// wait for new data to come in
@@ -926,6 +956,8 @@ var OGVPlayer = function(options) {
 					if (more) {
 						// Keep processing headers
 						pingProcessing();
+					} else if (streamEnded) {
+						throw new Error('end of file before headers found');
 					} else {
 						// Read more data!
 						log('reading more cause we are out of data');
@@ -1009,8 +1041,16 @@ var OGVPlayer = function(options) {
 			}
 
 		} else if (state == State.READY) {
+			log('initial seek to ' + initialSeekTime);
 
-			if (paused) {
+			if (initialSeekTime > 0) {
+
+				var target = initialSeekTime;
+				initialSeekTime = 0;
+				log('initial seek to ' + target);
+				doSeek(target);
+
+			} else if (paused) {
 
 				// Paused? stop here.
 				log('paused while in ready');
@@ -1044,17 +1084,7 @@ var OGVPlayer = function(options) {
 
 		} else if (state == State.SEEKING) {
 
-			if ((codec.hasVideo && codec.frameTimestamp < 0)
-			 || (codec.hasAudio && codec.audioTimestamp < 0)
-			) {
-				codec.process(function processSeeking(more) {
-					if (more) {
-						pingProcessing();
-					} else {
-						readBytesAndWait();
-					}
-				});
-			} else if (seekState == SeekState.NOT_SEEKING) {
+			if (seekState == SeekState.NOT_SEEKING) {
 				throw new Error('seeking in invalid state (not seeking?)');
 			} else if (seekState == SeekState.BISECT_TO_TARGET) {
 				doProcessBisectionSeek();
@@ -1816,14 +1846,12 @@ var OGVPlayer = function(options) {
 						return initialPlaybackOffset;
 					}
 				} else {
-					return 0;
+					return initialSeekTime;
 				}
 			}
 		},
 		set: function setCurrentTime(val) {
-			if (stream && byteLength && duration) {
-				seek(val);
-			}
+			seek(val);
 		}
 	});
 
