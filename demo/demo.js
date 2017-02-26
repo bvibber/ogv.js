@@ -1020,6 +1020,12 @@
                     }
                 }
             });
+            player.addEventListener('volumechange', function() {
+                if (muted != player.muted) {
+                    muted = player.muted;
+                    setHash();
+                }
+            });
 
             var container = document.getElementById('player');
             container.insertBefore(player, container.firstChild);
@@ -1051,43 +1057,6 @@
             player = null;
         }
     }
-
-    function togglePause() {
-        if (player.paused) {
-            player.play();
-        } else {
-            player.pause();
-        }
-    }
-
-    function playVideo() {
-        var status = document.getElementById('status-view');
-        status.className = 'status-invisible';
-        status.textContent = '';
-
-        OGVPlayer.initSharedAudioContext();
-        player.load();
-        player.play();
-    }
-
-
-    function showStatus(str) {
-        status.className = 'status-visible';
-        status.textContent = str;
-    }
-
-    function errorHandler(event) {
-        var str;
-        if ('message' in event) {
-            str = event.message;
-        } else {
-            str = "unknown script error";
-        }
-        showStatus(str);
-        console.log(event);
-    }
-    //window.addEventListener('error', errorHandler);
-
 
     window.setInterval(function() {
         if (player) {
