@@ -12,248 +12,6 @@
 	var devicePixelRatio = window.devicePixelRatio || 1;
 
 	var player;
-	var averagePlayTime = 0, // ms
-		averageDemuxingTime = 0, // ms
-		averageVideoDecodingTime = 0, // ms
-		averageAudioDecodingTime = 0, // ms
-		averageBufferTime = 0, // ms
-		averageDrawingTime = 0, // ms
-		averageProxyTime = 0; // ms
-
-	var benchmarkData = [],
-		benchmarkClockData = [],
-		benchmarkVideoData = [],
-		benchmarkAudioData = [],
-		benchmarkLateData = [],
-		benchmarkDirty = false,
-		benchmarkTargetFps = -1;
-	function clearBenchmark() {
-		benchmarkData = [];
-		benchmarkClockData = [];
-		benchmarkVideoData = [];
-		benchmarkAudioData = [];
-		benchmarkDirty = true;
-	}
-	function recordBenchmarkPoint(info) {
-		benchmarkData.push(info.cpuTime);
-		benchmarkVideoData.push(info.videoTime);
-		benchmarkAudioData.push(info.audioTime);
-		benchmarkClockData.push(info.clockTime);
-		benchmarkLateData.push(info.late);
-
-		benchmarkDirty = true;
-	}
-	function showBenchmark() {
-		if (!benchmarkDirty) {
-			return;
-		}
-		benchmarkDirty = false;
-
-		var canvas = document.getElementById('benchmark'),
-			width = canvas.width,
-			height = canvas.height,
-			ctx = canvas.getContext('2d'),
-			i,
-			fps60 = 1000.0 / 60.0,
-			fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps60),
-			maxTime = fpsTarget * 2,
-			chunkSize = benchmarkTargetFps * 5, // show last 5 seconds
-			maxItems = Math.min(chunkSize, benchmarkData.length);
-
-		var clockData = benchmarkClockData.slice(-chunkSize),
-			cpuData = benchmarkData.slice(-chunkSize),
-			videoData = benchmarkVideoData.slice(-chunkSize),
-			audioData = benchmarkAudioData.slice(-chunkSize),
-			lateData = benchmarkLateData.slice(-chunkSize);
-
-		// Draw!
-
-		ctx.clearRect(0, 0, width, height);
-
-		function x(i) {
-			return Math.round(i * (width - 1) / maxItems);
-		}
-		function y(ms) {
-			return Math.round((height - 1) - ms * (height - 1) / maxTime);
-		}
-
-		var barX = [],
-			barWidth = [];
-		for (i = 0; i < maxItems; i++) {
-			barX[i] = x(i);
-			barWidth[i] = Math.max(x(i + 1) - barX[i], 1);
-		}
-
-		// Time bar graph
-		ctx.globalAlpha = 0.33;
-
-		// Wall clock time
-		ctx.fillStyle = 'darkviolet';
-		for (i = 0; i < maxItems; i++) {
-			if (lateData[i]) {
-				var py = y(clockData[i]),
-					pheight = y(fpsTarget) - py;
-				ctx.fillRect(barX[i], py, barWidth[i], pheight);
-			}
-		}
-		ctx.fillStyle = 'blue';
-		for (i = 0; i < maxItems; i++) {
-			if (!lateData[i]) {
-				var py = y(clockData[i]),
-					pheight = y(fpsTarget) - py;
-				ctx.fillRect(barX[i], py, barWidth[i], pheight);
-			}
-		}
-
-		// Video decode thread
-		ctx.fillStyle = 'darkcyan';
-		for (i = 0; i < maxItems; i++) {
-			var py = y(videoData[i]);
-			ctx.fillRect(barX[i], py, barWidth[i], height - py);
-		}
-
-		// Audio decode thread
-		ctx.fillStyle = 'green';
-		for (i = 0; i < maxItems; i++) {
-			var py = y(audioData[i]);
-			ctx.fillRect(barX[i], py, barWidth[i], height - py);
-		}
-
-		// Main thread CPU time
-		ctx.fillStyle = 'black';
-		for (i = 0; i < maxItems; i++) {
-			var py = y(cpuData[i]);
-			ctx.fillRect(barX[i], py, barWidth[i], height - py);
-		}
-
-		ctx.globalAlpha = 1;
-
-		if (benchmarkTargetFps) {
-			ctx.beginPath();
-			ctx.strokeStyle = 'red';
-			ctx.fillStyle = 'none';
-			ctx.moveTo(x(0), y(fpsTarget));
-			ctx.lineTo(x(maxItems - 1), y(fpsTarget));
-			ctx.stroke();
-		}
-
-	}
-
-	function round2(n) {
-		return Math.round(n * 100) / 100;
-	}
-	function round1_0(n) {
-		var n = Math.round(n * 10) / 10,
-			s = n + '';
-		if (s.indexOf('.') === -1) {
-			s += '.0';
-		}
-		return s;
-	}
-	function showAverageRate() {
-		if (!player || !player.getPlaybackStats) {
-			return;
-		}
-
-		var info = player.getPlaybackStats();
-		if (info.framesProcessed) {
-			averagePlayTime = info.playTime / info.framesProcessed;
-			averageDemuxingTime = info.demuxingTime / info.framesProcessed;
-			averageVideoDecodingTime = info.videoDecodingTime / info.framesProcessed;
-			averageAudioDecodingTime = info.audioDecodingTime / info.framesProcessed;
-			averageBufferTime = info.bufferTime / info.framesProcessed;
-			averageDrawingTime = info.drawingTime / info.framesProcessed;
-			averageProxyTime = info.proxyTime / info.framesProcessed;
-
-			var targetPerFrameTime = info.targetPerFrameTime;
-			benchmarkTargetFps = 1000 / targetPerFrameTime;
-			document.getElementById('bench-target').textContent = round1_0(targetPerFrameTime);
-			document.getElementById('bench-clock').textContent = round1_0(averagePlayTime);
-			document.getElementById('bench-total').textContent = round1_0(averageDemuxingTime + averageBufferTime + averageDrawingTime + averageProxyTime);
-			document.getElementById('bench-demux').textContent = round1_0(averageDemuxingTime);
-			document.getElementById('bench-video').textContent = round1_0(averageVideoDecodingTime);
-			document.getElementById('bench-audio').textContent = round1_0(averageAudioDecodingTime);
-			document.getElementById('bench-buffer').textContent = round1_0(averageBufferTime);
-			document.getElementById('bench-draw').textContent = round1_0(averageDrawingTime);
-			document.getElementById('bench-proxy').textContent = round1_0(averageProxyTime);
-
-			document.getElementById('video-fps').textContent = round2(player.ogvjsVideoFrameRate);
-			document.getElementById('video-jitter').textContent = round2(info.jitter);
-			document.getElementById('video-late').textContent = info.lateFrames;
-			document.getElementById('audio-drops').textContent = info.droppedAudio;
-			document.getElementById('audio-delayed').textContent = round1_0(info.delayedAudio);
-
-			// keep it a rolling average
-			player.resetPlaybackStats();
-		}
-	}
-
-	function clamp(val) {
-		if (val < 0) {
-			return 0;
-		} else if (val > 1) {
-			return 1;
-		} else {
-			return val;
-		}
-	}
-	var thumbSeeking = false,
-		initialThumbX = 0,
-		seekTarget = 0;
-	function updateProgress() {
-		if (player) {
-			var total = player.duration,
-				processed = player.currentTime,
-				thumb = (thumbSeeking ? seekTarget : processed),
-				buffered = 0,
-				ranges = player.buffered;
-			if (ranges.length) {
-				// hack -- find the range that contains current, if any
-				// would be better to show the actual multi ranges :D
-				for (var i = 0; i < ranges.length; i++) {
-					if (processed >= ranges.start(i) && processed <= ranges.end(i)) {
-						buffered = ranges.end(i);
-						break;
-					}
-				}
-			}
-
-			function percent(val) {
-				var ratio = val / total,
-					percentage = ratio * 100.0;
-				return percentage + '%';
-			}
-
-			document.getElementById('progress-total').title = total;
-			document.getElementById('progress-buffered').style.width = percent(buffered);
-			document.getElementById('progress-processed').style.width = percent(processed);
-			document.getElementById('progress-thumb').style.left = percent(thumb);
-
-			function simtrunc(val) {
-				if (val >= 0) {
-					return Math.floor(val);
-				} else {
-					return Math.ceil(val);
-				}
-			}
-			var trunc = Math.trunc || simtrunc;
-
-			function formatTime(time) {
-				var rtime = Math.round(time),
-					minutes = trunc(rtime / 60),
-					seconds = Math.abs(rtime % 60),
-					padding = (seconds < 10) ? '0' : '';
-				return minutes + ':' + padding + seconds;
-			}
-
-			controls.querySelector('.time-elapsed').textContent = formatTime(thumb);
-			if (player.duration < Infinity) {
-				controls.querySelector('.time-remaining').textContent = formatTime(thumb - total);
-			} else {
-				controls.querySelector('.time-remaining').textContent = '';
-			}
-		}
-	}
 
 	/**
 	 * dictionary -> URL query string params
@@ -537,8 +295,6 @@
 	}
 
 	var container = document.getElementById('player'),
-		controls = document.getElementById('controls'),
-		spinner = document.getElementById('spinner-panel'),
 		videoChooser = document.getElementById('video-chooser'),
 		selectedTitle = null,
 		selectedUrl = null,
@@ -1221,11 +977,7 @@
 			document.getElementById('audio-rate').textContent = '';
 			document.getElementById('audio-drops').textContent = '';
 
-			spinner.classList.add('loading');
 			player.addEventListener('loadedmetadata', function() {
-				spinner.classList.remove('loading');
-				updateProgress();
-
 				// Standard metadata ain't much.
 				document.getElementById('video-pic-width').textContent = player.videoWidth;
 				document.getElementById('video-pic-height').textContent = player.videoHeight;
@@ -1233,11 +985,11 @@
 				// And grab our custom metadata...
 				var fps;
 				if (typeof (player.ogvjsVideoFrameRate) === 'number' && player.ogvjsVideoFrameRate > 0) {
-					benchmarkTargetFps = player.ogvjsVideoFrameRate;
+					benchmark.setTargetFPS(player.ogvjsVideoFrameRate);
 					fps = round2(player.ogvjsVideoFrameRate);
 				} else {
 					// Native video element doesn't seem to expose frame rate?!
-					benchmarkTargetFps = 60;
+					benchmark.setTargetFPS(60);
 					fps = '?';
 				}
 				document.getElementById('video-fps').textContent = fps;
@@ -1248,38 +1000,11 @@
 				}
 			});
 
-			spinner.classList.remove('seeking');
-			player.addEventListener('seeking', function() {
-				spinner.classList.add('seeking');
-			});
-			player.addEventListener('seeked', function() {
-				spinner.classList.remove('seeking');
-			});
-
-			player.addEventListener('timeupdate', function() {
-				updateProgress();
-			});
-
-			clearBenchmark();
 			// There is a 'timeupdate' event on HTMLMediaElement, but it only
 			// seems to fire every quarter second. No per-frame callback for
 			// native video, sorry!
 			player.addEventListener('framecallback', function(info) {
-				recordBenchmarkPoint(info);
-			});
-
-			player.addEventListener('ended', function() {
-				updateProgress();
-				showControlPanel();
-			});
-
-			player.addEventListener('pause', function() {
-				updateProgress();
-				showControlPanel();
-			});
-
-			player.addEventListener('play', function() {
-				delayHideControlPanel();
+				benchmark.recordPoint(info);
 			});
 
 			if (startTime == 0) {
@@ -1303,67 +1028,10 @@
 				player.width = 256; // hack for audio
 				player.height = 256;
 			}
-			showControlPanel();
 
-			player.addEventListener('touchstart', function(event) {
-				event.preventDefault();
-				if (controlPanel.style.opacity == 1.0) {
-					hideControlPanel();
-				} else {
-					showControlPanel();
-				}
-			});
-
-			document.querySelector('.play').style.display = 'inline';
-			document.querySelector('.pause').style.display = 'none';
-			player.addEventListener('play', function() {
-				document.querySelector('.play').style.display = 'none';
-				document.querySelector('.pause').style.display = 'inline';
-			});
-			player.addEventListener('pause', function() {
-				document.querySelector('.play').style.display = 'inline';
-				document.querySelector('.pause').style.display = 'none';
-			});
-			player.addEventListener('ended', function() {
-				document.querySelector('.play').style.display = 'inline';
-				document.querySelector('.pause').style.display = 'none';
-			});
-			if (muted) {
-				controls.querySelector('.mute').style.display = 'none';
-				controls.querySelector('.unmute').style.display = 'inline';
-			} else {
-				controls.querySelector('.mute').style.display = 'inline';
-				controls.querySelector('.unmute').style.display = 'none';
-			}
-
-			updateProgress();
+			controls.init(player);
+			benchmark.init(player);
 		});
-	}
-
-	function drawPlayButton() {
-		var midX = canvas.width / 2,
-			midY = canvas.height / 2,
-			side = canvas.height / 4;
-
-		function triangle() {
-			ctx.beginPath();
-			ctx.moveTo(midX - side / 2, midY - side / 2);
-			ctx.lineTo(midX + side / 2, midY);
-			ctx.lineTo(midX - side / 2, midY + side / 2);
-			ctx.lineTo(midX - side / 2, midY - side / 2);
-		}
-
-		ctx.save();
-		triangle();
-		ctx.fillStyle = "white";
-		ctx.fill();
-		ctx.restore();
-
-		ctx.save();
-		triangle();
-		ctx.strokeStyle = "2px black";
-		ctx.stroke();
-		ctx.restore();
 	}
 
 	var selectedTitle = getDefault();
@@ -1420,243 +1088,10 @@
 	}
 	//window.addEventListener('error', errorHandler);
 
-	function onclick(selector, listener) {
-		var el = controls.querySelector(selector);
-
-		el.addEventListener('click', listener);
-
-		el.addEventListener('touchstart', function(event) {
-			// :active doesn't work on iOS \o/
-			el.classList.add('active');
-			event.preventDefault();
-		});
-		el.addEventListener('touchcancel', function(event) {
-			el.classList.remove('active');
-			event.preventDefault();
-		});
-		el.addEventListener('touchend', function(event) {
-			el.classList.remove('active');
-			event.preventDefault();
-			listener();
-		});
-	}
-
-	onclick('.play', function() {
-		if (player) {
-			player.play();
-		}
-	});
-	onclick('.pause', function() {
-		if (player) {
-			player.pause();
-		}
-	});
-	onclick('.mute', function() {
-		if (player) {
-			player.muted = true;
-		}
-		mute = true;
-		controls.querySelector('.mute').style.display = 'none';
-		controls.querySelector('.unmute').style.display = 'inline';
-		setHash();
-	});
-	onclick('.unmute', function() {
-		if (player) {
-			player.muted = false;
-		}
-		mute = false;
-		controls.querySelector('.mute').style.display = 'inline';
-		controls.querySelector('.unmute').style.display = 'none';
-		setHash();
-	});
-	document.querySelector('#progress-total').addEventListener('click', function(event) {
-		if (player && player.seekable.length) {
-			var x = event.offsetX,
-				fraction = x / this.offsetWidth,
-				seekTime = fraction * player.duration;
-			player.currentTime = seekTime;
-		}
-	});
-	if (window.PointerEvent) {
-		document.querySelector('#progress-thumb').addEventListener('pointerdown', function(event) {
-			console.log('touch start');
-			if (player && player.seekable.length) {
-				var thumbPointer = event.pointerId;
-				event.target.setPointerCapture(thumbPointer);
-
-				thumbSeeking = true;
-				seekTarget = player.currentTime;
-				initialThumbFraction = seekTarget / player.duration;
-				initialThumbX = event.clientX;
-
-				var ontouchmove = function(event) {
-					console.log('touch move');
-					var bar = document.querySelector('#progress-total'),
-						dx = event.clientX - initialThumbX,
-						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-					seekTarget = fraction * player.duration;
-					player.currentTime = seekTarget;
-					updateProgress();
-					event.preventDefault();
-				};
-				var ontouchup = function(event) {
-					console.log('touch up');
-					thumbSeeking = false;
-					player.currentTime = seekTarget;
-					updateProgress();
-
-					this.removeEventListener('pointermove', ontouchmove);
-					this.removeEventListener('pointerup', ontouchup);
-					this.removeEventListener('pointercancel', ontouchup);
-					event.preventDefault();
-					event.target.releasePointerCapture(thumbPointer);
-				};
-				this.addEventListener('pointermove', ontouchmove);
-				this.addEventListener('pointerup', ontouchup);
-				this.addEventListener('pointercancel', ontouchup);
-			}
-			event.preventDefault();
-		});
-	} else {
-		document.querySelector('#progress-thumb').addEventListener('touchstart', function(event) {
-			console.log('touch start');
-			if (player && player.seekable.length) {
-				thumbSeeking = true;
-				seekTarget = player.currentTime;
-				initialThumbFraction = seekTarget / player.duration;
-				initialThumbX = event.touches[0].pageX;
-
-				var ontouchmove = function(event) {
-					console.log('touch move');
-					var bar = document.querySelector('#progress-total'),
-						dx = event.touches[0].pageX - initialThumbX,
-						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-					seekTarget = fraction * player.duration;
-					player.currentTime = seekTarget;
-					updateProgress();
-					event.preventDefault();
-				};
-				var ontouchup = function(event) {
-					console.log('touch up');
-					thumbSeeking = false;
-					player.currentTime = seekTarget;
-					updateProgress();
-
-					this.removeEventListener('touchmove', ontouchmove);
-					this.removeEventListener('touchend', ontouchup);
-					this.removeEventListener('touchcancel', ontouchup);
-					event.preventDefault();
-				};
-				this.addEventListener('touchmove', ontouchmove);
-				this.addEventListener('touchend', ontouchup);
-				this.addEventListener('touchcancel', ontouchup);
-			}
-			event.preventDefault();
-		});
-		document.querySelector('#progress-thumb').addEventListener('mousedown', function(event) {
-			if (player && player.seekable.length) {
-				thumbSeeking = true;
-				seekTarget = player.currentTime;
-				initialThumbFraction = seekTarget / player.duration;
-				initialThumbX = event.clientX;
-
-				var onmove = function(event) {
-					var bar = document.querySelector('#progress-total'),
-						dx = event.clientX - initialThumbX,
-						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-					seekTarget = fraction * player.duration;
-					player.currentTime = seekTarget;
-					updateProgress();
-					event.preventDefault();
-				};
-				var onmouseup = function(event) {
-					var bar = document.querySelector('#progress-total'),
-						dx = event.clientX - initialThumbX,
-						fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
-					seekTarget = fraction * player.duration;
-					thumbSeeking = false;
-					player.currentTime = seekTarget;
-					updateProgress();
-
-					document.removeEventListener('mousemove', onmove);
-					document.removeEventListener('mouseup', onmouseup);
-					event.preventDefault();
-				};
-				document.addEventListener('mousemove', onmove);
-				document.addEventListener('mouseup', onmouseup);
-			}
-			event.preventDefault();
-		});
-	}
-
-	onclick('.fullscreen', function() {
-		var requestFullscreen = (container.requestFullscreen || container.mozRequestFullScreen || container.webkitRequestFullscreen || container.msRequestFullscreen).bind(container);
-		requestFullscreen();
-	});
-	onclick('.unzoom', function() {
-		var cancelFullscreen = (document.cancelFullscreen || document.mozCancelFullScreen || document.webkitCancelFullScreen || document.msExitFullscreen).bind(document);
-		cancelFullscreen();
-	});
-	function fullResizeVideo() {
-		var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-		if (fullscreenElement == container) {
-			controls.querySelector('.fullscreen').style.display = 'none';
-			controls.querySelector('.unzoom').style.display = 'inline';
-		} else {
-			controls.querySelector('.fullscreen').style.display = 'inline';
-			controls.querySelector('.unzoom').style.display = 'none';
-		}
-	}
-	document.addEventListener('fullscreenchange', fullResizeVideo);
-	document.addEventListener('mozfullscreenchange', fullResizeVideo);
-	document.addEventListener('webkitfullscreenchange', fullResizeVideo);
-	document.addEventListener('MSFullscreenChange', fullResizeVideo);
-
-	var controlPanel = document.getElementById('control-panel');
-	var playerTimeout;
-	function hideControlPanel() {
-		// don't hide if we're paused
-		// @todo or are audio-only
-		if (player && !player.paused) {
-			if (controlPanel.style.opacity == 1.0) {
-				controlPanel.style.opacity = 0.0;
-			}
-		}
-		if (playerTimeout) {
-			clearTimeout(playerTimeout);
-			playerTimeout = null;
-		}
-	}
-	function delayHideControlPanel() {
-		playerTimeout = setTimeout(function() {
-			playerTimeout = null;
-			if (player && !player.paused) {
-				controlPanel.style.opacity = 0.0;
-			}
-		}, 5000);
-	}
-	function showControlPanel() {
-		if (controlPanel.style.opacity == 0.0) {
-			controlPanel.style.opacity = 1.0;
-		}
-		if (playerTimeout) {
-			clearTimeout(playerTimeout);
-			playerTimeout = null;
-		}
-	}
-	container.addEventListener('mousemove', function() {
-		showControlPanel();
-		delayHideControlPanel();
-	});
-
-	//nativePlayer.querySelector('.play').addEventListener('click', function() {
-	//	nativeVideo.play();
-	//}
 
 	window.setInterval(function() {
-		if (player && benchmarkData.length > 0) {
-			showBenchmark();
-			showAverageRate();
+		if (player) {
+			benchmark.update();
 		}
 	}, 1000);
 

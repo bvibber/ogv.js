@@ -273,9 +273,9 @@ build/demo/ajax-loader.gif : $(DEMO_DIR)/ajax-loader.gif
 	test -d build/demo || mkdir -p build/demo
 	cp $(DEMO_DIR)/ajax-loader.gif build/demo/ajax-loader.gif
 
-build/demo/demo.js : $(DEMO_DIR)/demo.js
+build/demo/demo.js : $(DEMO_DIR)/demo.js $(DEMO_DIR)/benchmark.js $(DEMO_DIR)/controls.js
 	test -d build/demo || mkdir -p build/demo
-	cp $(DEMO_DIR)/demo.js build/demo/demo.js
+	cat $(DEMO_DIR)/demo.js $(DEMO_DIR)/benchmark.js $(DEMO_DIR)/controls.js > build/demo/demo.js
 
 build/demo/iconfont.css : $(DEMO_DIR)/iconfont.css
 	test -d build/demo || mkdir -p build/demo
