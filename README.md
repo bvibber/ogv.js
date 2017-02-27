@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.3.2 - 2017-??-??
+* fastSeek() is now fast
+
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
 * Fix for bisection seeking in very short Ogg files

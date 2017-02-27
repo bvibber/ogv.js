@@ -507,9 +507,15 @@ var OGVPlayer = function(options) {
 	var seekTargetTime = 0.0,
 		seekTargetKeypoint = 0.0,
 		bisectTargetTime = 0.0,
+		seekMode,
 		lastSeekPosition,
 		lastFrameSkipped,
 		seekBisector;
+
+	var SeekMode = {
+		EXACT: "exact",
+		FAST: "fast"
+	};
 
 	function Cancel(msg) {
 		Error.call(this, msg);
@@ -555,8 +561,8 @@ var OGVPlayer = function(options) {
 		seekBisector.start();
 	}
 
-	function seek(toTime) {
-		log('requested seek to ' + toTime);
+	function seek(toTime, mode) {
+		log('requested seek to ' + toTime + ', mode ' + mode);
 
 		if (self.readyState == self.HAVE_NOTHING) {
 			log('not yet loaded; saving seek position for later');
@@ -585,6 +591,7 @@ var OGVPlayer = function(options) {
 			}
 			state = State.SEEKING;
 			seekTargetTime = toTime;
+			seekMode = mode;
 			if (codec) {
 				codec.flush(callback);
 			} else {
@@ -729,6 +736,10 @@ var OGVPlayer = function(options) {
 						readBytesAndWait();
 					}
 				});
+				return;
+			} else if (seekMode === SeekMode.FAST && codec.keyframeTimestamp == codec.frameTimestamp) {
+				// Found some frames? Go ahead now!
+				continueSeekedPlayback();
 				return;
 			} else if (codec.frameTimestamp + frameDuration < seekTargetTime) {
 				// Haven't found a time yet, or haven't reached the target time.
@@ -1782,7 +1793,7 @@ var OGVPlayer = function(options) {
 	 * @todo implement the fast part of the behavior!
 	 */
 	self.fastSeek = function(seekToTime) {
-		self.currentTime = +seekToTime;
+		seek(+seekToTime, SeekMode.FAST);
 	};
 
 	/**
@@ -1851,7 +1862,7 @@ var OGVPlayer = function(options) {
 			}
 		},
 		set: function setCurrentTime(val) {
-			seek(val);
+			seek(val, SeekMode.EXACT);
 		}
 	});
 
