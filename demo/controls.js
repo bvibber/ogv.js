@@ -130,27 +130,27 @@
     var onNextSeek;
     function setNextSeek() {
         updateProgress();
-        onNextSeek = function() {
-            if (thumbSeeking) {
-                doFastSeek(seekTarget);
-                updateProgress();
-            }
-            onNextSeek = null;
-        };
-        if (player.seeking) {
-            var onseeked = function() {
-                if (onNextSeek) {
-                    onNextSeek();
-                }
-                player.removeEventListener('seeked', onseeked);
-            };
-            player.addEventListener('seeked', onseeked);
+
+        if (onNextSeek) {
+            // delay!
         } else {
-            onNextSeek();
+            var onseeked = function() {
+                player.removeEventListener('seeked', onseeked);
+                onNextSeek = null;
+                if (thumbSeeking) {
+                    setNextSeek();
+                }
+            };
+            onNextSeek = onseeked;
+            player.addEventListener('seeked', onseeked);
+            doFastSeek(seekTarget);
         }
     }
     function clearNextSeek() {
-        onNextSeek = null;
+        if (onNextSeek) {
+            player.removeEventListener('seeked', onNextSeek);
+            onNextSeek = null;
+        }
     }
     document.querySelector('#progress-total').addEventListener('click', function(event) {
         if (player && player.seekable.length) {
@@ -184,6 +184,7 @@
                 var ontouchup = function(event) {
                     console.log('touch up');
                     thumbSeeking = false;
+                    clearNextSeek();
                     player.currentTime = seekTarget;
                     updateProgress();
 
@@ -220,6 +221,7 @@
                 var ontouchup = function(event) {
                     console.log('touch up');
                     thumbSeeking = false;
+                    clearNextSeek();
                     player.currentTime = seekTarget;
                     updateProgress();
 
