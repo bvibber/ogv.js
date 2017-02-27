@@ -337,6 +337,7 @@
         container.removeEventListener('mousemove', onmousemove);
     });
 
+    var seekSpinnerTimeout;
     window.controls = {
         init: function(aPlayer) {
             player = aPlayer;
@@ -349,9 +350,16 @@
 
             spinner.classList.remove('seeking');
             player.addEventListener('seeking', function() {
-                spinner.classList.add('seeking');
+                // use a timeout so very short seeks don't throw up a spinner
+                seekSpinnerTimeout = setTimeout(function() {
+                    spinner.classList.add('seeking');
+                }, 250);
             });
             player.addEventListener('seeked', function() {
+                if (seekSpinnerTimeout) {
+                    clearTimeout(seekSpinnerTimeout);
+                    seekSpinnerTimeout = null;
+                }
                 spinner.classList.remove('seeking');
             });
 
