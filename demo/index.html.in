@@ -93,6 +93,9 @@
 									<option value="240p.webm">240p WebM</option>
 									<option value="160p.webm">160p WebM</option>
 								</optgroup>
+								<optgroup label="Ogg Vorbis">
+									<option value="ogg">Vorbis Audio</option>
+								</optgroup>
 							</select>
 
 							Player:

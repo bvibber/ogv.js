@@ -148,7 +148,8 @@
 
             // Build an entry for the original media
             var ext = getExtension(imageinfo.url),
-                format;
+                format,
+                useOriginal = true;
             if (ext == 'ogg') {
                 format = 'ogv'; // todo: check video/audioness
             } else if (ext == 'ogv') {
@@ -159,17 +160,21 @@
             } else if (ext == 'webm') {
                 format = 'webm';
             } else {
-                throw new Error("Unexpected file extension " + ext);
+                console.log("Unexpected file extension " + ext);
+                format = ext;
+                useOriginal = false;
             }
-            sources.push({
-                key: 'original',
-                format: format,
-                width: imageinfo.width,
-                height: imageinfo.height,
-                url: imageinfo.url,
-                size: imageinfo.size,
-                bitrate: imageinfo.size * 8 / mediaInfo.duration
-            });
+            if (useOriginal) {
+                sources.push({
+                    key: 'original',
+                    format: format,
+                    width: imageinfo.width,
+                    height: imageinfo.height,
+                    url: imageinfo.url,
+                    size: imageinfo.size,
+                    bitrate: imageinfo.size * 8 / mediaInfo.duration
+                });
+            }
 
             // Build entries for the transcodes
             var sourceMode = document.querySelector('#media-source').value;
@@ -207,21 +212,19 @@
                             var format, height, matches;
                             matches = key.match(/^(\d+)p\.(.*?)$/);
                             if (matches) {
-                                var height = parseInt(matches[1]),
-                                    format = matches[2],
-                                    bitrate = transcode.bandwidth;
-                                sources.push({
-                                    key: key,
-                                    format: format,
-                                    width: transcode.height,
-                                    height: transcode.width,
-                                    url: transcode.src,
-                                    size: Math.round(bitrate * mediaInfo.duration / 8),
-                                    bitrate: bitrate
-                                });
+                                format = matches[2];
                             } else {
-                                console.log("unexpected transcode key name: " + key);
+                                format = key;
                             }
+                            sources.push({
+                                key: key,
+                                format: format,
+                                width: transcode.height,
+                                height: transcode.width,
+                                url: transcode.src,
+                                size: Math.round(transcode.bandwidth * mediaInfo.duration / 8),
+                                bitrate: transcode.bandwidth
+                            });
                         }
                     }
                 }
@@ -876,7 +879,7 @@
                 if (source.key == preferredKey) {
                     selected = source;
                 }
-                if (source.format == 'oga') {
+                if (source.format == 'oga' || source.format == 'ogg') {
                     oga = source;
                 }
                 if (optionsMap[source.key]) {
