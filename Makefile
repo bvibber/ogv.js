@@ -265,9 +265,9 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
 	test -d build/demo || mkdir -p build/demo
 	sed 's/OGV_VERSION/$(FULLVER)/g' < $(DEMO_DIR)/index.html.in > build/demo/index.html
 
-build/demo/demo.css : $(DEMO_DIR)/demo.css
+build/demo/demo.css : $(DEMO_DIR)/demo.css $(DEMO_DIR)/controls.css
 	test -d build/demo || mkdir -p build/demo
-	cp $(DEMO_DIR)/demo.css build/demo/demo.css
+	cat $(DEMO_DIR)/demo.css $(DEMO_DIR)/controls.css > build/demo/demo.css
 
 build/demo/ajax-loader.gif : $(DEMO_DIR)/ajax-loader.gif
 	test -d build/demo || mkdir -p build/demo
