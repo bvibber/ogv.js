@@ -295,9 +295,14 @@
             playerTimeout = null;
         }
     }
-    container.addEventListener('mousemove', function() {
+    function onmousemove() {
         showControlPanel();
         delayHideControlPanel();
+    }
+    container.addEventListener('mousemove', onmousemove);
+    container.addEventListener('touchstart', function() {
+        // mousemove triggers on taps in iOS, which undoes our attempts to hide
+        container.removeEventListener('mousemove', onmousemove);
     });
 
     window.controls = {
@@ -340,7 +345,6 @@
             showControlPanel();
 
             player.addEventListener('touchstart', function(event) {
-                event.preventDefault();
                 if (controlPanel.style.opacity == 1.0) {
                     hideControlPanel();
                 } else {
