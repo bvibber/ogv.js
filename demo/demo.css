@@ -60,14 +60,6 @@ html, body {
 	height: 5em;
 	text-align: right;
 }
-#filter {
-	position: absolute;
-	width: 140px;
-	height: 1.5em;
-	top: 2.5em;
-	right: 2.5em;
-	z-index: 9999;
-}
 
 #media-chooser-stub {
 	background: rgba(0, 0, 0, 0.5);
@@ -307,8 +299,11 @@ html, body {
 	overflow-x: hidden;
 }
 
-#media-source-block {
-	padding: 16px;
+#media-source-block,
+#searchform {
+	margin: 16px;
+}
+#filter {
 }
 
 .media-item {

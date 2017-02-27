@@ -13,9 +13,7 @@
 		<h2>decoding Theora and WebM video in JavaScript</h2>
 	</div>
 	<div id=search>
-		<form id="searchform">
-			<input id=filter placeholder="Search media">
-		</form>
+		<button id=chooser-button>Choose...</button>
 	</div>
 
 	<div id="main-player">
@@ -156,6 +154,9 @@
 				<option value=shortlist-profile1>VP8 -profile=1 tests</option>
 			</select>
 		</div>
+		<form id="searchform">
+			<input id=filter placeholder="Search media">
+		</form>
 		<div id="media-list">
 			<!-- ... -->
 		</div>

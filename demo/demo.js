@@ -729,6 +729,8 @@
         typingSearchTimeout = setTimeout(showChooser, 250);
     });
 
+    document.querySelector('#chooser-button').addEventListener('click', showChooser);
+
     window.addEventListener('hashchange', function() {
         // Warning: sometimes this triggers when we change it programatically
         // it seems to be normalizing our unicode or something. Fun!
