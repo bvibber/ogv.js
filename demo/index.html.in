@@ -14,9 +14,9 @@
 			<h2>decoding Theora and WebM video in JavaScript</h2>
 		</div>
 		<div id="source-info">
-			<div>
+			<div id="source-select-line">
+				<button id=chooser-button>Select...</button>
 				<a id="pagelink" href="javascript:false" target="_blank">...</a>
-				<button id=chooser-button>Choose...</button>
 			</div>
 			<div>
 				Source:
