@@ -876,7 +876,7 @@
                 } else if (key == 'original') {
                     return 'Original';
                 } else if (key == 'ogg') {
-                    return 'Vorbis';
+                    return 'Ogg Vorbis';
                 } else {
                     return key;
                 }
