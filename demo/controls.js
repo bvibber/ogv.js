@@ -127,6 +127,31 @@
             player.currentTime = seekTarget;
         }
     }
+    var onNextSeek;
+    function setNextSeek() {
+        updateProgress();
+        onNextSeek = function() {
+            if (thumbSeeking) {
+                doFastSeek(seekTarget);
+                updateProgress();
+            }
+            onNextSeek = null;
+        };
+        if (player.seeking) {
+            var onseeked = function() {
+                if (onNextSeek) {
+                    onNextSeek();
+                }
+                player.removeEventListener('seeked', onseeked);
+            };
+            player.addEventListener('seeked', onseeked);
+        } else {
+            onNextSeek();
+        }
+    }
+    function clearNextSeek() {
+        onNextSeek = null;
+    }
     document.querySelector('#progress-total').addEventListener('click', function(event) {
         if (player && player.seekable.length) {
             var x = event.offsetX,
@@ -153,8 +178,7 @@
                         dx = event.clientX - initialThumbX,
                         fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
                     seekTarget = fraction * player.duration;
-                    doFastSeek(seekTarget);
-                    updateProgress();
+                    setNextSeek();
                     event.preventDefault();
                 };
                 var ontouchup = function(event) {
@@ -190,8 +214,7 @@
                         dx = event.touches[0].pageX - initialThumbX,
                         fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
                     seekTarget = fraction * player.duration;
-                    doFastSeek(seekTarget);
-                    updateProgress();
+                    setNextSeek();
                     event.preventDefault();
                 };
                 var ontouchup = function(event) {
@@ -223,8 +246,7 @@
                         dx = event.clientX - initialThumbX,
                         fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
                     seekTarget = fraction * player.duration;
-                    doFastSeek(seekTarget);
-                    updateProgress();
+                    setNextSeek();
                     event.preventDefault();
                 };
                 var onmouseup = function(event) {
@@ -233,6 +255,7 @@
                         fraction = clamp(initialThumbFraction + dx / bar.offsetWidth);
                     seekTarget = fraction * player.duration;
                     thumbSeeking = false;
+                    clearNextSeek();
                     player.currentTime = seekTarget;
                     updateProgress();
 
