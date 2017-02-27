@@ -2391,7 +2391,12 @@ function StyleManager() {
 	var self = this;
 	var el = document.createElement('style');
 	el.type = 'text/css';
-	el.textContent = 'ogvjs { display: inline-block; position: relative; }';
+	el.textContent = 'ogvjs { ' +
+		'display: inline-block; ' +
+		'position: relative; ' +
+		'-webkit-user-select: none; ' +
+		'-webkit-tap-highlight-color: rgba(0,0,0,0); '
+		'}';
 	document.head.appendChild(el);
 
 	var sheet = el.sheet;
