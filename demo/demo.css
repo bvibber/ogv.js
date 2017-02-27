@@ -19,10 +19,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 html, body {
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
 	padding: 0;
 	margin: 0;
 }
@@ -421,20 +417,3 @@ html, body {
 }
 
 
-/*
- * min-width is hack for Android portrait with keyboard shown
- * http://stackoverflow.com/questions/8883163/css-media-query-soft-keyboard-breaks-css-orientation-rules-alternative-solut
- */
-@media (min-width: 480px) and (max-width: 640px) and (orientation: landscape) {
-	#player {
-		z-index: 9999;
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-	}
-	#header, #source-info, #metadata {
-		display: none;
-	}
-}
