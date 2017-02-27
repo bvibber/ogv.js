@@ -107,16 +107,17 @@
     function findSourcesForMedia(media, callback) {
         commonsApi({
             action: 'query',
-            prop: 'imageinfo|transcodestatus',
+            prop: 'videoinfo',
             titles: media,
-            iiprop: 'url|size|mediatype|metadata',
-            iiurlwidth: 1280,
-            iiurlheight: 720
+            viprop: 'url|size|mediatype|metadata|derivatives',
+            viurlwidth: 1280,
+            viurlheight: 720,
+            redirects: 1
         }, function(data, err) {
 
             var sources = [],
                 page = firstPageInApiResult(data);
-            if (page && ('imageinfo' in page) && 'transcodestatus' in page) {
+            if (page && ('videoinfo' in page)) {
                 // yay
             } else {
                 console.log("Skipping missing image data");
@@ -124,8 +125,8 @@
                 return;
             }
 
-            var imageinfo = page.imageinfo[0],
-                transcodestatus = page.transcodestatus;
+            var imageinfo = page.videoinfo[0],
+                derivatives = imageinfo.derivatives;
 
             function findMetadata(name) {
                 var meta = imageinfo.metadata;
@@ -198,26 +199,23 @@
                     });
                 });
             } else {
-                for (var key in transcodestatus) {
-                    if (transcodestatus.hasOwnProperty(key)) {
-                        var transcode = transcodestatus[key];
-                        if (transcode.time_success != '') {
+                if (derivatives) {
+                    for (var i = 0; i < derivatives.length; i++) {
+                        var transcode = derivatives[i];
+                        if ('transcodekey' in transcode) {
+                            var key = transcode.transcodekey;
                             var format, height, matches;
                             matches = key.match(/^(\d+)p\.(.*?)$/);
                             if (matches) {
                                 var height = parseInt(matches[1]),
                                     format = matches[2],
-                                    bitrate = parseFloat(transcode.final_bitrate);
-                                if (bitrate == 0) {
-                                    // incomplete
-                                    continue;
-                                }
+                                    bitrate = transcode.bandwidth;
                                 sources.push({
                                     key: key,
                                     format: format,
-                                    width: Math.round(imageinfo.width * height / imageinfo.height),
-                                    height: height,
-                                    url: transcodeUrl(imageinfo.url, height, format),
+                                    width: transcode.height,
+                                    height: transcode.width,
+                                    url: transcode.src,
                                     size: Math.round(bitrate * mediaInfo.duration / 8),
                                     bitrate: bitrate
                                 });
