@@ -8,82 +8,63 @@
 	<link rel="stylesheet" type="text/css" href="iconfont.css">
 
 <body>
-	<div id="header">
-		<h1><a href="https://github.com/brion/ogv.js" target="_blank">ogv.js</a></h1>
-		<h2>decoding Theora and WebM video in JavaScript</h2>
-	</div>
-	<div id=search>
-		<button id=chooser-button>Choose...</button>
-	</div>
+	<div id="wrapper">
+		<div id="header">
+			<h1><a href="https://github.com/brion/ogv.js" target="_blank">ogv.js</a></h1>
+			<h2>decoding Theora and WebM video in JavaScript</h2>
+		</div>
+		<div id="source-info">
+			<div>
+				<a id="pagelink" href="javascript:false" target="_blank">...</a>
+				<button id=chooser-button>Choose...</button>
+			</div>
+			<div>
+				Source:
+				<select height=1 id="video-preferred-size">
+					<option value="js">360p Ogg Theora</option>
+				</select>
+			</div>
+			<div>
+				Player:
+				<select height=1 id="player-backend">
+					<option value="js">JavaScript (auto)</option>
+					<option value="js-noworker">JS no Worker</option>
+					<option value="js-cpu">JS no WebGL</option>
+					<option value="native">native</option>
+					<option value="cortado">Cortado (Java)</option>
+				</select>
+			</div>
+		</div>
 
-	<div id="main-player">
-		<div id="player" class="ogvjs-player">
-			<div id="spinner-panel"></div>
-			<div id="control-panel">
-				<div id="controls">
-					<button class="play" title="Play"><span class="icon-play"></span></button>
-					<button class="pause" title="Pause" style="display:none"><span class="icon-pause"></span></button>
-					<button class="mute" title="Mute"><span class="icon-volume-up"></span></button>
-					<button class="unmute" title="Unmute" style="display:none"><span class="icon-volume-off"></span></button>
-					<div class="time-elapsed"></div>
-					<div class="progress">
-						<div id="progress-total">
-							<div id="progress-buffered"></div>
-							<div id="progress-processed"></div>
-							<div id="progress-played"></div>
+		<div id="player-aspect">
+			<div id="player" class="ogvjs-player">
+				<div id="spinner-panel"></div>
+				<div id="control-panel">
+					<div id="controls">
+						<button class="play" title="Play"><span class="icon-play"></span></button>
+						<button class="pause" title="Pause" style="display:none"><span class="icon-pause"></span></button>
+						<button class="mute" title="Mute"><span class="icon-volume-up"></span></button>
+						<button class="unmute" title="Unmute" style="display:none"><span class="icon-volume-off"></span></button>
+						<div class="time-elapsed"></div>
+						<div class="progress">
+							<div id="progress-total">
+								<div id="progress-buffered"></div>
+								<div id="progress-processed"></div>
+								<div id="progress-played"></div>
+							</div>
+							<div id="progress-thumb"></div>
 						</div>
-						<div id="progress-thumb"></div>
+						<div class="time-remaining"></div>
+						<button class="fullscreen" title="Fullscreen"><span class="icon-resize-full"></span></button>
+						<button class="unzoom" title="Unzoom" style="display:none"><span class="icon-resize-small"></span></button>
 					</div>
-					<div class="time-remaining"></div>
-					<button class="fullscreen" title="Fullscreen"><span class="icon-resize-full"></span></button>
-					<button class="unzoom" title="Unzoom" style="display:none"><span class="icon-resize-small"></span></button>
 				</div>
 			</div>
 		</div>
 
 		<div id="metadata">
 
-			<canvas id="benchmark" width=500 height=200></canvas>
-			<div id="benchmark-legend">
-				<ul id="benchmark-upper">
-					<li style="color:darkviolet">late frame delay
-					<li style="color:blue">on-time frame delay
-					<li style="color:red">frame rate target
-				</ul>
-				<ul id="benchmark-lower">
-					<li style="color:darkcyan">video decode time
-					<li style="color:green">audio decode time
-					<li style="color:#222">main thread time
-				</ul>
-			</div>
-
 			<table id="info">
-				<tr>
-					<td>
-						<div>
-							<a id="pagelink" href="javascript:false" target="_blank">...</a>
-						</div>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<div>
-							Source:
-							<select height=1 id="video-preferred-size">
-								<option value="js">360p Ogg Theora</option>
-							</select>
-
-							Player:
-							<select height=1 id="player-backend">
-								<option value="js">JavaScript (auto)</option>
-								<option value="js-noworker">JS no Worker</option>
-								<option value="js-cpu">JS no WebGL</option>
-								<option value="native">native</option>
-								<option value="cortado">Cortado (Java)</option>
-							</select>
-						</div>
-					</td>
-				</tr>
 				<tr>
 					<td>
 						<div>
@@ -120,15 +101,15 @@
 								<td class="bench-proxy">prx)</td>
 							</tr>
 							<tr>
-								<td id="bench-target" class="bench-target"></td>
-								<td id="bench-clock" class="bench-clock"></td>
-								<td id="bench-video" class="bench-video"></td>
-								<td id="bench-audio" class="bench-audio"></td>
-								<td id="bench-total" class="bench-total"></td>
-								<td id="bench-demux" class="bench-demux"></td>
-								<td id="bench-buffer" class="bench-buffer"></td>
-								<td id="bench-draw" class="bench-draw"></td>
-								<td id="bench-proxy" class="bench-proxy"></td>
+								<td id="bench-target" class="bench-target">-</td>
+								<td id="bench-clock" class="bench-clock">-</td>
+								<td id="bench-video" class="bench-video">-</td>
+								<td id="bench-audio" class="bench-audio">-</td>
+								<td id="bench-total" class="bench-total">-</td>
+								<td id="bench-demux" class="bench-demux">-</td>
+								<td id="bench-buffer" class="bench-buffer">-</td>
+								<td id="bench-draw" class="bench-draw">-</td>
+								<td id="bench-proxy" class="bench-proxy">-</td>
 							</tr>
 						</table>
 					</td>
@@ -137,29 +118,46 @@
 					<td><span id="status-view"></span></td>
 				</tr>
 			</table>
-		</div>
-	</div>
 
-	<div id="media-chooser-stub">
-		<!-- lightbox-style click-to-dismiss background -->
-	</div>
-	<div id="media-chooser">
-		<div id=media-source-block>
-			<select id=media-source>
-				<option value=motd>Wikimedia Commons Media of the Day</option>
-				<option value=blender>Blender open movies</option>
-				<option value=highfps>60fps high frame rate</option>
-				<option value=shortlist>VBR transcode tests</option>
-				<option value=shortlist-cbr>CBR/soft-target tests</option>
-				<option value=shortlist-profile1>VP8 -profile=1 tests</option>
-			</select>
+			<div id="benchmark-container">
+				<canvas id="benchmark" width=500 height=200></canvas>
+				<div id="benchmark-legend">
+					<ul id="benchmark-upper">
+						<li style="color:darkviolet">late frame delay
+						<li style="color:blue">on-time frame delay
+						<li style="color:red">frame rate target
+					</ul>
+					<ul id="benchmark-lower">
+						<li style="color:darkcyan">video decode time
+						<li style="color:green">audio decode time
+						<li style="color:#222">main thread time
+					</ul>
+				</div>
+			</div>
 		</div>
-		<form id="searchform">
-			<input id=filter placeholder="Search media">
-		</form>
-		<div id="media-list">
-			<!-- ... -->
+
+		<div id="media-chooser-stub">
+			<!-- lightbox-style click-to-dismiss background -->
 		</div>
+		<div id="media-chooser">
+			<div id=media-source-block>
+				<select id=media-source>
+					<option value=motd>Wikimedia Commons Media of the Day</option>
+					<option value=blender>Blender open movies</option>
+					<option value=highfps>60fps high frame rate</option>
+					<option value=shortlist>VBR transcode tests</option>
+					<option value=shortlist-cbr>CBR/soft-target tests</option>
+					<option value=shortlist-profile1>VP8 -profile=1 tests</option>
+				</select>
+			</div>
+			<form id="searchform">
+				<input id=filter placeholder="Search media">
+			</form>
+			<div id="media-list">
+				<!-- ... -->
+			</div>
+		</div>
+
 	</div>
 
 	<script src="lib/ogv.js?version=OGV_VERSION"></script>

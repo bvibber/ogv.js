@@ -1,6 +1,6 @@
 body {
 	font-family: 'Helvetica Neue', 'Roboto', 'Helvetica', sans-serif;
-	background: #eee;
+	background: #aaa;
 	color: black;
 }
 
@@ -18,12 +18,7 @@ h1, h2, h3, h4, h5, h6 {
 	display: block;
 }
 
-body {
-	overflow: hidden;
-}
 html, body {
-	/* hack to prevent doc overscroll on ios */
-	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
@@ -32,14 +27,15 @@ html, body {
 	margin: 0;
 }
 
+#wrapper {
+	max-width: 864px;
+	margin-left: auto;
+	margin-right: auto;
+	background: #eee;
+	color: black;
+}
+
 #header {
-	position: absolute;
-	height: 5em;
-
-	left: 0;
-	right: 0;
-
-	top: 0;
 	height: 5em;
 
 	padding-left: 24px;
@@ -52,13 +48,10 @@ html, body {
 #header h2 {
 	display: inline-block;
 }
-#search {
-	position: absolute;
-	width: 180px;
-	right: 0;
-	top: 0;
-	height: 5em;
-	text-align: right;
+
+#source-info {
+	padding: 8px;
+	background-color: white;
 }
 
 #media-chooser-stub {
@@ -75,7 +68,7 @@ html, body {
 	
 	position: absolute;
 
-	right: 0;
+	left: 0;
 	max-width: 100%;
 	width: 500px;
 
@@ -86,18 +79,20 @@ html, body {
 	z-index: 9999;
 }
 
+#player-aspect {
+	width: 100%;
+	padding-bottom: 56.25%; /* force 16:9 aspect ratio */
+	position: relative;
+}
 #player {
 	background-color: #222;
 	color: white;
 	position: absolute;
-
-	left: 0;
-	right: 0;
-
-	top: 5em;
-	bottom: 10em;
 	
-	text-align: center;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
 }
 
 #player:-webkit-full-screen {
@@ -288,14 +283,6 @@ html, body {
 }
 
 #metadata {
-	position: absolute;
-
-	left: 0;
-	right: 0;
-
-	height: 10em;
-	bottom: 0;
-
 	overflow-x: hidden;
 }
 
@@ -350,12 +337,6 @@ html, body {
 }
 
 #info {
-	position: absolute;
-	left: 0;
-	right: 500px;
-	
-	overflow-x: hidden;
-	overflow-y: auto;
 }
 
 #info td {
@@ -364,14 +345,12 @@ html, body {
 	overflow: hidden;
 }
 
-#benchmark {
+#benchmark-container {
 	background: white;
-	position: absolute;
-	right: 0;
-	top: 0;
-	bottom: 0;
+	position: relative;
+}
+#benchmark {
 	width: 100%;
-	max-width: 500px;
 	height: 10em;
 }
 #benchmark-legend {
@@ -379,10 +358,10 @@ html, body {
 	top: 0;
 	right: 0;
 	bottom: 0;
-	width: 500px;
+	width: 100%;
 	
 	text-align: right;
-	font-size: 0.8em;
+	font-size: 12px;
 }
 #benchmark-legend > ul {
 	position: absolute;
@@ -436,14 +415,6 @@ html, body {
 }
 
 
-/* hack for small screens */
-@media (max-width: 640px) {
-	#benchmark,
-	#benchmark-legend {
-		display: none;
-	}
-}
-
 /*
  * min-width is hack for Android portrait with keyboard shown
  * http://stackoverflow.com/questions/8883163/css-media-query-soft-keyboard-breaks-css-orientation-rules-alternative-solut
@@ -457,7 +428,7 @@ html, body {
 		right: 0;
 		bottom: 0;
 	}
-	#header, #search, #metadata {
+	#header, #source-info, #metadata {
 		display: none;
 	}
 }
