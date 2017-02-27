@@ -858,16 +858,32 @@
             console.log('duration of file: ' + mediaInfo.duration);
 
             var selector = document.getElementById('video-preferred-size');
-            var options = selector.querySelectorAll('option'),
-                optionsMap = {};
-            for (var i = 0; i < options.length; i++) {
-                optionsMap[options[i].value] = options[i];
-                options[i].disabled = true;
+            selector.innerHTML = '';
+
+            function descriptionForKey(key) {
+                var matches = key.match(/^(\d+p)\.(.+)$/);
+                if (matches) {
+                    var res = matches[1], format = matches[2];
+                    if (format == 'ogv') {
+                        return res + ' Ogg Theora';
+                    } else if (format == 'webm') {
+                        return res + ' WebM VP8';
+                    } else if (format == 'vp9.webm') {
+                        return res + ' WebM VP9';
+                    } else {
+                        return res + ' ' + format;
+                    }
+                } else if (key == 'original') {
+                    return 'Original';
+                } else if (key == 'ogg') {
+                    return 'Vorbis';
+                } else {
+                    return key;
+                }
             }
 
             // Find the transcoded or original ogv stream for now
-
-            // temporarily disable the smallest transcodes, except on mobiles/iOS
+            var optionsMap = {};
             var minHeight;
             var selected = null,
                 original = null,
@@ -882,11 +898,13 @@
                 if (source.format == 'oga' || source.format == 'ogg') {
                     oga = source;
                 }
-                if (optionsMap[source.key]) {
-                    if (optionsMap.hasOwnProperty(source.key)) {
-                        optionsMap[source.key].disabled = false;
-                    }
-                }
+
+                var option = document.createElement('option');
+                option.textContent = descriptionForKey(source.key);
+                option.value = source.key;
+                selector.appendChild(option);
+
+                optionsMap[source.key] = option;
             });
             if (selected == null) {
                 console.log("Try original file");
@@ -897,7 +915,13 @@
                 selected = oga;
             }
             if (selected == null) {
-                throw new Error("No ogv or oga source found.");
+                if (sources.length) {
+                    selected = sources[0];
+                } else {
+                    throw new Error("No source found.");
+                }
+            } else {
+                optionsMap[selected.key].selected = true;
             }
 
             selectedUrl = selected.url;

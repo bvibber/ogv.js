@@ -72,30 +72,7 @@
 						<div>
 							Source:
 							<select height=1 id="video-preferred-size">
-								<option value="original">original</option>
-								<optgroup label="Ogg Theora/Vorbis">
-									<option value="2160p.ogv">2160p Ogg</option>
-									<option value="1440p.ogv">1440p Ogg</option>
-									<option value="1080p.ogv">1080p Ogg</option>
-									<option value="720p.ogv">720p Ogg</option>
-									<option value="480p.ogv">480p Ogg</option>
-									<option value="360p.ogv">360p Ogg</option>
-									<option value="240p.ogv">240p Ogg</option>
-									<option value="160p.ogv">160p Ogg</option>
-								</optgroup>
-								<optgroup label="WebM VP8/Vorbis">
-									<option value="2160p.webm">2160p WebM</option>
-									<option value="1440p.webm">1440p WebM</option>
-									<option value="1080p.webm">1080p WebM</option>
-									<option value="720p.webm">720p WebM</option>
-									<option value="480p.webm">480p WebM</option>
-									<option value="360p.webm">360p WebM</option>
-									<option value="240p.webm">240p WebM</option>
-									<option value="160p.webm">160p WebM</option>
-								</optgroup>
-								<optgroup label="Ogg Vorbis">
-									<option value="ogg">Vorbis Audio</option>
-								</optgroup>
+								<option value="js">360p Ogg Theora</option>
 							</select>
 
 							Player:
