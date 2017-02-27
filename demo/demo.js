@@ -146,36 +146,6 @@
                 thumbheight: imageinfo.thumbheight
             };
 
-            // Build an entry for the original media
-            var ext = getExtension(imageinfo.url),
-                format,
-                useOriginal = true;
-            if (ext == 'ogg') {
-                format = 'ogv'; // todo: check video/audioness
-            } else if (ext == 'ogv') {
-                format = 'ogv';
-            } else if (ext == 'oga') {
-                // uhhhh.
-                format = 'oga';
-            } else if (ext == 'webm') {
-                format = 'webm';
-            } else {
-                console.log("Unexpected file extension " + ext);
-                format = ext;
-                useOriginal = false;
-            }
-            if (useOriginal) {
-                sources.push({
-                    key: 'original',
-                    format: format,
-                    width: imageinfo.width,
-                    height: imageinfo.height,
-                    url: imageinfo.url,
-                    size: imageinfo.size,
-                    bitrate: imageinfo.size * 8 / mediaInfo.duration
-                });
-            }
-
             // Build entries for the transcodes
             var sourceMode = document.querySelector('#media-source').value;
             if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr' || sourceMode == 'shortlist-profile1') {
@@ -204,6 +174,35 @@
                     });
                 });
             } else {
+                // Build an entry for the original media
+                var ext = getExtension(imageinfo.url),
+                    format,
+                    useOriginal = true;
+                if (ext == 'ogg') {
+                    format = 'ogv'; // todo: check video/audioness
+                } else if (ext == 'ogv') {
+                    format = 'ogv';
+                } else if (ext == 'oga') {
+                    // uhhhh.
+                    format = 'oga';
+                } else if (ext == 'webm') {
+                    format = 'webm';
+                } else {
+                    console.log("Unexpected file extension " + ext);
+                    format = ext;
+                    useOriginal = false;
+                }
+                if (useOriginal) {
+                    sources.push({
+                        key: 'original',
+                        format: format,
+                        width: imageinfo.width,
+                        height: imageinfo.height,
+                        url: imageinfo.url,
+                        size: imageinfo.size,
+                        bitrate: imageinfo.size * 8 / mediaInfo.duration
+                    });
+                }
                 if (derivatives) {
                     for (var i = 0; i < derivatives.length; i++) {
                         var transcode = derivatives[i];
