@@ -687,27 +687,24 @@ var OGVPlayer = function(options) {
 			}
 		}
 
-		if (paused) {
-			//stopPlayback(); // :P
-
-			// Decode and show first frame immediately
-			if (codec.hasVideo && codec.frameReady) {
-				// hack! move this into the main loop when retooling
-				// to avoid maintaining this double draw
-				codec.decodeFrame(function(ok) {
-					if (ok) {
-						if (thumbnail) {
-							self.removeChild(thumbnail);
-							thumbnail = null;
-						}
-						frameSink.drawFrame(codec.frameBuffer);
+		// Decode and show first frame immediately
+		if (codec.hasVideo && codec.frameReady) {
+			// hack! move this into the main loop when retooling
+			// to avoid maintaining this double draw
+			codec.decodeFrame(function(ok) {
+				if (ok) {
+					if (thumbnail) {
+						self.removeChild(thumbnail);
+						thumbnail = null;
 					}
-					finishedSeeking();
-				} );
-				return;
-			}
+					frameSink.drawFrame(codec.frameBuffer);
+				}
+				finishedSeeking();
+			} );
+			return;
+		} else {
+			finishedSeeking();
 		}
-		finishedSeeking();
 	}
 
 	/**
