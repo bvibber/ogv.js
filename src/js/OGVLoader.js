@@ -9,7 +9,8 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',
 		OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
 		OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',
-		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js'
+		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
+		OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js'
 	};
 
   // @fixme make this less awful
@@ -17,7 +18,8 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		OGVDecoderAudioOpus: 'audio',
 		OGVDecoderAudioVorbis: 'audio',
 		OGVDecoderVideoTheora: 'video',
-		OGVDecoderVideoVP8: 'video'
+		OGVDecoderVideoVP8: 'video',
+		OGVDecoderVideoVP9: 'video',
 	};
 	var proxyInfo = {
 		audio: {

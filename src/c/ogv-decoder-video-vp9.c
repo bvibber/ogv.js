@@ -18,7 +18,7 @@ static vpx_codec_ctx_t    vpxContext;
 static vpx_codec_iface_t *vpxDecoder;
 
 void ogv_video_decoder_init() {
-	vpxDecoder = vpx_codec_vp8_dx();
+	vpxDecoder = vpx_codec_vp9_dx();
 	vpx_codec_dec_init(&vpxContext, vpxDecoder, NULL, 0);
 }
 
@@ -28,7 +28,7 @@ void ogv_video_decoder_destroy() {
 
 int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 	// no header packets for VP8
-	printf("VP8 process_header should not happen?\n");
+	printf("VP9 process_header should not happen?\n");
 	return 0;
 }
 
@@ -45,7 +45,7 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 		// @fixme can we have multiples really? how does this worky
 		if (foundImage) {
 			// skip for now
-			printf("got multiple frames from VP8 stream unexpectedly?\n");
+			printf("got multiple frames from VP9 stream unexpectedly?\n");
 			continue;
 		}
 		foundImage = 1;
@@ -53,7 +53,7 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 							 image->planes[1], image->stride[1],
 							 image->planes[2], image->stride[2],
 							 image->w, image->d_h,
-							 image->w >> 1, image->d_h >> 1); // always 4:2:0
+							 image->w >> 1, image->d_h >> 1); // @todo pixel format
 	}
 	return foundImage;
 }

@@ -94,7 +94,7 @@
         if (sourceMode == 'shortlist-cbr') {
             baseUrl = 'https://media-streaming.wmflabs.org/cbr-soft';
         }
-        if (sourceMode == 'shortlist-profile1') {
+        if (sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9') {
             baseUrl = 'https://media-streaming.wmflabs.org/profile1';
         }
         return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
@@ -148,13 +148,17 @@
 
             // Build entries for the transcodes
             var sourceMode = document.querySelector('#media-source').value;
-            if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr' || sourceMode == 'shortlist-profile1') {
+            if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr' || sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9') {
                 var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
                     widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
                     formats = ['ogv', 'webm'];
                 if (sourceMode == 'shortlist-profile1') {
                     sizes = [160, 240, 360, 480, 720, 1080];
                     formats = ['webm'];
+                }
+                if (sourceMode == 'shortlist-vp9') {
+                    sizes = [160, 240, 360, 480, 720, 1080];
+                    formats = ['vp9.webm'];
                 }
                 sizes.forEach(function(size, i) {
                     formats.forEach(function(format) {
@@ -636,7 +640,7 @@
                 ]
             ];
             processList(shortlist);
-        } else if (sourceMode == 'shortlist-profile1') {
+        } else if (sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9') {
             var shortlist = [
                 [
                     "File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
