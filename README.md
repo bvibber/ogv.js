@@ -9,6 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 1.3.2 - 2017-??-??
 * fastSeek() is now fast
+* VP9 base profile support in WebM container
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
@@ -65,7 +66,7 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * SIMD acceleration: no
 * controls: no (currently provided by demo or other UI harness)
 
-Ogg files are fairly well supported, but WebM is still very experimental and is disabled by default.
+Ogg files are fairly well supported, but WebM is still experimental and is disabled by default.
 
 
 ## Goals
@@ -188,7 +189,7 @@ Dynamically loaded assets:
 * `ogv-demuxer-webm.js` is used in playing .webm files.
 * `ogv-decoder-audio-vorbis.js` and `ogv-decoder-audio-opus.js` are used in playing both Ogg and WebM files containing audio.
 * `ogv-decoder-video-theora.js` is used in playing .ogg and .ogv video files.
-* `ogv-decoder-video-vp8.js` is used in playing .webm video files.
+* `ogv-decoder-video-vp8.js` and `ogv-decoder-video-vp9.js` are used in playing .webm video files.
 * `dynamicaudio.swf` is the Flash audio shim, used for Internet Explorer 10/11.
 
 If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
@@ -282,9 +283,13 @@ You can then unmute the video in response to a touch or click handler. Alternate
 
 *WebM*
 
-WebM support was added in June 2015, with some major issues finally worked out in May 2016. It remains experimental, but should be fully enabled in the future once a few more bugs are worked out. Beware that performance of WebM VP8 decoding is much slower than Ogg Theora.
+WebM support was added in June 2015, with some major issues finally worked out in May 2016. Initial VP9 support was added in February 2017. It remains experimental, but should be fully enabled in the future once a few more bugs are worked out.
 
 To enable, set `enableWebM: true` in your `options` array.
+
+Beware that performance of WebM VP8 is much slower than Ogg Theora, and VP9 is slower still.
+
+For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblocking filter) which will sacrifice quality modestly. When encoding with ffmpeg, this is the `-profile:v 1` option to the `libvpx` codec.
 
 
 ## Upstream library notes
