@@ -510,7 +510,8 @@ var OGVPlayer = function(options) {
 		seekMode,
 		lastSeekPosition,
 		lastFrameSkipped,
-		seekBisector;
+		seekBisector,
+		didSeek;
 
 	var SeekMode = {
 		EXACT: "exact",
@@ -533,7 +534,7 @@ var OGVPlayer = function(options) {
 		dataEnded = false;
 		ended = false;
 		stream.seek(offset, seekCancel).then(function() {
-			setTimeout(readBytesAndWait, 0);
+			readBytesAndWait();
 		}).catch(onStreamError);
 	}
 
@@ -631,13 +632,19 @@ var OGVPlayer = function(options) {
 		pendingFrame = 0;
 		pendingAudio = 0;
 
+		didSeek = false;
 		codec.seekToKeypoint(toTime, function(seeking) {
 			if (seeking) {
 				seekState = SeekState.LINEAR_TO_TARGET;
 				fireEventAsync('seeking');
 
-				// wait for i/o to trigger readBytesAndWait
-				return;
+				if (didSeek) {
+					// wait for i/o to trigger readBytesAndWait
+					return;
+				} else {
+					pingProcessing();
+					return;
+				}
 			}
 			// Use the old interface still implemented on ogg demuxer
 			codec.getKeypointOffset(toTime, function(offset) {
@@ -659,7 +666,7 @@ var OGVPlayer = function(options) {
 					startBisection(seekTargetTime);
 				}
 
-				fireEvent('seeking');
+				fireEventAsync('seeking');
 			});
 		});
 	}
@@ -721,6 +728,7 @@ var OGVPlayer = function(options) {
 		if (codec.hasVideo) {
 			if (pendingFrame) {
 				// wait
+				return;
 			} else if (!codec.frameReady) {
 				// Haven't found a frame yet, process more data
 				codec.process(function(more) {
@@ -885,6 +893,9 @@ var OGVPlayer = function(options) {
 		audioPipelineDepth = 3;
 
 	function doProcessing() {
+		if (didSeek) {
+			didSeek = false;
+		}
 		nextProcessingTimer = null;
 
 		if (isProcessing()) {
@@ -1555,8 +1566,8 @@ var OGVPlayer = function(options) {
 		lastFrameDrawingTime = 0;
 		currentVideoCpuTime = 0;
 		codec.onseek = function(offset) {
+			didSeek = true;
 			if (stream) {
-				console.log('SEEKING TO', offset);
 				seekStream(offset);
 			}
 		};
