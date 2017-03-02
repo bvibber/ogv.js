@@ -351,6 +351,9 @@
             spinner.classList.remove('seeking');
             player.addEventListener('seeking', function() {
                 // use a timeout so very short seeks don't throw up a spinner
+                if (seekSpinnerTimeout) {
+                    clearTimeout(seekSpinnerTimeout);
+                }
                 seekSpinnerTimeout = setTimeout(function() {
                     spinner.classList.add('seeking');
                 }, 250);
