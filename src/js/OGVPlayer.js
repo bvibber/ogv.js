@@ -736,7 +736,10 @@ var OGVPlayer = function(options) {
 						// need more packets
 						pingProcessing();
 					} else if (streamEnded) {
-						throw new Error('stream ended during linear seeking');
+						log('stream ended during linear seeking on video');
+						dataEnded = true;
+						frameEndTimestamp = seekTargetTime;
+						continueSeekedPlayback();
 					} else {
 						readBytesAndWait();
 					}
@@ -775,7 +778,10 @@ var OGVPlayer = function(options) {
 						// need more packets
 						pingProcessing();
 					} else if (streamEnded) {
-						throw new Error('stream ended during linear seeking');
+						log('stream ended during linear seeking on audio');
+						dataEnded = true;
+						frameEndTimestamp = seekTargetTime;
+						continueSeekedPlayback();
 					} else {
 						readBytesAndWait();
 					}
