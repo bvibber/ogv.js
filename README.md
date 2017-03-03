@@ -11,7 +11,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * fastSeek() is now fast
 * VP9 base profile support in WebM container
 * Safari no longer complains about missing es6-promise.map source map
-* smoother playback on low-end machines prone to lag spikes: allow A/V sync to lag by 4 frames instead of 1 before halting audio
+* smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. (To restore previous behavior, set sync='delay-audio' in options.)
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes

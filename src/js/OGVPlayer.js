@@ -57,6 +57,9 @@ var OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
  *                 'base': string; base URL for additional resources, such as Flash audio shim
  *                 'webGL': bool; pass true to use WebGL acceleration if available
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
+ *                 'sync': string; A/V sync plan: one of:
+ *                     'delay-audio' (pre-1.3.2 behavior) stop audio when behind, then play all frames to catch up
+ *                     'skip-frames' (default) to preserve audio, skipping frames until the next sync point (keyframe)
  */
 var OGVPlayer = function(options) {
 	options = options || {};
@@ -82,6 +85,10 @@ var OGVPlayer = function(options) {
 	var enableWorker = !!window.Worker;
 	if (typeof options.worker !== 'undefined') {
 		enableWorker = !!options.worker;
+	}
+
+	if (options.sync === undefined) {
+		options.sync = 'skip-frames';
 	}
 
 	var State = {
@@ -1206,7 +1213,7 @@ var OGVPlayer = function(options) {
 							readyForFrameDraw = decodedFrames.length > 0;
 							readyForFrameDecode = (pendingFrame == 0) && (decodedFrames.length <= framePipelineDepth) && codec.frameReady;
 
-							var audioSyncThreshold = targetPerFrameTime * 4; // up to 4 frames late before throttle
+							var audioSyncThreshold = targetPerFrameTime;
 							if (prebufferingAudio) {
 								if (readyForFrameDecode) {
 									log('decoding a frame during prebuffering');
@@ -1217,18 +1224,35 @@ var OGVPlayer = function(options) {
 								log('audio timeline ended? ready to draw frame');
 							} else if (-frameDelay >= audioSyncThreshold) {
 								// late frame!
-								if (!stoppedForLateFrame) {
-									log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
-									lateFrames++;
-									if (decodedFrames.length > 1) {
-										log('late frame has a neighbor; skipping to next frame');
-										decodedFrames.shift();
-										frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
-										framesProcessed++; // pretend!
-										doFrameComplete();
-									} else {
-										stopPlayback();
-										stoppedForLateFrame = true;
+								if (options.sync == 'delay-audio') {
+									// Delay audio while video catches up. Old default.
+									if (!stoppedForLateFrame) {
+										log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
+										lateFrames++;
+										if (decodedFrames.length > 1) {
+											log('late frame has a neighbor; skipping to next frame');
+											decodedFrames.shift();
+											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+											framesProcessed++; // pretend!
+											doFrameComplete();
+										} else {
+											stopPlayback();
+											stoppedForLateFrame = true;
+										}
+									}
+								} else if (options.sync == 'skip-frames') {
+									// Resync at the next keyframe. Default as of 1.3.2.
+									var nextKeyframe = codec.nextKeyframeTimestamp;
+									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && nextKeyframe <= playbackPosition) {
+										lateFrames++;
+										decodedFrames = [];
+										log('skipping late frame at ' + frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
+										while (codec.frameTimestamp < nextKeyframe) {
+											// note: this is a known synchronous operation :)
+											codec.discardFrame(function() {/*fake*/});
+										}
+										pingProcessing();
+										return;
 									}
 								}
 							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {

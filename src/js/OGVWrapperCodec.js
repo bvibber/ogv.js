@@ -118,6 +118,12 @@ var OGVWrapperCodec = (function(options) {
 		}
 	});
 
+	Object.defineProperty(self, 'nextKeyframeTimestamp', {
+		get: function() {
+			return demuxer.nextKeyframeTimestamp;
+		}
+	});
+
 	Object.defineProperty(self, 'videoFormat', {
 		get: function() {
 			if (self.hasVideo) {

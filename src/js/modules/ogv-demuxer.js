@@ -91,6 +91,21 @@ Object.defineProperty(Module, 'keyframeTimestamp', {
 		}
 	}
 });
+/**
+ * If we've seen a future keyframe in the queue, what is it?
+ * @property number
+ */
+Object.defineProperty(Module, 'nextKeyframeTimestamp', {
+	get: function() {
+		for (var i = 0; i < Module.videoPackets.length; i++) {
+			var packet = Module.videoPackets[i];
+			if (packet.keyframeTimestamp == packet.timestamp) {
+				return packet.keyframeTimestamp;
+			}
+		}
+		return -1;
+	}
+});
 
 /**
  * Are we in the middle of an asynchronous processing operation?
