@@ -110,7 +110,6 @@
         }
         controls.querySelector('.mute').style.display = 'none';
         controls.querySelector('.unmute').style.display = 'inline';
-        setHash();
     });
     onclick('.unmute', function() {
         if (player) {
@@ -118,7 +117,6 @@
         }
         controls.querySelector('.mute').style.display = 'inline';
         controls.querySelector('.unmute').style.display = 'none';
-        setHash();
     });
     function doFastSeek(seekTarget) {
         if (typeof player.fastSeek == 'function') {
