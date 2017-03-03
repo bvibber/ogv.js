@@ -1206,7 +1206,7 @@ var OGVPlayer = function(options) {
 							readyForFrameDraw = decodedFrames.length > 0;
 							readyForFrameDecode = (pendingFrame == 0) && (decodedFrames.length <= framePipelineDepth) && codec.frameReady;
 
-							var audioSyncThreshold = targetPerFrameTime;
+							var audioSyncThreshold = targetPerFrameTime * 4; // up to 4 frames late before throttle
 							if (prebufferingAudio) {
 								if (readyForFrameDecode) {
 									log('decoding a frame during prebuffering');
