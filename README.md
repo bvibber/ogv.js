@@ -10,6 +10,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 1.3.2 - 2017-??-??
 * fastSeek() is now fast
 * VP9 base profile support in WebM container
+* Safari no longer complains about missing es6-promise.map source map
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes

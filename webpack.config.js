@@ -30,6 +30,11 @@ module.exports = [
         {
           test: /\.swf$/,
           loader: 'file?name=[name].[ext]?version=[hash]'
+        },
+        {
+          test: /\.js$/,
+          include: /node_modules\/es6-promise/,
+          loader: 'strip-sourcemap-loader'
         }
       ]
     }
