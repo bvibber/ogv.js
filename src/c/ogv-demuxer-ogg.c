@@ -70,7 +70,7 @@ static int processBegin(oggz_packet *packet, long serialno)
         videoCodec = content;
         videoCodecName = "theora";
         videoStream = serialno;
-        ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, -1, -1);
+        ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, -1, -1, 0);
         return OGGZ_CONTINUE;
     }
 
@@ -109,6 +109,15 @@ static int processBegin(oggz_packet *packet, long serialno)
     return OGGZ_CONTINUE;
 }
 
+static int packet_is_keyframe_theora(oggz_packet *packet)
+{
+	ogg_int64_t granulepos = oggz_tell_granulepos(oggz);
+	int granuleshift = oggz_get_granuleshift(oggz, videoStream);
+
+	ogg_int64_t key_frameno = (granulepos >> granuleshift);
+	return (granulepos == (key_frameno << granuleshift));
+}
+
 static float calc_keyframe_timestamp(oggz_packet *packet, long serialno)
 {
 	ogg_int64_t granulepos = oggz_tell_granulepos(oggz);
@@ -141,7 +150,7 @@ static int processSkeleton(oggz_packet *packet, long serialno)
     }
 
     if (hasVideo && serialno == videoStream) {
-    	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
+    	ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp, packet_is_keyframe_theora(packet));
     }
 
     if (hasAudio && serialno == audioStream) {
@@ -158,7 +167,7 @@ static int processDecoding(oggz_packet *packet, long serialno) {
     if (hasVideo && serialno == videoStream) {
 			if (packet->op.bytes > 0) {
 				// Skip 0-byte Theora packets, they're dupe frames.
-				ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp);
+				ogvjs_callback_video_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, keyframeTimestamp, packet_is_keyframe_theora(packet));
 				return OGGZ_STOP_OK;
 			}
     }

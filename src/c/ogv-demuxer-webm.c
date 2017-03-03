@@ -343,11 +343,15 @@ static int processDecoding() {
 		nestegg_packet_data(packet, 0, &data, &data_len);
 
 		if (hasVideo && track == videoTrack) {
+      int isKeyframe;
       if ((videoCodec == NESTEGG_CODEC_VP8 && packet_is_keyframe_vp8(data, data_len)) ||
-        (videoCodec == NESTEGG_CODEC_VP9 && packet_is_keyframe_vp9(data, data_len))) {
-          lastKeyframeKimestamp = timestamp;
-        }
-			ogvjs_callback_video_packet((char *)data, data_len, timestamp, lastKeyframeKimestamp);
+          (videoCodec == NESTEGG_CODEC_VP9 && packet_is_keyframe_vp9(data, data_len))) {
+        lastKeyframeKimestamp = timestamp;
+        isKeyframe = 1;
+      } else {
+        isKeyframe = 0;
+      }
+			ogvjs_callback_video_packet((char *)data, data_len, timestamp, lastKeyframeKimestamp, isKeyframe);
 		} else if (hasAudio && track == audioTrack) {
 			ogvjs_callback_audio_packet((char *)data, data_len, timestamp);
 		} else {

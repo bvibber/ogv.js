@@ -49,14 +49,15 @@ mergeInto(LibraryManager.library, {
 		Module.loadedMetadata = true;
 	},
 
-	ogvjs_callback_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp) {
+	ogvjs_callback_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp, isKeyframe) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
 		Module.videoPackets.push({
 			data: Module.HEAPU8.buffer.slice
 				? Module.HEAPU8.buffer.slice(buffer, buffer + len)
 				: (new Uint8Array(new Uint8Array(Module.HEAPU8.buffer, buffer, len))).buffer,
 			timestamp: frameTimestamp,
-			keyframeTimestamp: keyframeTimestamp
+			keyframeTimestamp: keyframeTimestamp,
+			isKeyframe: !!isKeyframe
 		});
 	},
 
