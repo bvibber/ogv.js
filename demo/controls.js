@@ -387,13 +387,16 @@
 
             showControlPanel();
 
-            player.addEventListener('touchstart', function(event) {
+            function showHideControls(event) {
                 if (controlPanel.style.opacity == 1.0) {
                     hideControlPanel();
                 } else {
                     showControlPanel();
                 }
-            });
+            }
+            player.addEventListener('touchstart', showHideControls);
+            // If the spinner is up, it'll block touches to the player.
+            spinner.addEventListener('touchstart', showHideControls);
 
             document.querySelector('.play').style.display = 'inline';
             document.querySelector('.pause').style.display = 'none';
