@@ -410,10 +410,10 @@ var OGVPlayer = function(options) {
 			frameSink = null;
 		}
 		if (decodedFrames) {
-			decodedFrames.splice(0, decodedFrames.length);
+			decodedFrames = [];
 		}
 		if (pendingFrames) {
-			pendingFrames.splice(0, pendingFrames.length);
+			pendingFrames = [];
 		}
 		initialSeekTime = 0.0;
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
@@ -639,8 +639,8 @@ var OGVPlayer = function(options) {
 		lastFrameSkipped = false;
 		lastSeekPosition = -1;
 
-		decodedFrames.splice(0, decodedFrames.length);
-		pendingFrames.splice(0, pendingFrames.length);
+		decodedFrames = [];
+		pendingFrames = [];
 		pendingFrame = 0;
 		pendingAudio = 0;
 
@@ -1254,14 +1254,11 @@ var OGVPlayer = function(options) {
 									var timeToResync = nextKeyframe - videoSyncPadding;
 
 									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
-										if (pendingFrame) {
-											// wait for it to finish decoding or we get confused
-											log('late frame but waiting for pending decode');
-											return;
-										}
 										log('skipping late frame at ' + frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
 										lateFrames += decodedFrames.length;
 										decodedFrames = [];
+										pendingFrames = [];
+										pendingFrame = 0;
 										while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
 											// note: this is a known synchronous operation :)
 											frameEndTimestamp = codec.frameTimestamp;
@@ -1307,8 +1304,13 @@ var OGVPlayer = function(options) {
 							pendingFrames.push({
 								frameEndTimestamp: nextFrameEndTimestamp
 							});
+							var currentPendingFrames = pendingFrames;
 							var frameDecodeTime = time(function() {
 								codec.decodeFrame(function processingDecodeFrame(ok) {
+									if (currentPendingFrames !== pendingFrames) {
+										log('play loop callback after flush, discarding');
+										return;
+									}
 									log('play loop callback: decoded frame');
 									pendingFrame--;
 									pendingFrames.shift();
