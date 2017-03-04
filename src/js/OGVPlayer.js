@@ -412,6 +412,9 @@ var OGVPlayer = function(options) {
 		if (decodedFrames) {
 			decodedFrames.splice(0, decodedFrames.length);
 		}
+		if (pendingFrames) {
+			pendingFrames.splice(0, pendingFrames.length);
+		}
 		initialSeekTime = 0.0;
 		// @todo set playback position, may need to fire timeupdate if wasnt previously 0
 		initialPlaybackPosition = 0;
@@ -423,7 +426,8 @@ var OGVPlayer = function(options) {
 	var lastFrameTime = getTimestamp(),
 		frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
-		decodedFrames = [];
+		decodedFrames = [],
+		pendingFrames = [];
 	var lastFrameDecodeTime = 0.0,
 		lastFrameVideoCpuTime = 0,
 		lastFrameAudioCpuTime = 0,
@@ -636,6 +640,7 @@ var OGVPlayer = function(options) {
 		lastSeekPosition = -1;
 
 		decodedFrames.splice(0, decodedFrames.length);
+		pendingFrames.splice(0, pendingFrames.length);
 		pendingFrame = 0;
 		pendingAudio = 0;
 
@@ -1211,7 +1216,7 @@ var OGVPlayer = function(options) {
 							frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
 							readyForFrameDraw = decodedFrames.length > 0;
-							readyForFrameDecode = (pendingFrame == 0) && (decodedFrames.length <= framePipelineDepth) && codec.frameReady;
+							readyForFrameDecode = (pendingFrame < framePipelineDepth) && (decodedFrames.length <= framePipelineDepth) && codec.frameReady;
 
 							var audioSyncThreshold = targetPerFrameTime;
 							if (prebufferingAudio) {
@@ -1249,6 +1254,11 @@ var OGVPlayer = function(options) {
 									var timeToResync = nextKeyframe - videoSyncPadding;
 
 									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
+										if (pendingFrame) {
+											// wait for it to finish decoding or we get confused
+											log('late frame but waiting for pending decode');
+											return;
+										}
 										log('skipping late frame at ' + frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
 										lateFrames += decodedFrames.length;
 										decodedFrames = [];
@@ -1284,7 +1294,7 @@ var OGVPlayer = function(options) {
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
-							var endy = decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : frameEndTimestamp;
+							var endy = pendingFrames.length ? pendingFrames[pendingFrames.length - 1] : (decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : frameEndTimestamp);
 							if (videoInfo.fps == 0 && (codec.frameTimestamp - endy) > 0) {
 								// WebM doesn't encode a frame rate
 								targetPerFrameTime = (codec.frameTimestamp - endy) * 1000;
@@ -1294,10 +1304,14 @@ var OGVPlayer = function(options) {
 							
 							var nextFrameEndTimestamp = codec.frameTimestamp;
 							pendingFrame++;
+							pendingFrames.push({
+								frameEndTimestamp: nextFrameEndTimestamp
+							});
 							var frameDecodeTime = time(function() {
 								codec.decodeFrame(function processingDecodeFrame(ok) {
 									log('play loop callback: decoded frame');
 									pendingFrame--;
+									pendingFrames.shift();
 									if (ok) {
 										// Save the buffer until it's time to draw
 										decodedFrames.push({
@@ -1393,21 +1407,21 @@ var OGVPlayer = function(options) {
 
 						} else if (decodedFrames.length && !nextFrameTimer && !prebufferingAudio) {
 
-							if (frameDelay < timerMinimum) {
+							/*if (frameDelay < timerMinimum) {
 								// Either we're very close or the frame rate is
 								// insanely high (infamous '1000fps bug')
 								// Timer will take 4ms anyway, so just check in now.
 								log('play loop: very short timer, so going back in');
 								pingProcessing();
-							} else {
-								var targetTimer = frameDelay - timerMinimum;
+							} else {*/
+								var targetTimer = frameDelay;// - timerMinimum;
 								// @todo consider using requestAnimationFrame
 								log('play loop: setting a timer for drawing ' + targetTimer);
 								nextFrameTimer = setTimeout(function() {
 									nextFrameTimer = null;
 									pingProcessing();
 								}, targetTimer);
-							}
+							//}
 
 						} else if (dataEnded && !(pendingAudio || pendingFrame || decodedFrames.length)) {
 							log('play loop: playback reached end of data ' + [pendingAudio, pendingFrame, decodedFrames.length]);
