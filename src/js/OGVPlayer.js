@@ -908,7 +908,7 @@ var OGVPlayer = function(options) {
 		pendingFrame = 0,
 		pendingAudio = 0,
 		framePipelineDepth = 3,
-		audioPipelineDepth = 3;
+		audioPipelineDepth = 16;
 
 	function doProcessing() {
 		if (didSeek) {
