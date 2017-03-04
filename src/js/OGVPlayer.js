@@ -1254,10 +1254,10 @@ var OGVPlayer = function(options) {
 										decodedFrames = [];
 										while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
 											// note: this is a known synchronous operation :)
+											frameEndTimestamp = codec.frameTimestamp;
 											lateFrames++;
 											codec.discardFrame(function() {/*fake*/});
 										}
-										frameEndTimestamp = nextKeyframe;
 										pingProcessing();
 										return;
 									}
