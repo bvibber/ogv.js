@@ -1243,14 +1243,21 @@ var OGVPlayer = function(options) {
 								} else if (options.sync == 'skip-frames') {
 									// Resync at the next keyframe. Default as of 1.3.2.
 									var nextKeyframe = codec.nextKeyframeTimestamp;
-									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && nextKeyframe <= playbackPosition) {
-										lateFrames++;
-										decodedFrames = [];
+
+									// When resyncing, allow time to decode a couple frames!
+									var videoSyncPadding = (targetPerFrameTime / 1000) * framePipelineDepth;
+									var timeToResync = nextKeyframe - videoSyncPadding;
+
+									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
 										log('skipping late frame at ' + frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
-										while (codec.frameTimestamp < nextKeyframe) {
+										lateFrames += decodedFrames.length;
+										decodedFrames = [];
+										while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
 											// note: this is a known synchronous operation :)
+											lateFrames++;
 											codec.discardFrame(function() {/*fake*/});
 										}
+										frameEndTimestamp = nextKeyframe;
 										pingProcessing();
 										return;
 									}
