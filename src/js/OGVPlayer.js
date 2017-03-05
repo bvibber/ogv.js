@@ -1210,6 +1210,24 @@ var OGVPlayer = function(options) {
 						}
 
 						if (codec.hasVideo) {
+							if (options.sync === 'skip-frames') {
+								var skipPast = -1;
+								for (var i = 0; i < decodedFrames.length - 1; i++) {
+									if (decodedFrames[i].frameEndTimestamp < playbackPosition) {
+										skipPast = i - 1;
+									}
+								}
+								if (skipPast >= 0) {
+									while (skipPast-- >= 0) {
+										log('skipping already-decoded late frame at ' + decodedFrames[0].frameEndTimestamp);
+										lateFrames++;
+										decodedFrames.shift();
+										frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+										framesProcessed++; // pretend!
+										doFrameComplete();
+									}
+								}
+							}
 							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 							actualPerFrameTime = targetPerFrameTime - frameDelay;
 							//frameDelay = Math.max(0, frameDelay);
