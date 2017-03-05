@@ -1409,13 +1409,13 @@ var OGVPlayer = function(options) {
 
 						} else if (decodedFrames.length && !nextFrameTimer && !prebufferingAudio) {
 
-							/*if (frameDelay < timerMinimum) {
+							if (frameDelay < timerMinimum) {
 								// Either we're very close or the frame rate is
 								// insanely high (infamous '1000fps bug')
 								// Timer will take 4ms anyway, so just check in now.
 								log('play loop: very short timer, so going back in');
 								pingProcessing();
-							} else {*/
+							} else {
 								var targetTimer = frameDelay;// - timerMinimum;
 								// @todo consider using requestAnimationFrame
 								log('play loop: setting a timer for drawing ' + targetTimer);
@@ -1423,7 +1423,7 @@ var OGVPlayer = function(options) {
 									nextFrameTimer = null;
 									pingProcessing();
 								}, targetTimer);
-							//}
+							}
 
 						} else if (dataEnded && !(pendingAudio || pendingFrame || decodedFrames.length)) {
 							log('play loop: playback reached end of data ' + [pendingAudio, pendingFrame, decodedFrames.length]);
