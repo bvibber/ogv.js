@@ -1213,7 +1213,7 @@ var OGVPlayer = function(options) {
 							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 							actualPerFrameTime = targetPerFrameTime - frameDelay;
 							//frameDelay = Math.max(0, frameDelay);
-							frameDelay = Math.min(frameDelay, targetPerFrameTime);
+							//frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
 							readyForFrameDraw = decodedFrames.length > 0;
 							readyForFrameDecode = (pendingFrame < framePipelineDepth) && (decodedFrames.length <= framePipelineDepth) && codec.frameReady;
@@ -1409,21 +1409,13 @@ var OGVPlayer = function(options) {
 
 						} else if (decodedFrames.length && !nextFrameTimer && !prebufferingAudio) {
 
-							if (frameDelay < timerMinimum) {
-								// Either we're very close or the frame rate is
-								// insanely high (infamous '1000fps bug')
-								// Timer will take 4ms anyway, so just check in now.
-								log('play loop: very short timer, so going back in');
+							var targetTimer = frameDelay;
+							// @todo consider using requestAnimationFrame
+							log('play loop: setting a timer for drawing ' + targetTimer);
+							nextFrameTimer = setTimeout(function() {
+								nextFrameTimer = null;
 								pingProcessing();
-							} else {
-								var targetTimer = frameDelay;// - timerMinimum;
-								// @todo consider using requestAnimationFrame
-								log('play loop: setting a timer for drawing ' + targetTimer);
-								nextFrameTimer = setTimeout(function() {
-									nextFrameTimer = null;
-									pingProcessing();
-								}, targetTimer);
-							}
+							}, targetTimer);
 
 						} else if (dataEnded && !(pendingAudio || pendingFrame || decodedFrames.length)) {
 							log('play loop: playback reached end of data ' + [pendingAudio, pendingFrame, decodedFrames.length]);
