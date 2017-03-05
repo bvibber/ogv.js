@@ -1267,15 +1267,6 @@ var OGVPlayer = function(options) {
 										}
 										pingProcessing();
 										return;
-									} else {
-										// If we already are late, and drawing is expensive as on
-										// some old Windows/IE setups, skip what we can.
-										while (decodedFrames.length > 1 && decodedFrames[0].frameEndTimestamp < playbackPosition) {
-											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
-											log('skipping already-decoded late frame at ' + frameEndTimestamp);
-											decodedFrames.shift();
-											lateFrames++;
-										}
 									}
 								}
 							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
