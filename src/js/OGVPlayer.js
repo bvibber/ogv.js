@@ -1524,7 +1524,9 @@ var OGVPlayer = function(options) {
 			log('readBytesAndWait during i/o');
 			return;
 		}
-		stream.read(32768, readCancel).then(function(data) {
+		var isSeeking = (state == State.SEEKING_END || state == State.SEEKING),
+			bufferSize = isSeeking ? 65536 : (65536 * 4);
+		stream.read(bufferSize, readCancel).then(function(data) {
 			log('got input ' + [data.byteLength]);
 
 			if (data.byteLength) {
