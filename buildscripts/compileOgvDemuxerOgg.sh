@@ -8,7 +8,6 @@ fi
 # compile wrapper around libogg + liboggz + libskeleton
 EMCC_FAST_COMPILER=1 emcc \
   -O2 \
-  --profiling \
   --memory-init-file 0 \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
