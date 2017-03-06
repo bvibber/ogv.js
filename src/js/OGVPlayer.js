@@ -1238,6 +1238,7 @@ var OGVPlayer = function(options) {
 											log('late frame has a neighbor; skipping to next frame');
 											decodedFrames.shift();
 											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
 											doFrameComplete();
 										} else {
@@ -1258,6 +1259,8 @@ var OGVPlayer = function(options) {
 											lateFrames++;
 											decodedFrames.shift();
 											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
 											doFrameComplete();
 										}
@@ -1274,12 +1277,23 @@ var OGVPlayer = function(options) {
 										log('skipping late frame at ' + frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
 
 										// First skip any already-decoded frames
-										for (var i = 0; i < decodedFrames.length + pendingFrames.length; i++) {
+										for (var i = 0; i < decodedFrames.length; i++) {
 											lateFrames++;
 											framesProcessed++; // pretend!
+											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											doFrameComplete();
 										}
 										decodedFrames = [];
+										for (var i = 0; i < pendingFrames.length; i++) {
+											lateFrames++;
+											framesProcessed++; // pretend!
+											frameEndTimestamp = pendingFrames[0].frameEndTimestamp;
+											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											actualPerFrameTime = targetPerFrameTime - frameDelay;
+											doFrameComplete();
+										}
 										pendingFrames = [];
 										pendingFrame = 0;
 
@@ -1287,6 +1301,8 @@ var OGVPlayer = function(options) {
 										while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
 											// note: this is a known synchronous operation :)
 											frameEndTimestamp = codec.frameTimestamp;
+											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											lateFrames++;
 											codec.discardFrame(function() {/*fake*/});
 											framesProcessed++; // pretend!

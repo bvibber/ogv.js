@@ -47,7 +47,7 @@
             i,
             fps60 = 1000.0 / 60.0,
             fpsTarget = (benchmarkTargetFps ? (1000.0 / benchmarkTargetFps) : fps60),
-            maxTime = fpsTarget * 4,
+            maxTime = fpsTarget * 8,
             chunkSize = benchmarkTargetFps * 5, // show last 5 seconds
             maxItems = Math.min(chunkSize, benchmarkData.length);
 
