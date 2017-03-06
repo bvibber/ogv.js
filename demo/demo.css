@@ -215,7 +215,7 @@ html, body {
 	top: 0;
 }
 #benchmark-lower {
-	top: 6em;
+	bottom: 0;
 }
 #benchmark-legend li {
 	list-style: none;

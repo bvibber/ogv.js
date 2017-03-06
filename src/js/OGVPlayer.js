@@ -447,7 +447,9 @@ var OGVPlayer = function(options) {
 	var lastTimeUpdate = 0, // ms
 		timeUpdateInterval = 250; // ms
 
-	function doFrameComplete() {
+	function doFrameComplete(data) {
+		data = data || {};
+
 		if (startedPlaybackInDocument && !document.body.contains(self)) {
 			// We've been de-parented since we last ran
 			// Stop playback at next opportunity!
@@ -475,7 +477,8 @@ var OGVPlayer = function(options) {
 			//clockTime: wallClockTime
 			clockTime: actualPerFrameTime,
 
-			late: stoppedForLateFrame
+			late: stoppedForLateFrame || data.dropped,
+			dropped: data.dropped
 		};
 		if (codec) {
 			timing.demuxerTime = (codec.demuxerCpuTime - lastFrameDemuxerCpuTime);
@@ -1240,7 +1243,9 @@ var OGVPlayer = function(options) {
 											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
-											doFrameComplete();
+											doFrameComplete({
+												dropped: true
+											});
 										} else {
 											stopPlayback();
 											stoppedForLateFrame = true;
@@ -1262,7 +1267,9 @@ var OGVPlayer = function(options) {
 											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
-											doFrameComplete();
+											doFrameComplete({
+												dropped: true
+											});
 										}
 									}
 
@@ -1283,7 +1290,9 @@ var OGVPlayer = function(options) {
 											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
 											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											doFrameComplete();
+											doFrameComplete({
+												dropped: true
+											});
 										}
 										decodedFrames = [];
 										for (var i = 0; i < pendingFrames.length; i++) {
@@ -1292,7 +1301,9 @@ var OGVPlayer = function(options) {
 											frameEndTimestamp = pendingFrames[0].frameEndTimestamp;
 											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											doFrameComplete();
+											doFrameComplete({
+												dropped: true
+											});
 										}
 										pendingFrames = [];
 										pendingFrame = 0;
@@ -1306,7 +1317,9 @@ var OGVPlayer = function(options) {
 											lateFrames++;
 											codec.discardFrame(function() {/*fake*/});
 											framesProcessed++; // pretend!
-											doFrameComplete();
+											doFrameComplete({
+												dropped: true
+											});
 										}
 										if (isProcessing()) {
 											// wait
