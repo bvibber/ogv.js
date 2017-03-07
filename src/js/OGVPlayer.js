@@ -903,7 +903,7 @@ var OGVPlayer = function(options) {
 		});
 		OGVPlayer.updatePositionOnResize();
 
-		frameSink = YUVCanvas.attach(canvas);
+		frameSink = YUVCanvas.attach(canvas, canvasOptions);
 	}
 
 	var depth = 0,
