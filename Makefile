@@ -22,6 +22,7 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
 EMSCRIPTEN_MODULE_FILES:=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.js")
 EMSCRIPTEN_MODULE_FILES+= $(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.json")
@@ -31,6 +32,7 @@ C_FILES:=$(shell find $(C_SRC_DIR) -type f -name "*.c")
 C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
+JSMT_ROOT_BUILD_DIR:=build/js-mt/root
 
 .PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
 
@@ -100,8 +102,10 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-theora.js \
 	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-decoder-video-vp9.js \
+	      build/ogv-decoder-video-vp9-mt.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
+	      build/pthread-main.js \
 	      build/dynamicaudio.swf \
 	      README.md \
 	      COPYING \
@@ -165,6 +169,10 @@ $(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/configureVpx.sh $(BUILDS
 	test -d build || mkdir build
 	./$(BUILDSCRIPTS_DIR)/configureVpx.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxJs.sh
+
+$(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxJsMT.sh
+	test -d build || mkdir build
+	./$(BUILDSCRIPTS_DIR)/compileVpxJsMT.sh
 
 # Compile our Emscripten modules
 
@@ -238,7 +246,6 @@ build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vp8.c \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                 $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 	test -d build || mkdir build
@@ -250,11 +257,21 @@ build/ogv-decoder-video-vp9.js : $(C_SRC_DIR)/ogv-decoder-video-vp9.c \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                 $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
 	test -d build || mkdir build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
+
+build/ogv-decoder-video-vp9-mt.js : $(C_SRC_DIR)/ogv-decoder-video-vp9.c \
+                                    $(C_SRC_DIR)/ogv-decoder-video.h \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+                                    $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
+	test -d build || mkdir build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 
 # Install dev dependencies
 

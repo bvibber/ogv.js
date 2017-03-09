@@ -86,6 +86,7 @@ var OGVPlayer = function(options) {
 	if (typeof options.worker !== 'undefined') {
 		enableWorker = !!options.worker;
 	}
+	var enableThreading = options.threading;
 
 	if (options.sync === undefined) {
 		options.sync = 'skip-frames';
@@ -132,6 +133,7 @@ var OGVPlayer = function(options) {
 	audioOptions.bufferSize = 8192;
 
 	codecOptions.worker = enableWorker;
+	codecOptions.threading = enableThreading;
 	if (typeof options.memoryLimit === 'number') {
 		codecOptions.memoryLimit = options.memoryLimit;
 	}

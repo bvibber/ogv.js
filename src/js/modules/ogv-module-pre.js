@@ -8,8 +8,17 @@ Module = {
 		console.log(str);
 	}
 };
+if (typeof OGVLoader !== 'undefined') {
+	Module['pthreadMainPrefixURL'] = OGVLoader.base + '/';
+}
 if (options['memoryLimit']) {
 	Module['TOTAL_MEMORY'] = options['memoryLimit'];
+}
+// Hack to let parameters through for pthreads initialization
+for (option in options) {
+	if (options.hasOwnProperty(option)) {
+		Module[option] = options[option];
+	}
 }
 
 // hack for https://github.com/brion/ogv.js/issues/448
@@ -18,5 +27,7 @@ var OGVDemuxerWebM = Module;
 var OGVDecoderVideoTheora = Module;
 var OGVDecoderVideoVP8 = Module;
 var OGVDecoderVideoVP9 = Module;
+var OGVDecoderVideoVP9MT = Module;
 var OGVDecoderAudioVorbis = Module;
 var OGVDecoderAudioOpus = Module;
+

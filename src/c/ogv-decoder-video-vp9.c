@@ -1,3 +1,7 @@
+#ifdef __EMSCRIPTEN_PTHREADS__
+#include <emscripten/threading.h>
+#endif
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -19,7 +23,17 @@ static vpx_codec_iface_t *vpxDecoder;
 
 void ogv_video_decoder_init() {
 	vpxDecoder = vpx_codec_vp9_dx();
-	vpx_codec_dec_init(&vpxContext, vpxDecoder, NULL, 0);
+	vpx_codec_dec_cfg_t cfg;
+#ifdef __EMSCRIPTEN_PTHREADS__
+	int cores = emscripten_num_logical_cores();
+	printf("libvpx will use up to %d cores\n", cores);
+	cfg.threads = cores;
+#else
+	cfg.threads = 0;
+#endif
+	cfg.w = 0; // ???
+	cfg.h = 0;
+	vpx_codec_dec_init(&vpxContext, vpxDecoder, &cfg, 0);
 }
 
 void ogv_video_decoder_destroy() {

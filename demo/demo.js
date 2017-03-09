@@ -977,6 +977,15 @@
                     worker: false, // experimental
                     enableWebM: true // experimental
                 });
+            } else if (playerBackend == 'js-mt') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    memoryLimit: maxmem,
+                    worker: false, // experimental
+                    threading: true, // experimental
+                    enableWebM: true // experimental
+                });
             } else if (playerBackend == 'webgl') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
