@@ -33,7 +33,7 @@ function time(func) {
 
 function copyByteArray(bytes) {
 	var heap = bytes.buffer;
-	if (typeof heap.slice === 'function') {
+	if (heap instanceof ArrayBuffer && typeof heap.slice === 'function') {
 		var extract = heap.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 		return new Uint8Array(extract);
 	} else {
