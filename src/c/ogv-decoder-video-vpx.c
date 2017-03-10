@@ -52,10 +52,20 @@ static void *decode_thread_run(void *arg);
 #endif
 
 void ogv_video_decoder_init() {
+
+#ifdef OGV_VP9
 	vpxDecoder = vpx_codec_vp9_dx();
+#else
+	vpxDecoder = vpx_codec_vp8_dx();
+#endif
+
 	vpx_codec_dec_cfg_t cfg;
 #ifdef __EMSCRIPTEN_PTHREADS__
 	int cores = emscripten_num_logical_cores();
+	if (cores > 4) {
+		// we only prelaunched enough threads for 4
+		cores = 4;
+	}
 	printf("libvpx will use up to %d cores\n", cores);
 	cfg.threads = cores;
 #else
@@ -93,7 +103,7 @@ void ogv_video_decoder_destroy() {
 
 int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 	// no header packets for VP8
-	printf("VP9 process_header should not happen?\n");
+	printf("VPX process_header should not happen?\n");
 	return 0;
 }
 

@@ -10,6 +10,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
 		OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',
 		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
+		OGVDecoderVideoVP8MT: 'ogv-decoder-video-vp8-mt.js',
 		OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js',
 		OGVDecoderVideoVP9MT: 'ogv-decoder-video-vp9-mt.js'
 	};

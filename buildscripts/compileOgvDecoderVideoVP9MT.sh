@@ -27,5 +27,6 @@ EMCC_FAST_COMPILER=1 emcc \
   --js-library src/js/modules/ogv-decoder-video-callbacks.js \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-decoder-video.js \
-  src/c/ogv-decoder-video-vp9.c \
+	-D OGV_VP9 \
+  src/c/ogv-decoder-video-vpx.c \
   -o build/ogv-decoder-video-vp9-mt.js
