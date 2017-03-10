@@ -11,3 +11,5 @@ extern void ogvjs_callback_frame(unsigned char *bufferY, int strideY,
                                  unsigned char *bufferCr, int strideCr,
                                  int width, int height,
                                  int chromaWidth, int chromaHeight);
+
+extern void ogvjs_callback_async_complete(int ret, double cpuTime);

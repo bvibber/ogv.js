@@ -243,7 +243,7 @@ var OGVWrapperCodec = (function(options) {
 					callback();
 				});
 			}, {
-				worker: options.worker
+				worker: options.worker && !options.threading
 			});
 		} else {
 			callback();

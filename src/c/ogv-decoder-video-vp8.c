@@ -22,6 +22,10 @@ void ogv_video_decoder_init() {
 	vpx_codec_dec_init(&vpxContext, vpxDecoder, NULL, 0);
 }
 
+int ogv_video_decoder_async() {
+  return 0;
+}
+
 void ogv_video_decoder_destroy() {
 	// should tear instance down, but meh
 }

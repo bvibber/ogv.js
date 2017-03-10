@@ -28,6 +28,10 @@ void ogv_video_decoder_init() {
     th_info_init(&theoraInfo);
 }
 
+int ogv_video_decoder_async() {
+  return 0;
+}
+
 int ogv_video_decoder_process_frame(const char *data, size_t data_len);
 
 int ogv_video_decoder_process_header(const char *data, size_t data_len) {

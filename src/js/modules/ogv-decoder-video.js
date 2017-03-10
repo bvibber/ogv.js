@@ -92,6 +92,8 @@ Module.processHeader = function(data, callback) {
 	callback(ret);
 };
 
+Module.callbacks = [];
+
 /**
  * Decode the given video data packet; fills out the frameBuffer property on success
  *
@@ -99,15 +101,26 @@ Module.processHeader = function(data, callback) {
  * @param function callback on completion
  */
 Module.processFrame = function(data, callback) {
-	var ret = time(function() {
-		// Map the ArrayBuffer into emscripten's runtime heap
-		var len = data.byteLength;
-		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
+	var isAsync = Module._ogv_video_decoder_async();
 
+	// Map the ArrayBuffer into emscripten's runtime heap
+	var len = data.byteLength;
+	var buffer = Module._malloc(len);
+	function callbackWrapper(ret) {
+		Module._free(buffer);
+		callback(ret);
+	}
+	if (isAsync) {
+		Module.callbacks.push(callbackWrapper);
+	}
+
+	var ret = time(function() {
+		Module.HEAPU8.set(new Uint8Array(data), buffer);
 		return Module._ogv_video_decoder_process_frame(buffer, len)
 	});
-	callback(ret);
+	if (!isAsync) {
+		callbackWrapper(ret);
+	}
 };
 
 /**

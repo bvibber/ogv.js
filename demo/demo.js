@@ -982,7 +982,6 @@
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
-                    worker: false, // experimental
                     threading: true, // experimental
                     enableWebM: true // experimental
                 });

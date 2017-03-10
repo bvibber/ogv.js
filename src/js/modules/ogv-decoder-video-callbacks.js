@@ -32,7 +32,7 @@ mergeInto(LibraryManager.library, {
 	                               width, height,
 	                               chromaWidth, chromaHeight) {
 
-		// Create typed array views of the source buffers from the emscripten heap:
+		// Create typed array copies of the source buffers from the emscripten heap:
 		var HEAPU8 = Module.HEAPU8,
 			format = Module.videoFormat,
 			countBytesY = strideY * height,
@@ -67,6 +67,13 @@ mergeInto(LibraryManager.library, {
 				stride: strideCr
 			}
 		};
+	},
+	
+	ogvjs_callback_async_complete: function(ret, cpuTime) {
+		var callback = Module.callbacks.shift();
+		Module.cpuTime += cpuTime;
+		callback(ret);
+		return;
 	}
 
 });
