@@ -52,30 +52,6 @@ function OGVWorkerSupport(propList, handlers) {
 		}
 	}
 
-	function copyByteArray(bytes) {
-		var heap = bytes.buffer;
-		if (typeof heap.slice === 'function') {
-			var extract = heap.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-			return new Uint8Array(extract);
-		} else {
-			// Hella slow in IE 10/11!
-			// But only game in town on IE 10.
-			return new Uint8Array(bytes);
-		}
-	}
-
-	function copyFrameBuffer(buffer) {
-		if (buffer == null) {
-			return null;
-		} else {
-			var copy = copyObject(buffer);
-			copy.y.bytes = copyByteArray(buffer.y.bytes);
-			copy.u.bytes = copyByteArray(buffer.u.bytes);
-			copy.v.bytes = copyByteArray(buffer.v.bytes);
-			return copy;
-		}
-	}
-
 	handlers.construct = function(args, callback) {
 		var className = args[0],
 			options = args[1];
@@ -125,8 +101,8 @@ function OGVWorkerSupport(propList, handlers) {
 								}
 							}
 						} else if (propName == 'frameBuffer') {
-							// Don't send the entire emscripten heap!
-							propVal = copyFrameBuffer(propVal);
+							// We already extract ahead of time now,
+							// so transfer the small buffers.
 							props[propName] = propVal;
 							if (propVal) {
 								transfers.push(propVal.y.bytes.buffer);

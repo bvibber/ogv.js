@@ -31,6 +31,18 @@ function time(func) {
 	return ret;
 }
 
+function copyByteArray(bytes) {
+	var heap = bytes.buffer;
+	if (typeof heap.slice === 'function') {
+		var extract = heap.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+		return new Uint8Array(extract);
+	} else {
+		// Hella slow in IE 10/11!
+		// But only game in town on IE 10.
+		return new Uint8Array(bytes);
+	}
+}
+
 // - Properties
 
 /**

@@ -55,15 +55,15 @@ mergeInto(LibraryManager.library, {
 				displayHeight: format.displayHeight
 			},
 			y: {
-				bytes: HEAPU8.slice(bufferY, bufferY + countBytesY),
+				bytes: copyByteArray(HEAPU8.subarray(bufferY, bufferY + countBytesY)),
 				stride:strideY
 			},
 			u: {
-				bytes: HEAPU8.slice(bufferCb, bufferCb + countBytesCb),
+				bytes: copyByteArray(HEAPU8.subarray(bufferCb, bufferCb + countBytesCb)),
 				stride: strideCb
 			},
 			v: {
-				bytes: HEAPU8.slice(bufferCr, bufferCr + countBytesCr),
+				bytes: copyByteArray(HEAPU8.subarray(bufferCr, bufferCr + countBytesCr)),
 				stride: strideCr
 			}
 		};
