@@ -991,6 +991,23 @@
                     threading: true, // experimental
                     enableWebM: true // experimental
                 });
+            } else if (playerBackend == 'wasm') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    memoryLimit: maxmem,
+                    wasm: true, // experimental
+                    enableWebM: true // experimental
+                });
+            } else if (playerBackend == 'wasm-noworker') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    memoryLimit: maxmem,
+                    worker: false,
+                    wasm: true, // experimental
+                    enableWebM: true // experimental
+                });
             } else if (playerBackend == 'webgl') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,

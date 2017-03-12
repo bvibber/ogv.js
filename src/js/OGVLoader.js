@@ -12,6 +12,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
 		OGVDecoderVideoVP8MT: 'ogv-decoder-video-vp8-mt.js',
 		OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js',
+		OGVDecoderVideoVP9W: 'ogv-decoder-video-vp9-wasm.js',
 		OGVDecoderVideoVP9MT: 'ogv-decoder-video-vp9-mt.js'
 	};
 
@@ -22,6 +23,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		OGVDecoderVideoTheora: 'video',
 		OGVDecoderVideoVP8: 'video',
 		OGVDecoderVideoVP9: 'video',
+		OGVDecoderVideoVP9W: 'video'
 	};
 	var proxyInfo = {
 		audio: {
@@ -83,6 +85,24 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		}
 	}
 
+	function loadWebAssembly(src, callback) {
+		if (!src.match(/-wasm\.js/)) {
+			callback(null);
+		} else {
+			var wasmSrc = src.replace(/-wasm\.js/, '-wasm.wasm');
+			var xhr = new XMLHttpRequest();
+			xhr.responseType = 'arraybuffer';
+			xhr.onload = function() {
+				callback(xhr.response);
+			};
+			xhr.onerror = function() {
+				callback(null);
+			};
+			xhr.open('GET', wasmSrc);
+			xhr.send();
+		}
+	}
+
 	function defaultBase() {
 		if (typeof global.window === 'object') {
 
@@ -117,18 +137,30 @@ var OGVVersion = __OGV_FULL_VERSION__;
 			options = options || {};
 			if (options.worker) {
 				this.workerProxy(className, callback);
-			} else if (typeof global[className] === 'function') {
-				// already loaded!
-				callback(global[className]);
-			} else if (typeof global.window === 'object') {
-				loadWebScript(urlForClass(className), function() {
-					callback(global[className]);
-				});
-			} else if (typeof global.importScripts === 'function') {
-				// worker has convenient sync importScripts
-				global.importScripts(urlForClass(className));
-				callback(global[className]);
+				return;
 			}
+			var url = urlForClass(className);
+			loadWebAssembly(url, function(wasmBinary) {
+				function wasmClassWrapper(options) {
+					options = options || {};
+					if (wasmBinary !== null) {
+						options.wasmBinary = wasmBinary;
+					}
+					return new global[className](options);
+				}
+				if (typeof global[className] === 'function') {
+					// already loaded!
+					callback(wasmClassWrapper);
+				} else if (typeof global.window === 'object') {
+					loadWebScript(url, function() {
+						callback(wasmClassWrapper);
+					});
+				} else if (typeof global.importScripts === 'function') {
+					// worker has convenient sync importScripts
+					global.importScripts(url);
+					callback(wasmClassWrapper);
+				}
+			});
 		},
 
 		workerProxy: function(className, callback) {

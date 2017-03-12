@@ -86,7 +86,8 @@ var OGVPlayer = function(options) {
 	if (typeof options.worker !== 'undefined') {
 		enableWorker = !!options.worker;
 	}
-	var enableThreading = options.threading;
+	var enableThreading = !!options.threading;
+	var enableWASM = !!options.wasm;
 
 	if (options.sync === undefined) {
 		options.sync = 'skip-frames';
@@ -134,6 +135,7 @@ var OGVPlayer = function(options) {
 
 	codecOptions.worker = enableWorker;
 	codecOptions.threading = enableThreading;
+	codecOptions.wasm = enableWASM;
 	if (typeof options.memoryLimit === 'number') {
 		codecOptions.memoryLimit = options.memoryLimit;
 	}
