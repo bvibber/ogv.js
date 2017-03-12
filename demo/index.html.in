@@ -149,8 +149,9 @@
 					<option value=shortlist>VBR transcode tests</option>
 					<option value=shortlist-cbr>CBR/soft-target tests</option>
 					<option value=shortlist-profile1>VP8 -profile=1 tests</option>
-					<option value=shortlist-vp9>VP9 tests</option>
+					<option value=shortlist-sliced0>VP8 -slices=n</option>
 					<option value=shortlist-sliced>VP8 -slices=n -profile=1</option>
+					<option value=shortlist-vp9>VP9 tests</option>
 				</select>
 			</div>
 			<form id="searchform">
