@@ -13,7 +13,6 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * Safari no longer complains about missing es6-promise.map source map
 * smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. (To restore previous behavior, set sync='delay-audio' in options.)
 * video frame decode pipeline now 3 frames deep instead of 1; smoother on IE on slow machines
-* experimental threaded JS builds of VP8, VP9 decoders
 * experimental Web Assembly builds of all modules
 
 1.3.1 - 2017-02-24
@@ -240,9 +239,6 @@ Currently the video and audio codecs run in worker threads by default, while the
 and player logic run on the UI thread. This seems to work pretty well.
 
 There is some overhead in extracting data out of each emscripten module's heap and in the thread-to-thread communications, but the parallelism and smoother main thread makes up for it.
-
-Multithreaded VP8 and VP9 decodes are possible using experimental browser features; set `options.threading` to `true` to enable (requires SharedArrayBuffer, no automatic environment checking). Known to work in Safari Technical Preview (well) and Firefox Nightly (with performance problems due to asm.js incompatibility).
-
 
 *Streaming download*
 
