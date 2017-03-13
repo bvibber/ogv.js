@@ -7,12 +7,14 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.3.2 - 2017-??-??
+1.4.0 - 2017-??-??
 * fastSeek() is now fast
 * VP9 base profile support in WebM container
 * Safari no longer complains about missing es6-promise.map source map
 * smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. (To restore previous behavior, set sync='delay-audio' in options.)
 * video frame decode pipeline now 3 frames deep instead of 1; smoother on IE on slow machines
+* experimental threaded JS builds of VP8, VP9 decoders
+* experimental Web Assembly builds of all modules
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
@@ -64,6 +66,7 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * background threading: yes (video, audio decoders in Workers)
+* multithreaded decoding: experimental (VP8, VP9; requires SharedArrayBuffer)
 * [GPU accelerated drawing: yes (WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
 * GPU accelerated decoding: no
 * SIMD acceleration: no
@@ -237,6 +240,8 @@ Currently the video and audio codecs run in worker threads by default, while the
 and player logic run on the UI thread. This seems to work pretty well.
 
 There is some overhead in extracting data out of each emscripten module's heap and in the thread-to-thread communications, but the parallelism and smoother main thread makes up for it.
+
+Multithreaded VP8 and VP9 decodes are possible using experimental browser features; set `options.threading` to `true` to enable (requires SharedArrayBuffer, no automatic environment checking). Known to work in Safari Technical Preview (well) and Firefox Nightly (with performance problems due to asm.js incompatibility).
 
 
 *Streaming download*
