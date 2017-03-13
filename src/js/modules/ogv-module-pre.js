@@ -11,7 +11,7 @@ Module = {
 if (typeof OGVLoader !== 'undefined') {
 	Module['pthreadMainPrefixURL'] = OGVLoader.base + '/';
 }
-if (options['memoryLimit']) {
+if (options['memoryLimit'] && !options.wasmBinary) {
 	Module['TOTAL_MEMORY'] = options['memoryLimit'];
 }
 // Hack to let parameters through for pthreads initialization

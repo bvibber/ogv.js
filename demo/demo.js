@@ -995,7 +995,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     wasm: true, // experimental
                     enableWebM: true // experimental
                 });
@@ -1003,7 +1002,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     worker: false,
                     wasm: true, // experimental
                     enableWebM: true // experimental
