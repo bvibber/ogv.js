@@ -5,11 +5,17 @@ var OGVVersion = __OGV_FULL_VERSION__;
 
 	var scriptMap = {
 		OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
+		OGVDemuxerOggW: 'ogv-demuxer-ogg-wasm.js',
 		OGVDemuxerWebM: 'ogv-demuxer-webm.js',
+		OGVDemuxerWebMW: 'ogv-demuxer-webm-wasm.js',
 		OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',
+		OGVDecoderAudioOpusW: 'ogv-decoder-audio-opus-wasm.js',
 		OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
+		OGVDecoderAudioVorbisW: 'ogv-decoder-audio-vorbis-wasm.js',
 		OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',
+		OGVDecoderVideoTheoraW: 'ogv-decoder-video-theora-wasm.js',
 		OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
+		OGVDecoderVideoVP8W: 'ogv-decoder-video-vp8-wasm.js',
 		OGVDecoderVideoVP8MT: 'ogv-decoder-video-vp8-mt.js',
 		OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js',
 		OGVDecoderVideoVP9W: 'ogv-decoder-video-vp9-wasm.js',
@@ -19,9 +25,13 @@ var OGVVersion = __OGV_FULL_VERSION__;
   // @fixme make this less awful
 	var proxyTypes = {
 		OGVDecoderAudioOpus: 'audio',
+		OGVDecoderAudioOpusW: 'audio',
 		OGVDecoderAudioVorbis: 'audio',
+		OGVDecoderAudioVorbisW: 'audio',
 		OGVDecoderVideoTheora: 'video',
+		OGVDecoderVideoTheoraW: 'video',
 		OGVDecoderVideoVP8: 'video',
+		OGVDecoderVideoVP8W: 'video',
 		OGVDecoderVideoVP9: 'video',
 		OGVDecoderVideoVP9W: 'video'
 	};

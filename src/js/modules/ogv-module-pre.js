@@ -33,4 +33,10 @@ var OGVDecoderAudioOpus = Module;
 var OGVDecoderVideoVP8MT = Module;
 var OGVDecoderVideoVP9MT = Module;
 
+var OGVDemuxerOggW = Module;
+var OGVDemuxerWebMW = Module;
+var OGVDecoderVideoTheoraW = Module;
+var OGVDecoderVideoVP8W = Module;
 var OGVDecoderVideoVP9W = Module;
+var OGVDecoderAudioOpusW = Module;
+var OGVDecoderAudioVorbisW = Module;

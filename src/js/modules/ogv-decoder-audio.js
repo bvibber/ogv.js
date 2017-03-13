@@ -68,10 +68,21 @@ Object.defineProperty(Module, 'processing', {
 // - public methods
 
 Module.init = function(callback) {
-	time(function() {
-		Module._ogv_audio_decoder_init();
-	});
-	callback();
+	function finish() {
+		time(function() {
+			Module._ogv_audio_decoder_init();
+		});
+		callback();
+	}
+	if (Module.wasmBinary) {
+		// WASM needs to wait for compilation
+		Module.onRuntimeInitialized = function() {
+			finish();
+		};
+	} else {
+		// JS already parsed/runnable
+		finish();
+	}
 };
 
 /**

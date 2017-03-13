@@ -154,9 +154,9 @@ var OGVWrapperCodec = (function(options) {
 	self.init = function(callback) {
 		var demuxerClassName;
 		if (options.type === 'video/webm') {
-			demuxerClassName = 'OGVDemuxerWebM';
+			demuxerClassName = options.wasm ? 'OGVDemuxerWebMW' : 'OGVDemuxerWebM';
 		} else {
-			demuxerClassName = 'OGVDemuxerOgg';
+			demuxerClassName = options.wasm ? 'OGVDemuxerOggW' : 'OGVDemuxerOgg';
 		}
 		processing = true;
 		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
@@ -193,8 +193,8 @@ var OGVWrapperCodec = (function(options) {
 	};
 
 	var audioClassMap = {
-		vorbis: 'OGVDecoderAudioVorbis',
-		opus: 'OGVDecoderAudioOpus'
+		vorbis: options.wasm ? 'OGVDecoderAudioVorbisW' : 'OGVDecoderAudioVorbis',
+		opus: options.wasm ? 'OGVDecoderAudioOpusW' : 'OGVDecoderAudioOpus'
 	};
 	function loadAudioCodec(callback) {
 		if (demuxer.audioCodec) {
@@ -220,8 +220,8 @@ var OGVWrapperCodec = (function(options) {
 	}
 
 	var videoClassMap = {
-		theora: 'OGVDecoderVideoTheora',
-		vp8: options.threading ? 'OGVDecoderVideoVP8MT' : 'OGVDecoderVideoVP8',
+		theora: options.wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
+		vp8: options.wasm ? 'OGVDecoderVideoVP8W' : (options.threading ? 'OGVDecoderVideoVP8MT' : 'OGVDecoderVideoVP8'),
 		vp9: options.wasm ? 'OGVDecoderVideoVP9W' : (options.threading ? 'OGVDecoderVideoVP9MT' : 'OGVDecoderVideoVP9')
 	};
 	function loadVideoCodec(callback) {
