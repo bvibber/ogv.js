@@ -49,6 +49,31 @@ var OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
 	return this;
 };
 
+var OGVMediaErrorConstants = {
+	MEDIA_ERR_ABORTED: 1,
+	MEDIA_ERR_NETWORK: 2,
+	MEDIA_ERR_DECODE: 3,
+	MEDIA_ERR_SRC_NOT_SUPPORTED: 4
+};
+function extend(dest, src) {
+	for (prop in src) {
+		if (src.hasOwnProperty(prop)) {
+			dest[prop] = src[prop];
+		}
+	}
+}
+
+/**
+ * Constructor for analogue of the MediaError class
+ * returned by HTMLMediaElement.error property
+ */
+var OGVMediaError = window.OGVMediaError = function(code, message) {
+	this.code = code;
+	this.message = message;
+};
+extend(OGVMediaError, OGVMediaErrorConstants);
+extend(OGVMediaError.prototype, OGVMediaErrorConstants);
+
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
  * which has a similar interface to the HTML audio/video elements.
@@ -332,7 +357,7 @@ var OGVPlayer = function(options) {
 		streamEnded = false,
 		seekCancel = {},
 		readCancel = {},
-		errorMessage = null,
+		mediaError = null,
 		dataEnded = false,
 		byteLength = 0,
 		duration = null,
@@ -1612,7 +1637,7 @@ var OGVPlayer = function(options) {
 			log('i/o promise canceled; ignoring');
 		} else {
 			log("i/o error: " + err);
-			errorMessage = 'i/o error: ' + err;
+			mediaError = new OGVMediaError(OGVMediaError.MEDIA_ERR_NETWORK, '' + err);
 			state = State.ERROR;
 			stopPlayback();
 		}
@@ -2263,10 +2288,10 @@ var OGVPlayer = function(options) {
 	Object.defineProperty(self, "error", {
 		get: function getError() {
 			if (state === State.ERROR) {
-				if (errorMessage) {
-					return errorMessage;
+				if (mediaError) {
+					return mediaError;
 				} else {
-					return "error occurred in media procesing";
+					return new OGVMediaError("unknown error occurred in media procesing");
 				}
 			} else {
 				return null;
@@ -2477,9 +2502,6 @@ var OGVPlayer = function(options) {
 	 */
 	self.onvolumechange = null;
 
-	// Copy the various public state constants in
-	setupConstants(self);
-
 	return self;
 };
 
@@ -2508,20 +2530,8 @@ var constants = {
 	HAVE_FUTURE_DATA: 3,
 	HAVE_ENOUGH_DATA: 4
 };
-function setupConstants(obj) {
-	for (var constName in constants) {
-		if (constants.hasOwnProperty(constName)) {
-			(function(name, val) {
-				Object.defineProperty(obj, constName, {
-					get: function() {
-						return val;
-					}
-				});
-			})(constName, constants[constName]);
-		}
-	}
-}
-setupConstants(OGVPlayer);
+extend(OGVPlayer, constants);
+extend(OGVPlayer.prototype, constants);
 
 OGVPlayer.instanceCount = 0;
 

@@ -364,9 +364,31 @@
                 spinner.classList.remove('seeking');
             });
 
+            spinner.classList.remove('error');
+            spinner.textContent = '';
             player.addEventListener('error', function() {
               spinner.classList.add('error');
-              spinner.textContent = 'Error: ' + player.error;
+              var err = player.error;
+              var msg;
+              if (err) {
+                if (err.code === err.MEDIA_ERR_ABORTED) {
+                  msg = 'aborted by user';
+                } else if (err.code === err.MEDIA_ERR_NETWORK) {
+                  msg = 'network error';
+                } else if (err.code === err.MEDIA_ERR_DECODE) {
+                  msg = 'decode error';
+                } else if (err.code === err.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+                  msg = 'source not supported';
+                } else {
+                  msg = 'unknown error';
+                }
+                if (err.message) {
+                  msg += ': ' + err.message;
+                }
+              } else {
+                msg = 'invalid error state';
+              }
+              spinner.textContent = 'Error: ' + msg;
             });
 
             player.addEventListener('timeupdate', function() {

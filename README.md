@@ -14,6 +14,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. (To restore previous behavior, set sync='delay-audio' in options.)
 * video frame decode pipeline now 3 frames deep instead of 1; smoother on IE on slow machines
 * experimental Web Assembly builds of all modules
+* `error` property now returns an `OGVMediaError` object instead of string
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
