@@ -34,7 +34,7 @@
 					<option value="wasm">Web Assembly</option>
 					<option value="wasm-noworker">Web Assembly no Worker</option>
 					<option value="native">native</option>
-					<option value="cortado">Cortado (Java)</option>
+					<!-- <option value="cortado">Cortado (Java)</option> -->
 				</select>
 			</div>
 		</div>
