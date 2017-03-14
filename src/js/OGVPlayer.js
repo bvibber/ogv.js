@@ -1394,6 +1394,7 @@ var OGVPlayer = function(options) {
 								frameEndTimestamp: nextFrameEndTimestamp
 							});
 							var currentPendingFrames = pendingFrames;
+							var wasAsync = false;
 							var frameDecodeTime = time(function() {
 								codec.decodeFrame(function processingDecodeFrame(ok) {
 									if (currentPendingFrames !== pendingFrames) {
@@ -1417,11 +1418,12 @@ var OGVPlayer = function(options) {
 									if (isProcessing()) {
 										// wait
 									} else {
-										pingProcessing();
+										pingProcessing(wasAsync ? undefined : 0);
 									}
 								});
 							});
 							if (pendingFrame) {
+								wasAsync = true;
 								proxyTime += frameDecodeTime;
 								// We can process something else while that's running
 								pingProcessing();
