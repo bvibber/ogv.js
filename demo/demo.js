@@ -254,7 +254,7 @@
 
         var today = new Date(),
             year = 2016,
-            month = 09,
+            month = 9,
             day = 20; // where we left off in motd.js, @fixme use live info
 
         var input = '';
