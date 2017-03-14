@@ -13,10 +13,16 @@
 	background-position: center;
 }
 #spinner-panel.seeking,
-#spinner-panel.loading {
+#spinner-panel.loading,
+#spinner-panel.error {
 	display: block;
 }
-
+#spinner-panel.error {
+	background-image: none;
+	text-align: center;
+	vertical-align: middle;
+	color: red;
+}
 #control-panel {
 	position: absolute;
 	

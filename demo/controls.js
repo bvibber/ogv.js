@@ -364,6 +364,11 @@
                 spinner.classList.remove('seeking');
             });
 
+            player.addEventListener('error', function() {
+              spinner.classList.add('error');
+              spinner.textContent = 'Error: ' + player.error;
+            });
+
             player.addEventListener('timeupdate', function() {
                 updateProgress();
             });
