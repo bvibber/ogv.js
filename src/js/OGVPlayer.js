@@ -1606,8 +1606,9 @@ var OGVPlayer = function(options) {
 			log('readBytesAndWait during i/o');
 			return;
 		}
-		var isSeeking = (state == State.SEEKING_END || state == State.SEEKING),
-			bufferSize = isSeeking ? 65536 : (65536 * 2);
+		// keep i/o size small to reduce CPU impact of demuxing on slow machines
+		// @todo make buffer size larger when packets are larger?
+		var bufferSize = 32768;
 		stream.read(bufferSize, readCancel).then(function(data) {
 			log('got input ' + [data.byteLength]);
 
