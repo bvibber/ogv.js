@@ -30,6 +30,7 @@
     this._flashaudio = new DynamicAudio(flashOptions);
     this._flashBuffer = '';
     this._flushTimeout = null;
+    this._flushInterval = 40; // flush added buffers no more often than every X ms
     this._cachedFlashState = null;
     this._cachedFlashTime = 0;
     this._cachedFlashInterval = 40; // resync state no more often than every X ms
@@ -269,8 +270,7 @@
       if (!this._flushTimeout) {
         // consolidate multiple consecutive tiny buffers in one pass;
         // pushing data to Flash is relatively expensive on slow machines
-        this._flushTimeout = true;
-        nextTick(this._flushFlashBuffer.bind(this));
+        this._flushTimeout = setTimeout(this._flushFlashBuffer.bind(this), this._flushInterval);
       }
     }
   };
