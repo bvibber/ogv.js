@@ -10,10 +10,12 @@ and is suitable for use in custom audio and video playback.
 
 ## Copyright and license
 
-* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2016 Brion Vibber
+* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2017 Brion Vibber
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.6 - 2017-03-16
+ * Flash: frequent small buffer flushes to Flash are coalesced better
 * 0.4.5 - 2016-06-12
  * Flash: extra security precautions on cross-domain mode
 * 0.4.4 - 2016-06-12
