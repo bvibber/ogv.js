@@ -127,3 +127,5 @@ Module.processAudio = function(data, callback) {
 Module.close = function() {
 	// no-op
 };
+
+Math.imul = Math_imul_orig;
