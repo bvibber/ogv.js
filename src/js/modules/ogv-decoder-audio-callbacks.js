@@ -19,11 +19,17 @@ mergeInto(LibraryManager.library, {
 
 		var outputBuffers = [];
 		if (buffers !== 0) {
-			var inPtr, inArray, outArray, i;
+			var inPtr, inArray, inBuffer, outArray, i;
 			for (var channel = 0; channel < channels; channel++) {
 				inPtr = HEAPU32[buffers / 4 + channel];
-				inArray = HEAPF32.subarray(inPtr / 4, inPtr / 4 + sampleCount);
-				outArray = new Float32Array(inArray);
+				if (HEAPF32.buffer.slice) {
+					inBuffer = HEAPF32.buffer.slice(inPtr, inPtr + sampleCount * 4);
+					outArray = new Float32Array(inBuffer);
+				} else {
+					// IE 10
+					inArray = HEAPF32.subarray(inPtr / 4, inPtr / 4 + sampleCount);
+					outArray = new Float32Array(inArray);
+				}
 				outputBuffers.push(outArray);
 			}
 		}
