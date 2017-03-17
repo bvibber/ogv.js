@@ -939,7 +939,7 @@ var OGVPlayer = function(options) {
 		needProcessing = false,
 		pendingFrame = 0,
 		pendingAudio = 0,
-		framePipelineDepth = 1,
+		framePipelineDepth = 3,
 		audioPipelineDepth = 4;
 
 	function doProcessing() {
@@ -1248,7 +1248,7 @@ var OGVPlayer = function(options) {
 							//frameDelay = Math.min(frameDelay, targetPerFrameTime);
 
 							readyForFrameDraw = decodedFrames.length > 0;
-							readyForFrameDecode = (pendingFrame < framePipelineDepth) && (decodedFrames.length <= framePipelineDepth) && codec.frameReady;
+							readyForFrameDecode = (pendingFrame + decodedFrames.length < framePipelineDepth) && codec.frameReady;
 
 							var audioSyncThreshold = targetPerFrameTime;
 							if (prebufferingAudio) {
