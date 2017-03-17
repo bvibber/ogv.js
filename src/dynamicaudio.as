@@ -162,6 +162,11 @@ package {
                 // go ping the decoder and let it know we need more data now!
                 log('starved at ' + queue.sampleCount());
                 triggerCallback('starved');
+                if (!soundChannel) {
+                  dropped++;
+                  log('dropped');
+                  return;
+                }
             }
 
             // If we haven't got enough data, write a buffer of silence to

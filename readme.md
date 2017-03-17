@@ -14,6 +14,8 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.7 - 2017-03-17
+ * Flash: cleaner behavior if stopped from onstarved handler
 * 0.4.6 - 2017-03-16
  * Flash: frequent small buffer flushes to Flash are coalesced better
 * 0.4.5 - 2016-06-12
