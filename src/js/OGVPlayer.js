@@ -397,7 +397,6 @@ var OGVPlayer = function(options) {
 		started = false;
 		//paused = true; // don't change this?
 		ended = false;
-		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
 		stoppedForLateFrame = false;
@@ -453,7 +452,6 @@ var OGVPlayer = function(options) {
 	}
 
 	var lastFrameTime = getTimestamp(),
-		frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
 		decodedFrames = [],
 		pendingFrames = [];
@@ -533,7 +531,7 @@ var OGVPlayer = function(options) {
 		function n(x) {
 			return Math.round(x * 10) / 10;
 		}
-		log('drew frame ' + frameEndTimestamp + ': ' +
+		log('drew frame ' + data.frameEndTimestamp + ': ' +
 			'clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
 			'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ' proxy: ' + n(timing.proxyTime) + ') ' +
 			'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
@@ -718,7 +716,6 @@ var OGVPlayer = function(options) {
 	function continueSeekedPlayback() {
 		seekState = SeekState.NOT_SEEKING;
 		state = State.READY;
-		frameEndTimestamp = codec.frameTimestamp;
 		audioEndTimestamp = codec.audioTimestamp;
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
@@ -782,7 +779,6 @@ var OGVPlayer = function(options) {
 					} else if (streamEnded) {
 						log('stream ended during linear seeking on video');
 						dataEnded = true;
-						frameEndTimestamp = seekTargetTime;
 						continueSeekedPlayback();
 					} else {
 						readBytesAndWait();
@@ -824,7 +820,6 @@ var OGVPlayer = function(options) {
 					} else if (streamEnded) {
 						log('stream ended during linear seeking on audio');
 						dataEnded = true;
-						frameEndTimestamp = seekTargetTime;
 						continueSeekedPlayback();
 					} else {
 						readBytesAndWait();
@@ -1242,13 +1237,15 @@ var OGVPlayer = function(options) {
 						}
 
 						if (codec.hasVideo) {
-							frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
-							actualPerFrameTime = targetPerFrameTime - frameDelay;
-							//frameDelay = Math.max(0, frameDelay);
-							//frameDelay = Math.min(frameDelay, targetPerFrameTime);
-
 							readyForFrameDraw = decodedFrames.length > 0;
 							readyForFrameDecode = (pendingFrame + decodedFrames.length < framePipelineDepth) && codec.frameReady;
+
+							if (readyForFrameDraw) {
+								frameDelay = (decodedFrames[0].frameEndTimestamp - playbackPosition) * 1000;
+								actualPerFrameTime = targetPerFrameTime - frameDelay;
+								//frameDelay = Math.max(0, frameDelay);
+								//frameDelay = Math.min(frameDelay, targetPerFrameTime);
+							}
 
 							var audioSyncThreshold = targetPerFrameTime;
 							if (prebufferingAudio) {
@@ -1259,7 +1256,7 @@ var OGVPlayer = function(options) {
 							} else if (readyForFrameDraw && dataEnded && audioEnded) {
 								// If audio timeline reached end, make sure the last frame draws
 								log('audio timeline ended? ready to draw frame');
-							} else if (-frameDelay >= audioSyncThreshold) {
+							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
 								if (options.sync == 'delay-audio') {
 									// Delay audio while video catches up. Old default.
@@ -1268,11 +1265,12 @@ var OGVPlayer = function(options) {
 										lateFrames++;
 										if (decodedFrames.length > 1) {
 											log('late frame has a neighbor; skipping to next frame');
-											decodedFrames.shift();
-											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
+											var frame = decodedFrames.shift();
+											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
 											doFrameComplete({
+												frameEndTimestamp: frame.frameEndTimestamp,
 												dropped: true
 											});
 										} else {
@@ -1289,16 +1287,14 @@ var OGVPlayer = function(options) {
 									}
 									if (skipPast >= 0) {
 										while (skipPast-- >= 0) {
-											log('skipping already-decoded late frame at ' + decodedFrames[0].frameEndTimestamp);
 											lateFrames++;
-											decodedFrames.shift();
-											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
-											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											var frame = decodedFrames.shift();
+											log('skipping already-decoded late frame at ' + frame.frameEndTimestamp);
+											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
-											doFrameComplete({
-												dropped: true
-											});
+											frame.dropped = true;
+											doFrameComplete();
 										}
 									}
 
@@ -1310,29 +1306,27 @@ var OGVPlayer = function(options) {
 									var timeToResync = nextKeyframe - videoSyncPadding;
 
 									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
-										log('skipping late frame at ' + frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
+										log('skipping late frame at ' + decodedFrames[0].frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
 
 										// First skip any already-decoded frames
 										for (var i = 0; i < decodedFrames.length; i++) {
+											var frame = decodedFrames[i];
 											lateFrames++;
 											framesProcessed++; // pretend!
-											frameEndTimestamp = decodedFrames[0].frameEndTimestamp;
-											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											doFrameComplete({
-												dropped: true
-											});
+											frame.dropped = true;
+											doFrameComplete(frame);
 										}
 										decodedFrames = [];
 										for (var i = 0; i < pendingFrames.length; i++) {
+											var frame = pendingFrames[i];
 											lateFrames++;
 											framesProcessed++; // pretend!
-											frameEndTimestamp = pendingFrames[0].frameEndTimestamp;
-											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											doFrameComplete({
-												dropped: true
-											});
+											frame.dropped = true;
+											doFrameComplete(frame);
 										}
 										pendingFrames = [];
 										pendingFrame = 0;
@@ -1340,15 +1334,16 @@ var OGVPlayer = function(options) {
 										// Now discard anything up to the keyframe
 										while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
 											// note: this is a known synchronous operation :)
-											frameEndTimestamp = codec.frameTimestamp;
-											frameDelay = (frameEndTimestamp - playbackPosition) * 1000;
+											var frame = {
+												frameEndTimestamp: codec.frameTimestamp,
+												dropped: true
+											};
+											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											lateFrames++;
 											codec.discardFrame(function() {/*fake*/});
 											framesProcessed++; // pretend!
-											doFrameComplete({
-												dropped: true
-											});
+											doFrameComplete(frame);
 										}
 										if (isProcessing()) {
 											// wait
@@ -1374,13 +1369,11 @@ var OGVPlayer = function(options) {
 							}
 						}
 
-						//log([playbackPosition, frameEndTimestamp, audioEndTimestamp, readyForFrameDraw, readyForFrameDecode, readyForAudioDecode].join(', '));
-
 						if (readyForFrameDecode) {
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
-							var endy = pendingFrames.length ? pendingFrames[pendingFrames.length - 1] : (decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : frameEndTimestamp);
+							var endy = pendingFrames.length ? pendingFrames[pendingFrames.length - 1] : (decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : codec.frameTimestamp);
 							if (videoInfo.fps == 0 && (codec.frameTimestamp - endy) > 0) {
 								// WebM doesn't encode a frame rate
 								targetPerFrameTime = (codec.frameTimestamp - endy) * 1000;
@@ -1453,7 +1446,10 @@ var OGVPlayer = function(options) {
 											});
 											if (!codec.hasVideo) {
 												framesProcessed++; // pretend!
-												doFrameComplete();
+												var frame = {
+													frameEndTimestamp: audioEndTimestamp
+												};
+												doFrameComplete(frame);
 											}
 										}
 									}
@@ -1492,7 +1488,6 @@ var OGVPlayer = function(options) {
 							}
 
 							var frame = decodedFrames.shift();
-							frameEndTimestamp = frame.frameEndTimestamp;
 							currentVideoCpuTime = frame.videoCpuTime;
 
 							drawingTime += time(function() {
@@ -1502,7 +1497,7 @@ var OGVPlayer = function(options) {
 							framesProcessed++;
 							framesPlayed++;
 
-							doFrameComplete();
+							doFrameComplete(frame);
 
 							pingProcessing();
 
