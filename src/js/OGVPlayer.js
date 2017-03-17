@@ -296,6 +296,8 @@ var OGVPlayer = function(options) {
 		// @todo pre-buffer a little data to avoid needing this
 		audioFeeder.onstarved = function () {
 			log('onstarved');
+			stopPlayback();
+			prebufferingAudio = true;
 			if (isProcessing()) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
