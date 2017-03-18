@@ -119,7 +119,6 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-vp9-wasm.wasm \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
-	      build/pthread-main.js \
 	      build/dynamicaudio.swf \
 	      README.md \
 	      COPYING \
