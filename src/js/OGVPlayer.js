@@ -399,6 +399,7 @@ var OGVPlayer = function(options) {
 		started = false;
 		//paused = true; // don't change this?
 		ended = false;
+		frameEndTimestamp = 0.0;
 		audioEndTimestamp = 0.0;
 		lastFrameDecodeTime = 0.0;
 		stoppedForLateFrame = false;
@@ -454,6 +455,7 @@ var OGVPlayer = function(options) {
 	}
 
 	var lastFrameTime = getTimestamp(),
+		frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
 		decodedFrames = [],
 		pendingFrames = [];
@@ -718,6 +720,7 @@ var OGVPlayer = function(options) {
 	function continueSeekedPlayback() {
 		seekState = SeekState.NOT_SEEKING;
 		state = State.READY;
+		frameEndTimestamp = codec.frameTimestamp;
 		audioEndTimestamp = codec.audioTimestamp;
 		if (codec.hasAudio) {
 			seekTargetTime = codec.audioTimestamp;
@@ -1293,6 +1296,7 @@ var OGVPlayer = function(options) {
 											var frame = decodedFrames.shift();
 											log('skipping already-decoded late frame at ' + frame.frameEndTimestamp);
 											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
+											frameEndTimestamp = frame.frameEndTimestamp;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											framesProcessed++; // pretend!
 											frame.dropped = true;
@@ -1315,6 +1319,7 @@ var OGVPlayer = function(options) {
 											var frame = decodedFrames[i];
 											lateFrames++;
 											framesProcessed++; // pretend!
+											frameEndTimestamp = frame.frameEndTimestamp;
 											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											frame.dropped = true;
@@ -1325,6 +1330,7 @@ var OGVPlayer = function(options) {
 											var frame = pendingFrames[i];
 											lateFrames++;
 											framesProcessed++; // pretend!
+											frameEndTimestamp = frame.frameEndTimestamp;
 											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
 											frame.dropped = true;
@@ -1375,15 +1381,14 @@ var OGVPlayer = function(options) {
 
 							log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
-							var endy = pendingFrames.length ? pendingFrames[pendingFrames.length - 1] : (decodedFrames.length ? decodedFrames[decodedFrames.length - 1].frameEndTimestamp : codec.frameTimestamp);
-							if (videoInfo.fps == 0 && (codec.frameTimestamp - endy) > 0) {
+							if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
 								// WebM doesn't encode a frame rate
-								targetPerFrameTime = (codec.frameTimestamp - endy) * 1000;
+								targetPerFrameTime = (codec.frameTimestamp - frameEndTimestamp) * 1000;
 							}
 							totalFrameTime += targetPerFrameTime;
 							totalFrameCount++;
 							
-							var nextFrameEndTimestamp = codec.frameTimestamp;
+							var nextFrameEndTimestamp = frameEndTimestamp = codec.frameTimestamp;
 							pendingFrame++;
 							pendingFrames.push({
 								frameEndTimestamp: nextFrameEndTimestamp
@@ -1410,11 +1415,13 @@ var OGVPlayer = function(options) {
 										// Bad packet or something.
 										log('Bad video packet or something');
 									}
-									if (isProcessing()) {
-										// wait
-									} else {
-										pingProcessing(wasAsync ? undefined : 0);
-									}
+									codec.process(function() {
+										if (isProcessing()) {
+											// wait
+										} else {
+											pingProcessing(wasAsync ? undefined : 0);
+										}
+									});
 								});
 							});
 							if (pendingFrame) {
