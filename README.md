@@ -66,10 +66,10 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * color: yes
 * audio: yes, with a/v sync (requires Web Audio or Flash)
 * background threading: yes (video, audio decoders in Workers)
-* multithreaded decoding: experimental (VP8, VP9; requires SharedArrayBuffer)
 * [GPU accelerated drawing: yes (WebGL)](https://github.com/brion/ogv.js/wiki/GPU-acceleration)
 * GPU accelerated decoding: no
 * SIMD acceleration: no
+* Web Assembly: yes (experimental; set `options.wasm` to `true`)
 * controls: no (currently provided by demo or other UI harness)
 
 Ogg files are fairly well supported, but WebM is still experimental and is disabled by default.
@@ -87,13 +87,13 @@ The API isn't quite complete, but works pretty well.
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
 The primary target browsers are (testing 360p/30fps):
-* Safari 6.1/7/8/9 on Mac OS X 10.7-10.11
-* Safari on iOS 8/9 64-bit
+* Safari 6.1/7/8/9/10 on Mac OS X 10.7-10.11
+* Safari on iOS 8/9/10 64-bit
 * Edge on Windows 10 desktop/tablet
 * Internet Explorer 10/11 on Windows 7/8/8.1/10 (desktop/tablet)
 
 And for lower-resolution files (testing 160p/15fps):
-* Safari on iOS 8/9 32-bit
+* Safari on iOS 8/9/10 32-bit
 * Edge on Windows 10 Mobile
 * Internet Explorer 10/11 on Windows RT
 
@@ -102,8 +102,8 @@ Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arr
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS, Windows RT, or Windows 10 Mobile.)
 
 Testing browsers (these support .ogv and .webm natively):
-* Firefox 46
-* Chrome 50
+* Firefox 52
+* Chrome 57
 
 
 ## Package installation
@@ -196,6 +196,7 @@ Dynamically loaded assets:
 * `ogv-decoder-audio-vorbis.js` and `ogv-decoder-audio-opus.js` are used in playing both Ogg and WebM files containing audio.
 * `ogv-decoder-video-theora.js` is used in playing .ogg and .ogv video files.
 * `ogv-decoder-video-vp8.js` and `ogv-decoder-video-vp9.js` are used in playing .webm video files.
+* `*-wasm.js` and `*-wasm.wasm` files are the Web Assembly versions of the above modules.
 * `dynamicaudio.swf` is the Flash audio shim, used for Internet Explorer 10/11.
 
 If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
@@ -302,6 +303,15 @@ For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblo
 We've experimented with tremor (libivorbis), an integer-only variant of libvorbis. This actually does *not* decode faster, but does save about 200kb off our generated JavaScript, presumably thanks to not including an encoder in the library. However on slow devices like iPod Touch 5th-generation, it makes a significant negative impact on the decode time so we've gone back to libvorbis.
 
 The Ogg Skeleton library (libskeleton) is a bit ... unfinished and is slightly modified here.
+
+
+## Web Assembly
+
+Web Assembly (WASM) versions of the emscripten cross-compiled modules are also included, used if `options.wasm` is true.
+
+The WASM versions of the modules are more compact than the cross-compiled asm.js-style JavaScript, and thus should download faster. Some browsers may also compile the module differently, providing more consistent performance at the beginning of playback.
+
+Currently Firefox and Chrome are the only release versions of browsers that support Web Assembly, but it's available behind the 'experimental JS options' flag in Edge preview builds and should eventually come to Safari.
 
 
 ## Building JS components
