@@ -370,6 +370,8 @@
         }
         if (sourceMode == 'motd') {
             searchQuery = 'filetype:video incategory:"Media of the Day" ' + filterString;
+        } else if (sourceMode = 'commons') {
+            searchQuery = 'filetype:video ' + filterString;
         } else if (sourceMode == 'blender') {
             processList([
                 [
@@ -627,6 +629,7 @@
           apiCall.generator = 'search';
           apiCall.gsrsearch = searchQuery;
           apiCall.gsrnamespace = 6;
+          apiCall.gsrlimit = 50;
         }
         
         commonsApi(apiCall, function(data) {
@@ -634,7 +637,7 @@
                 var pages,
                     mediaItems = {},
                     foundPages = [];
-                console.log(data);
+
                 if ('query' in data && 'pages' in data.query) {
                   pages = data.query.pages;
                 } else {
@@ -652,6 +655,9 @@
                 }
                 if (searchQuery !== null) {
                   selection = foundPages;
+                }
+                if (selection.length == 0) {
+                    mediaList.appendChild(document.createTextNode('No matches'));
                 }
                 selection.forEach(function(title) {
                     var imageinfo = mediaItems[title];
