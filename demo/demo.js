@@ -370,7 +370,7 @@
         }
         if (sourceMode == 'motd') {
             searchQuery = 'filetype:video incategory:"Media of the Day" ' + filterString;
-        } else if (sourceMode = 'commons') {
+        } else if (sourceMode == 'commons') {
             searchQuery = 'filetype:video ' + filterString;
         } else if (sourceMode == 'blender') {
             processList([
@@ -418,16 +418,6 @@
         } else if (sourceMode == 'highfps') {
             processList([
                 [
-                    "File:Spectator Mode for Job Simulator - a new way to display social VR footage.webm",
-                    '1080p60',
-                    'VR game footage'
-                ],
-                [
-                    "File:ManifoldGarden BRoll01 E3 V01.webm",
-                    '1080p60',
-                    'game footage'
-                ],
-                [
                     "File:Big Buck Bunny 4K.webm",
                     '2250p60',
                     'animation (has 1000fps bug)'
@@ -446,6 +436,36 @@
                     "File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
                     '1080p59.94',
                     'live action'
+                ],
+                [
+                    "File:President Obama Sings \"Sweet Home Chicago\".webm",
+                    '720p59.94',
+                    'live action'
+                ],
+                [
+                    "File:Inside the White House- The Kitchen Garden.webm",
+                    '720p59.94',
+                    'live action, mix of sources'
+                ],
+                [
+                    "File:Spectator Mode for Job Simulator - a new way to display social VR footage.webm",
+                    '1080p60',
+                    'VR game footage'
+                ],
+                [
+                    "File:ManifoldGarden BRoll01 E3 V01.webm",
+                    '1080p60',
+                    'game footage'
+                ],
+                [
+                    "File:Project CARS - Game of the Year Edition Launch Trailer.webm",
+                    '1080p60',
+                    'game footage'
+                ],
+                [
+                    "File:GRID 2 - Demolition Derby (Trailer).webm",
+                    '1080p60',
+                    'game footage'
                 ]
             ]);
         } else if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
