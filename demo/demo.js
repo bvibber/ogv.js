@@ -243,67 +243,6 @@
         });
     }
 
-    function fetchMediaList(callback) {
-        function pad00(n) {
-            if (n < 10) {
-                return '0' + n;
-            } else {
-                return '' + n;
-            }
-        }
-
-        var today = new Date(),
-            year = 2016,
-            month = 9,
-            day = 20; // where we left off in motd.js, @fixme use live info
-
-        var input = '';
-        while (true) {
-            if ((year > today.getUTCFullYear()) ||
-                (year == today.getUTCFullYear() && month > (today.getUTCMonth() + 1)) ||
-                (year == today.getUTCFullYear() && month == (today.getUTCMonth() + 1) && day > today.getUTCDate())) {
-                break;
-            }
-            var ymd = year +
-                    '-' +
-                    pad00(month) +
-                    '-' +
-                    pad00(day);
-            var line = ymd + '|{{Motd/' + ymd + '}}\n';
-            input += line;
-
-            day++;
-            if (day > 31) {
-                day = 1;
-                month++;
-                if (month > 12) {
-                    month = 1;
-                    year++;
-                }
-            }
-        }
-
-        commonsApi({
-            action: 'expandtemplates',
-            text: input
-        }, function(data, err) {
-            var output = data.expandtemplates['*'],
-                lines = output.split('\n');
-            lines.forEach(function(line) {
-                var bits = line.split('|'),
-                    date = bits[0],
-                    filename = bits[1];
-                if (filename && !filename.match(/\.gif$/i)) {
-                    //console.log(filename);
-                    motd[date] = filename;
-                } else {
-                    //console.log('motd update skipping ' + filename);
-                }
-            });
-            callback();
-        });
-    }
-
     var container = document.getElementById('player'),
         videoChooser = document.getElementById('video-chooser'),
         selectedTitle = null,
@@ -412,6 +351,7 @@
         }
 
         var selection = [],
+            searchQuery = null,
             frameRates = {},
             descriptions = {};
         
@@ -429,16 +369,7 @@
             });
         }
         if (sourceMode == 'motd') {
-            var max = 40, list = [];
-            for (var day in motd) {
-                if (motd.hasOwnProperty(day)) {
-                    var title = motd[day];
-                    if (passFilter(title)) {
-                        list.push('File:' + motd[day]);
-                    }
-                }
-            }
-            selection = list.reverse().slice(0, max);
+            searchQuery = 'filetype:video incategory:"Media of the Day" ' + filterString;
         } else if (sourceMode == 'blender') {
             processList([
                 [
@@ -676,32 +607,51 @@
 
         mediaList.innerHTML = '';
 
-        if (selection.length == 0) {
+        if (selection.length == 0 && searchQuery == null) {
             mediaList.appendChild(document.createTextNode('No matches'));
             return;
         }
 
         chooserState++;
         var state = chooserState;
-        commonsApi({
+        var apiCall = {
             action: 'query',
             prop: 'imageinfo',
             iiprop: 'url|size',
             iiurlwidth: 128 * devicePixelRatio,
             iiurlheight: 128 * devicePixelRatio,
-            titles: selection.join('|')
-        }, function(data) {
+        };
+        if (searchQuery == null) {
+          apiCall.titles = selection.join('|');
+        } else {
+          apiCall.generator = 'search';
+          apiCall.gsrsearch = searchQuery;
+          apiCall.gsrnamespace = 6;
+        }
+        
+        commonsApi(apiCall, function(data) {
             if (state == chooserState) {
-                var pages = data.query.pages,
-                    mediaItems = {};
+                var pages,
+                    mediaItems = {},
+                    foundPages = [];
+                console.log(data);
+                if ('query' in data && 'pages' in data.query) {
+                  pages = data.query.pages;
+                } else {
+                  pages = [];
+                }
                 for (var pageId in pages) {
                     if (pages.hasOwnProperty(pageId)) {
                         var page = pages[pageId];
                         if (page.imageinfo) {
                             var imageinfo = page.imageinfo[0];
                             mediaItems[page.title] = imageinfo;
+                            foundPages.push(page.title);
                         }
                     }
+                }
+                if (searchQuery !== null) {
+                  selection = foundPages;
                 }
                 selection.forEach(function(title) {
                     var imageinfo = mediaItems[title];
@@ -1102,9 +1052,6 @@
     var selectedTitle = getDefault();
     //showChooser();
     showVideo();
-    fetchMediaList(function() {
-        console.log('media list updated');
-    });
 
     function stopVideo() {
         if (player) {

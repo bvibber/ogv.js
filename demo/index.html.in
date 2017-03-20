@@ -168,7 +168,6 @@
 
 	<script src="lib/ogv.js?version=OGV_VERSION"></script>
 	<script src="lib/CortadoPlayer.js?version=OGV_VERSION"></script>
-	<script src="motd.js?version=OGV_VERSION"></script>
 	<script src="demo.js?version=OGV_VERSION"></script>
 
 </body>

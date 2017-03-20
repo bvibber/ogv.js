@@ -308,7 +308,6 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/ajax-loader.gif \
                         build/demo/demo.js \
                         build/demo/iconfont.css \
-                        build/demo/motd.js \
                         build/demo/benchmark.html \
                         build/demo/minimal.html \
                         build/demo/media/ehren-paper_lights-96.opus \
@@ -335,10 +334,6 @@ build/demo/demo.js : $(DEMO_DIR)/demo.js $(DEMO_DIR)/benchmark.js $(DEMO_DIR)/co
 build/demo/iconfont.css : $(DEMO_DIR)/iconfont.css
 	test -d build/demo || mkdir -p build/demo
 	cp $(DEMO_DIR)/iconfont.css build/demo/iconfont.css
-
-build/demo/motd.js : $(DEMO_DIR)/motd.js
-	test -d build/demo || mkdir -p build/demo
-	cp $(DEMO_DIR)/motd.js build/demo/motd.js
 
 build/demo/benchmark.html : $(DEMO_DIR)/benchmark.html
 	test -d build/demo || mkdir -p build/demo

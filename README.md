@@ -319,7 +319,7 @@ Currently Firefox and Chrome are the only release versions of browsers that supp
 Building ogv.js is known to work on Mac OS X and Linux (tested Ubuntu 15.04).
 
 1. You will need autoconf, automake, libtool, pkg-config, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
-2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently using the 1.34.1 SDK release for distribution builds.
+2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently using the incoming branch (of what will be 1.38) for distribution builds for latest WASM support.
 3. `git submodule update --init`
 4. Run `npm install` to install build utilities
 5. Run `make js` to configure and build the libraries and the C wrapper
