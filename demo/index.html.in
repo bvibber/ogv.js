@@ -30,7 +30,7 @@
 					<option value="js">JavaScript</option>
 					<option value="js-noworker">JS no Worker</option>
 					<option value="js-cpu">JS no WebGL</option>
-					<!-- <option value="js-mt">JS multithreaded</option> -->
+					<option value="js-mt">JS multithreaded</option>
 					<option value="wasm">Web Assembly</option>
 					<option value="wasm-noworker">WASM no Worker</option>
 					<option value="native">native</option>

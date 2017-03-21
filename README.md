@@ -15,6 +15,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * experimental Web Assembly builds of all modules
 * `error` property now returns an `OGVMediaError` object instead of string
 * decode pipeline up to 3 frames deep to aid in momentary spikes
+* experimental multithreaded JS builds for VP8 and VP9
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
@@ -70,6 +71,7 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * GPU accelerated decoding: no
 * SIMD acceleration: no
 * Web Assembly: yes (experimental; set `options.wasm` to `true`)
+* multithreaded VP8, VP9: yes (experimental; set `options.threading` to `true`; requires `SharedArrayBuffer`)
 * controls: no (currently provided by demo or other UI harness)
 
 Ogg files are fairly well supported, but WebM is still experimental and is disabled by default.
@@ -86,7 +88,7 @@ The API isn't quite complete, but works pretty well.
 
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
-The primary target browsers are (testing 360p/30fps):
+The primary target browsers are (testing 360p/30fps and up):
 * Safari 6.1/7/8/9/10 on Mac OS X 10.7-10.11
 * Safari on iOS 8/9/10 64-bit
 * Edge on Windows 10 desktop/tablet
@@ -190,16 +192,17 @@ These entry points may be loaded directly from a script element, or concatenated
 Further code modules are loaded at runtime, which must be available with their defined names together in a directory. If the files are not hosted same-origin to the web page that includes them, you will need to set up appropriate CORS headers to allow loading of the worker JS modules.
 
 Dynamically loaded assets:
-* `ogv-worker-audio.js` and `ogv-worker-video.js` are Worker entry points, used to run video and audio decoders in the background.
+* `ogv-worker-audio.js`, `ogv-worker-video.js`, and `pthread-main.js` are Worker entry points, used to run video and audio decoders in the background.
 * `ogv-demuxer-ogg.js` is used in playing .ogg, .oga, and .ogv files.
 * `ogv-demuxer-webm.js` is used in playing .webm files.
 * `ogv-decoder-audio-vorbis.js` and `ogv-decoder-audio-opus.js` are used in playing both Ogg and WebM files containing audio.
 * `ogv-decoder-video-theora.js` is used in playing .ogg and .ogv video files.
 * `ogv-decoder-video-vp8.js` and `ogv-decoder-video-vp9.js` are used in playing .webm video files.
 * `*-wasm.js` and `*-wasm.wasm` files are the Web Assembly versions of the above modules.
+* `*-mt.js` are the multithreaded versions of some of the above modules.
 * `dynamicaudio.swf` is the Flash audio shim, used for Internet Explorer 10/11.
 
-If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
+If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM. Web Assembly and multithreaded modules are experimental and can be left out if not enabled in your runtime options.
 
 
 ## Performance
@@ -297,6 +300,8 @@ Beware that performance of WebM VP8 is much slower than Ogg Theora, and VP9 is s
 
 For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblocking filter) which will sacrifice quality modestly. When encoding with ffmpeg, this is the `-profile:v 1` option to the `libvpx` codec.
 
+It is also recommended to use the `-slices` option for VP8, or `-tile-columns` for VP9, to maximize ability to use multithreaded decoding when available.
+
 
 ## Upstream library notes
 
@@ -307,11 +312,26 @@ The Ogg Skeleton library (libskeleton) is a bit ... unfinished and is slightly m
 
 ## Web Assembly
 
-Web Assembly (WASM) versions of the emscripten cross-compiled modules are also included, used if `options.wasm` is true.
+Experimental Web Assembly (WASM) versions of the emscripten cross-compiled modules are also included, used if `options.wasm` is true.
 
 The WASM versions of the modules are more compact than the cross-compiled asm.js-style JavaScript, and thus should download faster. Some browsers may also compile the module differently, providing more consistent performance at the beginning of playback.
 
 Currently Firefox and Chrome are the only release versions of browsers that support Web Assembly, but it's available behind the 'experimental JS options' flag in Edge preview builds and should eventually come to Safari.
+
+If you are making a slim build and will not use the `wasm` option, you can leave out the `*-wasm.js` and `*-wasm.wasm` files.
+
+
+## Multithreading
+
+Experimental multithreaded VP8 and VP9 decoding up to 4 cores is available for VP8 and VP9 video, used if `options.threading` is true. This requires browser support for the incomplete `SharedArrayBuffer` and `Atomics` APIs, currently available in Firefox developer & nightly builds and Safari Technical Preview, and Chrome behind a flag.
+
+Threading is not currently compatible with Web Assembly.
+
+Speedups will only be noticeable when using the "slices" or "token partitions" option for VP8 encoding, or the "tile columns" option for VP9 encoding.
+
+Currently, getting a successful multithreaded build requires a [patch to the emscripten compiler](https://github.com/kripken/emscripten/pull/5016); without this patch, the resulting multithreaded modules will build but fail to initialize correctly.
+
+If you are making a slim build and will not use the `threading` option, you can leave out the `*-mt.js` files, as well as `pthread-main.js`.
 
 
 ## Building JS components
@@ -319,7 +339,7 @@ Currently Firefox and Chrome are the only release versions of browsers that supp
 Building ogv.js is known to work on Mac OS X and Linux (tested Ubuntu 15.04).
 
 1. You will need autoconf, automake, libtool, pkg-config, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
-2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently using the incoming branch (of what will be 1.38) for distribution builds for latest WASM support.
+2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently using the incoming branch (of what will be 1.38) for distribution builds for latest WASM support, plus [multithreading patch](https://github.com/kripken/emscripten/pull/5016)
 3. `git submodule update --init`
 4. Run `npm install` to install build utilities
 5. Run `make js` to configure and build the libraries and the C wrapper
