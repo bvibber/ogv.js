@@ -25,17 +25,12 @@ static vpx_codec_iface_t *vpxDecoder;
 
 #ifdef __EMSCRIPTEN_PTHREADS__
 
-static enum {
-	STATE_IDLE,
-	STATE_BUSY
-} main_thread_state = STATE_IDLE;
-
 static double cpu_time = 0.0;
+static int busy = 0;
 
 static pthread_t decode_thread;
 static pthread_mutex_t decode_mutex; // to hold critical section
-static pthread_mutex_t decode_cond_mutex; // to hold for the below
-static pthread_cond_t decode_cond; // to trigger on new input
+static pthread_cond_t ping_cond; // to trigger on new input
 
 typedef struct {
 	const char *data;
@@ -81,8 +76,7 @@ void ogv_video_decoder_init() {
 		printf("Error launching decode thread: %d\n", ret);
 	}
 	pthread_mutex_init(&decode_mutex, NULL);
-	pthread_mutex_init(&decode_cond_mutex, NULL);
-	pthread_cond_init(&decode_cond, NULL);
+	pthread_cond_init(&ping_cond, NULL);
 #endif
 }
 
@@ -145,17 +139,19 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 	decode_queue[decode_queue_end].data_len = data_len;
 	decode_queue_end = (decode_queue_end + 1) % decode_queue_size;
 
-	pthread_cond_signal(&decode_cond);
+	pthread_cond_signal(&ping_cond);
 	pthread_mutex_unlock(&decode_mutex);
 	return 1;
 }
 
-static void decode_thread_return() {
-	pthread_mutex_lock(&decode_mutex);
+static void main_thread_return() {
 	int ret = process_frame_return();
-	main_thread_state = STATE_IDLE;
+
+	pthread_mutex_lock(&decode_mutex);
 	double delta = cpu_time;
 	cpu_time = 0;
+	busy = 0;
+	pthread_cond_signal(&ping_cond);
 	pthread_mutex_unlock(&decode_mutex);
 
 	ogvjs_callback_async_complete(ret, delta);
@@ -163,32 +159,25 @@ static void decode_thread_return() {
 
 static void *decode_thread_run(void *arg) {
 	while (1) {
-		int work_to_do = 0;
-		decode_queue_t item;
 		pthread_mutex_lock(&decode_mutex);
-		if (main_thread_state == STATE_IDLE && decode_queue_end != decode_queue_start) {
-			item = decode_queue[decode_queue_start];
-			work_to_do = 1;
-			decode_queue_start = (decode_queue_start + 1) % decode_queue_size;
+		while (busy || decode_queue_end == decode_queue_start) {
+			pthread_cond_wait(&ping_cond, &decode_mutex);
 		}
+		busy = 1;
+		decode_queue_t item;
+		item = decode_queue[decode_queue_start];
+		decode_queue_start = (decode_queue_start + 1) % decode_queue_size;
 		pthread_mutex_unlock(&decode_mutex);
 
-		if (work_to_do) {
-			double start = emscripten_get_now();
-			process_frame_decode(item.data, item.data_len);
-			double delta = emscripten_get_now() - start;
+		double start = emscripten_get_now();
+		process_frame_decode(item.data, item.data_len);
+		double delta = emscripten_get_now() - start;
 
-			pthread_mutex_lock(&decode_mutex);
-			main_thread_state = STATE_BUSY;
-			cpu_time += delta;
-			pthread_mutex_unlock(&decode_mutex);
+		pthread_mutex_lock(&decode_mutex);
+		cpu_time += delta;
+		pthread_mutex_unlock(&decode_mutex);
 
-			emscripten_sync_run_in_main_runtime_thread_(EM_FUNC_SIG_V, decode_thread_return);
-		} else {
-			pthread_mutex_lock(&decode_mutex);
-			pthread_cond_wait(&decode_cond, &decode_mutex);
-			pthread_mutex_unlock(&decode_mutex);
-		}
+		emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_V, main_thread_return);
 	}
 }
 
