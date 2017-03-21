@@ -14,7 +14,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -s VERBOSE=1 \
   -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
   -s USE_PTHREADS=1 \
-	-s PTHREAD_POOL_SIZE=5 \
+  -s PTHREAD_POOL_SIZE=1 \
   -s NO_EXIT_RUNTIME=1 \
   -s TOTAL_MEMORY=33554432 \
   -s EXPORT_NAME="'OGVDecoderVideoVP9MT'" \
@@ -26,6 +26,6 @@ EMCC_FAST_COMPILER=1 emcc \
   --js-library src/js/modules/ogv-decoder-video-callbacks.js \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-decoder-video.js \
-	-D OGV_VP9 \
+  -D OGV_VP9 \
   src/c/ogv-decoder-video-vpx.c \
   -o build/ogv-decoder-video-vp9-mt.js

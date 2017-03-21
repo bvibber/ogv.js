@@ -46,7 +46,7 @@ static void *decode_thread_run(void *arg);
 
 #endif
 
-void ogv_video_decoder_init() {
+static void do_init() {
 
 #ifdef OGV_VP9
 	vpxDecoder = vpx_codec_vp9_dx();
@@ -69,7 +69,9 @@ void ogv_video_decoder_init() {
 	cfg.w = 0; // ???
 	cfg.h = 0;
 	vpx_codec_dec_init(&vpxContext, vpxDecoder, &cfg, 0);
+}
 
+void ogv_video_decoder_init() {
 #ifdef __EMSCRIPTEN_PTHREADS__
 	int ret = pthread_create(&decode_thread, NULL, decode_thread_run, NULL);
 	if (ret) {
@@ -77,6 +79,8 @@ void ogv_video_decoder_init() {
 	}
 	pthread_mutex_init(&decode_mutex, NULL);
 	pthread_cond_init(&ping_cond, NULL);
+#else
+  do_init();
 #endif
 }
 
@@ -158,6 +162,7 @@ static void main_thread_return() {
 }
 
 static void *decode_thread_run(void *arg) {
+	do_init();
 	while (1) {
 		pthread_mutex_lock(&decode_mutex);
 		while (busy || decode_queue_end == decode_queue_start) {
