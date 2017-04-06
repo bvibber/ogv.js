@@ -381,6 +381,8 @@
             searchQuery = 'filetype:video incategory:"Media of the Day" ' + filterString;
         } else if (sourceMode == 'commons') {
             searchQuery = 'filetype:video ' + filterString;
+        } else if (sourceMode == 'commons-audio') {
+          searchQuery = 'filetype:audio ' + filterString;
         } else if (sourceMode == 'blender') {
             processList([
                 [
