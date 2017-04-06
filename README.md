@@ -299,7 +299,7 @@ To enable, set `enableWebM: true` in your `options` array.
 
 Beware that performance of WebM VP8 is much slower than Ogg Theora, and VP9 is slower still.
 
-For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblocking filter) which will sacrifice quality modestly. When encoding with ffmpeg, this is the `-profile:v 1` option to the `libvpx` codec.
+For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblocking filter) which will sacrifice quality modestly, mainly in high-motion scenes. When encoding with ffmpeg, this is the `-profile:v 1` option to the `libvpx` codec.
 
 It is also recommended to use the `-slices` option for VP8, or `-tile-columns` for VP9, to maximize ability to use multithreaded decoding when available.
 
@@ -310,21 +310,23 @@ We've experimented with tremor (libivorbis), an integer-only variant of libvorbi
 
 The Ogg Skeleton library (libskeleton) is a bit ... unfinished and is slightly modified here.
 
+libvpx is slightly modified to work around emscripten threading limitations in the VP8 decoder.
+
 
 ## Web Assembly
 
 Experimental Web Assembly (WASM) versions of the emscripten cross-compiled modules are also included, used if `options.wasm` is true.
 
-The WASM versions of the modules are more compact than the cross-compiled asm.js-style JavaScript, and thus should download faster. Some browsers may also compile the module differently, providing more consistent performance at the beginning of playback.
+The WASM versions of the modules are more compact than the cross-compiled asm.js-style JavaScript, and should download and parse faster. Some browsers may also compile the module differently, providing more consistent performance at the beginning of playback.
 
-Currently Firefox and Chrome are the only release versions of browsers that support Web Assembly, but it's available behind the 'experimental JS options' flag in Edge preview builds and should eventually come to Safari.
+Currently Firefox and Chrome are the only release versions of browsers that support Web Assembly, but it's available in Safari Technical Preview and behind the 'experimental JS options' flag in Edge in Windows 10 version 1703.
 
 If you are making a slim build and will not use the `wasm` option, you can leave out the `*-wasm.js` and `*-wasm.wasm` files.
 
 
 ## Multithreading
 
-Experimental multithreaded VP8 and VP9 decoding up to 4 cores is available for VP8 and VP9 video, used if `options.threading` is true. This requires browser support for the incomplete `SharedArrayBuffer` and `Atomics` APIs, currently available in Safari 10.1 / iOS 10.3 and in Firefox developer & nightly builds, and in Chrome behind a flag.
+Experimental multithreaded VP8 and VP9 decoding up to 4 cores is available for VP8 and VP9 video, used if `options.threading` is true. This requires browser support for the new `SharedArrayBuffer` and `Atomics` APIs, currently available in Safari 10.1 / iOS 10.3 and in Firefox developer & nightly builds, and in Chrome behind a flag.
 
 Threading is not currently compatible with Web Assembly.
 
