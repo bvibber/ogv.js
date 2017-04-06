@@ -58,7 +58,9 @@ var OGVVersion = __OGV_FULL_VERSION__;
 	function urlForScript(scriptName) {
 		if (scriptName) {
 			var base = OGVLoader.base;
-			if (base) {
+			if (base === undefined) {
+				base = '';
+			} else {
 				base += '/';
 			}
 			return base + scriptName + '?version=' + encodeURIComponent(OGVVersion);
@@ -118,7 +120,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 
 			// for browser, try to autodetect
 			var scriptNodes = document.querySelectorAll('script'),
-				regex = /^(?:(.*)\/)ogv(?:-support)?\.js(?:\?|#|$)/,
+				regex = /^(?:|(.*)\/)ogv(?:-support)?\.js(?:\?|#|$)/,
 				path,
 				matches;
 			for (var i = 0; i < scriptNodes.length; i++) {
@@ -131,11 +133,13 @@ var OGVVersion = __OGV_FULL_VERSION__;
 				}
 			}
 
+			return undefined; // current dir
+
 		} else {
 
 			// for workers, assume current directory
 			// if not a worker, too bad.
-			return '';
+			return undefined;
 
 		}
 	}

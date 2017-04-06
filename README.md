@@ -16,6 +16,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * `error` property now returns an `OGVMediaError` object instead of string.
 * Decode pipeline up to 3 frames deep to aid in momentary spikes.
 * Experimental multithreaded JS builds for VP8 and VP9; set `threading: true` in options to force on.
+* Fixed bad autodetection of files in root dir
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
