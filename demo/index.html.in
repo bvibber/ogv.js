@@ -145,9 +145,11 @@
 		<div id="media-chooser">
 			<div id=media-source-block>
 				<select id=media-source>
+					<option value=constrained>Demo set (VP8/VP9 -crf 10)</option>
 					<option value=motd>Wikimedia Commons Media of the Day</option>
 					<option value=commons>Wikimedia Commons all videos</option>
 					<option value=blender>Blender open movies</option>
+					<!--
 					<option value=highfps>60fps high frame rate</option>
 					<option value=shortlist>VBR transcode tests</option>
 					<option value=shortlist-cbr>CBR/soft-target tests</option>
@@ -155,6 +157,7 @@
 					<option value=shortlist-sliced0>VP8 -slices=n</option>
 					<option value=shortlist-sliced>VP8 -slices=n -profile=1</option>
 					<option value=shortlist-vp9>VP9 tests</option>
+					-->
 				</select>
 			</div>
 			<form id="searchform">

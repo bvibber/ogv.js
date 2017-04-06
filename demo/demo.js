@@ -103,6 +103,9 @@
         if (sourceMode == 'shortlist-sliced0') {
             baseUrl = 'https://media-streaming.wmflabs.org/sliced0';
         }
+        if (sourceMode == 'constrained') {
+            baseUrl = 'https://media-streaming.wmflabs.org/constrained';
+        }
         return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
     }
 
@@ -154,7 +157,7 @@
 
             // Build entries for the transcodes
             var sourceMode = document.querySelector('#media-source').value;
-            if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr' || sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9' || sourceMode == 'shortlist-sliced'|| sourceMode == 'shortlist-sliced0') {
+            if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr' || sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9' || sourceMode == 'shortlist-sliced'|| sourceMode == 'shortlist-sliced0' || sourceMode == 'constrained') {
                 var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
                     widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
                     formats = ['ogv', 'webm'];
@@ -166,12 +169,18 @@
                     sizes = [160, 240, 360, 480, 720, 1080];
                     formats = ['vp9.webm'];
                 }
+                if (sourceMode == 'constrained') {
+                    formats = ['ogv', 'lowcpu.webm', 'webm', 'vp9.webm'];
+                }
                 sizes.forEach(function(size, i) {
                     formats.forEach(function(format) {
                         // fixme: tweak if necessary
                         var width = widths[i],
                             aspect = imageinfo.width / imageinfo.height,
                             height = Math.round(width / aspect);
+                        if (sourceMode === 'constrained' && width > 1920 && format === 'ogv') {
+                            return;
+                        }
                         if (width <= imageinfo.width) {
                             sources.push({
                                 key: size + 'p.' + format,
@@ -623,6 +632,154 @@
                 ]
             ];
             processList(shortlist);
+        } else if (sourceMode == 'constrained') {
+          var shortlist = [
+              // Space stuff
+              [
+                  "File:Curiosity's Seven Minutes of Terror.ogv",
+                  '720p23.98',
+                  'live-action with CG elements'
+              ],
+              [
+                  "File:RED 4K Video of Colorful Liquid in Space.webm",
+                  '2160p23.98',
+                  'UHD, modest motion'
+              ],
+              [
+                  "File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
+                  '2160p23.98',
+                  'UHD, mix of low and high motion'
+              ],
+              [
+                  "File:Here's to Engineering.webm",
+                  '2160p23.98',
+                  'UHD, low motion'
+              ],
+
+              // Blender movies
+              [
+                  "File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
+                  '1080p24',
+                  '3d animated'
+              ],
+              [
+                  "File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
+                  '2160p24',
+                  'cartoon; some motion spikes'
+              ],
+              [
+                  "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+                  '2160p24',
+                  'sci-fi; mix of scene types'
+              ],
+
+              // Wikipedia stuff
+              /*
+              // thumbnail broken
+              [
+                  "File:Women in botany and Wikipedia.webm",
+                  '2160p24',
+                  'UHD source'
+              ],*/
+              [
+                  "File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
+                  '1080p23.98',
+                  'low motion with some spikes'
+              ],
+              [
+                  "File:How Open Access Empowered a 16-Year-Old to Make Cancer Breakthrough.ogv",
+                  '1080p23.98',
+                  'talking heads; modest motion'
+              ],
+              [
+                  "File:Knowledge for Everyone (short cut).webm",
+                  '1080p23.98',
+                  'mix of scenes'
+              ],
+              [
+                  "File:Share-a-Fact on the Official Wikipedia Android app.webm",
+                  '1080p29.97',
+                  'short animation, some motion spikes'
+              ],
+              [
+                  "File:Sneak Preview - Wikipedia VisualEditor.webm",
+                  '1080p23.98',
+                  'modest motion with spikes'
+              ],
+              [
+                  "File:The Impact Of Wikipedia.webm",
+                  '1080p23.98',
+                  'low motion'
+              ],
+              [
+                  "File:WikiArabia tech meetup in Ramallah 2016.webm",
+                  '1080p24',
+                  'modest motion'
+              ],
+              [
+                  "File:Wikipedia Edit 2015.webm",
+                  '1080p24',
+                  'animated, many dupe frames'
+              ],
+              [
+                  "File:Wiki Makes Video Intro 4 26.webm",
+                  '720p59.94',
+                  'high fps, mix of scenes'
+              ],
+
+              // Misc stuff
+              [
+                  "File:Tawakkol Karman (English).ogv",
+                  '1080p50',
+                  'high fps, modest motion'
+              ],
+              [
+                  "File:Eisbach surfen v1.ogv",
+                  '1080p30',
+                  'high motion'
+              ],
+              [
+                  "File:FEZ trial gameplay HD.webm",
+                  '720p30',
+                  'animation'
+              ],
+              [
+                  "File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
+                  '1080p59.94',
+                  'high fps, moderate motion'
+              ],
+              [
+                  "File:Snowdonia by drone.webm",
+                  '1080p30',
+                  'mix of high and low motion scenes'
+              ],
+              [
+                  "File:Stugl,aerial video.webm",
+                  '1080p60',
+                  'high fps, high motion'
+              ],
+              [
+                  "File:President Obama Sings \"Sweet Home Chicago\".webm",
+                  '720p59.94',
+                  'live action'
+              ],
+              [
+                  "File:Inside the White House- The Kitchen Garden.webm",
+                  '720p59.94',
+                  'live action, mix of sources'
+              ],
+              [
+                  "File:Spectator Mode for Job Simulator - a new way to display social VR footage.webm",
+                  '1080p60',
+                  'VR game footage'
+              ],
+              [
+                  "File:Project CARS - Game of the Year Edition Launch Trailer.webm",
+                  '1080p60',
+                  'game footage'
+              ]
+          ];
+          processList(shortlist);
         } else {
             throw new Error('unexpected sourceMode');
         }
@@ -799,7 +956,7 @@
         hash += '&size=' + sizeKey;
 
         var mode = document.getElementById('media-source').value;
-        if (mode == 'motd') {
+        if (mode == 'constrained') {
             // nothin
         } else {
             hash += '&source=' + mode;
@@ -855,6 +1012,8 @@
                         return res + ' Ogg Theora';
                     } else if (format == 'webm') {
                         return res + ' WebM VP8';
+                    } else if (format == 'lowcpu.webm') {
+                        return res + ' WebM VP8 low-CPU';
                     } else if (format == 'vp9.webm') {
                         return res + ' WebM VP9';
                     } else {
