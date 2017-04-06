@@ -295,9 +295,15 @@ var OGVPlayer = function(options) {
 		// the very beginning of playback when we haven't buffered any data yet.
 		// @todo pre-buffer a little data to avoid needing this
 		audioFeeder.onstarved = function () {
-			log('onstarved');
-			stopPlayback();
-			prebufferingAudio = true;
+			if (dataEnded) {
+				// Probably end of file.
+				// Do nothing!
+				log('onstarved: appear to have reached end of audio');
+			} else {
+				log('onstarved: halting audio due to starvation');
+				stopPlayback();
+				prebufferingAudio = true;
+			}
 			if (isProcessing()) {
 				// We're waiting on input or other async processing;
 				// we'll get triggered later.
