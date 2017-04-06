@@ -7,15 +7,15 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.4.0 - 2017-??-??
-* fastSeek() is now fast
-* VP9 base profile support in WebM container
+1.4.0 - 2017-04-06
+* fastSeek() is now fast; seeks to first keyframe found.
+* VP9 base profile support in WebM container (8-bit 4:2:0 only).
 * Safari no longer complains about missing es6-promise.map source map
-* smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. (To restore previous behavior, set sync='delay-audio' in options.)
-* experimental Web Assembly builds of all modules
-* `error` property now returns an `OGVMediaError` object instead of string
-* decode pipeline up to 3 frames deep to aid in momentary spikes
-* experimental multithreaded JS builds for VP8 and VP9
+* Smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. To restore previous behavior, set `sync: 'delay-audio'` in options.
+* Experimental Web Assembly builds of all modules; set `wasm: true` in options to force on.
+* `error` property now returns an `OGVMediaError` object instead of string.
+* Decode pipeline up to 3 frames deep to aid in momentary spikes.
+* Experimental multithreaded JS builds for VP8 and VP9; set `threading: true` in options to force on.
 
 1.3.1 - 2017-02-24
 * Fix for seeking before load completes
@@ -323,7 +323,7 @@ If you are making a slim build and will not use the `wasm` option, you can leave
 
 ## Multithreading
 
-Experimental multithreaded VP8 and VP9 decoding up to 4 cores is available for VP8 and VP9 video, used if `options.threading` is true. This requires browser support for the incomplete `SharedArrayBuffer` and `Atomics` APIs, currently available in Firefox developer & nightly builds and Safari Technical Preview, and Chrome behind a flag.
+Experimental multithreaded VP8 and VP9 decoding up to 4 cores is available for VP8 and VP9 video, used if `options.threading` is true. This requires browser support for the incomplete `SharedArrayBuffer` and `Atomics` APIs, currently available in Safari 10.1 / iOS 10.3 and in Firefox developer & nightly builds, and in Chrome behind a flag.
 
 Threading is not currently compatible with Web Assembly.
 
