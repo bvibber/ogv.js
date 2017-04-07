@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.4.1 - 2017-04-07
+* fix for seek shortly after initialization
+* fix for some missing instance constants
+
 1.4.0 - 2017-04-06
 * fastSeek() is now fast; seeks to first keyframe found.
 * VP9 base profile support in WebM container (8-bit 4:2:0 only).

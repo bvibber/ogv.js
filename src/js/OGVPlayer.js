@@ -172,6 +172,8 @@ var OGVPlayer = function(options) {
 	var self = document.createElement('ogvjs');
 	self.className = instanceId;
 
+	extend(self, constants);
+
 	canvas.style.position = 'absolute';
 	canvas.style.top = '0';
 	canvas.style.left = '0';
@@ -622,8 +624,8 @@ var OGVPlayer = function(options) {
 			return;
 		}
 
-		if (!stream.seekable) {
-			throw new Error('Cannot bisect a non-seekable stream');
+		if (stream && !stream.seekable) {
+			throw new Error('Cannot seek a non-seekable stream');
 		}
 
 		function prepForSeek(callback) {
@@ -2544,7 +2546,6 @@ var constants = {
 	HAVE_ENOUGH_DATA: 4
 };
 extend(OGVPlayer, constants);
-extend(OGVPlayer.prototype, constants);
 
 OGVPlayer.instanceCount = 0;
 
