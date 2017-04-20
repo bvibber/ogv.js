@@ -97,24 +97,6 @@ var OGVVersion = __OGV_FULL_VERSION__;
 		}
 	}
 
-	function loadWebAssembly(src, callback) {
-		if (!src.match(/-wasm\.js/)) {
-			callback(null);
-		} else {
-			var wasmSrc = src.replace(/-wasm\.js/, '-wasm.wasm');
-			var xhr = new XMLHttpRequest();
-			xhr.responseType = 'arraybuffer';
-			xhr.onload = function() {
-				callback(xhr.response);
-			};
-			xhr.onerror = function() {
-				callback(null);
-			};
-			xhr.open('GET', wasmSrc);
-			xhr.send();
-		}
-	}
-
 	function defaultBase() {
 		if (typeof global.window === 'object') {
 
@@ -154,27 +136,27 @@ var OGVVersion = __OGV_FULL_VERSION__;
 				return;
 			}
 			var url = urlForClass(className);
-			loadWebAssembly(url, function(wasmBinary) {
-				function wasmClassWrapper(options) {
-					options = options || {};
-					if (wasmBinary !== null) {
-						options.wasmBinary = wasmBinary;
-					}
-					return new global[className](options);
-				}
-				if (typeof global[className] === 'function') {
-					// already loaded!
-					callback(wasmClassWrapper);
-				} else if (typeof global.window === 'object') {
-					loadWebScript(url, function() {
-						callback(wasmClassWrapper);
-					});
-				} else if (typeof global.importScripts === 'function') {
-					// worker has convenient sync importScripts
-					global.importScripts(url);
-					callback(wasmClassWrapper);
-				}
-			});
+			function classWrapper(options) {
+				options = options || {};
+				options.locateFile = function(filename) {
+					// Allow secondary resources like the .wasm payload
+					// to be loaded by the emscripten code.
+					return urlForScript(filename);
+				};
+				return new global[className](options);
+			}
+			if (typeof global[className] === 'function') {
+				// already loaded!
+				callback(classWrapper);
+			} else if (typeof global.window === 'object') {
+				loadWebScript(url, function() {
+					callback(classWrapper);
+				});
+			} else if (typeof global.importScripts === 'function') {
+				// worker has convenient sync importScripts
+				global.importScripts(url);
+				callback(classWrapper);
+			}
 		},
 
 		workerProxy: function(className, callback) {
