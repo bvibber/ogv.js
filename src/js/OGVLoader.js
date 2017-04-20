@@ -219,7 +219,9 @@ var OGVVersion = __OGV_FULL_VERSION__;
 						}
 						// Create the web worker
 						worker = new Worker(URL.createObjectURL(blob));
-						callback(construct);
+						callback(function(options) {
+							return Promise.resolve(new construct(options));
+						})
 					}
 				}
 
@@ -251,7 +253,9 @@ var OGVVersion = __OGV_FULL_VERSION__;
 			} else {
 				// Local URL; load it directly for simplicity.
 				worker = new Worker(workerUrl);
-				callback(construct);
+				callback(function(options) {
+					return Promise.resolve(new construct(options));
+				})
 			}
 		}
 	};

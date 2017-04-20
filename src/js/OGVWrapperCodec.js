@@ -160,15 +160,17 @@ var OGVWrapperCodec = (function(options) {
 		}
 		processing = true;
 		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
-			demuxer = new demuxerClass();
-			demuxer.onseek = function(offset) {
-				if (self.onseek) {
-					self.onseek(offset);
-				}
-			};
-			demuxer.init(function() {
-				processing = false;
-				callback();
+			demuxerClass().then(function(demuxerModule) {
+				demuxer = demuxerModule;
+				demuxer.onseek = function(offset) {
+					if (self.onseek) {
+						self.onseek(offset);
+					}
+				};
+				demuxer.init(function() {
+					processing = false;
+					callback();
+				});
 			});
 		});
 	};
@@ -205,11 +207,13 @@ var OGVWrapperCodec = (function(options) {
 				if (demuxer.audioFormat) {
 					audioOptions.audioFormat = demuxer.audioFormat;
 				}
-				audioDecoder = new audioCodecClass(audioOptions);
-				audioDecoder.init(function() {
-					loadedAudioMetadata = audioDecoder.loadedMetadata;
-					processing = false;
-					callback();
+				audioCodecClass(audioOptions).then(function(decoder) {
+					audioDecoder = decoder;
+					audioDecoder.init(function() {
+						loadedAudioMetadata = audioDecoder.loadedMetadata;
+						processing = false;
+						callback();
+					});
 				});
 			}, {
 				worker: options.worker
@@ -236,11 +240,13 @@ var OGVWrapperCodec = (function(options) {
 				if (options.memoryLimit) {
 					videoOptions.memoryLimit = options.memoryLimit;
 				}
-				videoDecoder = new videoCodecClass(videoOptions);
-				videoDecoder.init(function() {
-					loadedVideoMetadata = videoDecoder.loadedMetadata;
-					processing = false;
-					callback();
+				videoCodecClass(videoOptions).then(function(decoder) {
+					videoDecoder = decoder;
+					videoDecoder.init(function() {
+						loadedVideoMetadata = videoDecoder.loadedMetadata;
+						processing = false;
+						callback();
+					});
 				});
 			}, {
 				worker: options.worker && !options.threading

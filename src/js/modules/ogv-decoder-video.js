@@ -80,21 +80,10 @@ Object.defineProperty(Module, 'processing', {
 // - public methods
 
 Module.init = function(callback) {
-	function finish() {
-		time(function() {
-			Module._ogv_video_decoder_init();
-		});
-		callback();
-	}
-	if (Module.wasmBinary) {
-		// WASM needs to wait for compilation
-		Module.onRuntimeInitialized = function() {
-			finish();
-		};
-	} else {
-		// JS already parsed/runnable
-		finish();
-	}
+	time(function() {
+		Module._ogv_video_decoder_init();
+	});
+	callback();
 };
 
 /**

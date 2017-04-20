@@ -113,11 +113,13 @@ function OGVWorkerSupport(propList, handlers) {
 			options = args[1];
 
 		OGVLoader.loadClass(className, function(classObj) {
-			self.target = new classObj(options);
-			callback();
-			while (pendingEvents.length) {
-				handleEvent(pendingEvents.shift());
-			}
+			classObj(options).then(function(target) {
+				self.target = target;
+				callback();
+				while (pendingEvents.length) {
+					handleEvent(pendingEvents.shift());
+				}
+			});
 		});
 	};
 

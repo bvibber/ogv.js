@@ -126,22 +126,11 @@ Object.defineProperty(Module, 'seekable', {
 // - public methods
 
 Module.init = function(callback) {
-	function finish() {
-		time(function() {
-			Module._ogv_demuxer_init();
-		});
-		callback();
-	}
-	if (Module.wasmBinary) {
-		// WASM needs to wait for compilation
-		Module.onRuntimeInitialized = function() {
-			finish();
-		};
-	} else {
-		// JS already parsed/runnable
-		finish();
-	}
-}
+	time(function() {
+		Module._ogv_demuxer_init();
+	});
+	callback();
+};
 
 /**
  * Queue up some data for later processing...
