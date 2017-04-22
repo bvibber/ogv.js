@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "1.4.1",
+  "version": "1.5.0alpha0",
   "description": "JavaScript media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
