@@ -11,10 +11,9 @@
 #include <nestegg/nestegg.h>
 
 #include "ogv-demuxer.h"
-#include "ogv-buffer-queue.h"
 
 static nestegg        *demuxContext;
-static BufferQueue    *bufferQueue;
+static int64_t         input_pos = 0;
 
 static bool            hasVideo = false;
 static unsigned int    videoTrack = 0;
@@ -39,7 +38,7 @@ enum AppState {
 
 void ogv_demuxer_init() {
     appState = STATE_BEGIN;
-    bufferQueue = bq_init();
+    input_pos = 0;
 }
 
 static void logCallback(nestegg *context, unsigned int severity, char const * format, ...)
@@ -54,13 +53,14 @@ static void logCallback(nestegg *context, unsigned int severity, char const * fo
 
 static int readCallback(void * buffer, size_t length, void *userdata)
 {
-	if (bq_headroom((BufferQueue *)userdata) < length) {
+	if (ogv_input_bytes_available(length) < length) {
 		// End of stream. Demuxer can recover from this if more data comes in!
 		return 0;
 	}
 
-	if (bq_read((BufferQueue *)userdata, buffer, length)) {
+	if (ogv_input_read_bytes(buffer, length)) {
 		// error
+		input_pos += length;
 		return -1;
 	} else {
 		// success
@@ -76,13 +76,14 @@ static int seekCallback(int64_t offset, int whence, void * userdata)
             pos = offset;
             break;
         case SEEK_CUR:
-            pos = ((BufferQueue *)userdata)->pos + offset;
+            pos = input_pos + offset;
             break;
         case SEEK_END: // not implemented
         default:
             return -1;
     }
-    if (bq_seek((BufferQueue *)userdata, pos)) {
+    if (ogv_input_seek(pos)) {
+        input_pos = pos;
         printf("Buffer seek failure in webm demuxer\n");
         return -1;
     } else {
@@ -92,7 +93,7 @@ static int seekCallback(int64_t offset, int whence, void * userdata)
 
 static int64_t tellCallback(void * userdata)
 {
-    return bq_tell((BufferQueue *)userdata);
+    return input_pos;
 }
 
 static nestegg_io ioCallbacks = {
@@ -106,12 +107,12 @@ static nestegg_io ioCallbacks = {
  * Safe read of EBML id or data size int64 from a data stream.
  * @returns byte count of the ebml number on success, or 0 on failure
  */
-static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask_bit)
+static int read_ebml_int64(int64_t *val, int keep_mask_bit)
 {
     // Count of initial 0 bits plus first 1 bit encode total number of bytes.
     // Rest of the bits are a big-endian number.
     char first;
-    if (bq_read(bufferQueue, &first, 1)) {
+    if (ogv_input_read_bytes(&first, 1)) {
         printf("out of bytes at start of field\n");
         return 0;
     }
@@ -135,7 +136,7 @@ static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask
     *val = (unsigned char)first >> shift;
     for (int i = 1; i < byteCount; i++) {
         char next;
-        if (bq_read(bufferQueue, &next, 1)) {
+        if (ogv_input_read_bytes(&next, 1)) {
             printf("out of bytes in field\n");
             return 0;
         }
@@ -147,35 +148,28 @@ static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask
 
 static int readyForNextPacket()
 {
-    int64_t pos = bq_tell(bufferQueue);
+    int64_t pos = input_pos;
     int ok = 0;
     
     int64_t id, size;
     int idSize, sizeSize;
     
-    idSize = read_ebml_int64(bufferQueue, &id, 1);
+    idSize = read_ebml_int64(&id, 1);
     if (idSize) {
         if (id != 0x1c53bb6bLL) {
             // Right now we only care about reading the cues.
             // If used elsewhere, unpack that. ;)
             ok = 1;
         }
-        sizeSize = read_ebml_int64(bufferQueue, &size, 0);
+        sizeSize = read_ebml_int64(&size, 0);
         if (sizeSize) {
-            printf("packet is %llx, size is %lld, headroom %lld\n", id, size, bq_headroom(bufferQueue));
-            if (bq_headroom(bufferQueue) >= size) {
+            printf("packet is %llx, size is %lld, headroom %lld\n", id, size, ogv_input_bytes_available(size));
+            if (ogv_input_bytes_available(size) >= size) {
                 ok = 1;
             }
         }
     }
-    /*
-    if (!ok) {
-        printf("not ready for packet! %lld/%lld %d %d %llx %lld\n", bq_tell(bufferQueue), bq_headroom(bufferQueue), idSize, sizeSize, id, size);
-    } else {
-        printf("ready for packet! %lld/%lld %d %d %llx %lld\n", bq_tell(bufferQueue), bq_headroom(bufferQueue), idSize, sizeSize, id, size);
-    }
-    */
-    bq_seek(bufferQueue, pos);
+    ogv_input_seek(pos);
     return ok;
 }
 
@@ -377,7 +371,7 @@ static int processSeeking()
             int64_t target = bufferQueue->lastSeekTarget;
             bq_flush(bufferQueue);
             bufferQueue->pos = target;
-            ogvjs_callback_seek(target);
+            ogv_input_seek(target);
         }
         return 0;
     } else {
@@ -387,35 +381,27 @@ static int processSeeking()
     }
 }
 
-void ogv_demuxer_receive_input(const char *buffer, int bufsize) {
-    if (bufsize > 0) {
-        bq_append(bufferQueue, buffer, bufsize);
-    }
-}
+static const int startupChunkSize = 256 * 1024;
 
-int ogv_demuxer_process() {
-	if (appState == STATE_BEGIN) {
-        if (bq_headroom(bufferQueue) > 256 * 1024) {
-            return processBegin();
-        } else {
-            // need more data
-            return 0;
-        }
+void ogv_demuxer_demux() {
+    if (appState == STATE_BEGIN) {
+        ogv_input_buffer(startupChunkSize, processBegin);
     } else if (appState == STATE_DECODING) {
-        return processDecoding();
+        processDecoding();
     } else if (appState == STATE_SEEKING) {
         if (readyForNextPacket()) {
-            return processSeeking();
+            processSeeking();
         } else {
+          
             // need more data
             printf("not ready to read the cues\n");
             return 0;
         }
-	} else {
-		// uhhh...
-		printf("Invalid appState in ogv_demuxer_process\n");
+    } else {
+        // uhhh...
+        printf("Invalid appState in ogv_demuxer_process\n");
         return 0;
-	}
+    }
 }
 
 void ogv_demuxer_destroy() {

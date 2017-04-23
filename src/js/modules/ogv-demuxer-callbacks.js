@@ -79,11 +79,41 @@ mergeInto(LibraryManager.library, {
 		return (Module.audioPackets.length > 0) ? 1 : 0;
 	},
 
-	ogvjs_callback_seek: function(offsetLow, offsetHigh) {
-		var offset = offsetLow + offsetHigh * 0x100000000;
-		if (Module.onseek) {
-			Module.onseek(offset);
-		}
+	ogv_input_eof: function() {
+		return Module.stream.eof ? 1 : 0;
+	},
+
+	ogv_input_seekable: function() {
+		return Module.stream.seekable ? 1 : 0;
+	},
+
+	ogv_input_offset: function() {
+		var offset = Module.stream.offset;
+		var offsetLow = offset & 0xffffffff;
+		var offsetHigh = offset - offsetLow;
+		Module.Runtime.setTempRet0(offsetHigh);
+		return offsetLow;
+	},
+
+	ogv_input_bytes_available: function(max) {
+		return Module.stream.bytesAvailable(max);
+	},
+
+	ogv_input_read_bytes(bufferPtr, len) {
+		var dest = Module.HEAPU8.subarray(bufferPtr, bufferPtr + len);
+		var nbytes = Module.stream.readBytes(dest);
+		return nbytes;
+	},
+
+	ogv_input_buffer: function(nbytes, callbackPtr) {
+		Module.stream.buffer(nbytes).then(function(available) {
+			Module.Runtime.dynCall('vi', callbackPtr, [available]);
+		});
+	},
+
+	ogv_input_seek: function(offsetLow, offsetHigh) {
+		var offset = Module.Runtime.makeBigInt(offsetLow, offsetHigh, true);
+		Module.stream.seek(offset);
 	}
 
 });

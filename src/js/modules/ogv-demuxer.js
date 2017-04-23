@@ -125,44 +125,26 @@ Object.defineProperty(Module, 'seekable', {
 
 // - public methods
 
-Module.init = function(callback) {
-	time(function() {
-		Module._ogv_demuxer_init();
+Module.init = function(stream) {
+	return new Promise(function(resolve, reject) {
+		Module.stream = stream;
+		time(function() {
+			Module._ogv_demuxer_init();
+		});
+		resolve();
 	});
-	callback();
 };
 
 /**
- * Queue up some data for later processing...
- *
- * @param ArrayBuffer data
- * @param function callback on completion
+ * Process some input data until packets are found
  */
-Module.receiveInput = function(data, callback) {
-	var ret = time(function() {
-		// Map the ArrayBuffer into emscripten's runtime heap
-		var len = data.byteLength;
-		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
-		Module._ogv_demuxer_receive_input(buffer, len);
+Module.demux = function() {
+	return new Promise(function(resolve, reject) {
+		Module._demuxerCallback = function() {
+			resolve();
+		};
+		Module._ogv_demuxer_demux();
 	});
-	callback();
-};
-
-/**
- * Process previously queued data into packets.
- *
- * 'more' parameter to callback function is 'true' if there
- * are more packets to be processed in the queued data,
- * or 'false' if there aren't.
- *
- * @param {function(more:Boolean)} callback on completion
- */
-Module.process = function(callback) {
-	var ret = time(function() {
-		return Module._ogv_demuxer_process();
-	});
-	callback(!!ret);
 };
 
 Module.dequeueVideoPacket = function(callback) {
