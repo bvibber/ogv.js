@@ -365,8 +365,6 @@ var OGVPlayer = function(options) {
 	var currentSrc = '',
 		stream,
 		streamEnded = false,
-		seekCancel = {},
-		readCancel = {},
 		mediaError = null,
 		dataEnded = false,
 		byteLength = 0,
@@ -571,22 +569,17 @@ var OGVPlayer = function(options) {
 		FAST: "fast"
 	};
 
-	function Cancel(msg) {
-		Error.call(this, msg);
-	}
-	Cancel.prototype = Object.create(Error);
-
 	function seekStream(offset) {
 		if (stream.seeking) {
-			seekCancel.cancel(new Cancel('cancel for new seek'));
+			stream.abort();
 		}
 		if (stream.buffering) {
-			readCancel.cancel(new Cancel('cancel for new seek'));
+			stream.abort();
 		}
 		streamEnded = false;
 		dataEnded = false;
 		ended = false;
-		stream.seek(offset, seekCancel).then(function() {
+		stream.seek(offset).then(function() {
 			readBytesAndWait();
 		}).catch(onStreamError);
 	}
@@ -630,10 +623,10 @@ var OGVPlayer = function(options) {
 
 		function prepForSeek(callback) {
 			if (stream && stream.buffering) {
-				readCancel.cancel(new Cancel('cancel for new seek'));
+				stream.abort();
 			}
 			if (stream && stream.seeking) {
-				seekCancel.cancel(new Cancel('cancel for new seek'));
+				stream.abort();
 			}
 			// clear any queued input/seek-start
 			actionQueue.splice(0, actionQueue.length);
@@ -1621,7 +1614,7 @@ var OGVPlayer = function(options) {
 		// keep i/o size small to reduce CPU impact of demuxing on slow machines
 		// @todo make buffer size larger when packets are larger?
 		var bufferSize = 32768;
-		stream.read(bufferSize, readCancel).then(function(data) {
+		stream.read(bufferSize).then(function(data) {
 			log('got input ' + [data.byteLength]);
 
 			if (data.byteLength) {
@@ -1647,7 +1640,7 @@ var OGVPlayer = function(options) {
 	}
 
 	function onStreamError(err) {
-		if (err instanceof Cancel) {
+		if (err.name === 'AbortError') {
 			// do nothing
 			log('i/o promise canceled; ignoring');
 		} else {

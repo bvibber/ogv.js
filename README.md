@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.0 - 2017-??-??
+* ... internal API changes ...
+
 1.4.1 - 2017-04-07
 * fix for seek shortly after initialization
 * fix for some missing instance constants
