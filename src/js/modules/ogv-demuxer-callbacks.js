@@ -3,42 +3,44 @@
 /* global Module */
 mergeInto(LibraryManager.library, {
 
-	ogvjs_callback_init_video: function(frameWidth, frameHeight,
+	ogv_init_video: function(codecStr,
+		                                 frameWidth, frameHeight,
 	                                    chromaWidth, chromaHeight,
                                         fps,
                                         picWidth, picHeight,
                                         picX, picY,
                                         displayWidth, displayHeight) {
-		Module.videoFormat = {
-			width: frameWidth,
-			height: frameHeight,
-			chromaWidth: chromaWidth,
-			chromaHeight: chromaHeight,
-			cropLeft: picX,
-			cropTop: picY,
-			cropWidth: picWidth,
-			cropHeight: picHeight,
-			displayWidth: displayWidth,
-			displayHeight: displayHeight,
-			fps: fps
-		};
+		Module.video = new OGVTrackInfo({
+			type: 'video',
+			codec: Module.Pointer_stringify(codecStr),
+			format: {
+				width: frameWidth,
+				height: frameHeight,
+				chromaWidth: chromaWidth,
+				chromaHeight: chromaHeight,
+				cropLeft: picX,
+				cropTop: picY,
+				cropWidth: picWidth,
+				cropHeight: picHeight,
+				displayWidth: displayWidth,
+				displayHeight: displayHeight,
+				fps: fps
+			}
+		});
 	},
 
-	ogvjs_callback_init_audio: function(channels, rate) {
-		Module.audioFormat = {
-			channels: channels,
-			rate: rate
-		};
+	ogv_init_audio: function(codecStr, channels, rate) {
+		Module.audio = new OGVTrackInfo({
+			type: 'audio',
+			codec: Module.Pointer_stringify(codecStr),
+			format: {
+				channels: channels,
+				rate: rate
+			}
+		});
 	},
 
-	ogvjs_callback_loaded_metadata: function(videoCodecStr, audioCodecStr) {
-		if (videoCodecStr) {
-			Module.videoCodec = Module.Pointer_stringify(videoCodecStr);
-		}
-		if (audioCodecStr) {
-			Module.audioCodec = Module.Pointer_stringify(audioCodecStr);
-		}
-
+	ogv_init_loaded: function() {
 		var len = Module._ogv_demuxer_media_duration();
 		if (len >= 0) {
 			Module.duration = len;
@@ -46,10 +48,10 @@ mergeInto(LibraryManager.library, {
 			Module.duration = NaN;
 		}
 
-		Module.loadedMetadata = true;
+		Module.loaded = true;
 	},
 
-	ogvjs_callback_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp, isKeyframe) {
+	ogv_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp, isKeyframe) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
 		Module.videoPackets.push({
 			data: Module.HEAPU8.buffer.slice
@@ -57,12 +59,12 @@ mergeInto(LibraryManager.library, {
 				: (new Uint8Array(new Uint8Array(Module.HEAPU8.buffer, buffer, len))).buffer,
 			timestamp: frameTimestamp,
 			keyframeTimestamp: keyframeTimestamp,
-			isKeyframe: !!isKeyframe
+			keyframe: !!isKeyframe
 		});
 	},
 
-	ogvjs_callback_audio_packet: function(buffer, len, audioTimestamp) {
-		// Note IE 10 doesn't have ArrayBuffer.slice
+	ogv_audio_packet: function(buffer, len, audioTimestamp) {
+		// Note IE 10 doesn't have ArrayBuffer.prototype.slice
 		Module.audioPackets.push({
 			data: Module.HEAPU8.buffer.slice
 				? Module.HEAPU8.buffer.slice(buffer, buffer + len)
@@ -71,12 +73,16 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	ogvjs_callback_frame_ready: function() {
-		return (Module.videoPackets.length > 0) ? 1 : 0;
+	ogv_promise_resolve: function() {
+		var resolve = Module.promiseCallbacks.resolve;
+		Module.promiseCallbacks = null;
+		resolve();
 	},
 
-	ogvjs_callback_audio_ready: function() {
-		return (Module.audioPackets.length > 0) ? 1 : 0;
+	ogv_promise_reject: function(errPtr) {
+		var reject = Module.promiseCallbacks.reject;
+		Module.promiseCallbacks = null;
+		reject(new Error(Module.Pointer_stringify(errPtr)));
 	},
 
 	ogv_input_eof: function() {
@@ -105,14 +111,24 @@ mergeInto(LibraryManager.library, {
 		return nbytes;
 	},
 
+	ogv_input_peek_bytes(bufferPtr, len) {
+		var dest = Module.HEAPU8.subarray(bufferPtr, bufferPtr + len);
+		var nbytes = Module.stream.peekBytes(dest);
+		return nbytes;
+	},
+
 	ogv_input_buffer: function(nbytes, callbackPtr) {
-		Module.stream.buffer(nbytes).then(function(available) {
-			Module.Runtime.dynCall('vi', callbackPtr, [available]);
+		Module.stream.buffer(nbytes).then(function() {
+			Module.Runtime.dynCall('vv', callbackPtr, []);
+		}).catch(function(err) {
+			var reject = Module.promiseCallbacks.reject;
+			Module.promiseCallbacks = null;
+			reject(err);
 		});
 	},
 
 	ogv_input_seek: function(offsetLow, offsetHigh) {
-		var offset = Module.Runtime.makeBigInt(offsetLow, offsetHigh, true);
+		var offset = Module.Runtime.makeBigInt(offsetLow, offsetHigh, false);
 		Module.stream.seek(offset);
 	}
 

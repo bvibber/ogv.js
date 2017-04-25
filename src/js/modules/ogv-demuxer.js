@@ -1,21 +1,5 @@
 /* global Module */
 
-// Resizable input buffer to store input packets
-
-var inputBuffer, inputBufferSize;
-function reallocInputBuffer(size) {
-	if (inputBuffer && inputBufferSize >= size) {
-		// We're cool
-		return inputBuffer;
-	}
-	if (inputBuffer) {
-		Module._free(inputBuffer);
-	}
-	inputBufferSize = size;
-	inputBuffer = Module._malloc(inputBufferSize);
-	return inputBuffer;
-}
-
 var getTimestamp;
 if (typeof performance === 'undefined' || typeof performance.now === 'undefined') {
 	getTimestamp = Date.now;
@@ -32,80 +16,34 @@ function time(func) {
 	return ret;
 }
 
+function OGVQueue() {
+	this.packets = [];
+}
+OGVQueue.prototype.clear = function() {
+	return this.packets.splice(0, this.packets.length);
+}
+OGVQueue.prototype.peek = function() {
+	return this.packets.length ? this.packets[0] : null;
+};
+OGVQueue.prototype.next = function() {
+	return this.packets.length ? this.packets.shift() : null;
+};
+OGVQueue.prototype.push = function(packet) {
+	this.packets.push(packet);
+};
+
 // - Properties
 
-Module.loadedMetadata = false;
-Module.videoCodec = null;
-Module.audioCodec = null;
+Module.loaded = false;
+Module.audio = null;
+Module.video = null;
 Module.duration = NaN;
-Module.onseek = null;
 Module.cpuTime = 0;
 
-Module.audioPackets = [];
-Object.defineProperty(Module, 'hasAudio', {
-	get: function() {
-		return Module.loadedMetadata && Module.audioCodec;
-	}
-});
-Object.defineProperty(Module, 'audioReady', {
-	get: function() {
-		return Module.audioPackets.length > 0;
-	}
-});
-Object.defineProperty(Module, 'audioTimestamp', {
-	get: function() {
-		if (Module.audioPackets.length > 0) {
-			return Module.audioPackets[0].timestamp;
-		} else {
-			return -1;
-		}
-	}
-});
-
-Module.videoPackets = [];
-Object.defineProperty(Module, 'hasVideo', {
-	get: function() {
-		return Module.loadedMetadata && Module.videoCodec;
-	}
-});
-Object.defineProperty(Module, 'frameReady', {
-	get: function() {
-		return Module.videoPackets.length > 0;
-	}
-});
-Object.defineProperty(Module, 'frameTimestamp', {
-	get: function() {
-		if (Module.videoPackets.length > 0) {
-			return Module.videoPackets[0].timestamp;
-		} else {
-			return -1;
-		}
-	}
-});
-Object.defineProperty(Module, 'keyframeTimestamp', {
-	get: function() {
-		if (Module.videoPackets.length > 0) {
-			return Module.videoPackets[0].keyframeTimestamp;
-		} else {
-			return -1;
-		}
-	}
-});
-/**
- * If we've seen a future keyframe in the queue, what is it?
- * @property number
- */
-Object.defineProperty(Module, 'nextKeyframeTimestamp', {
-	get: function() {
-		for (var i = 0; i < Module.videoPackets.length; i++) {
-			var packet = Module.videoPackets[i];
-			if (packet.isKeyframe) {
-				return packet.timestamp;
-			}
-		}
-		return -1;
-	}
-});
+Module.stream = null;
+Module.audioPackets = new OGVQueue();
+Module.videoPackets = new OGVQueue();
+Module.promiseCallbacks = null;
 
 /**
  * Are we in the middle of an asynchronous processing operation?
@@ -113,13 +51,19 @@ Object.defineProperty(Module, 'nextKeyframeTimestamp', {
  */
 Object.defineProperty(Module, 'processing', {
 	get: function getProcessing() {
-		return false;
+		return !!Module.promiseCallbacks;
 	}
 });
 
 Object.defineProperty(Module, 'seekable', {
 	get: function() {
-		return !!Module._ogv_demuxer_seekable();
+		return !!Module._ogv_demuxer_seekable() && Module.stream.eof;
+	}
+});
+
+Object.defineProperty(Module, 'eof', {
+	get: function() {
+		return !Module.videoPackets.peek() && !Module.audioPackets.peek() && Module.stream.eof;
 	}
 });
 
@@ -127,93 +71,124 @@ Object.defineProperty(Module, 'seekable', {
 
 Module.init = function(stream) {
 	return new Promise(function(resolve, reject) {
+		if (Module.processing) {
+			throw new Error('invalid: async operation in progress');
+		}
 		Module.stream = stream;
-		time(function() {
-			Module._ogv_demuxer_init();
-		});
-		resolve();
+		Module.promiseCallbacks = {
+			resolve: resolve,
+			reject: reject
+		};
+		Module._ogv_demuxer_init();
 	});
 };
 
 /**
  * Process some input data until packets are found
  */
-Module.demux = function() {
+function demux() {
 	return new Promise(function(resolve, reject) {
-		Module._demuxerCallback = function() {
-			resolve();
+		if (Module.processing) {
+			throw new Error('invalid: async operation in progress');
+		}
+		Module.promiseCallbacks = {
+			resolve: resolve,
+			reject: reject
 		};
 		Module._ogv_demuxer_demux();
 	});
 };
 
-Module.dequeueVideoPacket = function(callback) {
-	if (Module.videoPackets.length) {
-		var packet = Module.videoPackets.shift().data;
-		callback(packet);
-	} else {
-		callback(null);
-	}
-};
+function demuxNextPacket(queue) {
+	return new Promise(function(resolve, reject) {
+		function check() {
+			if (queue.peek()) {
+				resolve(queue.next());
+			} else if (Module.stream.eof) {
+				resolve(null);
+			} else {
+				next();
+			}
+		}
+		function next() {
+			demux().then(complete).catch(reject);
+		}
+		check();
+	});
+}
 
-Module.dequeueAudioPacket = function(callback) {
-	if (Module.audioPackets.length) {
-		var packet = Module.audioPackets.shift().data;
-		callback(packet);
-	} else {
-		callback(null);
-	}
+
+/**
+ * Process input data until eof or a video packet is found
+ * @return {Promise<OGVPacket>} - resolved packet may be null if eof
+ */
+Module.demuxVideo = function() {
+	return demuxNextPacket(Module.videoPackets);
 };
 
 /**
- * Return the offset of the relevant keyframe or other position
- * just before the given presentation timestamp
- *
- * @param number timeSeconds
- * @param function(number) callback
- *        takes the calculated byte offset
+ * Process input data until eof or an audio packet is found
+ * @return {Promise<OGVPacket>} - resolved packet may be null if eof
  */
-Module.getKeypointOffset = function(timeSeconds, callback) {
-	var offset = time(function() {
-		return Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
-	});
-	callback(offset);
+Module.demuxAudio = function() {
+	return demuxNextPacket(Module.audioPackets);
 };
+
 
 /**
  * Initiate seek to the nearest keyframe or other position just before
  * the given presentation timestamp. This may trigger seek requests, and
  * it may take some time before processing returns more packets.
  *
- * @param number timeSeconds
- * @param function(boolean) callback
- *        indicates whether seeking was initiated or not.
+ * @param {number} timeSeconds - time in seconds to aim for
+ * @returns {Promise}
  */
-Module.seekToKeypoint = function(timeSeconds, callback) {
-	var ret = time(function() {
-		return Module._ogv_demuxer_seek_to_keypoint(timeSeconds * 1000);
+Module.seek = function(timeSeconds) {
+	return new Promise(function(resolve, reject) {
+		if (!Module.seekable) {
+			throw new Error('invalid: seek on non-seekable data');
+		}
+		if (Module.processing) {
+			throw new Error('invalid: async operation in progress');
+		}
+		Module.promiseCallbacks = {
+			resolve: resolve,
+			reject: reject
+		};
+		Module.audioPackets.clear();
+		Module.videoPackets.clear();
+		Module._ogv_demuxer_seek(timeSeconds);
 	});
-	if (ret) {
-		Module.audioPackets.splice(0, Module.audioPackets.length);
-		Module.videoPackets.splice(0, Module.videoPackets.length);
-	}
-	callback(!!ret);
 };
 
-Module.flush = function(callback) {
-	time(function() {
-		Module.audioPackets.splice(0, Module.audioPackets.length);
-		Module.videoPackets.splice(0, Module.videoPackets.length);
-		Module._ogv_demuxer_flush();
-	});
-	callback();
+Module.abort = function() {
+	if (Module.processing) {
+		// This will send an AbortError through the promises.
+		Module.stream.abort();
+	}
+};
+
+Module.flush = function() {
+	return new Promise(function(resolve, reject) {
+		if (Module.processing) {
+			throw new Error('invalid: async operation in progress');
+		}
+		time(function() {
+			Module.audioPackets.clear();
+			Module.videoPackets.clear();
+			Module._ogv_demuxer_flush();
+		});
+		resolve();
+	})
 };
 
 /**
  * Close out any resources required by the demuxer module
  */
 Module.close = function() {
-	// no-op
+	if (Module.stream) {
+		Module.stream.close();
+	}
 };
 
 Math.imul = Math_imul_orig;

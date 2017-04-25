@@ -14,6 +14,7 @@
 
 static nestegg        *demuxContext;
 static int64_t         input_pos = 0;
+static int64_t         input_seek_target = -1;
 
 static bool            hasVideo = false;
 static unsigned int    videoTrack = 0;
@@ -28,7 +29,7 @@ static char           *audioCodecName = NULL;
 static int64_t         seekTime;
 static unsigned int    seekTrack;
 
-static double          lastKeyframeKimestamp = -1;
+static double          lastKeyframeTimestamp = -1;
 
 enum AppState {
     STATE_BEGIN,
@@ -83,6 +84,7 @@ static int seekCallback(int64_t offset, int whence, void * userdata)
             return -1;
     }
     if (ogv_input_seek(pos)) {
+        input_seek_target = pos;
         input_pos = pos;
         printf("Buffer seek failure in webm demuxer\n");
         return -1;
@@ -173,7 +175,7 @@ static int readyForNextPacket()
     return ok;
 }
 
-static int processBegin() {
+static void processBegin(size_t bytesAvailable) {
 	// This will read through headers, hopefully we have enough data
 	// or else it may fail and explode.
 	// @todo rework all this to faux sync or else full async
@@ -268,7 +270,7 @@ static int processBegin() {
 	printf("Done with headers step\n");
 	ogvjs_callback_loaded_metadata(videoCodecName, audioCodecName);
 
-	return 1;
+  ogv_promise_resolve();
 }
 
 static int packet_is_keyframe_vp8(const unsigned char *data, size_t data_len) {
@@ -308,7 +310,7 @@ static int packet_is_keyframe_vp9(const unsigned char *data, size_t data_len) {
   return (frame_type == 0);
 }
 
-static int processDecoding() {
+static void processDecoding(size_t bytesAvailable) {
 	//printf("webm processDecoding: reading next packet...\n");
 
 	// Do the nestegg_read_packet dance until it fails to read more data,
@@ -316,13 +318,19 @@ static int processDecoding() {
 	nestegg_packet *packet = NULL;
 	int ret = nestegg_read_packet(demuxContext, &packet);
 	if (ret == 0) {
-		// End of stream? Usually means we need more data.
-		nestegg_read_reset(demuxContext);
-		return 0;
+		if (ogv_input_eof()) {
+      // End of stream!
+      ogv_promise_resolve();
+    } else {
+      // Out of input data, wait on some more input
+      nestegg_read_reset(demuxContext);
+      ogv_input_buffer(32768, processDecoding);
+    }
 	} else if (ret < 0) {
 		// Unknown unrecoverable error
-		printf("webm processDecoding: error %d\n", ret);
-		return 0;
+    char err[64];
+    snprintf(err, sizeof(err), "nestegg_read_packet: error %d", ret);
+    ogv_promise_reject(err);
 	} else {
 		//printf("webm processDecoding: got packet?\n");
 		unsigned int track;
@@ -340,12 +348,12 @@ static int processDecoding() {
       int isKeyframe;
       if ((videoCodec == NESTEGG_CODEC_VP8 && packet_is_keyframe_vp8(data, data_len)) ||
           (videoCodec == NESTEGG_CODEC_VP9 && packet_is_keyframe_vp9(data, data_len))) {
-        lastKeyframeKimestamp = timestamp;
+        lastKeyframeTimestamp = timestamp;
         isKeyframe = 1;
       } else {
         isKeyframe = 0;
       }
-			ogvjs_callback_video_packet((char *)data, data_len, timestamp, lastKeyframeKimestamp, isKeyframe);
+			ogvjs_callback_video_packet((char *)data, data_len, timestamp, lastKeyframeTimestamp, isKeyframe);
 		} else if (hasAudio && track == audioTrack) {
 			ogvjs_callback_audio_packet((char *)data, data_len, timestamp);
 		} else {
@@ -353,31 +361,25 @@ static int processDecoding() {
 		}
 
 		nestegg_free_packet(packet);
-		return 1;
+    ogv_promise_resolve();
 	}
 }
 
-static int processSeeking()
+static void processSeeking()
 {
-    bufferQueue->lastSeekTarget = 0;
+    input_seek_target = -1;
     int r = nestegg_track_seek(demuxContext, seekTrack, seekTime);
     if (r) {
-        if (bufferQueue->lastSeekTarget == 0) {
+        if (input_seek_target == -1) {
             // Maybe we just need more data?
-            printf("is seeking processing... FAILED at %lld %lld %lld\n", bufferQueue->pos, bq_start(bufferQueue), bq_end(bufferQueue));
         } else {
+            // Seek time!
             // We need to go off and load stuff...
-            printf("is seeking processing... MOAR SEEK %lld %lld %lld\n", bufferQueue->lastSeekTarget, bq_start(bufferQueue), bq_end(bufferQueue));
-            int64_t target = bufferQueue->lastSeekTarget;
-            bq_flush(bufferQueue);
-            bufferQueue->pos = target;
-            ogv_input_seek(target);
         }
-        return 0;
+        ogv_input_buffer(32768, processSeeking);
     } else {
         appState = STATE_DECODING;
-        printf("is seeking processing... LOOKS ROLL OVER\n");
-        return 0;
+        ogv_promise_resolve();
     }
 }
 
@@ -388,47 +390,26 @@ void ogv_demuxer_demux() {
         ogv_input_buffer(startupChunkSize, processBegin);
     } else if (appState == STATE_DECODING) {
         processDecoding();
-    } else if (appState == STATE_SEEKING) {
-        if (readyForNextPacket()) {
-            processSeeking();
-        } else {
-          
-            // need more data
-            printf("not ready to read the cues\n");
-            return 0;
-        }
     } else {
-        // uhhh...
-        printf("Invalid appState in ogv_demuxer_process\n");
-        return 0;
+        ogv_promise_reject("invalid appState in demux\n");
     }
 }
 
 void ogv_demuxer_destroy() {
-	// should probably tear stuff down, eh
-    bq_free(bufferQueue);
-    bufferQueue = NULL;
+    // should probably tear stuff down, eh
+    ogv_input_close();
 }
 
 void ogv_demuxer_flush() {
-    bq_flush(bufferQueue);
     // we may not need to handle the packet queue because this only
     // happens after seeking and nestegg handles that internally
-    lastKeyframeKimestamp = -1;
-}
-
-/**
- * @return segment length in bytes, or -1 if unknown
- */
-long ogv_demuxer_media_length() {
-	// @todo check if this is needed? maybe an ogg-specific thing
-	return -1;
+    lastKeyframeTimestamp = -1;
 }
 
 /**
  * @return segment duration in seconds, or -1 if unknown
  */
-float ogv_demuxer_media_duration() {
+double ogv_demuxer_media_duration() {
 	uint64_t duration_ns;
     if (nestegg_duration(demuxContext, &duration_ns) < 0) {
     	return -1;
@@ -442,23 +423,17 @@ int ogv_demuxer_seekable()
 	return nestegg_has_cues(demuxContext);
 }
 
-long ogv_demuxer_keypoint_offset(long time_ms)
-{
-	// can't do with nestegg's API; use ogv_demuxer_seek_to_keypoint instead
-	return -1;
-}
-
-int ogv_demuxer_seek_to_keypoint(long time_ms)
+void ogv_demuxer_seek(double timeSeconds)
 {
     appState = STATE_SEEKING;
-    seekTime = (int64_t)time_ms * 1000000LL;
+    seekTime = (int64_t)(timeSeconds * 1000000000.0);
     if (hasVideo) {
         seekTrack = videoTrack;
+        processSeeking();
     } else if (hasAudio) {
         seekTrack = audioTrack;
+        processSeeking();
     } else {
-        return 0;
+        ogv_promise_reject("cannot seek with no tracks");
     }
-    processSeeking();
-    return 1;
 }
