@@ -124,11 +124,30 @@ static int process_frame_return() {
 			continue;
 		}
 		foundImage = 1;
+
+		int chromaWidth, chromaHeight;
+		switch(image->fmt) {
+			case VPX_IMG_FMT_I420:
+				chromaWidth = image->w >> 1;
+				chromaHeight = image->h >> 1;
+				break;
+			case VPX_IMG_FMT_I422:
+				chromaWidth = image->w >> 1;
+				chromaHeight = image->h;
+				break;
+			case VPX_IMG_FMT_I444:
+				chromaWidth = image->w;
+				chromaHeight = image->h;
+				break;
+			default:
+				printf("Skipping frame with unknown picture type %d\n", (int)image->fmt);
+				return 0;
+		}
 		ogvjs_callback_frame(image->planes[0], image->stride[0],
 							 image->planes[1], image->stride[1],
 							 image->planes[2], image->stride[2],
-							 image->w, image->d_h,
-							 image->w >> 1, image->d_h >> 1); // @todo pixel format
+							 image->w, image->h,
+							 chromaWidth, chromaHeight);
 	}
 	return foundImage;
 }

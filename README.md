@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.4.2 - 2017-04-24
+* support 8-bit 4:2:2 and 4:4:4 subsampling in VP9
+
 1.4.1 - 2017-04-07
 * fix for seek shortly after initialization
 * fix for some missing instance constants
