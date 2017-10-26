@@ -22,8 +22,8 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
 EMSCRIPTEN_MODULE_FILES:=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.js")
 EMSCRIPTEN_MODULE_FILES+= $(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.json")
@@ -112,17 +112,14 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-theora-wasm.js \
 	      build/ogv-decoder-video-theora-wasm.wasm \
 	      build/ogv-decoder-video-vp8.js \
-	      build/ogv-decoder-video-vp8-mt.js \
 	      build/ogv-decoder-video-vp8-wasm.js \
 	      build/ogv-decoder-video-vp8-wasm.wasm \
 	      build/ogv-decoder-video-vp9.js \
-	      build/ogv-decoder-video-vp9-mt.js \
 	      build/ogv-decoder-video-vp9-wasm.js \
 	      build/ogv-decoder-video-vp9-wasm.wasm \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      build/dynamicaudio.swf \
-	      build/pthread-main.js \
 	      README.md \
 	      COPYING \
 	      dist/

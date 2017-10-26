@@ -7,8 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.0 - 2017-??-??
-* ... internal API changes ...
+1.5.0 - 2017-10-??
+* switch demo to WebM VP8 by default
+* disabled experimental pthreads build for now
 
 1.4.2 - 2017-04-24
 * support 8-bit 4:2:2 and 4:4:4 subsampling in VP9

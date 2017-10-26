@@ -967,9 +967,9 @@
         document.location.hash = hash;
     }
 
-    var preferredKey = '360p.ogv';
+    var preferredKey = '360p.webm';
     if (OGVCompat.isSlow()) {
-        preferredKey = '160p.ogv';
+        preferredKey = '240p.webm';
     }
     var selector = document.getElementById('video-preferred-size');
     selector.value = preferredKey;
