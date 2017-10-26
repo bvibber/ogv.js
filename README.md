@@ -8,6 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 ## Updates
 
 1.5.0 - 2017-10-??
+* enable WebM by default
 * enable WebAssembly by default if available
 * switch demo to WebM VP8 by default
 * disabled experimental pthreads build for now
@@ -87,7 +88,7 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * multithreaded VP8, VP9: in development (experimental; add back to Makefile; set `options.threading` to `true`; requires `SharedArrayBuffer`)
 * controls: no (currently provided by demo or other UI harness)
 
-Ogg files are fairly well supported, but WebM is still experimental and is disabled by default.
+Ogg and WebM files are fairly well supported.
 
 
 ## Goals
@@ -102,15 +103,15 @@ The API isn't quite complete, but works pretty well.
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
 The primary target browsers are (testing 360p/30fps and up):
-* Safari 6.1/7/8/9/10/11/12 on Mac OS X 10.7-10.13
-* Safari on iOS 8/9/10/11 64-bit
+* Safari 6.1-12 on Mac OS X 10.7-10.13
+* Safari on iOS 8-11 64-bit
 * Edge on Windows 10 desktop/tablet
-* Internet Explorer 10/11 on Windows 7/8/8.1/10 (desktop/tablet)
+* Internet Explorer 10-11 on Windows 7-10 (desktop/tablet)
 
 And for lower-resolution files (testing 160p/15fps):
-* Safari on iOS 8/9/10 32-bit
+* Safari on iOS 8-10 32-bit
 * Edge on Windows 10 Mobile
-* Internet Explorer 10/11 on Windows RT
+* Internet Explorer 10-11 on Windows RT
 
 Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arrays.
 
@@ -163,7 +164,8 @@ The `OGVPlayer` class implements a player, and supports a subset of the events, 
 
   // Or with options
   var player = new OGVPlayer({
-    enableWebM: true
+	debug: true,
+	debugFilter: /demuxer/
   });
 
   // Now treat it just like a video or audio element
@@ -305,15 +307,13 @@ You can then unmute the video in response to a touch or click handler. Alternate
 
 *WebM*
 
-WebM support was added in June 2015, with some major issues finally worked out in May 2016. Initial VP9 support was added in February 2017. It remains experimental, but should be fully enabled in the future once a few more bugs are worked out.
+WebM support was added in June 2015, with some major issues finally worked out in May 2016. Initial VP9 support was added in February 2017. It's pretty stable in production use at Wikipedia and is enabled by default as of October 2015.
 
-To enable, set `enableWebM: true` in your `options` array.
-
-Beware that performance of WebM VP8 is much slower than Ogg Theora, and VP9 is slower still.
+Beware that performance of WebM VP8 is much slower than Ogg Theora, and VP9 is slightly slower still.
 
 For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblocking filter) which will sacrifice quality modestly, mainly in high-motion scenes. When encoding with ffmpeg, this is the `-profile:v 1` option to the `libvpx` codec.
 
-It is also recommended to use the `-slices` option for VP8, or `-tile-columns` for VP9, to maximize ability to use multithreaded decoding when available.
+It is also recommended to use the `-slices` option for VP8, or `-tile-columns` for VP9, to maximize ability to use multithreaded decoding when available in the future.
 
 
 ## Upstream library notes

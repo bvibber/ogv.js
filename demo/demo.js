@@ -1104,16 +1104,14 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
-                    enableWebM: true // experimental
+                    memoryLimit: maxmem
                 });
             } else if (playerBackend == 'js') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
-					wasm: false,
-                    enableWebM: true // experimental
+					wasm: false
                 });
             } else if (playerBackend == 'js-cpu') {
                 player = new OGVPlayer({
@@ -1121,8 +1119,7 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
                     webGL: false, // force 2d canvas
-					wasm: false,
-                    enableWebM: true // experimental
+					wasm: false
                 });
             } else if (playerBackend == 'js-noworker') {
                 player = new OGVPlayer({
@@ -1130,8 +1127,7 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
                     worker: false, // experimental
-					wasm: false,
-                    enableWebM: true // experimental
+					wasm: false
                 });
             } else if (playerBackend == 'js-mt') {
                 player = new OGVPlayer({
@@ -1139,31 +1135,27 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
 					wasm: false,
-                    threading: true, // experimental
-                    enableWebM: true // experimental
+                    threading: true // experimental
                 });
             } else if (playerBackend == 'wasm') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    wasm: true, // force
-                    enableWebM: true // experimental
+                    wasm: true // force
                 });
             } else if (playerBackend == 'wasm-noworker') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     worker: false,
-                    wasm: true, // force
-                    enableWebM: true // experimental
+                    wasm: true // force
                 });
             } else if (playerBackend == 'webgl') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
-                    forceWebGL: true,
-                    enableWebM: true // experimental
+                    forceWebGL: true
                 });
             } else if (playerBackend == 'cortado') {
                 player = new CortadoPlayer();

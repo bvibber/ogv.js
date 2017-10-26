@@ -103,9 +103,6 @@ var OGVPlayer = function(options) {
 		canvasOptions.webGL = 'required';
 	}
 
-	// Experimental options
-	var enableWebM = !!options.enableWebM;
-
 	// Running the codec in a worker thread equals happy times!
 	var enableWorker = !!window.Worker;
 	if (typeof options.worker !== 'undefined') {
@@ -1744,7 +1741,7 @@ var OGVPlayer = function(options) {
 		// @todo use the demuxer and codec interfaces directly
 
 		// @todo fix detection proper
-		if (enableWebM && currentSrc.match(/\.webm$/i)) {
+		if (currentSrc.match(/\.webm$/i)) {
 			codecOptions.type = 'video/webm';
 		} else {
 			codecOptions.type = 'video/ogg';
