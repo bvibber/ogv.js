@@ -11,6 +11,9 @@
 
     var devicePixelRatio = window.devicePixelRatio || 1;
 
+	var auto = window.WebAssembly ? 'wasm' : 'js';
+	document.getElementById('auto-select').text += ' (' + auto + ')';
+
     var player;
 
     /**
@@ -257,7 +260,7 @@
         selectedTitle = null,
         selectedUrl = null,
         skipAudio = false,
-        playerBackend = 'js',
+        playerBackend = 'auto',
         muted = false,
         startTime = 0,
         autoplay = false;
@@ -268,7 +271,7 @@
     function getDefault() {
         if (document.location.hash.length > 1) {
             var title;
-            playerBackend = 'js';
+            playerBackend = 'auto';
             document.location.hash.slice(1).split('&').forEach(function(pair) {
                 var parts = pair.split('='),
                     name = decodeURIComponent(parts[0]),
@@ -950,7 +953,7 @@
             hash += '&mute=1';
         }
 
-        if (playerBackend != 'js') {
+        if (playerBackend != 'auto') {
             hash += '&player=' + encodeURIComponent(playerBackend);
         }
 
@@ -1097,11 +1100,19 @@
             //debugFilter = /setting a timer/;
             //debugFilter = /ended|ending|end |demuxer/i;
             //debugFilter = /play loop.*(draw|frame)/;
-            if (playerBackend == 'js') {
+			if (playerBackend == 'auto') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
+                    enableWebM: true // experimental
+                });
+            } else if (playerBackend == 'js') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    memoryLimit: maxmem,
+					wasm: false,
                     enableWebM: true // experimental
                 });
             } else if (playerBackend == 'js-cpu') {
@@ -1110,6 +1121,7 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
                     webGL: false, // force 2d canvas
+					wasm: false,
                     enableWebM: true // experimental
                 });
             } else if (playerBackend == 'js-noworker') {
@@ -1118,6 +1130,7 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
                     worker: false, // experimental
+					wasm: false,
                     enableWebM: true // experimental
                 });
             } else if (playerBackend == 'js-mt') {
@@ -1125,6 +1138,7 @@
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
+					wasm: false,
                     threading: true, // experimental
                     enableWebM: true // experimental
                 });
@@ -1132,7 +1146,7 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    wasm: true, // experimental
+                    wasm: true, // force
                     enableWebM: true // experimental
                 });
             } else if (playerBackend == 'wasm-noworker') {
@@ -1140,7 +1154,7 @@
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     worker: false,
-                    wasm: true, // experimental
+                    wasm: true, // force
                     enableWebM: true // experimental
                 });
             } else if (playerBackend == 'webgl') {

@@ -111,8 +111,20 @@ var OGVPlayer = function(options) {
 	if (typeof options.worker !== 'undefined') {
 		enableWorker = !!options.worker;
 	}
+
+	// Use the WebAssembly build by default if available;
+	// it should load and compile faster than asm.js.
+	var enableWASM = !!window.WebAssembly;
+	if (typeof options.wasm !== 'undefined') {
+		enableWASM = !!options.wasm;
+	}
+
+	// Experimental pthreads multithreading mode, if built.
 	var enableThreading = !!options.threading;
-	var enableWASM = !!options.wasm;
+	if (enableWASM) {
+		// No MT WASM yet.
+		enableThreading = false;
+	}
 
 	if (options.sync === undefined) {
 		options.sync = 'skip-frames';
