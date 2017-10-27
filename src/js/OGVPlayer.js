@@ -170,7 +170,9 @@ var OGVPlayer = function(options) {
 	codecOptions.worker = enableWorker;
 	codecOptions.threading = enableThreading;
 	codecOptions.wasm = enableWASM;
-	if (typeof options.memoryLimit === 'number') {
+	if (typeof options.memoryLimit === 'number' && !enableWASM) {
+		// Optional memory limit override for asm.js build;
+		// can be useful for very large frame sizes.
 		codecOptions.memoryLimit = options.memoryLimit;
 	}
 

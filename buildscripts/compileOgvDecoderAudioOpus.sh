@@ -43,6 +43,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -s NO_BROWSER=1 \
   -s INVOKE_RUN=0 \
   -s NO_EXIT_RUNTIME=1 \
+  -s ALLOW_MEMORY_GROWTH=1 \
   -s EXPORT_NAME="'OGVDecoderAudioOpusW'" \
   -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
