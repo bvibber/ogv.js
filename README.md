@@ -8,6 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 ## Updates
 
 1.5.0 - 2017-10-??
+* improved image filtering/scaling on Windows
 * allow memory growth on WebAssembly
 * work around broken object-fit on Edge 16
 * enable WebM by default
