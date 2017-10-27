@@ -8,6 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 ## Updates
 
 1.5.0 - 2017-10-??
+* work around broken object-fit on Edge 16
 * enable WebM by default
 * enable WebAssembly by default if available
 * switch demo to WebM VP8 by default

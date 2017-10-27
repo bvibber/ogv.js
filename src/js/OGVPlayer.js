@@ -2580,9 +2580,13 @@ OGVPlayer.styleManager = new StyleManager();
 
 // IE 10/11 and Edge 12 don't support object-fit.
 // Also just for fun, IE 10 doesn't support 'auto' sizing on canvas. o_O
-OGVPlayer.supportsObjectFit = (typeof document.createElement('div').style.objectFit === 'string');
+OGVPlayer.supportsObjectFit = (typeof document.createElement('canvas').style.objectFit === 'string');
 if (OGVPlayer.supportsObjectFit && navigator.userAgent.match(/iPhone|iPad|iPod Touch/)) {
 	// Safari for iOS 8/9 supports it but positions our <canvas> incorrectly when using WebGL >:(
+	OGVPlayer.supportsObjectFit = false;
+}
+if (OGVPlayer.supportsObjectFit && navigator.userAgent.match(/Edge/)) {
+	// Edge 16 supports it but it doesn't actually work on <canvas>
 	OGVPlayer.supportsObjectFit = false;
 }
 if (OGVPlayer.supportsObjectFit) {
