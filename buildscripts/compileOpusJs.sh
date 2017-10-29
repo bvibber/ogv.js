@@ -3,14 +3,14 @@
 dir=`pwd`
 
 # set up the build directory
-mkdir build
+mkdir -p build
 cd build
 
-mkdir js
+mkdir -p js
 cd js
 
-mkdir root
-mkdir libopus
+mkdir -p root
+mkdir -p libopus
 cd libopus
   
 # finally, run configuration script

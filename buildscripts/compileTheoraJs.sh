@@ -3,14 +3,14 @@
 dir=`pwd`
 
 # set up the build directory
-mkdir build
+mkdir -p build
 cd build
 
-mkdir js
+mkdir -p js
 cd js
 
-mkdir root
-mkdir libtheora
+mkdir -p root
+mkdir -p libtheora
 cd libtheora
 
 # finally, run configuration script

@@ -3,14 +3,14 @@
 dir=`pwd`
 
 # set up the build directory
-mkdir build
+mkdir -p build
 cd build
 
-mkdir js-mt
+mkdir -p js-mt
 cd js-mt
 
-mkdir root
-mkdir libvpx
+mkdir -p root
+mkdir -p libvpx
 cd libvpx
 
 #
