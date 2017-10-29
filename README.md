@@ -1,7 +1,7 @@
 ogv.js
 ======
 
-Media decoder and player for Ogg Vorbis/Opus/Theora and (experimentally) WebM video.
+Media decoder and player for Ogg Vorbis/Opus/Theora and WebM video.
 
 Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compiled to JavaScript with Emscripten.
 
@@ -228,7 +228,7 @@ If you know you will never use particular formats or codecs you can skip bundlin
 
 As of 2015, for SD-or-less resolution basic Ogg Theora decoding speed is reliable on desktop and newer high-end mobile devices; current high-end desktops and laptops can even reach HD resolutions. Older and low-end mobile devices may have difficulty on any but audio and the lowest-resolution video files.
 
-WebM is much slower, and remains experimental.
+WebM VP8/VP9 is slower, but works pretty well at a resolution step below Theora.
 
 *Low-res targets*
 
