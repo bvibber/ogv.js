@@ -8,7 +8,7 @@ fi
 
 # compile wrapper around libvpx
 EMCC_FAST_COMPILER=1 emcc \
-  -O2 \
+  -O3 \
   --memory-init-file 0 \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
