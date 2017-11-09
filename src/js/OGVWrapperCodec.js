@@ -268,17 +268,9 @@ var OGVWrapperCodec = (function(options) {
 		processing = true;
 
 		var videoPacketCount = demuxer.videoPackets.length,
-			audioPacketCount = demuxer.audioPackets.length,
-			start = (window.performance ? performance.now() : Date.now());
+			audioPacketCount = demuxer.audioPackets.length;
 		function finish(result) {
 			processing = false;
-			var delta = (window.performance ? performance.now() : Date.now()) - start;
-			if (delta > 8) {
-				console.log('slow demux in ' + delta + ' ms; ' +
-					(demuxer.videoPackets.length - videoPacketCount) + ' +video packets, ' +
-					(demuxer.audioPackets.length - audioPacketCount) + ' +audio packets');
-			}
-			//console.log('demux returned ' + (result ? 'true' : 'false') + '; ' + demuxer.videoPackets.length + '; ' + demuxer.audioPackets.length);
 			callback(result);
 		}
 
