@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.0 - 2017-11-??
+1.5.0 - 2017-11-09
 * cleaned up console logging
 * enable WebM by default
 * enable WebAssembly by default if available
