@@ -17,6 +17,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * updated yuv-canvas
     * improved image filtering/scaling on Windows
     * work around broken object-fit on Edge 16
+* updated stream-file to 0.2.1
+    * fixes error on abort during network load
 
 1.4.2 - 2017-04-24
 * support 8-bit 4:2:2 and 4:4:4 subsampling in VP9
