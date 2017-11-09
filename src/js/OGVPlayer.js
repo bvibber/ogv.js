@@ -1601,7 +1601,7 @@ var OGVPlayer = function(options) {
 		} else if (state == State.ERROR) {
 
 			// Nothing to do.
-			console.log("Reached error state. Sorry bout that.");
+			//console.log("Reached error state. Sorry bout that.");
 
 		} else {
 
