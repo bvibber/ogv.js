@@ -83,7 +83,7 @@ static int seekCallback(int64_t offset, int whence, void * userdata)
             return -1;
     }
     if (bq_seek((BufferQueue *)userdata, pos)) {
-        printf("Buffer seek failure in webm demuxer\n");
+        //printf("Buffer seek failure in webm demuxer\n");
         return -1;
     } else {
         return 0;
@@ -112,11 +112,11 @@ static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask
     // Rest of the bits are a big-endian number.
     char first;
     if (bq_read(bufferQueue, &first, 1)) {
-        printf("out of bytes at start of field\n");
+        //printf("out of bytes at start of field\n");
         return 0;
     }
     if (first == 0) {
-        printf("zero field\n");
+        //printf("zero field\n");
         return 0;
     }
 
@@ -136,7 +136,7 @@ static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask
     for (int i = 1; i < byteCount; i++) {
         char next;
         if (bq_read(bufferQueue, &next, 1)) {
-            printf("out of bytes in field\n");
+            //printf("out of bytes in field\n");
             return 0;
         }
         *val = *val << 8 | (unsigned char)next;
@@ -162,7 +162,7 @@ static int readyForNextPacket()
         }
         sizeSize = read_ebml_int64(bufferQueue, &size, 0);
         if (sizeSize) {
-            printf("packet is %llx, size is %lld, headroom %lld\n", id, size, bq_headroom(bufferQueue));
+            //printf("packet is %llx, size is %lld, headroom %lld\n", id, size, bq_headroom(bufferQueue));
             if (bq_headroom(bufferQueue) >= size) {
                 ok = 1;
             }
@@ -183,10 +183,8 @@ static int processBegin() {
 	// This will read through headers, hopefully we have enough data
 	// or else it may fail and explode.
 	// @todo rework all this to faux sync or else full async
-	printf("nestegg_init starting...\n");
     ioCallbacks.userdata = (void *)bufferQueue;
 	if (nestegg_init(&demuxContext, ioCallbacks, logCallback, -1) < 0) {
-		printf("nestegg_init failed\n");
 		return 0;
 	}
 
@@ -254,14 +252,13 @@ static int processBegin() {
 		} else {
 			unsigned int codecDataCount;
 			nestegg_track_codec_data_count(demuxContext, audioTrack, &codecDataCount);
-			printf("codec data for audio: %d\n", codecDataCount);
 			
             for (unsigned int i = 0; i < codecDataCount; i++) {
                 unsigned char *data;
                 size_t len;
                 int ret = nestegg_track_codec_data(demuxContext, audioTrack, i, &data, &len);
                 if (ret < 0) {
-                	printf("failed to read codec data %d\n", i);
+                	//printf("failed to read codec data %d\n", i);
                 	abort();
                 }
                 // ... store these!
@@ -271,7 +268,6 @@ static int processBegin() {
 	}
 
 	appState = STATE_DECODING;
-	printf("Done with headers step\n");
 	ogvjs_callback_loaded_metadata(videoCodecName, audioCodecName);
 
 	return 1;
@@ -327,7 +323,7 @@ static int processDecoding() {
 		return 0;
 	} else if (ret < 0) {
 		// Unknown unrecoverable error
-		printf("webm processDecoding: error %d\n", ret);
+		//printf("webm processDecoding: error %d\n", ret);
 		return 0;
 	} else {
 		//printf("webm processDecoding: got packet?\n");
@@ -370,10 +366,10 @@ static int processSeeking()
     if (r) {
         if (bufferQueue->lastSeekTarget == 0) {
             // Maybe we just need more data?
-            printf("is seeking processing... FAILED at %lld %lld %lld\n", bufferQueue->pos, bq_start(bufferQueue), bq_end(bufferQueue));
+            //printf("is seeking processing... FAILED at %lld %lld %lld\n", bufferQueue->pos, bq_start(bufferQueue), bq_end(bufferQueue));
         } else {
             // We need to go off and load stuff...
-            printf("is seeking processing... MOAR SEEK %lld %lld %lld\n", bufferQueue->lastSeekTarget, bq_start(bufferQueue), bq_end(bufferQueue));
+            //printf("is seeking processing... MOAR SEEK %lld %lld %lld\n", bufferQueue->lastSeekTarget, bq_start(bufferQueue), bq_end(bufferQueue));
             int64_t target = bufferQueue->lastSeekTarget;
             bq_flush(bufferQueue);
             bufferQueue->pos = target;
@@ -382,7 +378,7 @@ static int processSeeking()
         return 0;
     } else {
         appState = STATE_DECODING;
-        printf("is seeking processing... LOOKS ROLL OVER\n");
+        //printf("is seeking processing... LOOKS ROLL OVER\n");
         return 0;
     }
 }
@@ -408,12 +404,12 @@ int ogv_demuxer_process() {
             return processSeeking();
         } else {
             // need more data
-            printf("not ready to read the cues\n");
+            //printf("not ready to read the cues\n");
             return 0;
         }
 	} else {
 		// uhhh...
-		printf("Invalid appState in ogv_demuxer_process\n");
+		//printf("Invalid appState in ogv_demuxer_process\n");
         return 0;
 	}
 }

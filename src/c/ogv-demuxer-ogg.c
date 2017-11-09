@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -102,7 +101,7 @@ static int processBegin(oggz_packet *packet, long serialno)
         } else if (ret > 0) {
             // Just keep going
         } else {
-            printf("Invalid ogg skeleton track data? %d\n", ret);
+            //printf("Invalid ogg skeleton track data? %d\n", ret);
             return OGGZ_STOP_ERR;
         }
     }
@@ -139,7 +138,7 @@ static int processSkeleton(oggz_packet *packet, long serialno)
     if (hasSkeleton && skeletonStream == serialno) {
         int ret = oggskel_decode_header(skeleton, &packet->op);
         if (ret < 0) {
-            printf("Error processing skeleton packet: %d\n", ret);
+            //printf("Error processing skeleton packet: %d\n", ret);
             return OGGZ_STOP_ERR;
         }
         if (packet->op.e_o_s) {
@@ -190,7 +189,7 @@ static int readPacketCallback(OGGZ *oggz, oggz_packet *packet, long serialno, vo
         case STATE_DECODING:
             return processDecoding(packet, serialno);
         default:
-            printf("Invalid state in Ogg readPacketCallback");
+            //printf("Invalid state in Ogg readPacketCallback");
             return OGGZ_STOP_ERR;
     }
 }
@@ -229,7 +228,7 @@ static int seekCallback(void *user_handle, long offset, int whence)
 			return -1;
 	}
 	if (bq_seek(bq, pos)) {
-		printf("Buffer seek failure in ogg demuxer; %lld (%ld %d)\n", pos, offset, whence);
+		//printf("Buffer seek failure in ogg demuxer; %lld (%ld %d)\n", pos, offset, whence);
 		return -1;
 	} else {
 		return (long)pos;
@@ -280,7 +279,7 @@ int ogv_demuxer_process() {
 			//printf("EOF %d from oggz_read\n", ret);
 			return 0;
 		} else if (ret < 0) {
-			printf("Error %d from oggz_read\n", ret);
+			//printf("Error %d from oggz_read\n", ret);
 			return 0;
 		}
 	} while(1);
@@ -387,7 +386,7 @@ void ogv_demuxer_flush()
 	// Need to "seek" to clear out stored units
 	int ret = oggz_seek(oggz, 0, SEEK_CUR);
 	if (ret < 0) {
-		printf("Failed to 'seek' oggz %d\n", ret);
+		//printf("Failed to 'seek' oggz %d\n", ret);
 	}
 
 	bq_flush(bufferQueue);

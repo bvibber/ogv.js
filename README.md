@@ -7,15 +7,16 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.0 - 2017-10-??
-* build modules with -O3 instead of -O2
-* improved image filtering/scaling on Windows
-* allow memory growth on WebAssembly
-* work around broken object-fit on Edge 16
+1.5.0 - 2017-11-??
+* cleaned up console logging
 * enable WebM by default
 * enable WebAssembly by default if available
-* switch demo to WebM VP8 by default
+* allow memory growth on WebAssembly
+* build modules with -O3 instead of -O2
 * disabled experimental pthreads build for now
+* updated yuv-canvas
+    * improved image filtering/scaling on Windows
+    * work around broken object-fit on Edge 16
 
 1.4.2 - 2017-04-24
 * support 8-bit 4:2:2 and 4:4:4 subsampling in VP9

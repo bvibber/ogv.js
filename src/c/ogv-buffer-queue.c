@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "ogv-buffer-queue.h"
@@ -37,12 +36,10 @@ int64_t bq_headroom(BufferQueue *queue) {
 
 int bq_seek(BufferQueue *queue, int64_t pos) {
     if (bq_start(queue) > pos) {
-        printf("trying to seek to %lld\n", pos);
         queue->lastSeekTarget = pos;
         return -1;
     }
     if (bq_end(queue) < pos) {
-        printf("trying to seek to %lld\n", pos);
         queue->lastSeekTarget = pos;
         return -1;
     }
@@ -94,7 +91,6 @@ void bq_append(BufferQueue *queue, const char *data, size_t len) {
 
 int bq_read(BufferQueue *queue, char *data, size_t len) {
     if (bq_headroom(queue) < len) {
-        printf("failed bq_read len %d at pos %lld\n", len, queue->pos);
         return -1;
     }
 
@@ -119,7 +115,6 @@ int bq_read(BufferQueue *queue, char *data, size_t len) {
             return 0;
         }
     }
-    printf("failed a bq_read len %d at pos %lld\n", len, queue->pos);
     return -1;
 }
 

@@ -2,12 +2,12 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/threading.h>
 #include <pthread.h>
+#include <stdio.h>
 #endif
 
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -101,7 +101,6 @@ void ogv_video_decoder_destroy() {
 
 int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 	// no header packets for VP8
-	printf("VPX process_header should not happen?\n");
 	return 0;
 }
 
@@ -120,7 +119,6 @@ static int process_frame_return() {
 		// @fixme can we have multiples really? how does this worky
 		if (foundImage) {
 			// skip for now
-			printf("got multiple frames from VP9 stream unexpectedly?\n");
 			continue;
 		}
 		foundImage = 1;
@@ -140,7 +138,7 @@ static int process_frame_return() {
 				chromaHeight = image->h;
 				break;
 			default:
-				printf("Skipping frame with unknown picture type %d\n", (int)image->fmt);
+				//printf("Skipping frame with unknown picture type %d\n", (int)image->fmt);
 				return 0;
 		}
 		ogvjs_callback_frame(image->planes[0], image->stride[0],
