@@ -91,23 +91,8 @@
             hash = matches[2],
             filename = matches[3],
             sourceMode = document.querySelector('#media-source').value;
-        if (sourceMode == 'shortlist') {
-            baseUrl = 'https://media-streaming.wmflabs.org';
-        }
-        if (sourceMode == 'shortlist-cbr') {
-            baseUrl = 'https://media-streaming.wmflabs.org/cbr-soft';
-        }
-        if (sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9') {
-            baseUrl = 'https://media-streaming.wmflabs.org/profile1';
-        }
-        if (sourceMode == 'shortlist-sliced') {
-            baseUrl = 'https://media-streaming.wmflabs.org/sliced';
-        }
-        if (sourceMode == 'shortlist-sliced0') {
-            baseUrl = 'https://media-streaming.wmflabs.org/sliced0';
-        }
-        if (sourceMode == 'constrained') {
-            baseUrl = 'https://media-streaming.wmflabs.org/constrained';
+        if (sourceMode == 'clean') {
+            baseUrl = 'https://media-streaming.wmflabs.org/clean';
         }
         return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
     }
@@ -160,30 +145,16 @@
 
             // Build entries for the transcodes
             var sourceMode = document.querySelector('#media-source').value;
-            if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr' || sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9' || sourceMode == 'shortlist-sliced'|| sourceMode == 'shortlist-sliced0' || sourceMode == 'constrained') {
+            if (sourceMode == 'clean') {
                 var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
                     widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
-                    formats = ['ogv', 'webm'];
-                if (sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-sliced' || sourceMode == 'shortlist-sliced0') {
-                    sizes = [160, 240, 360, 480, 720, 1080];
-                    formats = ['webm'];
-                }
-                if (sourceMode == 'shortlist-vp9') {
-                    sizes = [160, 240, 360, 480, 720, 1080];
-                    formats = ['vp9.webm'];
-                }
-                if (sourceMode == 'constrained') {
-                    formats = ['ogv', 'lowcpu.webm', 'webm', 'vp9.webm'];
-                }
+                    formats = ['ogv', 'webm', 'vp9.webm'];
                 sizes.forEach(function(size, i) {
                     formats.forEach(function(format) {
                         // fixme: tweak if necessary
                         var width = widths[i],
                             aspect = imageinfo.width / imageinfo.height,
                             height = Math.round(width / aspect);
-                        if (sourceMode === 'constrained' && width > 1920 && format === 'ogv') {
-                            return;
-                        }
                         if (width <= imageinfo.width) {
                             sources.push({
                                 key: size + 'p.' + format,
@@ -386,258 +357,7 @@
             searchQuery = 'filetype:video ' + filterString;
         } else if (sourceMode == 'commons-audio') {
           searchQuery = 'filetype:audio ' + filterString;
-        } else if (sourceMode == 'blender') {
-            processList([
-                [
-                    "File:Caminandes- Llama Drama - Short Movie.ogv",
-                    '1080p24',
-                    '3d animation'
-                ],
-                [
-                    "File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
-                    '1080p24',
-                    '3d animated'
-                ],
-                [
-                    "File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
-                    '2160p24',
-                    '2d animation'
-                ],
-                [
-                    "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
-                    '2160p24',
-                    'live action + CG effects'
-                ],
-                [
-                    "File:Cosmos Laundromat - First Cycle - Official Blender Foundation release.webm",
-                    '1152p24',
-                    '3d animation'
-                ],
-                [
-                    "File:Sintel movie 4K.webm",
-                    '2304p24',
-                    '3d animation (has 1000fps bug)'
-                ],
-                [
-                    "File:Big Buck Bunny 4K.webm",
-                    '2250p60',
-                    '3d animation (has 1000fps bug)'
-                ],
-                [
-                    "File:Elephants Dream (2006) 1080p24.webm",
-                    '1080p24',
-                    '3d animation'
-                ]
-            ]);
-        } else if (sourceMode == 'highfps') {
-            processList([
-                [
-                    "File:Big Buck Bunny 4K.webm",
-                    '2250p60',
-                    'animation (has 1000fps bug)'
-                ],
-                [
-                    "File:Stugl,aerial video.webm",
-                    '1080p60',
-                    'aerial drone footage'
-                ],
-                [
-                    "File:A Moment with Astronaut Kjell Lindgren.webm",
-                    '1080p59.94',
-                    'live action'
-                ],
-                [
-                    "File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
-                    '1080p59.94',
-                    'live action'
-                ],
-                [
-                    "File:President Obama Sings \"Sweet Home Chicago\".webm",
-                    '720p59.94',
-                    'live action'
-                ],
-                [
-                    "File:Inside the White House- The Kitchen Garden.webm",
-                    '720p59.94',
-                    'live action, mix of sources'
-                ],
-                [
-                    "File:Spectator Mode for Job Simulator - a new way to display social VR footage.webm",
-                    '1080p60',
-                    'VR game footage'
-                ],
-                [
-                    "File:ManifoldGarden BRoll01 E3 V01.webm",
-                    '1080p60',
-                    'game footage'
-                ],
-                [
-                    "File:Project CARS - Game of the Year Edition Launch Trailer.webm",
-                    '1080p60',
-                    'game footage'
-                ],
-                [
-                    "File:GRID 2 - Demolition Derby (Trailer).webm",
-                    '1080p60',
-                    'game footage'
-                ]
-            ]);
-        } else if (sourceMode == 'shortlist' || sourceMode == 'shortlist-cbr') {
-            var shortlist = [
-                // Blender movies
-                [
-                    "File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
-                    '1080p24',
-                    '3d animated'
-                ],
-                [
-                    "File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
-                    '2160p24',
-                    'cartoon; some motion spikes'
-                ],
-                [
-                    "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
-                    '2160p24',
-                    'sci-fi; mix of scene types'
-                ],
-
-                // Space stuff
-                [
-                    "File:Curiosity's Seven Minutes of Terror.ogv",
-                    '720p23.98',
-                    'live-action with CG elements'
-                ],
-                [
-                    "File:RED 4K Video of Colorful Liquid in Space.webm",
-                    '2160p23.98',
-                    'UHD, modest motion'
-                ],
-                [
-                    "File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
-                    '2160p23.98',
-                    'UHD, mix of low and high motion'
-                ],
-                [
-                    "File:Here's to Engineering.webm",
-                    '2160p23.98',
-                    'UHD, low motion'
-                ],
-
-                // Wikipedia stuff
-                [
-                    "File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
-                    '1080p23.98',
-                    'low motion with some spikes'
-                ],
-                [
-                    "File:How Open Access Empowered a 16-Year-Old to Make Cancer Breakthrough.ogv",
-                    '1080p23.98',
-                    'talking heads; modest motion'
-                ],
-                [
-                    "File:Knowledge for Everyone (short cut).webm",
-                    '1080p23.98',
-                    'mix of scenes'
-                ],
-                [
-                    "File:Share-a-Fact on the Official Wikipedia Android app.webm",
-                    '1080p29.97',
-                    'short animation, some motion spikes'
-                ],
-                [
-                    "File:Sneak Preview - Wikipedia VisualEditor.webm",
-                    '1080p23.98',
-                    'modest motion with spikes'
-                ],
-                [
-                    "File:The Impact Of Wikipedia.webm",
-                    '1080p23.98',
-                    'low motion'
-                ],
-                [
-                    "File:WikiArabia tech meetup in Ramallah 2016.webm",
-                    '1080p24',
-                    'modest motion'
-                ],
-                [
-                    "File:Wikipedia Edit 2015.webm",
-                    '1080p24',
-                    'animated, many dupe frames'
-                ],
-                [
-                    "File:Wiki Makes Video Intro 4 26.webm",
-                    '720p59.94',
-                    'high fps, mix of scenes'
-                ],
-                [
-                    "File:This is the Wikimedia Foundation.webm",
-                    '1080p23.98',
-                    'mix of scenes'
-                ],
-
-                // Misc stuff
-                [
-                    "File:Tawakkol Karman (English).ogv",
-                    '1080p50',
-                    'high fps, modest motion'
-                ],
-                [
-                    "File:Eisbach surfen v1.ogv",
-                    '1080p30',
-                    'high motion'
-                ],
-                [
-                    "File:FEZ trial gameplay HD.webm",
-                    '720p30',
-                    'animation'
-                ],
-                [
-                    "File:Furcifer pardalis moving eyes.ogv",
-                    '1080p24',
-                    'low motion'
-                ],
-                [
-                    "File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
-                    '1080p59.94',
-                    'high fps, moderate motion'
-                ],
-                [
-                    "File:Snowdonia by drone.webm",
-                    '1080p30',
-                    'mix of high and low motion scenes'
-                ],
-                [
-                    "File:Stugl,aerial video.webm",
-                    '1080p60',
-                    'high fps, high motion'
-                ]
-            ];
-            processList(shortlist);
-        } else if (sourceMode == 'shortlist-profile1' || sourceMode == 'shortlist-vp9' || sourceMode == 'shortlist-sliced' || sourceMode == 'shortlist-sliced0') {
-            var shortlist = [
-                [
-                    "File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
-                    '2160p24',
-                    'cartoon; some motion spikes'
-                ],
-                [
-                    "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
-                    '2160p24',
-                    'sci-fi; mix of scene types'
-                ],
-                [
-                    "File:Knowledge for Everyone (short cut).webm",
-                    '1080p23.98',
-                    'mix of scenes'
-                ],
-                [
-                    "File:Stugl,aerial video.webm",
-                    '1080p60',
-                    'high fps, high motion'
-                ]
-            ];
-            processList(shortlist);
-        } else if (sourceMode == 'constrained') {
+        } else if (sourceMode == 'clean') {
           var shortlist = [
               // Space stuff
               [
@@ -705,11 +425,6 @@
                   "File:Share-a-Fact on the Official Wikipedia Android app.webm",
                   '1080p29.97',
                   'short animation, some motion spikes'
-              ],
-              [
-                  "File:Sneak Preview - Wikipedia VisualEditor.webm",
-                  '1080p23.98',
-                  'modest motion with spikes'
               ],
               [
                   "File:The Impact Of Wikipedia.webm",
@@ -961,7 +676,7 @@
         hash += '&size=' + sizeKey;
 
         var mode = document.getElementById('media-source').value;
-        if (mode == 'constrained') {
+        if (mode == 'clean') {
             // nothin
         } else {
             hash += '&source=' + mode;
