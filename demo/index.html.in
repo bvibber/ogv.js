@@ -35,7 +35,6 @@
 					<option value="wasm">Web Assembly</option>
 					<option value="wasm-noworker">&nbsp;&nbsp;WASM no Worker</option>
 					<option value="native">native</option>
-					<!-- <option value="cortado">Cortado (Java)</option> -->
 				</select>
 			</div>
 		</div>
@@ -151,15 +150,6 @@
 					<option value=motd>Wikimedia Commons Media of the Day</option>
 					<option value=commons>Wikimedia Commons all videos</option>
 					<option value=commons-audio>Wikimedia Commons all audio</option>
-					<!--
-					<option value=highfps>60fps high frame rate</option>
-					<option value=shortlist>VBR transcode tests</option>
-					<option value=shortlist-cbr>CBR/soft-target tests</option>
-					<option value=shortlist-profile1>VP8 -profile=1 tests</option>
-					<option value=shortlist-sliced0>VP8 -slices=n</option>
-					<option value=shortlist-sliced>VP8 -slices=n -profile=1</option>
-					<option value=shortlist-vp9>VP9 tests</option>
-					-->
 				</select>
 			</div>
 			<form id="searchform">

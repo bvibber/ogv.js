@@ -872,13 +872,6 @@
                     memoryLimit: maxmem,
                     forceWebGL: true
                 });
-            } else if (playerBackend == 'cortado') {
-                player = new CortadoPlayer();
-                player.durationHint = mediaInfo.duration;
-                player.videoWidthHint = selected.width;
-                player.videoHeightHint = selected.height;
-                player.width = selected.width; // ?
-                player.height = selected.height;
             } else if (playerBackend == 'native') {
                 player = document.createElement('video');
             } else {

@@ -9,8 +9,6 @@ BUILDSCRIPTS_DIR:=buildscripts
 
 AUDIO_DIR:=node_modules/audio-feeder
 
-CORTADO_JAR:=assets/cortado.jar
-
 JS_SRC_DIR:=src/js
 JS_FILES:=$(shell find $(JS_SRC_DIR) -type f -name "*.js")
 JS_FILES+= $(shell find $(JS_SRC_DIR)/workers -type f -name "*.js")
@@ -312,9 +310,7 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
                         build/demo/media/curiosity.ogv \
-                        build/demo/lib/ogv.js \
-                        build/demo/lib/cortado.jar \
-                        build/demo/lib/CortadoPlayer.js
+                        build/demo/lib/ogv.js
 	test -d build/demo || mkdir -p build/demo
 	sed 's/OGV_VERSION/$(FULLVER)/g' < $(DEMO_DIR)/index.html.in > build/demo/index.html
 
@@ -358,13 +354,6 @@ build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
 	cp -pr dist/* build/demo/lib/
 
-build/demo/lib/cortado.jar : $(CORTADO_JAR)
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp $(CORTADO_JAR) build/demo/lib/cortado.jar
-
-build/demo/lib/CortadoPlayer.js : $(JS_SRC_DIR)/CortadoPlayer.js
-	test -d build/demo/lib || mkdir -p build/demo/lib
-	cp $(JS_SRC_DIR)/CortadoPlayer.js build/demo/lib/CortadoPlayer.js
 
 # TODO: Use Karma with this instead: https://github.com/karma-runner/karma-qunit
 #       which will replace this stuff here by a one-liner
