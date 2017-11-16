@@ -399,13 +399,11 @@
               ],
 
               // Wikipedia stuff
-              /*
-              // thumbnail broken
               [
                   "File:Women in botany and Wikipedia.webm",
                   '2160p24',
                   'UHD source'
-              ],*/
+              ],
               [
                   "File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
                   '1080p23.98',
