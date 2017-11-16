@@ -815,7 +815,7 @@
             //debugFilter = /setting a timer/;
             //debugFilter = /ended|ending|end |demuxer/i;
             //debugFilter = /play loop.*(draw|frame)/;
-			if (playerBackend == 'auto') {
+            if (playerBackend == 'auto') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
@@ -826,7 +826,7 @@
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
-					wasm: false
+                    wasm: false
                 });
             } else if (playerBackend == 'js-cpu') {
                 player = new OGVPlayer({
@@ -834,7 +834,7 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
                     webGL: false, // force 2d canvas
-					wasm: false
+                    wasm: false
                 });
             } else if (playerBackend == 'js-noworker') {
                 player = new OGVPlayer({
@@ -842,14 +842,14 @@
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
                     worker: false, // experimental
-					wasm: false
+                    wasm: false
                 });
             } else if (playerBackend == 'js-mt') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                     memoryLimit: maxmem,
-					wasm: false,
+                    wasm: false,
                     threading: true // experimental
                 });
             } else if (playerBackend == 'wasm') {
