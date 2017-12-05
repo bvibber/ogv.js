@@ -167,6 +167,7 @@ var OGVPlayer = function(options) {
 	// Buffer in largeish chunks to survive long CPU spikes on slow CPUs (eg, 32-bit iOS)
 	audioOptions.bufferSize = 8192;
 
+	codecOptions.type = options.type;
 	codecOptions.worker = enableWorker;
 	codecOptions.threading = enableThreading;
 	codecOptions.wasm = enableWASM;
@@ -1743,9 +1744,9 @@ var OGVPlayer = function(options) {
 		// @todo use the demuxer and codec interfaces directly
 
 		// @todo fix detection proper
-		if (currentSrc.match(/\.webm$/i)) {
+		if (currentSrc.match(/\.webm$/i) && !codecOptions.type) {
 			codecOptions.type = 'video/webm';
-		} else {
+		} else if(!codecOptions.type) {
 			codecOptions.type = 'video/ogg';
 		}
 
