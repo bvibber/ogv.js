@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.1 - 2017-12-05
+* use Content-Type to choose demuxer instead of URL extension
+
 1.5.0 - 2017-11-09
 * cleaned up console logging
 * enable WebM by default
