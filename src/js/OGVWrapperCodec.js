@@ -153,7 +153,7 @@ var OGVWrapperCodec = (function(options) {
 	// - public methods
 	self.init = function(callback) {
 		var demuxerClassName;
-		if (options.type === 'video/webm') {
+		if (options.type === 'video/webm' || options.type === 'audio/webm') {
 			demuxerClassName = options.wasm ? 'OGVDemuxerWebMW' : 'OGVDemuxerWebM';
 		} else {
 			demuxerClassName = options.wasm ? 'OGVDemuxerOggW' : 'OGVDemuxerOgg';

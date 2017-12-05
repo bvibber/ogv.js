@@ -1742,10 +1742,13 @@ var OGVPlayer = function(options) {
 	function loadCodec(callback) {
 		// @todo use the demuxer and codec interfaces directly
 
-		// @todo fix detection proper
-		if (currentSrc.match(/\.webm$/i)) {
+		if (stream && stream.headers && 'content-type' in stream.headers) {
+			codecOptions.type = stream.headers['content-type'];
+		} else if (currentSrc.match(/\.webm$/i)) {
+			console.log('no Content-Type; assuming data is WebM based on URL');
 			codecOptions.type = 'video/webm';
 		} else {
+			console.log('no Content-Type; assuming data is Ogg based on URL');
 			codecOptions.type = 'video/ogg';
 		}
 
