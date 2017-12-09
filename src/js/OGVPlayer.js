@@ -1702,7 +1702,7 @@ var OGVPlayer = function(options) {
 	var videoInfo,
 		audioInfo;
 
-	function startProcessingVideo() {
+	function startProcessingVideo(firstBuffer) {
 		if (started || codec) {
 			return;
 		}
@@ -1735,29 +1735,40 @@ var OGVPlayer = function(options) {
 			}
 		};
 		codec.init(function() {
-			readBytesAndWait();
+			codec.receiveInput(firstBuffer, readBytesAndWait);
 		});
 	}
 
 	function loadCodec(callback) {
 		// @todo use the demuxer and codec interfaces directly
 
-		if (stream && stream.headers && 'content-type' in stream.headers &&
-			  !stream.headers['content-type'].match(/^text\//)) {
-			// On Safari we get back "text/plain; charset=x-user-defined"
-			var t = stream.headers['content-type'];
-			log('Content-Type: ' + t);
-			codecOptions.type = t;
-		} else if (currentSrc.match(/\.webm$/i)) {
-			log('no Content-Type; assuming data is WebM based on URL');
-			codecOptions.type = 'video/webm';
-		} else {
-			log('no Content-Type; assuming data is Ogg based on URL');
-			codecOptions.type = 'video/ogg';
-		}
+		stream.read(1024).then(function(buf) {
+			var hdr = new Uint8Array(buf);
+			if (hdr.length > 4 &&
+				  hdr[0] == 'O'.charAt(0) &&
+				  hdr[1] == 'g'.charAt(0) &&
+				  hdr[2] == 'g'.charAt(0) &&
+				  hdr[3] == 'S'.charAt(0)
+			) {
+				// Ogg stream
+				codecOptions.type = 'video/ogg';
+			} else if (hdr.length > 4 &&
+				         hdr[0] == 0x1a &&
+				         hdr[1] == 0x45 &&
+							   hdr[2] == 0xdf &&
+							   hdr[3] == 0xa3
+			) {
+				// Matroska or WebM
+				codecOptions.type = 'video/webm';
+			} else {
+				// @todo handle unknown file types gracefully
+				codecOptions.type = 'video/ogg';
+			}
 
-		codecClass = OGVWrapperCodec;
-		callback();
+			codecClass = OGVWrapperCodec;
+			// Pass that first buffer in to the demuxer!
+			callback(buf);
+		});
 	}
 
 	/**
