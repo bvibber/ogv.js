@@ -216,7 +216,7 @@ var OGVPlayer = function(options) {
 
 			//console.log('+' + delta + 'ms ' + msg);
 			//then = now;
-			
+
 			if (!options.debugFilter || msg.match(options.debugFilter)) {
 				console.log('[' + (Math.round(delta * 10) / 10) + 'ms] ' + msg);
 			}
@@ -518,7 +518,7 @@ var OGVPlayer = function(options) {
 			drawingTime: drawingTime - lastFrameDrawingTime,
 			bufferTime: bufferTime - lastFrameBufferTime,
 			proxyTime: proxyTime - lastFrameProxyTime,
-			
+
 			demuxerTime: 0,
 			videoTime: 0,
 			audioTime: 0,
@@ -976,7 +976,7 @@ var OGVPlayer = function(options) {
 			depth++;
 			doProcessingLoop();
 			depth--;
-			
+
 			if (needProcessing && isProcessing()) {
 				throw new Error('REENTRANCY FAIL: waiting on input or codec but asked to keep processing');
 			}
@@ -1228,7 +1228,7 @@ var OGVPlayer = function(options) {
 							}
 							droppedAudio = audioState.dropped;
 							delayedAudio = audioState.delayed;
-							
+
 							readyForAudioDecode = audioFeeder.durationBuffered <=
 								audioFeeder.bufferThreshold * 2;
 
@@ -1399,7 +1399,7 @@ var OGVPlayer = function(options) {
 							}
 							totalFrameTime += targetPerFrameTime;
 							totalFrameCount++;
-							
+
 							var nextFrameEndTimestamp = frameEndTimestamp = codec.frameTimestamp;
 							pendingFrame++;
 							pendingFrames.push({
@@ -1568,7 +1568,7 @@ var OGVPlayer = function(options) {
 					}
 				}
 			}
-			
+
 			function doProcessPlayDemux() {
 				var wasFrameReady = codec.frameReady,
 					wasAudioReady = codec.audioReady;
