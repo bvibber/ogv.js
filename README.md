@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.2 - 2017-12-??
+* update to stream-file 0.2.3
+    * fixes error loading blob URLs in Safari
+
 1.5.1 - 2017-12-05
 * use Content-Type to choose demuxer instead of URL extension
 
