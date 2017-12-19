@@ -809,7 +809,7 @@
             //debugFilter = /drew frame|dropped|delayed/;
             //debugFilter = /demuxer|stream is at end/;
             //debugFilter = /waiting/;
-            debugFilter = /late frame/;
+            //debugFilter = /late frame/;
             //debugFilter = /setting a timer/;
             //debugFilter = /ended|ending|end |demuxer/i;
             //debugFilter = /play loop.*(draw|frame)/;
