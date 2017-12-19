@@ -17,6 +17,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -s PTHREAD_POOL_SIZE=1 \
   -s NO_EXIT_RUNTIME=1 \
   -s TOTAL_MEMORY=33554432 \
+  -s LEGACY_VM_SUPPORT=1 \
   -s EXPORT_NAME="'OGVDecoderVideoVP8MT'" \
   -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \

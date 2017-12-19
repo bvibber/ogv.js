@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.3 - 201?-??-??
+* updated build chain to emscripten 1.37.25
+
 1.5.2 - 2017-12-09
 * use magic bytes sniffing to choose demuxer
     * fixes WebM in blobs and in Safari
