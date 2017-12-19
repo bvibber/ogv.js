@@ -32,11 +32,19 @@ mergeInto(LibraryManager.library, {
 	},
 
 	ogvjs_callback_loaded_metadata: function(videoCodecStr, audioCodecStr) {
+		function stringify(ptr) {
+			// Only works right on ASCII!
+			var str = "", heap = Module.HEAPU8;
+			for (var i = ptr; heap[i] != 0; i++) {
+				str += String.fromCharCode(heap[i]);
+			}
+			return str;
+		}
 		if (videoCodecStr) {
-			Module.videoCodec = Module.Pointer_stringify(videoCodecStr);
+			Module.videoCodec = stringify(videoCodecStr);
 		}
 		if (audioCodecStr) {
-			Module.audioCodec = Module.Pointer_stringify(audioCodecStr);
+			Module.audioCodec = stringify(audioCodecStr);
 		}
 
 		var len = Module._ogv_demuxer_media_duration();
