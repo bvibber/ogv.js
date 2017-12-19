@@ -141,7 +141,12 @@ var OGVVersion = __OGV_FULL_VERSION__;
 				options.locateFile = function(filename) {
 					// Allow secondary resources like the .wasm payload
 					// to be loaded by the emscripten code.
-					return urlForScript(filename);
+					if (filename.slice(0, 5) === 'data:') {
+						// emscripten 1.37.25 loads memory initializers as data: URI
+						return filename;
+					} else {
+						return urlForScript(filename);
+					}
 				};
 				return new global[className](options);
 			}
