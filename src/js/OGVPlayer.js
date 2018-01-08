@@ -1929,445 +1929,465 @@ function OGVPlayer(options) {
 		seek(+seekToTime, SeekMode.FAST);
 	};
 
-	/**
-	 * HTMLMediaElement src property
-	 */
-	Object.defineProperty(self, "src", {
-		get: function getSrc() {
-			return self.getAttribute('src') || '';
-		},
-		set: function setSrc(val) {
-			self.setAttribute('src', val);
-			loading = false; // just in case?
-			prepForLoad("interactive");
-		}
-	});
-
-	/**
-	 * HTMLMediaElement buffered property
-	 */
-	Object.defineProperty(self, "buffered", {
-		get: function getBuffered() {
-			var ranges;
-			if (stream && byteLength && duration) {
-				ranges = stream.getBufferedRanges().map(function(range) {
-					return range.map(function(offset) {
-						return (offset / stream.length) * duration;
-					});
-				});
-			} else {
-				ranges = [[0, 0]];
-			}
-			return new OGVTimeRanges(ranges);
-		}
-	});
-
-	/**
-	 * HTMLMediaElement seekable property
-	 */
-	Object.defineProperty(self, "seekable", {
-		get: function getSeekable() {
-			if (self.duration < Infinity && stream && stream.seekable && codec && codec.seekable) {
-				return new OGVTimeRanges([[0, duration]]);
-			} else {
-				return new OGVTimeRanges([]);
-			}
-		}
-	});
-
-	/**
-	 * HTMLMediaElement currentTime property
-	 */
-	Object.defineProperty(self, "currentTime", {
-		get: function getCurrentTime() {
-			if (state == State.SEEKING) {
-				return seekTargetTime;
-			} else {
-				if (codec) {
-					if (state == State.PLAYING && !paused) {
-						return getPlaybackTime();
-					} else {
-						return initialPlaybackOffset;
-					}
-				} else {
-					return initialSeekTime;
-				}
-			}
-		},
-		set: function setCurrentTime(val) {
-			seek(val, SeekMode.EXACT);
-		}
-	});
-
-	/**
-	 * HTMLMediaElement duration property
-	 */
-	Object.defineProperty(self, "duration", {
-		get: function getDuration() {
-			if (codec && codec.loadedMetadata) {
-				if (duration !== null) {
-					return duration;
-				} else {
-					return Infinity;
-				}
-			} else {
-				return NaN;
-			}
-		}
-	});
-
-	/**
-	 * HTMLMediaElement paused property
-	 */
-	Object.defineProperty(self, "paused", {
-		get: function getPaused() {
-			return paused;
-		}
-	});
-
-	/**
-	 * HTMLMediaElement ended property
-	 */
-	Object.defineProperty(self, "ended", {
-		get: function getEnded() {
-			return ended;
-		}
-	});
-
-	/**
-	 * HTMLMediaElement ended property
-	 */
-	Object.defineProperty(self, "seeking", {
-		get: function getSeeking() {
-			return (state == State.SEEKING);
-		}
-	});
-
-	/**
-	 * HTMLMediaElement muted property
-	 */
-	Object.defineProperty(self, "muted", {
-		get: function getMuted() {
-			return muted;
-		},
-		set: function setMuted(val) {
-			muted = val;
-			if (audioFeeder) {
-				audioFeeder.muted = muted;
-			} else if (started && !muted && codec && codec.hasAudio) {
-				log('unmuting: switching from timer to audio clock');
-				initAudioFeeder();
-				startPlayback(audioEndTimestamp);
-			}
-			fireEventAsync('volumechange');
-		}
-	});
-
-	Object.defineProperty(self, "poster", {
-		get: function getPoster() {
-			return poster;
-		},
-		set: function setPoster(val) {
-			poster = val;
-			if (!started) {
-				if (thumbnail) {
-					self.removeChild(thumbnail);
-				}
-				thumbnail = new Image();
-				thumbnail.src = poster;
-				thumbnail.className = 'ogvjs-poster';
-				thumbnail.style.position = 'absolute';
-				thumbnail.style.top = '0';
-				thumbnail.style.left = '0';
-				thumbnail.style.width = '100%';
-				thumbnail.style.height = '100%';
-				thumbnail.style.objectFit = 'contain';
-				thumbnail.style.visibility = 'hidden';
-				thumbnail.addEventListener('load', function() {
-					if (thumbnail === this) {
-						OGVPlayer.styleManager.appendRule('.' + instanceId, {
-							width: thumbnail.naturalWidth + 'px',
-							height: thumbnail.naturalHeight + 'px'
-						});
-						OGVPlayer.updatePositionOnResize();
-						thumbnail.style.visibility = 'visible';
-					}
-				});
-				self.appendChild(thumbnail);
-			}
-		}
-	});
-
-	// Video metadata properties...
-	Object.defineProperty(self, "videoWidth", {
-		get: function getVideoWidth() {
-			if (videoInfo) {
-				return videoInfo.displayWidth;
-			} else {
-				return 0;
-			}
-		}
-	});
-	Object.defineProperty(self, "videoHeight", {
-		get: function getVideoHeight() {
-			if (videoInfo) {
-				return videoInfo.displayHeight;
-			} else {
-				return 0;
-			}
-		}
-	});
-	Object.defineProperty(self, "ogvjsVideoFrameRate", {
-		get: function getOgvJsVideoFrameRate() {
-			if (videoInfo) {
-				if (videoInfo.fps == 0) {
-					return totalFrameCount / (totalFrameTime / 1000);
-				} else {
-					return videoInfo.fps;
-				}
-			} else {
-				return 0;
-			}
-		}
-	});
-
-	// Audio metadata properties...
-	Object.defineProperty(self, "ogvjsAudioChannels", {
-		get: function getOgvJsAudioChannels() {
-			if (audioInfo) {
-				return audioInfo.channels;
-			} else {
-				return 0;
-			}
-		}
-	});
-	Object.defineProperty(self, "ogvjsAudioSampleRate", {
-		get: function getOgvJsAudioChannels() {
-			if (audioInfo) {
-				return audioInfo.rate;
-			} else {
-				return 0;
-			}
-		}
-	});
-
 	// Display size...
 	var width = 0, height = 0;
-	/**
-	 * @property width
-	 * @todo reflect to the width attribute?
-	 */
-	Object.defineProperty(self, "width", {
-		get: function getWidth() {
-			return width;
-		},
-		set: function setWidth(val) {
-			width = parseInt(val, 10);
-			self.style.width = width + 'px';
-			OGVPlayer.updatePositionOnResize();
-		}
-	});
-
-	/**
-	 * @property height
-	 * @todo reflect to the height attribute?
-	 */
-	Object.defineProperty(self, "height", {
-		get: function getHeight() {
-			return height;
-		},
-		set: function setHeight(val) {
-			height = parseInt(val, 10);
-			self.style.height = height + 'px';
-			OGVPlayer.updatePositionOnResize();
-		}
-	});
-
-	/**
-	 * @property autoplay {boolean} stub prop
-	 * @todo reflect to the autoplay attribute?
-	 * @todo implement actual autoplay behavior
-	 */
-	Object.defineProperty(self, "autoplay", {
-		get: function getAutoplay() {
-			return false;
-		},
-		set: function setAutoplay(val) {
-			// ignore
-		}
-	});
-
-	/**
-	 * @property controls {boolean} stub prop
-	 * @todo reflect to the controls attribute?
-	 * @todo implement actual control behavior
-	 */
-	Object.defineProperty(self, "controls", {
-		get: function getControls() {
-			return false;
-		},
-		set: function setControls(val) {
-			// ignore
-		}
-	});
-
-	/**
-	 * @property loop {boolean} stub prop
-	 * @todo reflect to the controls attribute?
-	 * @todo implement actual loop behavior
-	 */
-	Object.defineProperty(self, "loop", {
-		get: function getLoop() {
-			return false;
-		},
-		set: function setLoop(val) {
-			// ignore
-		}
-	});
-
-	/**
-	 * @property crossOrigin {string|null} stub prop
-	 * @todo reflect to the crossorigin attribute?
-	 * @todo implement actual behavior
-	 */
-	Object.defineProperty(self, "crossOrigin", {
-		get: function getCrossOrigin() {
-			return null;
-		},
-		set: function setCrossOrigin(val) {
-			// ignore
-		}
-	});
-
-	/**
-	 * Returns the URL to the currently-playing resource.
-	 * @property currentSrc {string|null}
-	 */
-	Object.defineProperty(self, "currentSrc", {
-		get: function getCurrentSrc() {
-			// @todo return absolute URL per spec
-			return currentSrc;
-		}
-	});
-
-	Object.defineProperty(self, "defaultMuted", {
-		get: function getDefaultMuted() {
-			return false;
-		}
-	});
-
-	Object.defineProperty(self, "defaultPlaybackRate", {
-		get: function getDefaultPlaybackRate() {
-			return 1;
-		}
-	});
-
-	/**
-	 * @property error {string|null}
-	 * @todo implement
-	 */
-	Object.defineProperty(self, "error", {
-		get: function getError() {
-			if (state === State.ERROR) {
-				if (mediaError) {
-					return mediaError;
-				} else {
-					return new OGVMediaError("unknown error occurred in media procesing");
-				}
-			} else {
-				return null;
-			}
-		}
-	});
-	/**
- 	 * @property preload {string}
-	 */
-	Object.defineProperty(self, "preload", {
-		get: function getPreload() {
-			return self.getAttribute('preload') || '';
-		},
-		set: function setPreload(val) {
-			self.setAttribute('preload', val);
-		}
-	});
-
-	/**
-	 * @property readyState {number}
-	 * @todo return more accurate info about availability of data
-	 */
-	Object.defineProperty(self, "readyState", {
-		get: function getReadyState() {
-			if (stream && codec && codec.loadedMetadata) {
-				// for now we don't really calc this stuff
-				// just pretend we have lots of data coming in already
-				return OGVPlayer.HAVE_ENOUGH_DATA;
-			} else {
-				return OGVPlayer.HAVE_NOTHING;
-			}
-		}
-	});
-
-	/**
-	 * @property networkState {number}
-	 * @todo implement
-	 */
-	Object.defineProperty(self, "networkState", {
-		get: function getNetworkState() {
-			if (stream) {
-				if (stream.waiting) {
-					return OGVPlayer.NETWORK_LOADING;
-				} else {
-					return OGVPlayer.NETWORK_IDLE;
-				}
-			} else {
-				if (self.readyState == OGVPlayer.HAVE_NOTHING) {
-					return OGVPlayer.NETWORK_EMPTY;
-				} else {
-					return OGVPlayer.NETWORK_NO_SOURCE;
-				}
-			}
-		}
-	});
-
-	/**
-	 * @property playbackRate {number}
-	 * @todo implement
-	 */
-	Object.defineProperty(self, "playbackRate", {
-		get: function getPlaybackRate() {
-			return 1;
-		},
-		set: function setPlaybackRate(val) {
-			// ignore
-		}
-	});
-
-	/**
-	 * @property played {OGVTimeRanges}
-	 * @todo implement correctly more or less
-	 */
-	Object.defineProperty(self, "played", {
-		get: function getPlayed() {
-			return new OGVTimeRanges([[0, self.currentTime]]);
-		}
-	});
-
 	var _volume = 1;
 
-	/**
-	 * @property volume {number}
-	 * @todo implement
-	 */
-	Object.defineProperty(self, "volume", {
-		get: function getVolume() {
-			return _volume;
-		},
-		set: function setVolume(val) {
-			_volume = +val;
-			if (audioFeeder) {
-				audioFeeder.volume = _volume;
+	Object.defineProperties(self, {
+		/**
+		 * HTMLMediaElement src property
+		 */
+		"src": {
+			get: function getSrc() {
+				return self.getAttribute('src') || '';
+			},
+			set: function setSrc(val) {
+				self.setAttribute('src', val);
+				loading = false; // just in case?
+				prepForLoad("interactive");
 			}
-			fireEventAsync('volumechange');
+		},
+
+		/**
+		 * HTMLMediaElement buffered property
+		 */
+		"buffered": {
+			get: function getBuffered() {
+				var ranges;
+				if (stream && byteLength && duration) {
+					ranges = stream.getBufferedRanges().map(function(range) {
+						return range.map(function(offset) {
+							return (offset / stream.length) * duration;
+						});
+					});
+				} else {
+					ranges = [[0, 0]];
+				}
+				return new OGVTimeRanges(ranges);
+			}
+		},
+
+		/**
+		 * HTMLMediaElement seekable property
+		 */
+		"seekable": {
+			get: function getSeekable() {
+				if (self.duration < Infinity && stream && stream.seekable && codec && codec.seekable) {
+					return new OGVTimeRanges([[0, duration]]);
+				} else {
+					return new OGVTimeRanges([]);
+				}
+			}
+		},
+
+		/**
+		 * HTMLMediaElement currentTime property
+		 */
+		"currentTime": {
+			get: function getCurrentTime() {
+				if (state == State.SEEKING) {
+					return seekTargetTime;
+				} else {
+					if (codec) {
+						if (state == State.PLAYING && !paused) {
+							return getPlaybackTime();
+						} else {
+							return initialPlaybackOffset;
+						}
+					} else {
+						return initialSeekTime;
+					}
+				}
+			},
+			set: function setCurrentTime(val) {
+				seek(val, SeekMode.EXACT);
+			}
+		},
+
+		/**
+		 * HTMLMediaElement duration property
+		 */
+		"duration": {
+			get: function getDuration() {
+				if (codec && codec.loadedMetadata) {
+					if (duration !== null) {
+						return duration;
+					} else {
+						return Infinity;
+					}
+				} else {
+					return NaN;
+				}
+			}
+		},
+
+		/**
+		 * HTMLMediaElement paused property
+		 */
+		"paused": {
+			get: function getPaused() {
+				return paused;
+			}
+		},
+
+		/**
+		 * HTMLMediaElement ended property
+		 */
+		"ended": {
+			get: function getEnded() {
+				return ended;
+			}
+		},
+
+		/**
+		 * HTMLMediaElement ended property
+		 */
+		"seeking": {
+			get: function getSeeking() {
+				return (state == State.SEEKING);
+			}
+		},
+
+		/**
+		 * HTMLMediaElement muted property
+		 */
+		"muted": {
+			get: function getMuted() {
+				return muted;
+			},
+			set: function setMuted(val) {
+				muted = val;
+				if (audioFeeder) {
+					audioFeeder.muted = muted;
+				} else if (started && !muted && codec && codec.hasAudio) {
+					log('unmuting: switching from timer to audio clock');
+					initAudioFeeder();
+					startPlayback(audioEndTimestamp);
+				}
+				fireEventAsync('volumechange');
+			}
+		},
+
+		/**
+		 * HTMLMediaElement poster property
+		 */
+		"poster": {
+			get: function getPoster() {
+				return poster;
+			},
+			set: function setPoster(val) {
+				poster = val;
+				if (!started) {
+					if (thumbnail) {
+						self.removeChild(thumbnail);
+					}
+					thumbnail = new Image();
+					thumbnail.src = poster;
+					thumbnail.className = 'ogvjs-poster';
+					thumbnail.style.position = 'absolute';
+					thumbnail.style.top = '0';
+					thumbnail.style.left = '0';
+					thumbnail.style.width = '100%';
+					thumbnail.style.height = '100%';
+					thumbnail.style.objectFit = 'contain';
+					thumbnail.style.visibility = 'hidden';
+					thumbnail.addEventListener('load', function() {
+						if (thumbnail === this) {
+							OGVPlayer.styleManager.appendRule('.' + instanceId, {
+								width: thumbnail.naturalWidth + 'px',
+								height: thumbnail.naturalHeight + 'px'
+							});
+							OGVPlayer.updatePositionOnResize();
+							thumbnail.style.visibility = 'visible';
+						}
+					});
+					self.appendChild(thumbnail);
+				}
+			}
+		},
+
+		/**
+		 * HTMLMediaElement video width property
+		 */
+		"videoWidth": {
+			get: function getVideoWidth() {
+				if (videoInfo) {
+					return videoInfo.displayWidth;
+				} else {
+					return 0;
+				}
+			}
+		},
+
+		/**
+		 * HTMLMediaElement video height property
+		 */
+		"videoHeight": {
+			get: function getVideoHeight() {
+				if (videoInfo) {
+					return videoInfo.displayHeight;
+				} else {
+					return 0;
+				}
+			}
+		},
+
+		/**
+		 * Custom video framerate property
+		 */
+		"ogvjsVideoFrameRate": {
+			get: function getOgvJsVideoFrameRate() {
+				if (videoInfo) {
+					if (videoInfo.fps == 0) {
+						return totalFrameCount / (totalFrameTime / 1000);
+					} else {
+						return videoInfo.fps;
+					}
+				} else {
+					return 0;
+				}
+			}
+		},
+
+		/**
+		 * Custom audio metadata property
+		 */
+		"ogvjsAudioChannels": {
+			get: function getOgvJsAudioChannels() {
+				if (audioInfo) {
+					return audioInfo.channels;
+				} else {
+					return 0;
+				}
+			}
+		},
+
+		/**
+		 * Custom audio metadata property
+		 */
+		"ogvjsAudioSampleRate": {
+			get: function getOgvJsAudioChannels() {
+				if (audioInfo) {
+					return audioInfo.rate;
+				} else {
+					return 0;
+				}
+			}
+		},
+
+		/**
+		 * @property width
+		 * @todo reflect to the width attribute?
+		 */
+		"width": {
+			get: function getWidth() {
+				return width;
+			},
+			set: function setWidth(val) {
+				width = parseInt(val, 10);
+				self.style.width = width + 'px';
+				OGVPlayer.updatePositionOnResize();
+			}
+		},
+
+		/**
+		 * @property height
+		 * @todo reflect to the height attribute?
+		 */
+		"height": {
+			get: function getHeight() {
+				return height;
+			},
+			set: function setHeight(val) {
+				height = parseInt(val, 10);
+				self.style.height = height + 'px';
+				OGVPlayer.updatePositionOnResize();
+			}
+		},
+
+		/**
+		 * @property autoplay {boolean} stub prop
+		 * @todo reflect to the autoplay attribute?
+		 * @todo implement actual autoplay behavior
+		 */
+		"autoplay": {
+			get: function getAutoplay() {
+				return false;
+			},
+			set: function setAutoplay(val) {
+				// ignore
+			}
+		},
+
+		/**
+		 * @property controls {boolean} stub prop
+		 * @todo reflect to the controls attribute?
+		 * @todo implement actual control behavior
+		 */
+		"controls": {
+			get: function getControls() {
+				return false;
+			},
+			set: function setControls(val) {
+				// ignore
+			}
+		},
+
+		/**
+		 * @property loop {boolean} stub prop
+		 * @todo reflect to the controls attribute?
+		 * @todo implement actual loop behavior
+		 */
+		"loop": {
+			get: function getLoop() {
+				return false;
+			},
+			set: function setLoop(val) {
+				// ignore
+			}
+		},
+
+		/**
+		 * @property crossOrigin {string|null} stub prop
+		 * @todo reflect to the crossorigin attribute?
+		 * @todo implement actual behavior
+		 */
+		"crossOrigin": {
+			get: function getCrossOrigin() {
+				return null;
+			},
+			set: function setCrossOrigin(val) {
+				// ignore
+			}
+		},
+
+		/**
+		 * Returns the URL to the currently-playing resource.
+		 * @property currentSrc {string|null}
+		 */
+		"currentSrc": {
+			get: function getCurrentSrc() {
+				// @todo return absolute URL per spec
+				return currentSrc;
+			}
+		},
+
+		"defaultMuted": {
+			get: function getDefaultMuted() {
+				return false;
+			}
+		},
+
+		"defaultPlaybackRate": {
+			get: function getDefaultPlaybackRate() {
+				return 1;
+			}
+		},
+
+		/**
+		 * @property error {OGVMediaError|null}
+		 */
+		"error": {
+			get: function getError() {
+				if (state === State.ERROR) {
+					if (mediaError) {
+						return mediaError;
+					} else {
+						return new OGVMediaError("unknown error occurred in media procesing");
+					}
+				} else {
+					return null;
+				}
+			}
+		},
+
+		/**
+	 	 * @property preload {string}
+		 */
+		"preload": {
+			get: function getPreload() {
+				return self.getAttribute('preload') || '';
+			},
+			set: function setPreload(val) {
+				self.setAttribute('preload', val);
+			}
+		},
+
+		/**
+		 * @property readyState {number}
+		 * @todo return more accurate info about availability of data
+		 */
+		"readyState": {
+			get: function getReadyState() {
+				if (stream && codec && codec.loadedMetadata) {
+					// for now we don't really calc this stuff
+					// just pretend we have lots of data coming in already
+					return OGVPlayer.HAVE_ENOUGH_DATA;
+				} else {
+					return OGVPlayer.HAVE_NOTHING;
+				}
+			}
+		},
+
+		/**
+		 * @property networkState {number}
+		 * @todo implement
+		 */
+		"networkState": {
+			get: function getNetworkState() {
+				if (stream) {
+					if (stream.waiting) {
+						return OGVPlayer.NETWORK_LOADING;
+					} else {
+						return OGVPlayer.NETWORK_IDLE;
+					}
+				} else {
+					if (self.readyState == OGVPlayer.HAVE_NOTHING) {
+						return OGVPlayer.NETWORK_EMPTY;
+					} else {
+						return OGVPlayer.NETWORK_NO_SOURCE;
+					}
+				}
+			}
+		},
+
+		/**
+		 * @property playbackRate {number}
+		 * @todo implement
+		 */
+		"playbackRate": {
+			get: function getPlaybackRate() {
+				return 1;
+			},
+			set: function setPlaybackRate(val) {
+				// ignore
+			}
+		},
+
+		/**
+		 * @property played {OGVTimeRanges}
+		 * @todo implement correctly more or less
+		 */
+		"played": {
+			get: function getPlayed() {
+				return new OGVTimeRanges([[0, self.currentTime]]);
+			}
+		},
+
+		/**
+		 * @property volume {number}
+		 */
+		"volume": {
+			get: function getVolume() {
+				return _volume;
+			},
+			set: function setVolume(val) {
+				_volume = +val;
+				if (audioFeeder) {
+					audioFeeder.volume = _volume;
+				}
+				fireEventAsync('volumechange');
+			}
 		}
 	});
 
