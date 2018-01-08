@@ -9,6 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 1.5.3 - 201?-??-??
 * updated build chain to emscripten 1.37.25
+* internal source cleanup
 
 1.5.2 - 2017-12-09
 * use magic bytes sniffing to choose demuxer

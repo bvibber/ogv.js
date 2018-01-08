@@ -1,78 +1,22 @@
+// OGVPlayer.js
+
+// External deps
 require('es6-promise').polyfill();
+var YUVCanvas = require('yuv-canvas'),
+	StreamFile = require('stream-file'),
+	AudioFeeder = require('audio-feeder'),
+	dynamicaudio_swf = require('audio-feeder/dist/dynamicaudio.swf');
 
-var YUVCanvas = require('yuv-canvas');
-
-// -- OGVLoader.js
-var OGVLoader = require("./OGVLoader.js");
-
-// -- StreamFile.js
-var StreamFile = require('stream-file');
-
-// -- AudioFeeder.js
-var AudioFeeder = require("audio-feeder"),
-	dynamicaudio_swf = require("audio-feeder/dist/dynamicaudio.swf");
-
-// -- Bisector.js
-var Bisector = require("./Bisector.js");
-
-// -- OGVMediaType.js
-var OGVMediaType = require("./OGVMediaType.js");
-
-// -- OGVWrapperCodec.js
-var OGVWrapperCodec = require("./OGVWrapperCodec.js");
-
-// -- OGVDecoderAudioProxy.js
-var OGVDecoderAudioProxy = require("./OGVDecoderAudioProxy.js");
-
-// -- OGVDecoderVideoProxy.js
-var OGVDecoderVideoProxy = require("./OGVDecoderVideoProxy.js");
-
-/**
- * Constructor for an analogue of the TimeRanges class
- * returned by various HTMLMediaElement properties
- *
- * Pass an array of two-element arrays, each containing a start and end time.
- */
-// FIXME: not use window scope if possible here
-var OGVTimeRanges = window.OGVTimeRanges = function(ranges) {
-	Object.defineProperty(this, 'length', {
-		get: function getLength() {
-			return ranges.length;
-		}
-	});
-	this.start = function(i) {
-		return ranges[i][0];
-	};
-	this.end = function(i) {
-		return ranges[i][1];
-	};
-	return this;
-};
-
-var OGVMediaErrorConstants = {
-	MEDIA_ERR_ABORTED: 1,
-	MEDIA_ERR_NETWORK: 2,
-	MEDIA_ERR_DECODE: 3,
-	MEDIA_ERR_SRC_NOT_SUPPORTED: 4
-};
-function extend(dest, src) {
-	for (prop in src) {
-		if (src.hasOwnProperty(prop)) {
-			dest[prop] = src[prop];
-		}
-	}
-}
-
-/**
- * Constructor for analogue of the MediaError class
- * returned by HTMLMediaElement.error property
- */
-var OGVMediaError = window.OGVMediaError = function(code, message) {
-	this.code = code;
-	this.message = message;
-};
-extend(OGVMediaError, OGVMediaErrorConstants);
-extend(OGVMediaError.prototype, OGVMediaErrorConstants);
+// Internal deps
+var OGVLoader = require('./OGVLoader.js'),
+	Bisector = require('./Bisector.js'),
+	extend = require('./extend.js'),
+	OGVMediaError = require('./OGVMediaError.js')
+	OGVMediaType = require('./OGVMediaType.js'),
+	OGVTimeRanges = require('./OGVTimeRanges.js'),
+	OGVWrapperCodec = require('./OGVWrapperCodec.js'),
+	OGVDecoderAudioProxy = require('./OGVDecoderAudioProxy.js'),
+	OGVDecoderVideoProxy = require('./OGVDecoderVideoProxy.js');
 
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
@@ -86,7 +30,7 @@ extend(OGVMediaError.prototype, OGVMediaErrorConstants);
  *                     'delay-audio' (pre-1.3.2 behavior) stop audio when behind, then play all frames to catch up
  *                     'skip-frames' (default) to preserve audio, skipping frames until the next sync point (keyframe)
  */
-var OGVPlayer = function(options) {
+function OGVPlayer(options) {
 	options = options || {};
 
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
