@@ -1774,11 +1774,9 @@ function OGVPlayer(options) {
 	 */
 	self.canPlayType = function(contentType) {
 		var type = new OGVMediaType(contentType);
-		if (type.minor === 'ogg' &&
-			(type.major === 'audio' || type.major === 'video' || type.major === 'application')) {
+		function checkTypes(supported) {
 			if (type.codecs) {
-				var supported = ['vorbis', 'opus', 'theora'],
-					knownCodecs = 0,
+				var knownCodecs = 0,
 					unknownCodecs = 0;
 				type.codecs.forEach(function(codec) {
 					if (supported.indexOf(codec) >= 0) {
@@ -1797,8 +1795,14 @@ function OGVPlayer(options) {
 			} else {
 				return 'maybe';
 			}
+		}
+		if (type.minor === 'ogg' &&
+			(type.major === 'audio' || type.major === 'video' || type.major === 'application')) {
+			return checkTypes(['vorbis', 'opus', 'theora']);
+		} else if (type.minor === 'webm' &&
+			(type.major === 'audio' || type.major === 'video')) {
+			return checkTypes(['vorbis', 'opus', 'vp8', 'vp9']);
 		} else {
-			// @todo when webm support is more complete, handle it
 			return '';
 		}
 	};

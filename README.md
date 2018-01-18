@@ -7,9 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.3 - 2018-??-??
+1.5.3 - 2018-01-18
+* fix canPlayType() to recognize WebM
 * updated build chain to emscripten 1.37.28
-* internal source cleanup
+* minor internal source cleanup
 
 1.5.2 - 2017-12-09
 * use magic bytes sniffing to choose demuxer

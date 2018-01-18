@@ -225,6 +225,16 @@ doubleTest('canPlayType', function(assert, player) {
 	assert.equal(player.canPlayType('video/ogg; codecs="theora"'), 'probably', 'video/ogg; codecs="theora"');
 	assert.equal(player.canPlayType('video/ogg; codecs="theora,vorbis"'), 'probably', 'video/ogg; codecs="theora,vorbis"');
 	assert.equal(player.canPlayType('video/ogg; codecs="theora,opus"'), 'probably', 'video/ogg; codecs="theora,opus"');
+
+	assert.equal(player.canPlayType('video/webm'), 'maybe', 'video/webm');
+	assert.equal(player.canPlayType('video/webm; codecs="vp8"'), 'probably', 'video/webm; codecs="vp8"');
+	assert.equal(player.canPlayType('video/webm; codecs="vp9"'), 'probably', 'video/webm; codecs="vp9"');
+	assert.equal(player.canPlayType('video/webm; codecs="vp8,vorbis"'), 'probably', 'video/webm; codecs="vp8,vorbis"');
+	assert.equal(player.canPlayType('video/webm; codecs="vp9,opus"'), 'probably', 'video/webm; codecs="vp9,opus"');
+
+	assert.equal(player.canPlayType('audio/webm'), 'maybe', 'audio/webm');
+	assert.equal(player.canPlayType('audio/webm; codecs="vorbis"'), 'probably', 'audio/webm; codecs="vorbis"');
+	assert.equal(player.canPlayType('audio/webm; codecs="opus"'), 'probably', 'audio/webm; codecs="opus"');
 });
 
 doubleTest('canPlayTypeSpaces', function(assert, player) {
