@@ -323,7 +323,7 @@ doubleAsyncTest('metadata detects aspect ratio', function(assert, player) {
 });
 
 doubleAsyncTest('metadata detects duration for file with x-content-duration', function(assert, player) {
-	player.src = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3c/IP-Routing.webm/IP-Routing.webm.360p.ogv';
+	player.src = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/3/3c/IP-Routing.webm/IP-Routing.webm.360p.webm';
 	assert.ok(isNaN(player.duration), "don't know duration before");
 	player.onloadedmetadata = function() {
 		assert.floatClose(player.duration, 330.284, "duration");
@@ -380,6 +380,7 @@ doubleAsyncTest('seekable matches duration', function(assert, player) {
 	assert.equal(seekable.length, 0, "zero ranges in seekable pre-load");
 	player.onloadedmetadata = function() {
 		var seekable = player.seekable;
+		assert.equal(player.duration, 3, "duration is expected value");
 		assert.equal(seekable.length, 1, "one range in seekable");
 		assert.equal(seekable.start(0), 0, "seekable range starts at 0");
 		assert.floatClose(seekable.end(0), player.duration, "seekable range matches duration");
