@@ -182,9 +182,10 @@ static int readyForNextPacket()
 static int processBegin() {
 	// This will read through headers, hopefully we have enough data
 	// or else it may fail and explode.
-	// @todo rework all this to faux sync or else full async
     ioCallbacks.userdata = (void *)bufferQueue;
-	if (nestegg_init(&demuxContext, ioCallbacks, logCallback, -1) < 0) {
+	if (nestegg_init(&demuxContext, ioCallbacks, logCallback, bq_headroom(bufferQueue)) < 0) {
+		// Seek back to start so it can retry when more data is available.
+		bq_seek(bufferQueue, 0);
 		return 0;
 	}
 
@@ -391,12 +392,7 @@ void ogv_demuxer_receive_input(const char *buffer, int bufsize) {
 
 int ogv_demuxer_process() {
 	if (appState == STATE_BEGIN) {
-        if (bq_headroom(bufferQueue) > 256 * 1024) {
-            return processBegin();
-        } else {
-            // need more data
-            return 0;
-        }
+        return processBegin();
     } else if (appState == STATE_DECODING) {
         return processDecoding();
     } else if (appState == STATE_SEEKING) {

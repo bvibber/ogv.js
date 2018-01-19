@@ -9,6 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 1.5.4 - 2018-??-??
 * fix regression on iOS 9
+* fix loading of WebM files under 256kb
 
 1.5.3 - 2018-01-18
 * fix canPlayType() to recognize WebM
