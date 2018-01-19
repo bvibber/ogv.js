@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.4 - 2018-??-??
+* fix regression on iOS 9
+
 1.5.3 - 2018-01-18
 * fix canPlayType() to recognize WebM
 * updated build chain to emscripten 1.37.28

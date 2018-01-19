@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "JavaScript media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
@@ -58,6 +58,6 @@
     "strip-sourcemap-loader": "0.0.1",
     "webpack": "^1.12.2",
     "webpack-dev-server": "^1.12.1",
-    "yuv-canvas": "1.2.0"
+    "yuv-canvas": "^1.2.1"
   }
 }
