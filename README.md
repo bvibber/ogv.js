@@ -7,8 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.4 - 2018-??-??
-* fix regression on iOS 9
+1.5.4 - 2018-01-19
+* updated yuv-canvas to 1.2.1
+    * fixes playback on iOS 9
 * fix loading of WebM files under 256kb
 
 1.5.3 - 2018-01-18
