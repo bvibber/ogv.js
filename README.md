@@ -7,8 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.5 - 2018-01-??
-* throw error when seeking unseekable files
+1.5.5 - 2018-01-22
 * allow linear seeking on WebM files without cues, such as audio/webm
 
 1.5.4 - 2018-01-19
@@ -305,7 +304,7 @@ Seeking is implemented via the HTTP Range: header.
 
 For Ogg files with keyframe indices in a skeleton index, seeking is very fast. Otherwise,  a bisection search is used to locate the target frame or audio position, which is very slow over the internet as it creates a lot of short-lived HTTP requests.
 
-For WebM files with cues, efficient seeking is supported as well as of 1.1.2.
+For WebM files with cues, efficient seeking is supported as well as of 1.1.2. WebM files without cues can be seeked in 1.5.5, but inefficiently via linear seek from the beginning. This is fine for small audio-only files, but might be improved for large files with a bisection in future.
 
 As with chunked streaming, cross-site playback requires CORS support for the Range header.
 
