@@ -28,6 +28,7 @@ static char           *audioCodecName = NULL;
 
 static int64_t         seekTime;
 static unsigned int    seekTrack;
+static int64_t         startPosition;
 
 static double          lastKeyframeKimestamp = -1;
 
@@ -188,6 +189,8 @@ static int processBegin() {
 		bq_seek(bufferQueue, 0);
 		return 0;
 	}
+
+  startPosition = bq_tell(bufferQueue);
 
 	// Look through the tracks finding our video and audio
 	unsigned int tracks;
@@ -363,7 +366,16 @@ static int processDecoding() {
 static int processSeeking()
 {
     bufferQueue->lastSeekTarget = 0;
-    int r = nestegg_track_seek(demuxContext, seekTrack, seekTime);
+    int r;
+    if (nestegg_has_cues(demuxContext)) {
+      r = nestegg_track_seek(demuxContext, seekTrack, seekTime);
+    } else {
+      // Audio WebM files often do not contain cues.
+      // Seek back to the start of the file, then demux from there.
+      // high-level code will do a linear search to the target.
+      r = nestegg_offset_seek(demuxContext, startPosition);
+    }
+    
     if (r) {
         if (bufferQueue->lastSeekTarget == 0) {
             // Maybe we just need more data?
@@ -445,7 +457,9 @@ float ogv_demuxer_media_duration() {
 
 int ogv_demuxer_seekable()
 {
-	return nestegg_has_cues(demuxContext);
+  // Audio WebM files often have no cues; allow brute-force seeking
+  // by linear demuxing through hopefully-cached data.
+	return 1;
 }
 
 long ogv_demuxer_keypoint_offset(long time_ms)
