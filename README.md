@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.5 - 2018-01-??
+* throw error when seeking WebM without cues, instead of failing silently
+
 1.5.4 - 2018-01-19
 * updated yuv-canvas to 1.2.1
     * fixes playback on iOS 9

@@ -576,6 +576,10 @@ function OGVPlayer(options) {
 			throw new Error('Cannot seek a non-seekable stream');
 		}
 
+		if (codec && !codec.seekable) {
+			throw new Error('Cannot seek in a non-seekable file');
+		}
+
 		function prepForSeek(callback) {
 			if (stream && stream.buffering) {
 				stream.abort();
