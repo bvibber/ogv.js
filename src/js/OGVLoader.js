@@ -2,6 +2,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 
 (function() {
 	var global = this;
+	var WebAssemblyCheck = require('./WebAssemblyCheck.js');
 
 	var scriptMap = {
 		OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
@@ -128,6 +129,10 @@ var OGVVersion = __OGV_FULL_VERSION__;
 
 	var OGVLoader = {
 		base: defaultBase(),
+
+		wasmSupported: function() {
+			return WebAssemblyCheck.wasmSupported();
+		},
 
 		loadClass: function(className, callback, options) {
 			options = options || {};

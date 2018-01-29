@@ -11,7 +11,7 @@
 
     var devicePixelRatio = window.devicePixelRatio || 1;
 
-	var auto = window.WebAssembly ? 'wasm' : 'js';
+	var auto = OGVLoader.wasmSupported() ? 'wasm' : 'js';
 	document.getElementById('auto-select').text += ' (' + auto + ')';
 
     var player;
