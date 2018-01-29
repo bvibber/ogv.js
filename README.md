@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.6 - 2018-??-??
+1.5.6 - 2018-01-29
 * detect and work around WebAssembly failure on iOS 11.2.2/11.2.5
 
 1.5.5 - 2018-01-22
