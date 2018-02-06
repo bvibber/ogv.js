@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.7 - 2018-??-??
+* updated build chain to emscripten 1.37.33
+
 1.5.6 - 2018-01-29
 * detect and work around WebAssembly failure on iOS 11.2.2/11.2.5
 
