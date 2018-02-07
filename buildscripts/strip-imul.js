@@ -55,14 +55,10 @@ function strip_imul(input_js) {
           node.callee.name === minifiedName) {
         path.replace(
           builders.parenthesizedExpression(
-            builders.binaryExpression('|',
-              builders.parenthesizedExpression(
-                builders.binaryExpression('*',
-                  builders.parenthesizedExpression(node.arguments[0]),
-                  builders.parenthesizedExpression(node.arguments[1])
-                )
-              ),
-              types.builders.literal(0))
+            builders.binaryExpression('*',
+              builders.parenthesizedExpression(node.arguments[0]),
+              builders.parenthesizedExpression(node.arguments[1])
+              )
             )
           );
         return false;
