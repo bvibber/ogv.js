@@ -23,7 +23,11 @@ EMCC_FAST_COMPILER=1 emcc \
   --post-js src/js/modules/ogv-decoder-video.js \
   -D OGV_VP9 \
   src/c/ogv-decoder-video-vpx.c \
-  -o build/ogv-decoder-video-vp9.js \
+  -o build/ogv-decoder-video-vp9-imul.js \
+&& \
+node buildscripts/strip-imul.js \
+  < build/ogv-decoder-video-vp9-imul.js \
+  > build/ogv-decoder-video-vp9.js \
 && \
 EMCC_FAST_COMPILER=1 emcc \
   -O2 \
