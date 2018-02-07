@@ -15,6 +15,7 @@ O(i+-1|0,d[5399+(p*3|0).... can have nested internals
 
 const recast = require('recast');
 const types = require('ast-types');
+const builders = types.builders;
 
 /**
  * Take JavaScript emscripten output and strip out the use of Math.imul
@@ -52,11 +53,19 @@ function strip_imul(input_js) {
       if (node.type === 'CallExpression' &&
           node.callee.type === 'Identifier' &&
           node.callee.name === minifiedName) {
-        let mult = types.builders.binaryExpression('*',
-          node.arguments[0],
-          node.arguments[1]);
-        let paren = types.builders.parenthesizedExpression(mult);
-        path.replace(paren);
+        path.replace(
+          builders.parenthesizedExpression(
+            builders.binaryExpression('|',
+              builders.parenthesizedExpression(
+                builders.binaryExpression('*',
+                  builders.parenthesizedExpression(node.arguments[0]),
+                  builders.parenthesizedExpression(node.arguments[1])
+                )
+              ),
+              types.builders.literal(0))
+            )
+          );
+        return false;
       }
       this.traverse(path);
     }
