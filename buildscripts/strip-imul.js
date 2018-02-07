@@ -8,7 +8,13 @@ var O=global.Math.imul
 ...
 q=O(m,e[r+18>>1]|0)|0
 
+
+O(i+-1|0,d[5399+(p*3|0).... can have nested internals
+
 */
+
+const recast = require('recast');
+const types = require('ast-types');
 
 /**
  * Take JavaScript emscripten output and strip out the use of Math.imul
@@ -21,15 +27,41 @@ q=O(m,e[r+18>>1]|0)|0
  * @return {string} same code with use of Math.imul stripped.
  */
 function strip_imul(input_js) {
+  // hacky detection first
   const initialMatch = input_js.match(/var (\w+)=global\.Math\.imul/);
   if (!initialMatch) {
     throw new Error('Did not find Math.imul in emscripten output.');
   }
   const minifiedName = initialMatch[1];
+
+
+  // This regex fails on nested parens and stuff.
+  /*
   const re = new RegExp('\\b' + minifiedName + '\\b\\((.*?),(.*?)\\)', 'g');
   return input_js.replace(re, (match, p1, p2) => {
-    return '(' + p1 + ')*(' + p2 + ')';
+    let rep = '((' + p1 + ')*(' + p2 + '))';
+    console.error(match, p1, p2, rep);
+    return rep;
   });
+  */
+
+  let ast = recast.parse(input_js);
+  types.visit(ast, {
+    visitCallExpression: function(path) {
+      const node = path.node;
+      if (node.type === 'CallExpression' &&
+          node.callee.type === 'Identifier' &&
+          node.callee.name === minifiedName) {
+        let mult = types.builders.binaryExpression('*',
+          node.arguments[0],
+          node.arguments[1]);
+        let paren = types.builders.parenthesizedExpression(mult);
+        path.replace(paren);
+      }
+      this.traverse(path);
+    }
+  });
+  return recast.print(ast).code;
 }
 
 if (require.main !== module) {
