@@ -12,6 +12,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * performance optimization for VP8 and VP9 on IE 11
     * roughly 15-25% performance improvement
     * uses direct multiplication instead of slow polyfill of Math.imul
+* performance optimization for VP8 loop filter
+    * roughly 10% performance improvement in Safari, Edge wasm builds
+    * smaller improvement in JS
 
 1.5.6 - 2018-01-29
 * detect and work around WebAssembly failure on iOS 11.2.2/11.2.5
