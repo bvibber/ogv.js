@@ -1,24 +1,12 @@
 #!/bin/bash
 
-suffix=so
-if [ `uname -s` == "Darwin" ]; then
-	suffix=dylib
-fi
+. ./buildscripts/compile-options.sh
 
 # compile wrapper around libogg + liboggz + libskeleton
-EMCC_FAST_COMPILER=1 emcc \
-  -O3 \
-  --memory-init-file 0 \
-  -s ASM_JS=1 \
-  -s VERBOSE=1 \
-  -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
-  -s NO_FILESYSTEM=1 \
-  -s INVOKE_RUN=0 \
-  -s NO_EXIT_RUNTIME=1 \
-  -s NODEJS_CATCH_EXIT=0 \
-  -s LEGACY_VM_SUPPORT=1 \
+emcc \
+  $EMCC_COMMON_OPTIONS \
+  $EMCC_ASMJS_OPTIONS \
   -s EXPORT_NAME="'OGVDemuxerOgg'" \
-  -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
@@ -32,21 +20,10 @@ EMCC_FAST_COMPILER=1 emcc \
   src/c/ogv-buffer-queue.c \
   -o build/ogv-demuxer-ogg.js \
 && \
-EMCC_FAST_COMPILER=1 emcc \
-  -O3 \
-  --memory-init-file 0 \
-  -s WASM=1 \
-  -s BINARYEN_METHOD="'native-wasm'" \
-  -s BINARYEN_IGNORE_IMPLICIT_TRAPS=1 \
-  -s VERBOSE=1 \
-  -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
-  -s NO_FILESYSTEM=1 \
-  -s INVOKE_RUN=0 \
-  -s NO_EXIT_RUNTIME=1 \
-  -s NODEJS_CATCH_EXIT=0 \
-  -s ALLOW_MEMORY_GROWTH=1 \
+emcc \
+  $EMCC_COMMON_OPTIONS \
+  $EMCC_WASM_OPTIONS \
   -s EXPORT_NAME="'OGVDemuxerOggW'" \
-  -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \

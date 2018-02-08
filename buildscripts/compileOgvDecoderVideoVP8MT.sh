@@ -1,26 +1,15 @@
 #!/bin/bash
 
-suffix=so
-if [ `uname -s` == "Darwin" ]; then
-	suffix=dylib
-fi
-# note the libvpx build system wants to make .so even on Mac
+. ./buildscripts/compile-options.sh
 
-# compile wrapper around libogg + libtheora
-EMCC_FAST_COMPILER=1 emcc \
-  -O3 \
-  --memory-init-file 0 \
-  -s ASM_JS=1 \
-  -s VERBOSE=1 \
-  -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
+# compile wrapper around libvpx
+emcc \
+  $EMCC_COMMON_OPTIONS \
+  $EMCC_ASMJS_OPTIONS \
   -s USE_PTHREADS=1 \
   -s PTHREAD_POOL_SIZE=1 \
-  -s NO_EXIT_RUNTIME=1 \
-  -s NODEJS_CATCH_EXIT=0 \
   -s TOTAL_MEMORY=33554432 \
-  -s LEGACY_VM_SUPPORT=1 \
   -s EXPORT_NAME="'OGVDecoderVideoVP8MT'" \
-  -s MODULARIZE=1 \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/js-mt/root/include \
   -Lbuild/js-mt/root/lib \
