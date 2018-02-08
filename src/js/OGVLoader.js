@@ -153,6 +153,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 						return urlForScript(filename);
 					}
 				};
+				options.pthreadMainPrefixURL = OGVLoader.base + '/';
 				return new global[className](options);
 			}
 			if (typeof global[className] === 'function') {

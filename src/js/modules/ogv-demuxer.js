@@ -9,10 +9,10 @@ function reallocInputBuffer(size) {
 		return inputBuffer;
 	}
 	if (inputBuffer) {
-		Module._free(inputBuffer);
+		Module['_free'](inputBuffer);
 	}
 	inputBufferSize = size;
-	inputBuffer = Module._malloc(inputBufferSize);
+	inputBuffer = Module['_malloc'](inputBufferSize);
 	return inputBuffer;
 }
 
@@ -27,56 +27,56 @@ function time(func) {
 		ret;
 	ret = func();
 	var delta = (getTimestamp() - start);
-	Module.cpuTime += delta;
+	Module['cpuTime'] += delta;
 	//console.log('demux time ' + delta);
 	return ret;
 }
 
 // - Properties
 
-Module.loadedMetadata = false;
-Module.videoCodec = null;
-Module.audioCodec = null;
-Module.duration = NaN;
-Module.onseek = null;
-Module.cpuTime = 0;
+Module['loadedMetadata'] = false;
+Module['videoCodec'] = null;
+Module['audioCodec'] = null;
+Module['duration'] = NaN;
+Module['onseek'] = null;
+Module['cpuTime'] = 0;
 
-Module.audioPackets = [];
+Module['audioPackets'] = [];
 Object.defineProperty(Module, 'hasAudio', {
 	get: function() {
-		return Module.loadedMetadata && Module.audioCodec;
+		return Module['loadedMetadata'] && Module['audioCodec'];
 	}
 });
 Object.defineProperty(Module, 'audioReady', {
 	get: function() {
-		return Module.audioPackets.length > 0;
+		return Module['audioPackets'].length > 0;
 	}
 });
 Object.defineProperty(Module, 'audioTimestamp', {
 	get: function() {
-		if (Module.audioPackets.length > 0) {
-			return Module.audioPackets[0].timestamp;
+		if (Module['audioPackets'].length > 0) {
+			return Module['audioPackets'][0].timestamp;
 		} else {
 			return -1;
 		}
 	}
 });
 
-Module.videoPackets = [];
+Module['videoPackets'] = [];
 Object.defineProperty(Module, 'hasVideo', {
 	get: function() {
-		return Module.loadedMetadata && Module.videoCodec;
+		return Module['loadedMetadata'] && Module['videoCodec'];
 	}
 });
 Object.defineProperty(Module, 'frameReady', {
 	get: function() {
-		return Module.videoPackets.length > 0;
+		return Module['videoPackets'].length > 0;
 	}
 });
 Object.defineProperty(Module, 'frameTimestamp', {
 	get: function() {
-		if (Module.videoPackets.length > 0) {
-			return Module.videoPackets[0].timestamp;
+		if (Module['videoPackets'].length > 0) {
+			return Module['videoPackets'][0].timestamp;
 		} else {
 			return -1;
 		}
@@ -84,8 +84,8 @@ Object.defineProperty(Module, 'frameTimestamp', {
 });
 Object.defineProperty(Module, 'keyframeTimestamp', {
 	get: function() {
-		if (Module.videoPackets.length > 0) {
-			return Module.videoPackets[0].keyframeTimestamp;
+		if (Module['videoPackets'].length > 0) {
+			return Module['videoPackets'][0].keyframeTimestamp;
 		} else {
 			return -1;
 		}
@@ -97,8 +97,8 @@ Object.defineProperty(Module, 'keyframeTimestamp', {
  */
 Object.defineProperty(Module, 'nextKeyframeTimestamp', {
 	get: function() {
-		for (var i = 0; i < Module.videoPackets.length; i++) {
-			var packet = Module.videoPackets[i];
+		for (var i = 0; i < Module['videoPackets'].length; i++) {
+			var packet = Module['videoPackets'][i];
 			if (packet.isKeyframe) {
 				return packet.timestamp;
 			}
@@ -119,15 +119,15 @@ Object.defineProperty(Module, 'processing', {
 
 Object.defineProperty(Module, 'seekable', {
 	get: function() {
-		return !!Module._ogv_demuxer_seekable();
+		return !!Module['_ogv_demuxer_seekable']();
 	}
 });
 
 // - public methods
 
-Module.init = function(callback) {
+Module['init'] = function(callback) {
 	time(function() {
-		Module._ogv_demuxer_init();
+		Module['_ogv_demuxer_init']();
 	});
 	callback();
 };
@@ -138,13 +138,13 @@ Module.init = function(callback) {
  * @param ArrayBuffer data
  * @param function callback on completion
  */
-Module.receiveInput = function(data, callback) {
+Module['receiveInput'] = function(data, callback) {
 	var ret = time(function() {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
-		Module._ogv_demuxer_receive_input(buffer, len);
+		Module['HEAPU8'].set(new Uint8Array(data), buffer);
+		Module['_ogv_demuxer_receive_input'](buffer, len);
 	});
 	callback();
 };
@@ -158,25 +158,25 @@ Module.receiveInput = function(data, callback) {
  *
  * @param {function(more:Boolean)} callback on completion
  */
-Module.process = function(callback) {
+Module['process'] = function(callback) {
 	var ret = time(function() {
-		return Module._ogv_demuxer_process();
+		return Module['_ogv_demuxer_process']();
 	});
 	callback(!!ret);
 };
 
-Module.dequeueVideoPacket = function(callback) {
-	if (Module.videoPackets.length) {
-		var packet = Module.videoPackets.shift().data;
+Module['dequeueVideoPacket'] = function(callback) {
+	if (Module['videoPackets'].length) {
+		var packet = Module['videoPackets'].shift().data;
 		callback(packet);
 	} else {
 		callback(null);
 	}
 };
 
-Module.dequeueAudioPacket = function(callback) {
-	if (Module.audioPackets.length) {
-		var packet = Module.audioPackets.shift().data;
+Module['dequeueAudioPacket'] = function(callback) {
+	if (Module['audioPackets'].length) {
+		var packet = Module['audioPackets'].shift().data;
 		callback(packet);
 	} else {
 		callback(null);
@@ -191,9 +191,9 @@ Module.dequeueAudioPacket = function(callback) {
  * @param function(number) callback
  *        takes the calculated byte offset
  */
-Module.getKeypointOffset = function(timeSeconds, callback) {
+Module['getKeypointOffset'] = function(timeSeconds, callback) {
 	var offset = time(function() {
-		return Module._ogv_demuxer_keypoint_offset(timeSeconds * 1000);
+		return Module['_ogv_demuxer_keypoint_offset'](timeSeconds * 1000);
 	});
 	callback(offset);
 };
@@ -207,22 +207,22 @@ Module.getKeypointOffset = function(timeSeconds, callback) {
  * @param function(boolean) callback
  *        indicates whether seeking was initiated or not.
  */
-Module.seekToKeypoint = function(timeSeconds, callback) {
+Module['seekToKeypoint'] = function(timeSeconds, callback) {
 	var ret = time(function() {
-		return Module._ogv_demuxer_seek_to_keypoint(timeSeconds * 1000);
+		return Module['_ogv_demuxer_seek_to_keypoint'](timeSeconds * 1000);
 	});
 	if (ret) {
-		Module.audioPackets.splice(0, Module.audioPackets.length);
-		Module.videoPackets.splice(0, Module.videoPackets.length);
+		Module['audioPackets'].splice(0, Module['audioPackets'].length);
+		Module['videoPackets'].splice(0, Module['videoPackets'].length);
 	}
 	callback(!!ret);
 };
 
-Module.flush = function(callback) {
+Module['flush'] = function(callback) {
 	time(function() {
-		Module.audioPackets.splice(0, Module.audioPackets.length);
-		Module.videoPackets.splice(0, Module.videoPackets.length);
-		Module._ogv_demuxer_flush();
+		Module['audioPackets'].splice(0, Module['audioPackets'].length);
+		Module['videoPackets'].splice(0, Module['videoPackets'].length);
+		Module['_ogv_demuxer_flush']();
 	});
 	callback();
 };
@@ -230,6 +230,6 @@ Module.flush = function(callback) {
 /**
  * Close out any resources required by the demuxer module
  */
-Module.close = function() {
+Module['close'] = function() {
 	// no-op
 };

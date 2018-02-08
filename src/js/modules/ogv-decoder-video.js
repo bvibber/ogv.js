@@ -10,10 +10,10 @@ function reallocInputBuffer(size) {
 		return inputBuffer;
 	}
 	if (inputBuffer) {
-		Module._free(inputBuffer);
+		Module['_free'](inputBuffer);
 	}
 	inputBufferSize = size;
-	inputBuffer = Module._malloc(inputBufferSize);
+	inputBuffer = Module['_malloc'](inputBufferSize);
 	return inputBuffer;
 }
 
@@ -27,7 +27,7 @@ function time(func) {
 	var start = getTimestamp(),
 		ret;
 	ret = func();
-	Module.cpuTime += (getTimestamp() - start);
+	Module['cpuTime'] += (getTimestamp() - start);
 	return ret;
 }
 
@@ -48,24 +48,24 @@ function copyByteArray(bytes) {
 /**
  * @property boolean
  */
-Module.loadedMetadata = !!options.videoFormat;
+Module['loadedMetadata'] = !!options['videoFormat'];
 
 /**
  * @property object
  */
-Module.videoFormat = options.videoFormat || null;
+Module['videoFormat'] = options['videoFormat'] || null;
 
 /**
  * Last-decoded video packet
  * @property object
  */
-Module.frameBuffer = null;
+Module['frameBuffer'] = null;
 
 /**
  * Running tally of CPU time spent in the decoder.
  * @property number
  */
-Module.cpuTime = 0;
+Module['cpuTime'] = 0;
 
 /**
  * Are we in the middle of an asynchronous processing operation?
@@ -79,9 +79,9 @@ Object.defineProperty(Module, 'processing', {
 
 // - public methods
 
-Module.init = function(callback) {
+Module['init'] = function(callback) {
 	time(function() {
-		Module._ogv_video_decoder_init();
+		Module['_ogv_video_decoder_init']();
 	});
 	callback();
 };
@@ -92,14 +92,14 @@ Module.init = function(callback) {
  * @param ArrayBuffer data
  * @param function callback on completion
  */
-Module.processHeader = function(data, callback) {
+Module['processHeader'] = function(data, callback) {
 	var ret = time(function() {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
+		Module['HEAPU8'].set(new Uint8Array(data), buffer);
 
-		return Module._ogv_video_decoder_process_header(buffer, len);
+		return Module['_ogv_video_decoder_process_header'](buffer, len);
 	});
 	callback(ret);
 };
@@ -112,14 +112,14 @@ Module.callbacks = [];
  * @param ArrayBuffer data
  * @param function callback on completion
  */
-Module.processFrame = function(data, callback) {
-	var isAsync = Module._ogv_video_decoder_async();
+Module['processFrame'] = function(data, callback) {
+	var isAsync = Module['_ogv_video_decoder_async']();
 
 	// Map the ArrayBuffer into emscripten's runtime heap
 	var len = data.byteLength;
-	var buffer = Module._malloc(len);
+	var buffer = Module['_malloc'](len);
 	function callbackWrapper(ret) {
-		Module._free(buffer);
+		Module['_free'](buffer);
 		callback(ret);
 	}
 	if (isAsync) {
@@ -127,8 +127,8 @@ Module.processFrame = function(data, callback) {
 	}
 
 	var ret = time(function() {
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
-		return Module._ogv_video_decoder_process_frame(buffer, len)
+		Module['HEAPU8'].set(new Uint8Array(data), buffer);
+		return Module['_ogv_video_decoder_process_frame'](buffer, len)
 	});
 	if (!isAsync) {
 		callbackWrapper(ret);
@@ -138,6 +138,6 @@ Module.processFrame = function(data, callback) {
 /**
  * Close out any resources required by the decoder module
  */
-Module.close = function() {
+Module['close'] = function() {
 	// no-op
 };

@@ -5,17 +5,17 @@
 mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_init_audio: function(channels, rate) {
-		Module.audioFormat = {
-			channels: channels,
-			rate: rate
+		Module['audioFormat'] = {
+			'channels': channels,
+			'rate': rate
 		};
-		Module.loadedMetadata = true;
+		Module['loadedMetadata'] = true;
 	},
 
 	ogvjs_callback_audio: function(buffers, channels, sampleCount) {
 		// buffers is an array of pointers to float arrays for each channel
-		var HEAPU32 = Module.HEAPU32;
-		var HEAPF32 = Module.HEAPF32;
+		var HEAPU32 = Module['HEAPU32'];
+		var HEAPF32 = Module['HEAPF32'];
 
 		var outputBuffers = [];
 		if (buffers !== 0) {
@@ -34,7 +34,7 @@ mergeInto(LibraryManager.library, {
 			}
 		}
 
-		Module.audioBuffer = outputBuffers;
+		Module['audioBuffer'] = outputBuffers;
 	}
 
 });

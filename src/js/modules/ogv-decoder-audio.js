@@ -10,10 +10,10 @@ function reallocInputBuffer(size) {
 		return inputBuffer;
 	}
 	if (inputBuffer) {
-		Module._free(inputBuffer);
+		Module['_free'](inputBuffer);
 	}
 	inputBufferSize = size;
-	inputBuffer = Module._malloc(inputBufferSize);
+	inputBuffer = Module['_malloc'](inputBufferSize);
 	return inputBuffer;
 }
 
@@ -27,7 +27,7 @@ function time(func) {
 	var start = getTimestamp(),
 		ret;
 	ret = func();
-	Module.cpuTime += (getTimestamp() - start);
+	Module['cpuTime'] += (getTimestamp() - start);
 	return ret;
 }
 
@@ -36,24 +36,24 @@ function time(func) {
 /**
  * @property boolean
  */
-Module.loadedMetadata = !!options.audioFormat;
+Module['loadedMetadata'] = !!options['audioFormat'];
 
 /**
  * @property object
  */
-Module.audioFormat = options.audioFormat || null;
+Module['audioFormat'] = options['audioFormat'] || null;
 
 /**
  * Last-decoded audio packet
  * @property object
  */
-Module.audioBuffer = null;
+Module['audioBuffer'] = null;
 
 /**
  * Running tally of CPU time spent in the decoder.
  * @property number
  */
-Module.cpuTime = 0;
+Module['cpuTime'] = 0;
 
 /**
  * Are we in the middle of an asynchronous processing operation?
@@ -67,9 +67,9 @@ Object.defineProperty(Module, 'processing', {
 
 // - public methods
 
-Module.init = function(callback) {
+Module['init'] = function(callback) {
 	time(function() {
-		Module._ogv_audio_decoder_init();
+		Module['_ogv_audio_decoder_init']();
 	});
 	callback();
 };
@@ -80,14 +80,14 @@ Module.init = function(callback) {
  * @param ArrayBuffer data
  * @param function callback on completion
  */
-Module.processHeader = function(data, callback) {
+Module['processHeader'] = function(data, callback) {
 	var ret = time(function() {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
+		Module['HEAPU8'].set(new Uint8Array(data), buffer);
 
-		return Module._ogv_audio_decoder_process_header(buffer, len);
+		return Module['_ogv_audio_decoder_process_header'](buffer, len);
 	});
 	callback(ret);
 };
@@ -98,14 +98,14 @@ Module.processHeader = function(data, callback) {
  * @param ArrayBuffer data
  * @param function callback on completion
  */
-Module.processAudio = function(data, callback) {
+Module['processAudio'] = function(data, callback) {
 	var ret = time(function() {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module.HEAPU8.set(new Uint8Array(data), buffer);
+		Module['HEAPU8'].set(new Uint8Array(data), buffer);
 
-		return Module._ogv_audio_decoder_process_audio(buffer, len);
+		return Module['_ogv_audio_decoder_process_audio'](buffer, len);
 	});
 	callback(ret);
 };
