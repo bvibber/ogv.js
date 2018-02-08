@@ -1,14 +1,9 @@
-#!//usr/bin/env node
-
 /*
 
-Math_imul=Math.imul
-...
 var O=global.Math.imul
 ...
 q=O(m,e[r+18>>1]|0)|0
-
-
+...
 O(i+-1|0,d[5399+(p*3|0).... can have nested internals
 
 */
@@ -24,7 +19,7 @@ const builders = types.builders;
  *
  * This WILL FAIL in the general case. Beware.
  *
- * @param {string} input_js
+ * @param {string} input_js asm.js code to process
  * @return {string} same code with use of Math.imul stripped.
  */
 function strip_imul(input_js) {
@@ -72,20 +67,22 @@ function strip_imul(input_js) {
 if (require.main !== module) {
   module.exports = strip_imul;
 } else {
-  // Consume input JS from stdin as utf-8
-  let input = '';
+  // Consume input JS from file in first argument,
+  // then write back the processed output in place.
+  const fs = require('fs');
 
-  const stdin = process.stdin;
-  stdin.setEncoding('utf8');
-  stdin.on('readable', () => {
-    const chunk = stdin.read()
-    if (chunk !== null) {
-      input += chunk;
-    }
-  });
-  stdin.on('end', () => {
-    let output = strip_imul(input);
-    process.stdout.write(output);
+  if (process.argv.length > 2) {
+    const filename = process.argv[2];
+    const input = fs.readFileSync(filename, {
+      encoding: 'utf8'
+    });
+    const output = strip_imul(input);
+    fs.writeFileSync(filename, output, {
+      encoding: 'utf8'
+    });
     process.exit(0);
-  });
+  } else {
+    console.error('Give file to process as argument');
+    process.exit(1);
+  }
 }
