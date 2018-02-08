@@ -1,11 +1,5 @@
 #!/bin/bash
 
-suffix=so
-if [ `uname -s` == "Darwin" ]; then
-	suffix=dylib
-fi
-# note the libvpx build system wants to make .so even on Mac
-
 # compile wrapper around libvpx
 EMCC_FAST_COMPILER=1 emcc \
   -O3 \
@@ -36,7 +30,7 @@ node buildscripts/strip-imul.js \
 	> build/ogv-decoder-video-vp8.js \
 && \
 EMCC_FAST_COMPILER=1 emcc \
-  -O2 \
+  -O3 \
   --memory-init-file 0 \
   -s WASM=1 \
   -s BINARYEN_METHOD="'native-wasm'" \

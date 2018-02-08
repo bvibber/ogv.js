@@ -32,7 +32,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -o build/ogv-demuxer-ogg.js \
 && \
 EMCC_FAST_COMPILER=1 emcc \
-  -O2 \
+  -O3 \
   --memory-init-file 0 \
   -s WASM=1 \
   -s BINARYEN_METHOD="'native-wasm'" \

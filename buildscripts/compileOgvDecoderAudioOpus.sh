@@ -33,7 +33,7 @@ EMCC_FAST_COMPILER=1 emcc \
   -o build/ogv-decoder-audio-opus.js \
 && \
 EMCC_FAST_COMPILER=1 emcc \
-  -O2 \
+  -O3 \
   --memory-init-file 0 \
   -s WASM=1 \
   -s BINARYEN_METHOD="'native-wasm'" \
