@@ -21,17 +21,6 @@ for (option in options) {
 	}
 }
 
-//
-// In IE 11 we need a polyfill for Math.imul.
-//
-// Emscripten provides one, but IE's compilation engine won't
-// inline it across files loaded separately, killing performance
-// when doing profiling on the main thread with separate modules.
-//
-// Save the original Math.imul so we can put it back later.
-//
-var Math_imul_orig = Math.imul;
-
 // hack for https://github.com/brion/ogv.js/issues/448
 var OGVDemuxerOgg = Module;
 var OGVDemuxerWebM = Module;
