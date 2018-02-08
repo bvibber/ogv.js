@@ -17,6 +17,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
     * smaller improvement in JS
 * performance optimization for Opus audio
     * now compiled with optimization, about 4x faster
+* built module wrappers with closure compiler
+    * shaves a few kilobites off load size
 
 1.5.6 - 2018-01-29
 * detect and work around WebAssembly failure on iOS 11.2.2/11.2.5
