@@ -36,6 +36,7 @@ EMCC_FAST_COMPILER=1 emcc \
   --memory-init-file 0 \
   -s WASM=1 \
   -s BINARYEN_METHOD="'native-wasm'" \
+  -s BINARYEN_IGNORE_IMPLICIT_TRAPS=1 \
   -s VERBOSE=1 \
   -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
   -s NO_FILESYSTEM=1 \
