@@ -15,6 +15,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * performance optimization for VP8 loop filter
     * roughly 10% performance improvement in Safari, Edge wasm builds
     * smaller improvement in JS
+* performance optimization for Opus audio
+    * now compiled with optimization, about 4x faster
 
 1.5.6 - 2018-01-29
 * detect and work around WebAssembly failure on iOS 11.2.2/11.2.5

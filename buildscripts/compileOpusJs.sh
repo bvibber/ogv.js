@@ -12,9 +12,15 @@ cd js
 mkdir -p root
 mkdir -p libopus
 cd libopus
-  
+
 # finally, run configuration script
-emconfigure ../../../libopus/configure --disable-asm --disable-oggtest --disable-doc --disable-extra-programs --prefix="$dir/build/js/root"
+emconfigure ../../../libopus/configure \
+  --disable-asm \
+  --disable-oggtest \
+  --disable-doc \
+  --disable-extra-programs \
+  --prefix="$dir/build/js/root" \
+  CFLAGS="-O3"
 
 # compile libopus
 emmake make -j4
