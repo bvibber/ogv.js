@@ -69,7 +69,9 @@ function decodeFile(filename) {
     if (demuxer.frameReady) {
       demuxer.dequeueVideoPacket((packet) => {
         //console.log(packet);
-        console.log('processing frame ' + frames);
+        if (!checksum) {
+          console.log('processing frame ' + frames);
+        }
         frames++;
         decoder.processFrame(packet, (ok) => {
           if (ok) {
@@ -82,7 +84,7 @@ function decodeFile(filename) {
               console.log(fps + ' fps decoding');
             }
           } else {
-            console.log('frame failed');
+            //console.log('frame failed');
           }
           process.nextTick(processData);
         });

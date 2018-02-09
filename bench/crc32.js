@@ -73,7 +73,7 @@ function crc32(bytes) {
   for (let i = 0; i < bytes.length; i++) {
     crc = crc32_table[(crc & 0xff) ^ (bytes[i])] ^ (crc >> 8);
   }
-  return crc;
+  return crc ^ -1;
 }
 
 module.exports = crc32;
