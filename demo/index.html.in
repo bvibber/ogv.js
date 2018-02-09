@@ -147,7 +147,6 @@
 			<div id=media-source-block>
 				<select id=media-source>
 					<option value=clean>Demo set (Theora/VP8/VP9)</option>
-					<option value=blender>Blender open movies</option>
 					<option value=motd>Wikimedia Commons Media of the Day</option>
 					<option value=commons>Wikimedia Commons all videos</option>
 					<option value=commons-audio>Wikimedia Commons all audio</option>
