@@ -99,8 +99,8 @@ Object.defineProperty(Module, 'nextKeyframeTimestamp', {
 	get: function() {
 		for (var i = 0; i < Module['videoPackets'].length; i++) {
 			var packet = Module['videoPackets'][i];
-			if (packet.isKeyframe) {
-				return packet.timestamp;
+			if (packet['isKeyframe']) {
+				return packet['timestamp'];
 			}
 		}
 		return -1;
