@@ -7,8 +7,7 @@
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_ASMJS_OPTIONS \
-  -s USE_PTHREADS=1 \
-  -s PTHREAD_POOL_SIZE=1 \
+  $EMCC_THREADED_OPTIONS \
   -s TOTAL_MEMORY=33554432 \
   -s EXPORT_NAME="'OGVDecoderVideoVP9MT'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \

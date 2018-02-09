@@ -6,6 +6,7 @@
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_ASMJS_OPTIONS \
+  $EMCC_NOTHREAD_OPTIONS \
   -s TOTAL_MEMORY=33554432 \
   -s EXPORT_NAME="'OGVDecoderVideoVP8'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
@@ -23,6 +24,7 @@ emcc \
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
+  $EMCC_NOTHREAD_OPTIONS \
   -s EXPORT_NAME="'OGVDecoderVideoVP8W'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/js/root/include \

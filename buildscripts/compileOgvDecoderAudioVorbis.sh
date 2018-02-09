@@ -6,6 +6,7 @@
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_ASMJS_OPTIONS \
+  $EMCC_NOTHREAD_OPTIONS \
   -s EXPORT_NAME="'OGVDecoderAudioVorbis'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
   -Ibuild/js/root/include \
@@ -22,6 +23,7 @@ emcc \
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
+  $EMCC_NOTHREAD_OPTIONS \
   -s EXPORT_NAME="'OGVDecoderAudioVorbisW'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
   -Ibuild/js/root/include \

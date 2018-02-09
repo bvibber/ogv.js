@@ -6,6 +6,7 @@
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_ASMJS_OPTIONS \
+  $EMCC_NOTHREAD_OPTIONS \
   -s EXPORT_NAME="'OGVDemuxerWebM'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/js/root/include \
@@ -21,6 +22,7 @@ emcc \
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
+  $EMCC_NOTHREAD_OPTIONS \
   -s EXPORT_NAME="'OGVDemuxerWebMW'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/js/root/include \

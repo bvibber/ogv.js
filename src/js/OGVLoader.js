@@ -154,6 +154,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 					}
 				};
 				options.pthreadMainPrefixURL = OGVLoader.base + '/';
+				options.mainScriptUrlOrBlob = scriptMap[className];
 				return new global[className](options);
 			}
 			if (typeof global[className] === 'function') {

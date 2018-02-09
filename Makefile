@@ -20,6 +20,7 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
+## Uncomment for pthreads:
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
@@ -121,6 +122,12 @@ dist: js README.md COPYING
 	      README.md \
 	      COPYING \
 	      dist/
+	## Uncomment for pthreads:
+	#cp -p build/ogv-decoder-video-vp8-mt.js \
+	#      build/ogv-decoder-video-vp9-mt.js \
+	#      build/pthread-main.js \
+	#      dist/
+
 	cp -p libogg/COPYING dist/COPYING-ogg.txt
 	cp -p libvorbis/COPYING dist/COPYING-vorbis.txt
 	cp -p libtheora/COPYING dist/COPYING-theora.txt
