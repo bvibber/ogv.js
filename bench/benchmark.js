@@ -1,4 +1,5 @@
 const fs = require('fs');
+const crc32 = require('./crc32.js');
 
 const OGVDemuxerWebM = require('../dist/ogv-demuxer-webm.js');
 const OGVDemuxerWebMW = require('../dist/ogv-demuxer-webm-wasm.js');
@@ -12,6 +13,7 @@ let decoderClass = {
   'vp8': OGVDecoderVideoVP8W,
   'vp9': OGVDecoderVideoVP9W
 };
+let checksum = false;
 
 function locateFile(url) {
   if (url.slice(0, 5) === 'data:') {
@@ -19,6 +21,10 @@ function locateFile(url) {
   } else {
     return '../dist/' + url;
   }
+}
+
+function frameChecksum(frame) {
+  return crc32(frame.y.bytes);
 }
 
 function decodeFile(filename) {
@@ -68,9 +74,13 @@ function decodeFile(filename) {
         decoder.processFrame(packet, (ok) => {
           if (ok) {
             //console.log('frame decoded');
-            const delta = (Date.now() - start) / 1000;
-            const fps = frames / delta;
-            console.log(fps + ' fps decoding');
+            if (checksum) {
+              console.log(frameChecksum(decoder.frameBuffer));
+            } else {
+              const delta = (Date.now() - start) / 1000;
+              const fps = frames / delta;
+              console.log(fps + ' fps decoding');
+            }
           } else {
             console.log('frame failed');
           }
@@ -118,21 +128,26 @@ function decodeFile(filename) {
 }
 
 let args = process.argv.slice(2);
-if (args.length >= 1) {
+while (args.length >= 1) {
   if (args[0] == '--js') {
     demuxerClass = OGVDemuxerWebM;
-    let decoderClass = {
+    decoderClass = {
       'vp8': OGVDecoderVideoVP8,
       'vp9': OGVDecoderVideoVP9
     };
     args.shift();
   } else if (args[0] == '--wasm') {
     demuxerClass = OGVDemuxerWebMW;
-    let decoderClass = {
+    decoderClass = {
       'vp8': OGVDecoderVideoVP8W,
       'vp9': OGVDecoderVideoVP9W
     };
     args.shift();
+  } else if (args[0] == '--checksum') {
+    checksum = true;
+    args.shift();
+  } else {
+    break;
   }
 }
 
