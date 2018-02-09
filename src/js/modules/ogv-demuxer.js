@@ -55,7 +55,7 @@ Object.defineProperty(Module, 'audioReady', {
 Object.defineProperty(Module, 'audioTimestamp', {
 	get: function() {
 		if (Module['audioPackets'].length > 0) {
-			return Module['audioPackets'][0].timestamp;
+			return Module['audioPackets'][0]['timestamp'];
 		} else {
 			return -1;
 		}
@@ -76,7 +76,7 @@ Object.defineProperty(Module, 'frameReady', {
 Object.defineProperty(Module, 'frameTimestamp', {
 	get: function() {
 		if (Module['videoPackets'].length > 0) {
-			return Module['videoPackets'][0].timestamp;
+			return Module['videoPackets'][0]['timestamp'];
 		} else {
 			return -1;
 		}
@@ -85,7 +85,7 @@ Object.defineProperty(Module, 'frameTimestamp', {
 Object.defineProperty(Module, 'keyframeTimestamp', {
 	get: function() {
 		if (Module['videoPackets'].length > 0) {
-			return Module['videoPackets'][0].keyframeTimestamp;
+			return Module['videoPackets'][0]['keyframeTimestamp'];
 		} else {
 			return -1;
 		}
@@ -167,7 +167,7 @@ Module['process'] = function(callback) {
 
 Module['dequeueVideoPacket'] = function(callback) {
 	if (Module['videoPackets'].length) {
-		var packet = Module['videoPackets'].shift().data;
+		var packet = Module['videoPackets'].shift()['data'];
 		callback(packet);
 	} else {
 		callback(null);
@@ -176,7 +176,7 @@ Module['dequeueVideoPacket'] = function(callback) {
 
 Module['dequeueAudioPacket'] = function(callback) {
 	if (Module['audioPackets'].length) {
-		var packet = Module['audioPackets'].shift().data;
+		var packet = Module['audioPackets'].shift()['data'];
 		callback(packet);
 	} else {
 		callback(null);
