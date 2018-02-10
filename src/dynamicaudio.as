@@ -4,6 +4,7 @@ package {
     import flash.external.ExternalInterface;
     import flash.media.Sound;
     import flash.media.SoundChannel;
+    import flash.media.SoundTransform;
     import flash.utils.setTimeout;
     import flash.system.Security;
 
@@ -84,7 +85,8 @@ package {
                 soundGenerator
             );
             playbackTimeAtBufferTail = 0;
-            soundChannel = this.sound.play();
+            soundChannel = sound.play();
+            soundChannel.soundTransform = new SoundTransform(volume, 0);
         }
 
         public function stopPlayback():void {
@@ -138,6 +140,9 @@ package {
 
         public function setVolume(val:Number):void {
           volume = val;
+          if (soundChannel) {
+              soundChannel.soundTransform = new SoundTransform(volume, 0);
+          }
         }
 
         public function setBufferSize(val:Number):void {
@@ -184,7 +189,7 @@ package {
 
             var playable:BufferQueue = queue.shiftSamples(bufferSize);
             log('playable sampleCount: ' + playable.sampleCount());
-            playable.writeToOutput(event.data, volume);
+            playable.writeToOutput(event.data, 1);
 
             var sampleCount:Number = playable.sampleCount();
             queuedTime += sampleCount / targetRate;

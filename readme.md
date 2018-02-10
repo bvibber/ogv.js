@@ -10,10 +10,13 @@ and is suitable for use in custom audio and video playback.
 
 ## Copyright and license
 
-* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2017 Brion Vibber
+* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2018 Brion Vibber
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.8 - 2018-02-10
+ * Flash: volume changes now apply immediately
+ * Flash: update build to flex sdk 4.16.1
 * 0.4.7 - 2017-03-17
  * Flash: cleaner behavior if stopped from onstarved handler
 * 0.4.6 - 2017-03-16

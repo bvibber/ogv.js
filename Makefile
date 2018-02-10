@@ -25,15 +25,15 @@ AS3_SOURCES=src/dynamicaudio.as \
 
 HERE:=$(shell if [ "${OS}" = "Windows_NT" ]; then cmd /c cd; else pwd; fi)
 
-FLEXSDK_VERSION:=4.15.0
+FLEXSDK_VERSION:=4.16.1
 FLEXSDK_BASE:=http://www-us.apache.org/dist/flex/$(FLEXSDK_VERSION)/binaries
 FLEXSDK_DIR:=apache-flex-sdk-$(FLEXSDK_VERSION)-bin
 FLEXSDK_ARCHIVE:=$(FLEXSDK_DIR).tar.gz
 FLEXSDK_URL:=$(FLEXSDK_BASE)/$(FLEXSDK_ARCHIVE)
 
 PLAYERGLOBAL_BASE:=$(FLEXSDK_DIR)/frameworks/libs/player
-PLAYERGLOBAL_DIR:=$(PLAYERGLOBAL_BASE)/11.1
-PLAYERGLOBAL_URL:=http://fpdownload.macromedia.com/get/flashplayer/updaters/11/playerglobal11_1.swc
+PLAYERGLOBAL_DIR:=$(PLAYERGLOBAL_BASE)/27.0
+PLAYERGLOBAL_URL:=http://fpdownload.macromedia.com/get/flashplayer/updaters/27/playerglobal27_0.swc
 
 FLEXSDK_BASE_DEP:=$(FLEXSDK_DIR)/flex-sdk-description.xml
 FLEXSDK_LIBS_DEP:=$(FLEXSDK_DIR)/frameworks/libs/osmf.swc

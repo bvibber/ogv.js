@@ -201,8 +201,7 @@
   	var newSamples = new Int16Array(samplecount * 2);
   	var chanLeft = samples[0];
   	var chanRight = this.channels > 1 ? samples[1] : chanLeft;
-    var volume = this.muted ? 0 : this.volume;
-  	var multiplier = volume * 16384; // smaller than 32768 to allow some headroom from those floats
+  	var multiplier = 16384; // smaller than 32768 to allow some headroom from those floats
   	for(var s = 0; s < samplecount; s++) {
   		var idx = (s * sampleincr) | 0;
   		var idx_out = s * 2;
