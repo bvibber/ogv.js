@@ -1,4 +1,6 @@
 package {
+    import flash.utils.ByteArray;
+    import flash.utils.Endian;
     import flash.utils.IDataOutput;
 
     /**
@@ -12,8 +14,7 @@ package {
         private var str:String;
         private var logger:ILogger;
 
-        static private const bytesPerSample:int = 8;
-        static private const multiplier:Number = 1/16384; // smaller than 32768 to allow some headroom from those floats;
+        static private const bytesPerSample:int = 16;
         static private var _hexValues:Vector.<int>;
 
         public function BufferQueueItem(hexString:String, aLogger:ILogger=null) {
@@ -45,16 +46,24 @@ package {
             return _hexValues;
         }
 
-        public function writeToOutput(out:IDataOutput, volume:Number):void {
+        public function writeToOutput(out:IDataOutput):void {
             var hexValues:Vector.<int> = hexValuesMap();
-            for (var i:int = 0; i < str.length; i += 4) {
-                var sample:int = (hexValues[str.charCodeAt(i)]) |
-                                 (hexValues[str.charCodeAt(i + 1)] << 4) |
-                                 (hexValues[str.charCodeAt(i + 2)] << 8) |
-                                 (hexValues[str.charCodeAt(i + 3)] << 12);
-                // sign extension to 32 bits via arithmetic shift
-                sample = (sample << 16) >> 16;
-                out.writeFloat(sample * multiplier * volume);
+            var bytes:ByteArray = new ByteArray();
+            bytes.endian = Endian.LITTLE_ENDIAN;
+
+            // Convert hex string to byte array...
+            var i:int;
+            for (i = 0; i < str.length; i += 2) {
+                var byte:int = (hexValues[str.charCodeAt(i)] << 4) |
+                               (hexValues[str.charCodeAt(i + 1)]);
+                bytes.writeByte((byte << 24) >> 24);
+            }
+
+            // Read them as native-endian float32s and write to output;
+            // note out.writeBytes(bytes) doesn't work.
+            bytes.position = 0;
+            for (i = 0; i < str.length; i += 8) {
+              out.writeFloat(bytes.readFloat());
             }
         }
 

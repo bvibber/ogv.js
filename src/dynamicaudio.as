@@ -189,7 +189,7 @@ package {
 
             var playable:BufferQueue = queue.shiftSamples(bufferSize);
             log('playable sampleCount: ' + playable.sampleCount());
-            playable.writeToOutput(event.data, 1);
+            playable.writeToOutput(event.data);
 
             var sampleCount:Number = playable.sampleCount();
             queuedTime += sampleCount / targetRate;

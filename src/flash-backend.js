@@ -185,29 +185,28 @@
   }
 
   /**
-   * Scaling and reordering of output for the Flash fallback.
+   * Reordering of output for the Flash fallback.
    * Input data must be pre-resampled to the correct sample rate.
+   * Mono input is doubled to stereo; more than 2 channels are dropped.
    *
    * @param {SampleBuffer} samples - input data as separate channels of 32-bit float
-   * @returns {Int16Array} - interleaved stereo 16-bit signed integer output
+   * @returns {Float32Array} - interleaved stereo 32-bit float output
    * @access private
    *
    * @todo handle input with higher channel counts better
-   * @todo try sending floats to flash without losing precision?
    */
   FlashBackend.prototype._resampleFlash = function(samples) {
     var sampleincr = 1;
   	var samplecount = samples[0].length;
-  	var newSamples = new Int16Array(samplecount * 2);
+  	var newSamples = new Float32Array(samplecount * 2);
   	var chanLeft = samples[0];
   	var chanRight = this.channels > 1 ? samples[1] : chanLeft;
-  	var multiplier = 16384; // smaller than 32768 to allow some headroom from those floats
   	for(var s = 0; s < samplecount; s++) {
   		var idx = (s * sampleincr) | 0;
   		var idx_out = s * 2;
-  		// Use a smaller
-  		newSamples[idx_out] = chanLeft[idx] * multiplier;
-  		newSamples[idx_out + 1] = chanRight[idx] * multiplier;
+
+  		newSamples[idx_out] = chanLeft[idx];
+  		newSamples[idx_out + 1] = chanRight[idx];
   	}
   	return newSamples;
   };
@@ -216,8 +215,8 @@
            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
   var hexBytes = [];
   for (var i = 0; i < 256; i++) {
-    hexBytes[i] = hexDigits[(i & 0x0f)] +
-            hexDigits[(i & 0xf0) >> 4];
+    hexBytes[i] = hexDigits[(i & 0xf0) >> 4] +
+                  hexDigits[(i & 0x0f)];
   }
   function hexString(buffer) {
     var samples = new Uint8Array(buffer);
@@ -241,7 +240,7 @@
       flashElement = this._flashaudio.flashElement;
 
     if (this._cachedFlashState) {
-        this._cachedFlashState.samplesQueued += chunk.length / 8;
+        this._cachedFlashState.samplesQueued += chunk.length / 16;
     }
     this._flashBuffer = '';
     this._flushTimeout = null;
@@ -298,7 +297,7 @@
         this._cachedFlashState = state;
         this._cachedFlashTime = now;
       }
-      state.samplesQueued += this._flashBuffer.length / 8;
+      state.samplesQueued += this._flashBuffer.length / 16;
       return state;
     } else {
       //console.log('getPlaybackState USED TOO EARLY');

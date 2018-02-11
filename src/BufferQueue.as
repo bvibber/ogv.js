@@ -21,9 +21,9 @@ package {
             return count;
         }
 
-        public function writeToOutput(out:IDataOutput, volume:Number):void {
+        public function writeToOutput(out:IDataOutput):void {
             for (var item:BufferQueueItem = head; item; item = item.next) {
-                item.writeToOutput(out, volume);
+                item.writeToOutput(out);
             }
         }
 

@@ -14,6 +14,8 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.9 - 2018-02-??
+ * Flash: full 32-bit float precision now used
 * 0.4.8 - 2018-02-10
  * Flash: volume changes now apply immediately
  * Flash: update build to flex sdk 4.16.1
