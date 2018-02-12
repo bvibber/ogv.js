@@ -14,52 +14,52 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
-* 0.4.9 - 2018-02-??
- * Flash: full 32-bit float precision now used
+* 0.4.9 - 2018-02-12
+    * Flash: full 32-bit float precision now used
 * 0.4.8 - 2018-02-10
- * Flash: volume changes now apply immediately
- * Flash: update build to flex sdk 4.16.1
+    * Flash: volume changes now apply immediately
+    * Flash: update build to flex sdk 4.16.1
 * 0.4.7 - 2017-03-17
- * Flash: cleaner behavior if stopped from onstarved handler
+    * Flash: cleaner behavior if stopped from onstarved handler
 * 0.4.6 - 2017-03-16
- * Flash: frequent small buffer flushes to Flash are coalesced better
+    * Flash: frequent small buffer flushes to Flash are coalesced better
 * 0.4.5 - 2016-06-12
- * Flash: extra security precautions on cross-domain mode
+    * Flash: extra security precautions on cross-domain mode
 * 0.4.4 - 2016-06-12
- * Web Audio: fix regression in `initSharedAudioContext`
+    * Web Audio: fix regression in `initSharedAudioContext`
 * 0.4.3 - 2016-06-11
- * Flash: now works cross-domain
- * Web Audio: `audioNode` option allows attaching to non-default destination
+    * Flash: now works cross-domain
+    * Web Audio: `audioNode` option allows attaching to non-default destination
 * 0.4.2 - 2016-06-03
- * Flash: fixed sample count in cached playback data
- * Web Audio: partial fixes to `stop()`/`start()` buffered audio recovery
+    * Flash: fixed sample count in cached playback data
+    * Web Audio: partial fixes to `stop()`/`start()` buffered audio recovery
 * 0.4.1 - 2016-06-02
- * Flash: Cleaned up internal buffering
- * Flash: `stop()`/`start()` more reliable, doesn't drop audio
- * Flash: `playbackPosition` no longer advances while paused
- * Now builds on Windows 10
+    * Flash: Cleaned up internal buffering
+    * Flash: `stop()`/`start()` more reliable, doesn't drop audio
+    * Flash: `playbackPosition` no longer advances while paused
+    * Now builds on Windows 10
 * 0.4.0 - 2016-05-14
- * more precise recovery of playback position after `stop()`/`start()`
- * addded `flush()` method; use to clear buffers after a stop when seeking etc
+    * more precise recovery of playback position after `stop()`/`start()`
+    * addded `flush()` method; use to clear buffers after a stop when seeking etc
 * 0.3.0 - 2016-05-03
- * Implemented `onstarved` callback for Flash backend
- * Added `onbufferlow` callback when buffered data gets low, but not yet empty
- * Added `bufferThreshold` property to get/set the threshold in seconds
- * Added `durationBuffered` property to track amount of data left to play
- * Added `playbackPosition` property mirroring getPlaybackState().playbackPosition
- * Retooled Flash plugin setup to use a callback instead of timer-based polling
+    * Implemented `onstarved` callback for Flash backend
+    * Added `onbufferlow` callback when buffered data gets low, but not yet empty
+    * Added `bufferThreshold` property to get/set the threshold in seconds
+    * Added `durationBuffered` property to track amount of data left to play
+    * Added `playbackPosition` property mirroring getPlaybackState().playbackPosition
+    * Retooled Flash plugin setup to use a callback instead of timer-based polling
 * 0.2.1 - 2016-04-28
- * Fixed regression in Flash build makefile
+    * Fixed regression in Flash build makefile
 * 0.2.0 - 2016-04-27
- * Refactored build to use Grunt instead of make for JS build
- * Pre-built JS included in npm package instead of webpack-specific sources
- * Webpack projects now responsible for including dynamicaudio.swf
+    * Refactored build to use Grunt instead of make for JS build
+    * Pre-built JS included in npm package instead of webpack-specific sources
+    * Webpack projects now responsible for including dynamicaudio.swf
 * 0.1.0 - 2016-04-16
- * Refactored code paths and build process!
- * Can now be imported directly into a webpack-based project
- * 'make build' to pre-build standalone .js to use in other build processes
+    * Refactored code paths and build process!
+    * Can now be imported directly into a webpack-based project
+    * 'make build' to pre-build standalone .js to use in other build processes
 * 0.0.2 - 2016-03-27
- * Broken out from ogv.js, cleaning up to publish as npm module
+    * Broken out from ogv.js, cleaning up to publish as npm module
 
 ## Installing with webpack or browserify
 
@@ -92,7 +92,7 @@ Include either as a module (CommonJS or AMD) or a standalone script.
 
 ## Usage
 
-```
+```js
 // Create a feeder object
 var feeder = new AudioFeeder({
   // Supply the path to dynamicaudio.swf for IE 10/11 compatibility
@@ -163,7 +163,7 @@ yet played data, are available through the `playbackPosition` and
 
 Additional playback state can be retrieved from the getPlaybackState() method:
 
-```
+```js
 {
   playbackPosition: Float /* seconds of sample data that have played back so far */,
   samplesQueued: Float /* samples remaining before the buffer empties out, approximate */,
@@ -181,7 +181,7 @@ video frames.
 This high-level pseudocode shows a simplified version of the playback sync logic
 from the [ogv.js video player](https://github.com/brion/ogv.js):
 
-```
+```js
 function processMediaData() {
   while (codec.audioReady && audioFeeder.durationBuffered < audioFeeder.bufferThreshold) {
     // When our audio buffer gets low, feed it some more audio data.
@@ -272,7 +272,7 @@ from the source files. This is known to work on Mac, Linux, and Windows.
 Build prerequisites:
 * node.js / npm
 
-```
+```bash
 # Fetch build dependencies (webpack, eslint etc)
 npm install
 npm install -g grunt-cli
@@ -303,7 +303,7 @@ Build prerequisites:
 * ant
 * curl
 
-```
+```bash
 # Rebuild dynamicaudio.swf, installing Flex SDK if necessary
 make swf
 ```
@@ -311,7 +311,7 @@ make swf
 Be warned that downloading libraries for the Apache Flex SDK may prompt
 you for permission at your terminal!
 
-```
+```bash
 # To remove just the dynamicaudio.swf
 make clean
 
