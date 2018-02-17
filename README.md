@@ -8,7 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 ## Updates
 
 1.5.7 - 2018-??-??
-* updated build chain to emscripten 1.37.33
+* updated build chain to emscripten 1.37.34
 * performance optimization for VP8 and VP9 on IE 11
     * roughly 15-25% performance improvement
     * uses direct multiplication instead of slow polyfill of Math.imul
