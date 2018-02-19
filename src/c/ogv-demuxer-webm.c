@@ -190,7 +190,9 @@ static int processBegin() {
 		return 0;
 	}
 
-  startPosition = bq_tell(bufferQueue);
+	// The first cluster starts a few bytes back, since we've already
+	// peeked-ahead its type and size.
+	startPosition = bq_tell(bufferQueue) - 12;
 
 	// Look through the tracks finding our video and audio
 	unsigned int tracks;
