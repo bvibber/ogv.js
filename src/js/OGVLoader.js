@@ -1,3 +1,6 @@
+/* global BlobBuilder */
+/* global Promise */
+
 var OGVVersion = __OGV_FULL_VERSION__;
 
 (function() {

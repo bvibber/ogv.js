@@ -1,6 +1,7 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
+/* global copyByteArray */
 
 mergeInto(LibraryManager.library, {
 

@@ -1,3 +1,5 @@
+/* global ArrayBuffer */
+
 /**
  * Proxy object for web worker interface for codec classes.
  *

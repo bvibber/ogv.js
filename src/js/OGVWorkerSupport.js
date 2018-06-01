@@ -1,3 +1,5 @@
+/* global ArrayBuffer */
+
 var OGVLoader = require('./OGVLoader.js');
 
 /**

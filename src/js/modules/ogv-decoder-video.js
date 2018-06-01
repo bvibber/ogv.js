@@ -1,5 +1,6 @@
 /* global Module */
 /* global options */
+/* global ArrayBuffer */
 
 // Resizable input buffer to store input packets
 
