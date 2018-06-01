@@ -52,14 +52,14 @@
     "ast-types": "^0.10.1",
     "audio-feeder": "0.4.9",
     "es6-promise": "^4.0.5",
-    "eslint": "^1.7.3",
+    "eslint": "^4.19.1",
     "file-loader": "^0.8.5",
     "node-static": "^0.7.7",
     "recast": "^0.13.0",
     "stream-file": "0.2.3",
     "strip-sourcemap-loader": "0.0.1",
     "webpack": "^1.12.2",
-    "webpack-dev-server": "^1.12.1",
+    "webpack-dev-server": "^3.1.4",
     "yuv-canvas": "^1.2.1"
   }
 }
