@@ -17,6 +17,7 @@ module.exports = [
   {
     // Main entry point!
     entry: './src/js/ogv.js',
+    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
@@ -26,10 +27,10 @@ module.exports = [
     },
     plugins: plugins,
     module: {
-      loaders: [
+      rules: [
         {
           test: /\.swf$/,
-          loader: 'file?name=[name].[ext]?version=[hash]'
+          loader: 'file-loader?name=[name].[ext]?version=[hash]'
         },
         {
           test: /\.js$/,
@@ -52,6 +53,7 @@ module.exports = [
   {
     // Alt limited entry point for just exposting the version marker string
     entry: './src/js/ogv-version.js',
+    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
@@ -61,6 +63,7 @@ module.exports = [
   },
 	{
 	  entry: './src/js/workers/ogv-worker-audio.js',
+    mode: 'production',
 	  output: {
 	    path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
@@ -70,6 +73,7 @@ module.exports = [
 	},
   {
     entry: './src/js/workers/ogv-worker-video.js',
+    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
