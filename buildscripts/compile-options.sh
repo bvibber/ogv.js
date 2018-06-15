@@ -14,7 +14,7 @@ EMCC_COMMON_OPTIONS="
 "
 
 EMCC_ASMJS_OPTIONS="
--s ASM_JS=1
+-s WASM=0
 -s LEGACY_VM_SUPPORT=1
 --memory-init-file 0
 "

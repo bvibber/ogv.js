@@ -9,7 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 1.5.8 - 2018-06-??
 * fixes for a few stray globals
-* update buildchain to emscripten 1.38.5
+* update buildchain to emscripten 1.38.6
 * update webpack to 4.x
 
 1.5.7 - 2018-02-19
