@@ -30,7 +30,10 @@ module.exports = [
       rules: [
         {
           test: /\.swf$/,
-          loader: 'file-loader?name=[name].[ext]?version=[hash]'
+          loader: 'file-loader',
+          options: {
+            'name': '[name].[ext]?version=[hash]'
+          }
         },
         {
           test: /\.js$/,
@@ -43,6 +46,7 @@ module.exports = [
   {
     // Alt limited entry point for compat testing before loading
     entry: './src/js/ogv-support.js',
+    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
