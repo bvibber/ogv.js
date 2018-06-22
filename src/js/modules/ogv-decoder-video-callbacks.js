@@ -46,8 +46,8 @@ mergeInto(LibraryManager.library, {
 		var outChromaStride = outStride * chromaWidth / width;
 		var outChromaHeight = outHeight * chromaHeight / height;
 
-		var outPicX = (picX + 1) & ~1; // round up to divisible by 2
-		var outPicY = (picY + 1) & ~1; // round up to divisible by 2
+		var outPicX = picX & ~1; // round down to divisible by 2
+		var outPicY = picY & ~1; // round down to divisible by 2
 		var chromaPicX = outPicX * chromaWidth / width;
 		var chromaPicY = outPicY * chromaHeight / height;
 
