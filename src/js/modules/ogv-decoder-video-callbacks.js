@@ -72,6 +72,21 @@ mergeInto(LibraryManager.library, {
 			outBytesV.set(src, outChromaStride * y);
 		}
 
+		var format = Module['videoFormat'];
+		var isOriginal = (picWidth === format['cropWidth'])
+					  && (picHeight === format['cropHeight']);
+		if (isOriginal) {
+			// This feels wrong, but in practice the WebM VP8 files I've found
+			// with non-square pixels list 1920x1080 in the WebM header for
+			// display size but 1440x1080 in the VP8 frame.
+			//
+			// Using the container-derived info to override for the original
+			// resolution gets these files working, while allowing VP8 and VP9
+			// files that change resolution and specify their pixels properly
+			// to keep working.
+			displayWidth = format['displayWidth'];
+			displayHeight = format['displayHeight'];
+		}
 		// And queue up the output buffer!
 		Module['frameBuffer'] = {
 			'format': {
