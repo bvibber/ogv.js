@@ -38,36 +38,65 @@ mergeInto(LibraryManager.library, {
 
 		// Create typed array copies of the source buffers from the emscripten heap:
 		var HEAPU8 = Module['HEAPU8'],
-			format = Module['videoFormat'],
-			countBytesY = strideY * height,
-			countBytesCb = strideCb * chromaHeight,
-			countBytesCr = strideCr * chromaHeight;
+			y;
+
+		// Copy just the visible portions, we don't need the rest.
+		var outStride = (picWidth + 7) & ~7; // round up to divisible by 8
+		var outHeight = (picHeight + 7) & ~7; // round up to divisible by 8
+		var outChromaStride = outStride * chromaWidth / width;
+		var outChromaHeight = outHeight * chromaHeight / height;
+
+		var outPicX = (picX + 1) & ~1; // round up to divisible by 2
+		var outPicY = (picY + 1) & ~1; // round up to divisible by 2
+		var chromaPicX = outPicX * chromaWidth / width;
+		var chromaPicY = outPicY * chromaHeight / height;
+
+		var outBytesY = new Uint8Array(outStride * outHeight);
+		for (y = 0; y < outHeight; y++) {
+			var start = bufferY + (y + outPicY) * strideY + picX;
+			var src = HEAPU8.subarray(start, start + outStride);
+			outBytesY.set(src, outStride * y);
+		}
+
+		var outBytesU = new Uint8Array(outChromaStride * outChromaHeight);
+		for (y = 0; y < outChromaHeight; y++) {
+			var start = bufferCb + (y + chromaPicY) * strideCb + chromaPicX;
+			var src = HEAPU8.subarray(start, start + outChromaStride);
+			outBytesU.set(src, outChromaStride * y);
+		}
+
+		var outBytesV = new Uint8Array(outChromaStride * outChromaHeight);
+		for (y = 0; y < outChromaHeight; y++) {
+			var start = bufferCr + (y + chromaPicY) * strideCr + chromaPicX;
+			var src = HEAPU8.subarray(start, start + outChromaStride);
+			outBytesV.set(src, outChromaStride * y);
+		}
 
 		// And queue up the output buffer!
 		Module['frameBuffer'] = {
 			'format': {
-				'width': width,
-				'height': height,
-				'chromaWidth': chromaWidth,
-				'chromaHeight': chromaHeight,
-				'cropLeft': picX,
-				'cropTop': picY,
+				'width': outStride,
+				'height': outHeight,
+				'chromaWidth': outChromaStride,
+				'chromaHeight': outChromaHeight,
+				'cropLeft': picX - outPicX,
+				'cropTop': picY - outPicY,
 				'cropWidth': picWidth,
 				'cropHeight': picHeight,
 				'displayWidth': displayWidth,
 				'displayHeight': displayHeight
 			},
 			'y': {
-				'bytes': copyByteArray(HEAPU8.subarray(bufferY, bufferY + countBytesY)),
-				'stride':strideY
+				'bytes': outBytesY,
+				'stride': outStride
 			},
 			'u': {
-				'bytes': copyByteArray(HEAPU8.subarray(bufferCb, bufferCb + countBytesCb)),
-				'stride': strideCb
+				'bytes': outBytesU,
+				'stride': outChromaStride
 			},
 			'v': {
-				'bytes': copyByteArray(HEAPU8.subarray(bufferCr, bufferCr + countBytesCr)),
-				'stride': strideCr
+				'bytes': outBytesV,
+				'stride': outChromaStride
 			}
 		};
 	},
