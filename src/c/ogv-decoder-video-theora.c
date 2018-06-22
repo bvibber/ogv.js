@@ -21,6 +21,9 @@ th_dec_ctx       *theoraDecoderContext;
 int               theoraHeaders = 0;
 int               theoraProcessingHeaders;
 
+static int display_width = 0;
+static int display_height = 0;
+
 void ogv_video_decoder_init() {
     /* init supporting Theora structures needed in header parsing */
     th_comment_init(&theoraComment);
@@ -51,8 +54,8 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 		int hdec = !(theoraInfo.pixel_fmt & 1);
 		int vdec = !(theoraInfo.pixel_fmt & 2);
 
-		int display_width = theoraInfo.pic_width;
-		int display_height = theoraInfo.pic_height;
+		display_width = theoraInfo.pic_width;
+		display_height = theoraInfo.pic_height;
 		if (theoraInfo.aspect_numerator > 0 && theoraInfo.aspect_denominator > 0) {
 			display_width = display_width * theoraInfo.aspect_numerator / theoraInfo.aspect_denominator;
 		}
@@ -89,7 +92,10 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 							 ycbcr[1].data, ycbcr[1].stride,
 							 ycbcr[2].data, ycbcr[2].stride,
 							 theoraInfo.frame_width, theoraInfo.frame_height,
-							 theoraInfo.frame_width >> hdec, theoraInfo.frame_height >> vdec);
+							 theoraInfo.frame_width >> hdec, theoraInfo.frame_height >> vdec,
+							 theoraInfo.pic_width, theoraInfo.pic_height,
+							 theoraInfo.pic_x, theoraInfo.pic_y,
+							 display_width, display_height);
         return 1;
     } else {
         //printf("Theora decoder failed mysteriously? %d\n", ret);

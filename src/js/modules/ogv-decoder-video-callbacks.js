@@ -31,7 +31,10 @@ mergeInto(LibraryManager.library, {
 	                               bufferCb, strideCb,
 	                               bufferCr, strideCr,
 	                               width, height,
-	                               chromaWidth, chromaHeight) {
+								   chromaWidth, chromaHeight,
+								   picWidth, picHeight,
+								   picX, picY,
+								   displayWidth, displayHeight) {
 
 		// Create typed array copies of the source buffers from the emscripten heap:
 		var HEAPU8 = Module['HEAPU8'],
@@ -42,18 +45,17 @@ mergeInto(LibraryManager.library, {
 
 		// And queue up the output buffer!
 		Module['frameBuffer'] = {
-			// @fixme what to do about the crop coordinates if resolution changes? can this happen in webm land? what about if ogv gets a new steam?
 			'format': {
 				'width': width,
 				'height': height,
 				'chromaWidth': chromaWidth,
 				'chromaHeight': chromaHeight,
-				'cropLeft': format['cropLeft'],
-				'cropTop': format['cropTop'],
-				'cropWidth': format['cropWidth'],
-				'cropHeight': format['cropHeight'],
-				'displayWidth': format['displayWidth'],
-				'displayHeight': format['displayHeight']
+				'cropLeft': picX,
+				'cropTop': picY,
+				'cropWidth': picWidth,
+				'cropHeight': picHeight,
+				'displayWidth': displayWidth,
+				'displayHeight': displayHeight
 			},
 			'y': {
 				'bytes': copyByteArray(HEAPU8.subarray(bufferY, bufferY + countBytesY)),

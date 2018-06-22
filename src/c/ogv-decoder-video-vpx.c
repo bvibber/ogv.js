@@ -145,7 +145,10 @@ static int process_frame_return() {
 							 image->planes[1], image->stride[1],
 							 image->planes[2], image->stride[2],
 							 image->w, image->h,
-							 chromaWidth, chromaHeight);
+							 chromaWidth, chromaHeight,
+							 image->d_w, image->d_h, // crop size
+							 0, 0, // crop pos
+							 image->r_w, image->r_h); // render size
 	}
 	return foundImage;
 }
