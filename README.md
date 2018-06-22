@@ -14,6 +14,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * opus built with --enable-float-approx
 * fix display of WebM files with resolution changes
 * fix green edges on some VP9 files
+* update opus to 1.2.1
 
 1.5.7 - 2018-02-19
 * fix for linear seek in audio/webm

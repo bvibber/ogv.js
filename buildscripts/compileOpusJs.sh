@@ -16,6 +16,7 @@ cd libopus
 # finally, run configuration script
 emconfigure ../../../libopus/configure \
   --disable-asm \
+  --disable-intrinsics \
   --enable-float-approx \
   --disable-doc \
   --disable-extra-programs \
