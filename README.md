@@ -11,6 +11,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * fixes for a few stray globals
 * update buildchain to emscripten 1.38.6
 * update webpack to 4.x
+* opus built with --enable-float-approx
 
 1.5.7 - 2018-02-19
 * fix for linear seek in audio/webm
