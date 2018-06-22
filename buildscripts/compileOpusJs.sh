@@ -16,7 +16,7 @@ cd libopus
 # finally, run configuration script
 emconfigure ../../../libopus/configure \
   --disable-asm \
-  --disable-oggtest \
+  --enable-float-approx \
   --disable-doc \
   --disable-extra-programs \
   --prefix="$dir/build/js/root" \
