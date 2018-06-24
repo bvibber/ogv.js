@@ -974,6 +974,23 @@
         }
     }
 
+    container.addEventListener('dragover', function(event) {
+        // seem to need this :P
+        event.preventDefault();
+    });
+    container.addEventListener('drop', function(event) {
+        event.preventDefault();
+        if (event.dataTransfer.items) {
+            var item = event.dataTransfer.items[0];
+            if (item.kind === 'file') {
+                var file = item.getAsFile();
+                var url = URL.createObjectURL(file);
+                player.src = url;
+                player.load();
+            }
+        }
+    });
+
     window.setInterval(function() {
         if (player) {
             benchmark.update();
