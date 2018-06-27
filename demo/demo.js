@@ -906,7 +906,7 @@
                 var fps;
                 if (typeof (player.ogvjsVideoFrameRate) === 'number' && player.ogvjsVideoFrameRate > 0) {
                     benchmark.setTargetFPS(player.ogvjsVideoFrameRate);
-                    fps = round2(player.ogvjsVideoFrameRate);
+                    fps = Math.round(player.ogvjsVideoFrameRate * 100) / 100;
                 } else {
                     // Native video element doesn't seem to expose frame rate?!
                     benchmark.setTargetFPS(60);
