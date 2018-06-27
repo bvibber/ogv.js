@@ -651,6 +651,7 @@
             autoplay = false;
             selectedTitle = title;
             setHash();
+            showVideo();
             dismissChooser();
         });
 
