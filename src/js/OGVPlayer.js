@@ -26,9 +26,6 @@ var OGVLoader = require('./OGVLoader.js'),
  *                 'base': string; base URL for additional resources, such as Flash audio shim
  *                 'webGL': bool; pass true to use WebGL acceleration if available
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
- *                 'sync': string; A/V sync plan: one of:
- *                     'delay-audio' (pre-1.3.2 behavior) stop audio when behind, then play all frames to catch up
- *                     'skip-frames' (default) to preserve audio, skipping frames until the next sync point (keyframe)
  */
 function OGVPlayer(options) {
 	options = options || {};
@@ -1223,103 +1220,82 @@ function OGVPlayer(options) {
 								log('audio timeline ended? ready to draw frame');
 							} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 								// late frame!
-								if (options.sync == 'delay-audio') {
-									// Delay audio while video catches up. Old default.
-									if (!stoppedForLateFrame) {
-										log('late frame at ' + playbackPosition + ': ' + (-frameDelay) + ' expected ' + audioSyncThreshold);
+								var skipPast = -1;
+								for (var i = 0; i < decodedFrames.length - 1; i++) {
+									if (decodedFrames[i].frameEndTimestamp < playbackPosition) {
+										skipPast = i - 1;
+									}
+								}
+								if (skipPast >= 0) {
+									while (skipPast-- >= 0) {
 										lateFrames++;
-										if (decodedFrames.length > 1) {
-											log('late frame has a neighbor; skipping to next frame');
-											var frame = decodedFrames.shift();
-											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
-											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											framesProcessed++; // pretend!
-											doFrameComplete({
-												frameEndTimestamp: frame.frameEndTimestamp,
-												dropped: true
-											});
-										} else {
-											stopPlayback();
-											stoppedForLateFrame = true;
-										}
+										var frame = decodedFrames.shift();
+										log('skipping already-decoded late frame at ' + frame.frameEndTimestamp);
+										frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
+										frameEndTimestamp = frame.frameEndTimestamp;
+										actualPerFrameTime = targetPerFrameTime - frameDelay;
+										framesProcessed++; // pretend!
+										frame.dropped = true;
+										doFrameComplete();
 									}
-								} else if (options.sync == 'skip-frames') {
-									var skipPast = -1;
-									for (var i = 0; i < decodedFrames.length - 1; i++) {
-										if (decodedFrames[i].frameEndTimestamp < playbackPosition) {
-											skipPast = i - 1;
-										}
+								}
+
+								// Resync at the next keyframe.
+								// @todo make this work when there's no audio stream being decoded ahead
+								var nextKeyframe = codec.nextKeyframeTimestamp;
+
+								// When resyncing, allow time to decode a couple frames!
+								var videoSyncPadding = (targetPerFrameTime / 1000) * (framePipelineDepth + pendingFrame);
+								var timeToResync = nextKeyframe - videoSyncPadding;
+
+								if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
+									log('skipping late frame at ' + decodedFrames[0].frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
+
+									// First skip any already-decoded frames
+									for (var i = 0; i < decodedFrames.length; i++) {
+										var frame = decodedFrames[i];
+										lateFrames++;
+										framesProcessed++; // pretend!
+										frameEndTimestamp = frame.frameEndTimestamp;
+										frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
+										actualPerFrameTime = targetPerFrameTime - frameDelay;
+										frame.dropped = true;
+										doFrameComplete(frame);
 									}
-									if (skipPast >= 0) {
-										while (skipPast-- >= 0) {
-											lateFrames++;
-											var frame = decodedFrames.shift();
-											log('skipping already-decoded late frame at ' + frame.frameEndTimestamp);
-											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
-											frameEndTimestamp = frame.frameEndTimestamp;
-											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											framesProcessed++; // pretend!
-											frame.dropped = true;
-											doFrameComplete();
-										}
+									decodedFrames = [];
+									for (var i = 0; i < pendingFrames.length; i++) {
+										var frame = pendingFrames[i];
+										lateFrames++;
+										framesProcessed++; // pretend!
+										frameEndTimestamp = frame.frameEndTimestamp;
+										frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
+										actualPerFrameTime = targetPerFrameTime - frameDelay;
+										frame.dropped = true;
+										doFrameComplete(frame);
 									}
+									pendingFrames = [];
+									pendingFrame = 0;
 
-									// Resync at the next keyframe. Default as of 1.3.2.
-									var nextKeyframe = codec.nextKeyframeTimestamp;
-
-									// When resyncing, allow time to decode a couple frames!
-									var videoSyncPadding = (targetPerFrameTime / 1000) * (framePipelineDepth + pendingFrame);
-									var timeToResync = nextKeyframe - videoSyncPadding;
-
-									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
-										log('skipping late frame at ' + decodedFrames[0].frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
-
-										// First skip any already-decoded frames
-										for (var i = 0; i < decodedFrames.length; i++) {
-											var frame = decodedFrames[i];
-											lateFrames++;
-											framesProcessed++; // pretend!
-											frameEndTimestamp = frame.frameEndTimestamp;
-											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
-											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											frame.dropped = true;
-											doFrameComplete(frame);
-										}
-										decodedFrames = [];
-										for (var i = 0; i < pendingFrames.length; i++) {
-											var frame = pendingFrames[i];
-											lateFrames++;
-											framesProcessed++; // pretend!
-											frameEndTimestamp = frame.frameEndTimestamp;
-											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
-											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											frame.dropped = true;
-											doFrameComplete(frame);
-										}
-										pendingFrames = [];
-										pendingFrame = 0;
-
-										// Now discard anything up to the keyframe
-										while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
-											// note: this is a known synchronous operation :)
-											var frame = {
-												frameEndTimestamp: codec.frameTimestamp,
-												dropped: true
-											};
-											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
-											actualPerFrameTime = targetPerFrameTime - frameDelay;
-											lateFrames++;
-											codec.discardFrame(function() {/*fake*/});
-											framesProcessed++; // pretend!
-											doFrameComplete(frame);
-										}
-										if (isProcessing()) {
-											// wait
-										} else {
-											pingProcessing();
-										}
-										return;
+									// Now discard anything up to the keyframe
+									while (codec.frameReady && codec.frameTimestamp < nextKeyframe) {
+										// note: this is a known synchronous operation :)
+										var frame = {
+											frameEndTimestamp: codec.frameTimestamp,
+											dropped: true
+										};
+										frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
+										actualPerFrameTime = targetPerFrameTime - frameDelay;
+										lateFrames++;
+										codec.discardFrame(function() {/*fake*/});
+										framesProcessed++; // pretend!
+										doFrameComplete(frame);
 									}
+									if (isProcessing()) {
+										// wait
+									} else {
+										pingProcessing();
+									}
+									return;
 								}
 							} else if (readyForFrameDraw && stoppedForLateFrame && !readyForFrameDecode && !readyForAudioDecode && frameDelay > fudgeDelta) {
 								// catching up, ok if we were early

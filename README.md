@@ -17,6 +17,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * update opus to 1.2.1
 * update ogg to 1.3.3
 * update vorbis to 1.3.6
+* remove old 'delay-audio' A/V sync behavior mode
 
 1.5.7 - 2018-02-19
 * fix for linear seek in audio/webm
