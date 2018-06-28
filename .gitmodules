@@ -3,7 +3,7 @@
 	url = https://git.xiph.org/ogg.git
 [submodule "libvorbis"]
 	path = libvorbis
-	url = https://git.xiph.org/mirrors/vorbis.git
+	url = https://git.xiph.org/vorbis.git
 [submodule "libtheora"]
 	path = libtheora
 	url = https://github.com/brion/theora.git
