@@ -244,9 +244,7 @@ function OGVPlayer(options) {
 		};
 
 		// If we ran out of audio *completely* schedule some more processing.
-		// This shouldn't happen if we keep up with onbufferlow, except at
-		// the very beginning of playback when we haven't buffered any data yet.
-		// @todo pre-buffer a little data to avoid needing this
+		// This shouldn't happen if we keep up with onbufferlow.
 		audioFeeder.onstarved = function () {
 			if (dataEnded) {
 				// Probably end of file.
