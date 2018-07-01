@@ -896,6 +896,8 @@
             document.getElementById('audio-channels').textContent = '';
             document.getElementById('audio-rate').textContent = '';
             document.getElementById('audio-drops').textContent = '';
+            document.getElementById('video-bitrate').textContent = '0';
+            document.getElementById('audio-bitrate').textContent = '0';
 
             player.addEventListener('loadedmetadata', function() {
                 // Standard metadata ain't much.

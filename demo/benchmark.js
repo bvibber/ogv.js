@@ -155,6 +155,8 @@
             averageBufferTime = info.bufferTime / info.framesProcessed;
             averageDrawingTime = info.drawingTime / info.framesProcessed;
             averageProxyTime = info.proxyTime / info.framesProcessed;
+            averageVideoBitrate = info.videoBytes * 8 / info.playTime; // kbits/s
+            averageAudioBitrate = info.audioBytes * 8 / info.playTime; // kbits/s
 
             var targetPerFrameTime = info.targetPerFrameTime;
             benchmarkTargetFps = 1000 / targetPerFrameTime;
@@ -173,6 +175,9 @@
             document.getElementById('video-late').textContent = info.lateFrames;
             document.getElementById('audio-drops').textContent = info.droppedAudio;
             document.getElementById('audio-delayed').textContent = round1_0(info.delayedAudio);
+
+            document.getElementById('video-bitrate').textContent = Math.round(averageVideoBitrate);
+            document.getElementById('audio-bitrate').textContent = Math.round(averageAudioBitrate);
 
             // keep it a rolling average
             player.resetPlaybackStats();

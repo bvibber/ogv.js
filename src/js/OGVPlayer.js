@@ -1831,6 +1831,8 @@ function OGVPlayer(options) {
 		return {
 			targetPerFrameTime: targetPerFrameTime,
 			framesProcessed: framesProcessed,
+			videoBytes: codec ? codec.videoBytes : 0,
+			audioBytes: codec ? codec.audioBytes : 0,
 			playTime: playTime,
 			demuxingTime: codec ? (codec.demuxerCpuTime - lastDemuxerCpuTime) : 0,
 			videoDecodingTime: codec ? (codec.videoCpuTime - lastVideoCpuTime) : 0,
@@ -1846,11 +1848,14 @@ function OGVPlayer(options) {
 	};
 	self.resetPlaybackStats = function() {
 		framesProcessed = 0;
+		bytesProcessed = 0;
 		playTime = 0;
 		if (codec) {
 			lastDemuxerCpuTime = codec.demuxerCpuTime;
 			lastVideoCpuTime = codec.videoCpuTime;
 			lastAudioCpuTime = codec.audioCpuTime;
+			codec.videoBytes = 0;
+			codec.audioBytes = 0;
 		}
 		lastBufferTime = bufferTime;
 		lastDrawingTime = drawingTime;

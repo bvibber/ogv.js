@@ -302,6 +302,7 @@ var OGVWrapperCodec = (function(options) {
 			} else if (demuxer.audioReady) {
 
 				demuxer.dequeueAudioPacket(function(packet) {
+					self.audioBytes += packet.byteLength;
 					audioDecoder.processHeader(packet, function(ret) {
 						finish(true);
 					});
@@ -325,6 +326,7 @@ var OGVWrapperCodec = (function(options) {
 
 				processing = true;
 				demuxer.dequeueVideoPacket(function(packet) {
+					self.videoBytes += packet.byteLength;
 					videoDecoder.processHeader(packet, function() {
 						finish(true);
 					});
@@ -362,6 +364,7 @@ var OGVWrapperCodec = (function(options) {
 			timestamp = self.frameTimestamp,
 			keyframeTimestamp = self.keyframeTimestamp;
 		demuxer.dequeueVideoPacket(function(packet) {
+			self.videoBytes += packet.byteLength;
 			videoDecoder.processFrame(packet, function(ok) {
 				// hack
 				if (videoDecoder.frameBuffer) {
@@ -376,18 +379,21 @@ var OGVWrapperCodec = (function(options) {
 	self.decodeAudio = function(callback) {
 		var cb = flushSafe(callback);
 		demuxer.dequeueAudioPacket(function(packet) {
+			self.audioBytes += packet.byteLength;
 			audioDecoder.processAudio(packet, cb);
 		});
 	}
 
 	self.discardFrame = function(callback) {
 		demuxer.dequeueVideoPacket(function(packet) {
+			self.videoBytes += packet.byteLength;
 			callback();
 		});
 	};
 
 	self.discardAudio = function(callback) {
 		demuxer.dequeueAudioPacket(function(packet) {
+			self.audioBytes += packet.byteLength;
 			callback();
 		});
 	};
@@ -434,6 +440,9 @@ var OGVWrapperCodec = (function(options) {
 			}
 		}
 	});
+
+	self.videoBytes = 0;
+	self.audioBytes = 0;
 
 	return self;
 });

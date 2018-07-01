@@ -91,6 +91,15 @@
 					</td>
 				</tr>
 				<tr>
+					<td>
+						<div>
+							Bitrate:
+							video <span id="video-bitrate">0</span> kbps,
+							audio <span id="audio-bitrate">0</span> kbps
+						</div>
+					</td>
+				</tr>
+				<tr>
 					<td id="decode-rate">
 						<table id="decode-rate-table">
 							<tr>
