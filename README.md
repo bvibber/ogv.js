@@ -7,9 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.8 - 2018-06-??
+1.5.8 - 2018-07-??
 * fixes for a few stray globals
-* update buildchain to emscripten 1.38.6
+* update buildchain to emscripten 1.38.10
 * update webpack to 4.x
 * opus built with --enable-float-approx
 * fix display of WebM files with resolution changes

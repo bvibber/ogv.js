@@ -158,7 +158,9 @@ var OGVVersion = __OGV_FULL_VERSION__;
 				};
 				options.pthreadMainPrefixURL = OGVLoader.base + '/';
 				options.mainScriptUrlOrBlob = scriptMap[className];
-				return new global[className](options);
+				// Note: these pseudoclasses should not use 'new',
+				// which breaks in emscripten 1.38.10
+				return global[className](options);
 			}
 			if (typeof global[className] === 'function') {
 				// already loaded!
