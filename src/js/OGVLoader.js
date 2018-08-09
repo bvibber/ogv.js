@@ -7,9 +7,6 @@ var OGVVersion = __OGV_FULL_VERSION__;
 	var global = this;
 	var WebAssemblyCheck = require('./WebAssemblyCheck.js');
 
-	// For IE 11
-	require('./currentScript.js').polyfill();
-
 	var scriptMap = {
 		OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
 		OGVDemuxerOggW: 'ogv-demuxer-ogg-wasm.js',
