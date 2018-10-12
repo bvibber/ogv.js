@@ -21,7 +21,7 @@
 			<div>
 				Source:
 				<select height=1 id="video-preferred-size">
-					<option value="360p.webm">360p WebM</option>
+					<option value="360p.vp9.webm">360p WebM VP9</option>
 				</select>
 			</div>
 			<div>

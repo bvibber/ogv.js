@@ -686,9 +686,9 @@
         document.location.hash = hash;
     }
 
-    var preferredKey = '360p.webm';
+    var preferredKey = '360p.vp9.webm';
     if (OGVCompat.isSlow()) {
-        preferredKey = '240p.webm';
+        preferredKey = '240p.vp9.webm';
     }
     var selector = document.getElementById('video-preferred-size');
     selector.value = preferredKey;
