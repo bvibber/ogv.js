@@ -1,0 +1,13 @@
+[binaries]
+c = 'emcc'
+ar = 'llvm-ar'
+install_name_tool = 'echo'
+
+[properties]
+c_link_args = []
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86'
+cpu = 'x86_64'
+endian = 'little'
