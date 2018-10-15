@@ -226,7 +226,8 @@ var OGVWrapperCodec = (function(options) {
 	var videoClassMap = {
 		theora: options.wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
 		vp8: options.wasm ? 'OGVDecoderVideoVP8W' : (options.threading ? 'OGVDecoderVideoVP8MT' : 'OGVDecoderVideoVP8'),
-		vp9: options.wasm ? 'OGVDecoderVideoVP9W' : (options.threading ? 'OGVDecoderVideoVP9MT' : 'OGVDecoderVideoVP9')
+		vp9: options.wasm ? 'OGVDecoderVideoVP9W' : (options.threading ? 'OGVDecoderVideoVP9MT' : 'OGVDecoderVideoVP9'),
+		av1: options.wasm ? 'OGVDecoderVideoAV1W' : 'OGVDecoderVideoAV1'
 	};
 	function loadVideoCodec(callback) {
 		if (demuxer.videoCodec) {

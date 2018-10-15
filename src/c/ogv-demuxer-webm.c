@@ -216,6 +216,12 @@ static int processBegin() {
 				videoCodec = codec;
 				videoCodecName = "vp9";
 			}
+            if (codec == NESTEGG_CODEC_AV1) {
+                hasVideo = 1;
+				videoTrack = track;
+				videoCodec = codec;
+				videoCodecName = "av1";
+            }
 		}
 		
 		if (trackType == NESTEGG_TRACK_AUDIO && !hasAudio) {
