@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
+1.5.9 - 2018-10-??
+* experimental support for AV1 video in WebM
+* update builchain to emscripten 1.38.13
+
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
 * update buildchain to emscripten 1.38.11
@@ -416,8 +420,8 @@ If you are making a slim build and will not use the `threading` option, you can 
 
 Building ogv.js is known to work on Mac OS X and Linux (tested Ubuntu 15.04).
 
-1. You will need autoconf, automake, libtool, pkg-config, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
-2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently building with 1.37.22. (For pthreads builds, emscripten needs a [multithreading patch](https://github.com/kripken/emscripten/pull/5016))
+1. You will need autoconf, automake, libtool, pkg-config, meson, ninja, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
+2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently building with 1.38.13. (For pthreads builds, emscripten needs a [multithreading patch](https://github.com/kripken/emscripten/pull/5016))
 3. `git submodule update --init`
 4. Run `npm install` to install build utilities
 5. Run `make js` to configure and build the libraries and the C wrapper
@@ -430,7 +434,7 @@ If you did all the setup above, just run `make demo` or `make`. Look in build/de
 
 ## License
 
-libogg, libvorbis, libtheora, libopus, nestegg, and libvpx are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
+libogg, libvorbis, libtheora, libopus, nestegg, libvpx, and dav1d are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
 
 Based on build scripts from https://github.com/devongovett/ogg.js
 

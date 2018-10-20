@@ -139,6 +139,7 @@ dist: js README.md COPYING
 	cp -p libnestegg/LICENSE dist/LICENSE-nestegg.txt
 	cp -p libvpx/LICENSE dist/LICENSE-vpx.txt
 	cp -p libvpx/PATENTS dist/PATENTS-vpx.txt
+	cp -p dav1d/COPYING dist/COPYING-dav1d.txt
 
 # Zip up the dist folder for non-packaged release
 
