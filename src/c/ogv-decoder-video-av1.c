@@ -50,6 +50,8 @@ int ogv_video_decoder_process_frame(const char *buf, size_t buf_len)
                          picture.p.w, picture.p.h,
                          0, 0,
                          picture.p.w, picture.p.h);
+    dav1d_picture_unref(&picture);
+
     return 1;
 }
 
