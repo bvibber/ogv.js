@@ -19,16 +19,13 @@ CFLAGS="-O3" meson ../../../dav1d \
   --prefix="$dir/build/js/root" \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
+  -Dbitdepths='["8"]' \
   -Ddefault_library=shared && \
 ninja && \
 mkdir -p "$dir/build/js/root/lib" && \
 cp -p src/libdav1d.so "$dir/build/js/root/lib/libdav1d.so" && \
 mkdir -p "$dir/build/js/root/include/dav1d" && \
-cp -p ../../../dav1d/include/dav1d/* "$dir/build/js/root/include/dav1d/"
-
-# don't run ninja install, it breaks on mac
-# trying to install_name_tool things?
-
-cd ..
-cd ..
+cp -p ../../../dav1d/include/dav1d/* "$dir/build/js/root/include/dav1d/" && \
+cd .. && \
+cd .. && \
 cd ..
