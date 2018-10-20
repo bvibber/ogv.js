@@ -12,6 +12,7 @@
 <div id="videoarea"></div>
 
 <select onchange="switchmedia(this)">
+	<option value="media/llama-drama-av1.webm">Llama drama (AV1, Opus; 180p)</option>
 	<option value="media/curiosity.ogv">Curiosity's Seven Minutes of Terror (Vorbis, Theora; 160p)</option>
 	<option value="media/ehren-paper_lights-96.opus">Ehren - Paper Lights (Opus)</option>
 	<option value="media/pixel_aspect_ratio.ogg">Theora Test suite pixel_aspect_ratio.ogg</option>
@@ -25,7 +26,7 @@
 
 var player = null;
 var paused = false;
-var sampleFile = 'media/curiosity.ogv';
+var sampleFile = 'media/llama-drama-av1.webm';
 
 player = new OGVPlayer();
 document.getElementById("videoarea").appendChild(player);
