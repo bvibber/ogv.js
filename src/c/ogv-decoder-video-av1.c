@@ -8,7 +8,6 @@
 #include <dav1d/dav1d.h>
 
 #include "ogv-decoder-video.h"
-#include "ogv-ogg-support.h"
 
 /* Video decode state */
 
