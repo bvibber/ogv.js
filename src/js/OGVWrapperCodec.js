@@ -32,107 +32,124 @@ function OGVWrapperCodec(options) {
 	this.loadedMetadata = false;
 	this.processing = false;
 
-	Object.defineProperty(self, 'duration', {
-		get: function() {
-			if (self.loadedMetadata) {
-				return demuxer.duration;
-			} else {
-				return NaN;
+	Object.defineProperties(self, {
+		duration: {
+			get: function() {
+				if (self.loadedMetadata) {
+					return demuxer.duration;
+				} else {
+					return NaN;
+				}
 			}
-		}
-	});
-
-	Object.defineProperty(self, 'hasAudio', {
-		get: function() {
-			return self.loadedMetadata && !!audioDecoder;
-		}
-	});
-
-	Object.defineProperty(self, 'audioReady', {
-		get: function() {
-			return self.hasAudio && demuxer.audioReady;
-		}
-	});
-
-	Object.defineProperty(self, 'audioTimestamp', {
-		get: function() {
-			return demuxer.audioTimestamp;
-		}
-	});
-
-	Object.defineProperty(self, 'audioFormat', {
-		get: function() {
-			if (self.hasAudio) {
-				return audioDecoder.audioFormat;
-			} else {
-				return null;
+		},
+		hasAudio: {
+			get: function() {
+				return self.loadedMetadata && !!audioDecoder;
 			}
-		}
-	});
-
-	Object.defineProperty(self, 'audioBuffer', {
-		get: function() {
-			if (self.hasAudio) {
-				return audioDecoder.audioBuffer;
-			} else {
-				return null;
+		},
+		audioReady: {
+			get: function() {
+				return self.hasAudio && demuxer.audioReady;
 			}
-		}
-	});
-
-	Object.defineProperty(self, 'hasVideo', {
-		get: function() {
-			return self.loadedMetadata && !!videoDecoder;
-		}
-	});
-
-	Object.defineProperty(self, 'frameReady', {
-		get: function() {
-			return self.hasVideo && demuxer.frameReady;
-		}
-	});
-
-	Object.defineProperty(self, 'frameTimestamp', {
-		get: function() {
-			return demuxer.frameTimestamp;
-		}
-	});
-
-	Object.defineProperty(self, 'keyframeTimestamp', {
-		get: function() {
-			return demuxer.keyframeTimestamp;
-		}
-	});
-
-	Object.defineProperty(self, 'nextKeyframeTimestamp', {
-		get: function() {
-			return demuxer.nextKeyframeTimestamp;
-		}
-	});
-
-	Object.defineProperty(self, 'videoFormat', {
-		get: function() {
-			if (self.hasVideo) {
-				return videoDecoder.videoFormat;
-			} else {
-				return null;
+		},
+		audioTimestamp: {
+			get: function() {
+				return demuxer.audioTimestamp;
 			}
-		}
-	});
-
-	Object.defineProperty(self, 'frameBuffer', {
-		get: function() {
-			if (self.hasVideo) {
-				return videoDecoder.frameBuffer;
-			} else {
-				return null;
+		},
+		audioFormat: {
+			get: function() {
+				if (self.hasAudio) {
+					return audioDecoder.audioFormat;
+				} else {
+					return null;
+				}
 			}
-		}
-	});
+		},
+		audioBuffer: {
+			get: function() {
+				if (self.hasAudio) {
+					return audioDecoder.audioBuffer;
+				} else {
+					return null;
+				}
+			}
+		},
+		hasVideo: {
+			get: function() {
+				return self.loadedMetadata && !!videoDecoder;
+			}
+		},
+		frameReady: {
+			get: function() {
+				return self.hasVideo && demuxer.frameReady;
+			}
+		},
+		frameTimestamp: {
+			get: function() {
+				return demuxer.frameTimestamp;
+			}
+		},
+		keyframeTimestamp: {
+			get: function() {
+				return demuxer.keyframeTimestamp;
+			}
+		},
+		nextKeyframeTimestamp: {
+			get: function() {
+				return demuxer.nextKeyframeTimestamp;
+			}
+		},
+		videoFormat: {
+			get: function() {
+				if (self.hasVideo) {
+					return videoDecoder.videoFormat;
+				} else {
+					return null;
+				}
+			}
+		},
+		frameBuffer: {
+			get: function() {
+				if (self.hasVideo) {
+					return videoDecoder.frameBuffer;
+				} else {
+					return null;
+				}
+			}
+		},
+		seekable: {
+			get: function() {
+				return demuxer.seekable;
+			}
+		},
 
-	Object.defineProperty(self, 'seekable', {
-		get: function() {
-			return demuxer.seekable;
+		demuxerCpuTime: {
+			get: function() {
+				if (demuxer) {
+					return demuxer.cpuTime;
+				} else {
+					return 0;
+				}
+			}
+		},
+		audioCpuTime: {
+			get: function() {
+				if (audioDecoder) {
+					return audioDecoder.cpuTime;
+				} else {
+					return 0;
+				}
+			}
+		},
+		videoCpuTime: {
+			get: function() {
+				if (videoDecoder) {
+					return videoDecoder.cpuTime;
+				} else {
+					return 0;
+				}
+			}
 		}
 	});
 
@@ -399,34 +416,6 @@ function OGVWrapperCodec(options) {
 	}
 
 	self.onseek = null;
-
-	Object.defineProperty(self, "demuxerCpuTime", {
-		get: function() {
-			if (demuxer) {
-				return demuxer.cpuTime;
-			} else {
-				return 0;
-			}
-		}
-	});
-	Object.defineProperty(self, "audioCpuTime", {
-		get: function() {
-			if (audioDecoder) {
-				return audioDecoder.cpuTime;
-			} else {
-				return 0;
-			}
-		}
-	});
-	Object.defineProperty(self, "videoCpuTime", {
-		get: function() {
-			if (videoDecoder) {
-				return videoDecoder.cpuTime;
-			} else {
-				return 0;
-			}
-		}
-	});
 
 	self.videoBytes = 0;
 	self.audioBytes = 0;
