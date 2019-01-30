@@ -14,7 +14,6 @@ var OGVLoader = require("./OGVLoader.js");
 function OGVWrapperCodec(options) {
 	options = options || {};
 	var self = this,
-		processing = false,
 		demuxer = null,
 		videoDecoder = null,
 		audioDecoder = null,
@@ -31,14 +30,7 @@ function OGVWrapperCodec(options) {
 	}
 
 	this.loadedMetadata = false;
-
-	Object.defineProperty(self, 'processing', {
-		get: function() {
-			return processing/*
-				|| (videoDecoder && videoDecoder.processing)
-				|| (audioDecoder && audioDecoder.processing)*/;
-		}
-	});
+	this.processing = false;
 
 	Object.defineProperty(self, 'duration', {
 		get: function() {
@@ -152,7 +144,7 @@ function OGVWrapperCodec(options) {
 		} else {
 			demuxerClassName = options.wasm ? 'OGVDemuxerOggW' : 'OGVDemuxerOgg';
 		}
-		processing = true;
+		self.processing = true;
 		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
 			demuxerClass().then(function(demuxerModule) {
 				demuxer = demuxerModule;
@@ -162,7 +154,7 @@ function OGVWrapperCodec(options) {
 					}
 				};
 				demuxer.init(function() {
-					processing = false;
+					self.processing = false;
 					callback();
 				});
 			});
@@ -195,7 +187,7 @@ function OGVWrapperCodec(options) {
 	function loadAudioCodec(callback) {
 		if (demuxer.audioCodec) {
 			var className = audioClassMap[demuxer.audioCodec];
-			processing = true;
+			self.processing = true;
 			OGVLoader.loadClass(className, function(audioCodecClass) {
 				var audioOptions = {};
 				if (demuxer.audioFormat) {
@@ -205,7 +197,7 @@ function OGVWrapperCodec(options) {
 					audioDecoder = decoder;
 					audioDecoder.init(function() {
 						loadedAudioMetadata = audioDecoder.loadedMetadata;
-						processing = false;
+						self.processing = false;
 						callback();
 					});
 				});
@@ -226,7 +218,7 @@ function OGVWrapperCodec(options) {
 	function loadVideoCodec(callback) {
 		if (demuxer.videoCodec) {
 			var className = videoClassMap[demuxer.videoCodec];
-			processing = true;
+			self.processing = true;
 			OGVLoader.loadClass(className, function(videoCodecClass) {
 				var videoOptions = {};
 				if (demuxer.videoFormat) {
@@ -239,7 +231,7 @@ function OGVWrapperCodec(options) {
 					videoDecoder = decoder;
 					videoDecoder.init(function() {
 						loadedVideoMetadata = videoDecoder.loadedMetadata;
-						processing = false;
+						self.processing = false;
 						callback();
 					});
 				});
@@ -257,15 +249,15 @@ function OGVWrapperCodec(options) {
 		loadedAllMetadata = false;
 
 	self.process = function(callback) {
-		if (processing) {
+		if (self.processing) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
-		processing = true;
+		self.processing = true;
 
 		var videoPacketCount = demuxer.videoPackets.length,
 			audioPacketCount = demuxer.audioPackets.length;
 		function finish(result) {
-			processing = false;
+			self.processing = false;
 			callback(result);
 		}
 
@@ -319,7 +311,7 @@ function OGVWrapperCodec(options) {
 
 			} else if (demuxer.frameReady) {
 
-				processing = true;
+				self.processing = true;
 				demuxer.dequeueVideoPacket(function(packet) {
 					self.videoBytes += packet.byteLength;
 					videoDecoder.processHeader(packet, function() {
