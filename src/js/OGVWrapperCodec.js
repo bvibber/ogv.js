@@ -14,9 +14,6 @@ var OGVLoader = require("./OGVLoader.js");
 var OGVWrapperCodec = (function(options) {
 	options = options || {};
 	var self = this,
-		suffix = '?version=' + encodeURIComponent(__OGV_FULL_VERSION__),
-		base = (typeof options.base === 'string') ? (options.base + '/') : '',
-		type = (typeof options.type === 'string') ? options.type : 'video/ogg',
 		processing = false,
 		demuxer = null,
 		videoDecoder = null,
