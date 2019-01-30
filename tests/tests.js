@@ -1,3 +1,5 @@
+"use strict";
+
 QUnit.test( "OGVPlayer loaded", function( assert ) {
 	assert.ok( window.OGVPlayer !== undefined, "Passed!" );
 });
@@ -25,7 +27,7 @@ var hasNativeOgg = (function() {
 })();
 
 function filenameFromUrl(url) {
-	bits = url.split('/');
+	var bits = url.split('/');
 	if (bits.length) {
 		return bits.pop();
 	} else {

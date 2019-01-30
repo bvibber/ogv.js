@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Proxy object for web worker interface for codec classes.
  *

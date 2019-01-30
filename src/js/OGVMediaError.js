@@ -1,3 +1,5 @@
+"use strict";
+
 var extend = require('./extend.js');
 
 var OGVMediaErrorConstants = {

@@ -1,3 +1,5 @@
+"use strict";
+
 var OGVWorkerSupport = require('./OGVWorkerSupport.js');
 
 var proxy = new OGVWorkerSupport([

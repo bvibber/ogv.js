@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * A quick CPU/JS engine benchmark to guesstimate whether we're
  * fast enough to handle 360p video in JavaScript.

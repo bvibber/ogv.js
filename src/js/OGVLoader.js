@@ -4,7 +4,9 @@
 var OGVVersion = __OGV_FULL_VERSION__;
 
 (function() {
-	var global = this;
+
+(function(global) {
+	"use strict";
 	var WebAssemblyCheck = require('./WebAssemblyCheck.js');
 
 	var scriptMap = {
@@ -264,5 +266,7 @@ var OGVVersion = __OGV_FULL_VERSION__;
 	};
 
 	module.exports = OGVLoader;
+
+})(this);
 
 })();

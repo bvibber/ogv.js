@@ -1,3 +1,5 @@
+"use strict";
+
 var OGVProxyClass = require('./OGVProxyClass.js');
 
 var OGVDecoderVideoProxy = OGVProxyClass({

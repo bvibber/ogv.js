@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Constructor for an analogue of the TimeRanges class
  * returned by various HTMLMediaElement properties

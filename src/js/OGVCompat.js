@@ -1,3 +1,5 @@
+"use strict";
+
 var BogoSlow = require('./BogoSlow.js');
 
 var OGVCompat = {

@@ -1,10 +1,11 @@
 //
 // -- ogv-support.js
 // https://github.com/brion/ogv.js
-// Copyright (c) 2013-2016 Brion Vibber
+// Copyright (c) 2013-2019 Brion Vibber
 //
 
 (function() {
+  "use strict";
 
   var OGVCompat = require('./OGVCompat.js'),
     OGVVersion = __OGV_FULL_VERSION__;

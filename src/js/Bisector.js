@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Give as your 'process' function something that will trigger an async
  * operation, then call the left() or right() methods to run another

@@ -1,4 +1,5 @@
 // OGVPlayer.js
+"use strict";
 
 // External deps
 require('es6-promise').polyfill();
