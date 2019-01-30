@@ -60,7 +60,7 @@
     "strip-sourcemap-loader": "0.0.1",
     "webpack": "^4.10.2",
     "webpack-cli": "^2.1.4",
-    "webpack-dev-server": "^3.1.10",
+    "webpack-dev-server": "^3.1.14",
     "yuv-canvas": "^1.2.1"
   }
 }
