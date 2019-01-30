@@ -30,12 +30,7 @@ function OGVWrapperCodec(options) {
 		};
 	}
 
-	var loadedMetadata = false;
-	Object.defineProperty(self, 'loadedMetadata', {
-		get: function() {
-			return loadedMetadata;
-		}
-	});
+	this.loadedMetadata = false;
 
 	Object.defineProperty(self, 'processing', {
 		get: function() {
@@ -341,7 +336,7 @@ function OGVWrapperCodec(options) {
 		} else if (loadedVideoMetadata && !self.loadedMetadata && loadedAllMetadata) {
 
 			// Ok we've found all the metadata there is. Enjoy.
-			loadedMetadata = true;
+			self.loadedMetadata = true;
 			finish(true);
 
 		} else if (self.loadedMetadata && (!self.hasAudio || demuxer.audioReady) && (!self.hasVideo || demuxer.frameReady)) {
