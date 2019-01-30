@@ -1848,7 +1848,6 @@ function OGVPlayer(options) {
 	};
 	self.resetPlaybackStats = function() {
 		framesProcessed = 0;
-		bytesProcessed = 0;
 		playTime = 0;
 		if (codec) {
 			lastDemuxerCpuTime = codec.demuxerCpuTime;
