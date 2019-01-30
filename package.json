@@ -11,11 +11,11 @@
   ],
   "scripts": {
     "prepublish": "make dist",
-    "build": "webpack --optimize-dedupe",
-    "lint": "eslint src/js",
-    "test": "make tests && static build/tests",
-    "demo": "static build/demo",
-    "start": "webpack-dev-server"
+    "build": "npx webpack --optimize-dedupe",
+    "lint": "npx eslint src/js",
+    "test": "make tests && npx static build/tests",
+    "demo": "npx static build/demo",
+    "start": "npx webpack-dev-server"
   },
   "repository": {
     "type": "git",
