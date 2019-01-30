@@ -1,7 +1,7 @@
 //
 // -- ogv.js
 // https://github.com/brion/ogv.js
-// Copyright (c) 2013-2018 Brion Vibber
+// Copyright (c) 2013-2019 Brion Vibber
 //
 // Entry point for pre-built ogv.js distribution, can be pulled in
 // via webpack, browserify etc.
@@ -13,17 +13,5 @@
 //
 // if it differs from your HTML's location.
 //
-// For webpack projects, try require('ogv/webpack-bundle') instead,
-// this uses file-loader to put the dist files into 'ogv.js' subdir in
-// your output dir.
-//
-// Uses file-loader to reference the various static assets
-// for the Flash shim and Web Worker modules.
-//
-// Bundles everything into ogvjs subdir, without changing filenames
-// as that would confuse the worker threads' loader.
-//
-// OGVLoader handles applying cache-breaking URL parameters, so hash
-// is not used in the output filename.
 
 module.exports = require('./dist/ogv.js');

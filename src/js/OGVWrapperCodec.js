@@ -6,7 +6,7 @@
  * Used by the high-level player interface.
  *
  * @author Brion Vibber <brion@pobox.com>
- * @copyright 2015
+ * @copyright 2015-2019 Brion Vibber
  * @license MIT-style
  */
 var OGVLoader = require("./OGVLoader.js");
