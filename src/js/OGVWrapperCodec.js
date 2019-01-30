@@ -11,7 +11,7 @@
  */
 var OGVLoader = require("./OGVLoader.js");
 
-var OGVWrapperCodec = (function(options) {
+function OGVWrapperCodec(options) {
 	options = options || {};
 	var self = this,
 		processing = false,
@@ -445,6 +445,6 @@ var OGVWrapperCodec = (function(options) {
 	self.audioBytes = 0;
 
 	return self;
-});
+}
 
 module.exports = OGVWrapperCodec;
