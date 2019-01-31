@@ -4,16 +4,16 @@
 // Copyright (c) 2013-2019 Brion Vibber
 //
 
-var OGVCompat = require("./OGVCompat.js").default,
-	OGVLoader = require("./OGVLoaderWeb.js").default,
-	OGVMediaError = require('./OGVMediaError.js').default,
-	OGVMediaType = require("./OGVMediaType.js").default,
-	OGVPlayer = require("./OGVPlayer.js"),
-	OGVTimeRanges = require('./OGVTimeRanges.js').default,
-	OGVVersion = __OGV_FULL_VERSION__;
+import OGVCompat from './OGVCompat.js';
+import OGVLoader from './OGVLoaderWeb.js';
+import OGVMediaError from './OGVMediaError.js';
+import OGVMediaType from './OGVMediaType.js';
+import OGVPlayer from './OGVPlayer.js';
+import OGVTimeRanges from './OGVTimeRanges.js';
+const OGVVersion = __OGV_FULL_VERSION__;
 
 // Version 1.0's web-facing and test-facing interfaces
-if (window) {
+if (typeof window === 'object') {
 	window.OGVCompat = OGVCompat;
 	window.OGVLoader = OGVLoader;
 	window.OGVMediaError = OGVMediaError; // exposed for testing, for now
@@ -23,10 +23,12 @@ if (window) {
 	window.OGVVersion = OGVVersion;
 }
 
-module.exports = {
-	OGVCompat: OGVCompat,
-	OGVLoader: OGVLoader,
-	OGVMediaType: OGVMediaType,
-	OGVPlayer: OGVPlayer,
-	OGVVersion: OGVVersion
+export {
+	OGVCompat,
+	OGVLoader,
+	OGVMediaError,
+	OGVMediaType,
+	OGVPlayer,
+	OGVTimeRanges,
+	OGVVersion
 };
