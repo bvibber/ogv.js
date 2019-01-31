@@ -7,9 +7,9 @@
 var OGVCompat = require("./OGVCompat.js"),
 	OGVLoader = require("./OGVLoader.js"),
 	OGVMediaError = require('./OGVMediaError.js'),
-	OGVMediaType = require("./OGVMediaType.js"),
+	OGVMediaType = require("./OGVMediaType.js").default,
 	OGVPlayer = require("./OGVPlayer.js"),
-	OGVTimeRanges = require('./OGVTimeRanges.js'),
+	OGVTimeRanges = require('./OGVTimeRanges.js').default,
 	OGVVersion = __OGV_FULL_VERSION__;
 
 // Version 1.0's web-facing and test-facing interfaces

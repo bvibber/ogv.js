@@ -1,45 +1,44 @@
-"use strict";
+function trim(str) {
+	return str.replace(/^\s+/, '').replace(/\s+$/, '');
+}
 
-function OGVMediaType(contentType) {
-	contentType = '' + contentType;
-
-	var self = this;
-	self.major = null;
-	self.minor = null;
-	self.codecs = null;
-
-	function trim(str) {
-		return str.replace(/^\s+/, '').replace(/\s+$/, '');
+function split(str, sep, limit) {
+	let bits = str.split(sep, limit).map((substr) => trim(substr));
+	if (typeof limit === 'number') {
+		// Extend with nulls to the expected length.
+		while (bits.length < limit) {
+			bits.push(null);
+		}
 	}
+	return bits;
+}
 
-	function split(str, sep, limit) {
-		var bits = str.split(sep, limit).map(function(substr) {
-			return trim(substr);
-		});
-		if (typeof limit === 'number') {
-			while (bits.length < limit) {
-				bits.push(null);
+class OGVMediaType {
+	constructor(contentType) {
+		contentType = String(contentType);
+
+		this.major = null;
+		this.minor = null;
+		this.codecs = null;
+
+		let parts = split(contentType, ';');
+		if (parts.length) {
+			let base = parts.shift();
+			if (base) {
+				let bits = split(base, '/', 2);
+				this.major = bits[0];
+				this.minor = bits[1];
+			}
+
+			for (let str of parts) {
+				let matches = str.match(/^codecs\s*=\s*"(.*?)"$/);
+				if (matches) {
+					this.codecs = split(matches[1], ',');
+					break;
+				}
 			}
 		}
-		return bits;
-	}
-
-	var parts = split(contentType, ';');
-	if (parts.length) {
-		var base = parts.shift();
-		if (base) {
-			var bits = split(base, '/', 2);
-			self.major = bits[0];
-			self.minor = bits[1];
-		}
-
-		parts.forEach(function(str) {
-			var matches = str.match(/^codecs\s*=\s*"(.*?)"$/);
-			if (matches) {
-				self.codecs = split(matches[1], ',');
-			}
-		});
 	}
 }
 
-module.exports = OGVMediaType;
+export default OGVMediaType;
