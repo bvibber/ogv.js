@@ -1,8 +1,6 @@
 // OGVPlayer.js
-"use strict";
 
 // External deps
-require('es6-promise').polyfill();
 var YUVCanvas = require('yuv-canvas'),
 	StreamFile = require('stream-file'),
 	AudioFeeder = require('audio-feeder'),

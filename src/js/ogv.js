@@ -4,6 +4,9 @@
 // Copyright (c) 2013-2019 Brion Vibber
 //
 
+import es6promise from 'es6-promise';
+es6promise.polyfill();
+
 import OGVCompat from './OGVCompat.js';
 import OGVLoader from './OGVLoaderWeb.js';
 import OGVMediaError from './OGVMediaError.js';
