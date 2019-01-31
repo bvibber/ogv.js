@@ -1,8 +1,6 @@
-"use strict";
+import OGVProxyClass from './OGVProxyClass.js';
 
-var OGVProxyClass = require('./OGVProxyClass.js');
-
-var OGVDecoderAudioProxy = OGVProxyClass({
+const OGVDecoderAudioProxy = OGVProxyClass({
 	loadedMetadata: false,
 	audioFormat: null,
 	audioBuffer: null,
@@ -25,4 +23,4 @@ var OGVDecoderAudioProxy = OGVProxyClass({
 	}
 });
 
-module.exports = OGVDecoderAudioProxy;
+export default OGVDecoderAudioProxy;

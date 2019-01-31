@@ -1,8 +1,6 @@
-"use strict";
+import OGVProxyClass from './OGVProxyClass.js';
 
-var OGVProxyClass = require('./OGVProxyClass.js');
-
-var OGVDecoderVideoProxy = OGVProxyClass({
+const OGVDecoderVideoProxy = OGVProxyClass({
 	loadedMetadata: false,
 	videoFormat: null,
 	frameBuffer: null,
@@ -25,4 +23,4 @@ var OGVDecoderVideoProxy = OGVProxyClass({
 	}
 });
 
-module.exports = OGVDecoderVideoProxy;
+export default OGVDecoderVideoProxy;

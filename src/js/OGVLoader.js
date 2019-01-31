@@ -58,11 +58,11 @@ var proxyTypes = {
 };
 var proxyInfo = {
 	audio: {
-		proxy: require('./OGVDecoderAudioProxy.js'),
+		proxy: require('./OGVDecoderAudioProxy.js').default,
 		worker: 'ogv-worker-audio.js',
 	},
 	video: {
-		proxy: require('./OGVDecoderVideoProxy.js'),
+		proxy: require('./OGVDecoderVideoProxy.js').default,
 		worker: 'ogv-worker-video.js'
 	}
 }

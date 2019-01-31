@@ -16,8 +16,8 @@ var OGVLoader = require('./OGVLoader.js'),
 	OGVMediaType = require('./OGVMediaType.js'),
 	OGVTimeRanges = require('./OGVTimeRanges.js'),
 	OGVWrapperCodec = require('./OGVWrapperCodec.js').default,
-	OGVDecoderAudioProxy = require('./OGVDecoderAudioProxy.js'),
-	OGVDecoderVideoProxy = require('./OGVDecoderVideoProxy.js');
+	OGVDecoderAudioProxy = require('./OGVDecoderAudioProxy.js').default,
+	OGVDecoderVideoProxy = require('./OGVDecoderVideoProxy.js').default;
 
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
