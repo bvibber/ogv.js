@@ -1,1 +1,1 @@
-module.exports = require("../OGVWorkerVideo.js");
+import _proxy from "../OGVWorkerVideo.js";

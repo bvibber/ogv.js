@@ -1,1 +1,1 @@
-module.exports = require("../OGVWorkerAudio.js");
+import _proxy from "../OGVWorkerAudio.js";

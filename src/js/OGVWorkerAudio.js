@@ -1,28 +1,26 @@
-"use strict";
+import OGVWorkerSupport from './OGVWorkerSupport.js';
 
-var OGVWorkerSupport = require('./OGVWorkerSupport.js');
-
-var proxy = new OGVWorkerSupport([
+let proxy = new OGVWorkerSupport([
 	'loadedMetadata',
 	'audioFormat',
 	'audioBuffer',
 	'cpuTime'
 ], {
-	init: function(args, callback) {
+	init: function(_args, callback) {
 		this.target.init(callback);
 	},
 
 	processHeader: function(args, callback) {
-		this.target.processHeader(args[0], function(ok) {
+		this.target.processHeader(args[0], (ok) => {
 			callback([ok]);
 		});
 	},
 
 	processAudio: function(args, callback) {
-		this.target.processAudio(args[0], function(ok) {
+		this.target.processAudio(args[0], (ok) => {
 			callback([ok]);
 		});
 	}
 });
 
-module.exports = proxy;
+export default proxy;

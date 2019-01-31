@@ -1,77 +1,87 @@
-"use strict";
-
 /* global ArrayBuffer */
 
-var OGVLoader = require('./OGVLoaderWorker.js').default;
+import OGVLoader from './OGVLoaderWorker.js';
+
+function copyAudioBuffer(data) {
+	if (data == null) {
+		return null;
+	} else {
+		// Array of Float32Arrays
+		var copy = [];
+		for (var i = 0; i < data.length; i++) {
+			copy[i] = new Float32Array(data[i]);
+		}
+		return copy;
+	}
+}
 
 /**
  * Web Worker wrapper for codec fun
  */
-function OGVWorkerSupport(propList, handlers) {
+class OGVWorkerSupport {
+	constructor(propList, handlers) {
+		this.propList = propList;
+		this.handlers = handlers;
 
-	var transferables = (function() {
-		var buffer = new ArrayBuffer(1024),
-			bytes = new Uint8Array(buffer);
-		try {
-			postMessage({
-				action: 'transferTest',
-				bytes: bytes
-			}, [buffer]);
-			if (buffer.byteLength) {
-				// No transferable support
+		this.transferables = (() => {
+			let buffer = new ArrayBuffer(1024),
+				bytes = new Uint8Array(buffer);
+			try {
+				postMessage({
+					action: 'transferTest',
+					bytes: bytes
+				}, [buffer]);
+				if (buffer.byteLength) {
+					// No transferable support
+					return false;
+				} else {
+					return true;
+				}
+			} catch (e) {
 				return false;
-			} else {
-				return true;
 			}
-		} catch (e) {
-			return false;
-		}
-	})();
+		})();
 
-	var self = this;
-	self.target = null;
+		this.target = null;
 
-	var sentProps = {},
-		pendingEvents = [];
+		this.sentProps = {};
+		this.pendingEvents = [];
 
-	function copyObject(obj) {
-		var copy = {};
-		for (var prop in obj) {
-			if (obj.hasOwnProperty(prop)) {
-				copy[prop] = obj[prop];
-			}
-		}
-		return copy;
+		this.handlers.construct = (args, callback) => {
+			let className = args[0],
+				options = args[1];
+
+			OGVLoader.loadClass(className, (classObj) => {
+				classObj(options).then((target) => {
+					this.target = target;
+					callback();
+					while (this.pendingEvents.length) {
+						this.handleEvent(this.pendingEvents.shift());
+					}
+				});
+			});
+		};
+
+		addEventListener('message', (event) => {
+			this.workerOnMessage(event);
+		});
 	}
 
-	function copyAudioBuffer(data) {
-		if (data == null) {
-			return null;
-		} else {
-			// Array of Float32Arrays
-			var copy = [];
-			for (var i = 0; i < data.length; i++) {
-				copy[i] = new Float32Array(data[i]);
-			}
-			return copy;
-		}
-	}
-
-	function handleEvent(data) {
-		handlers[data.action].call(self, data.args, function(args) {
+	handleEvent(data) {
+		this.handlers[data.action].call(this, data.args, (args) => {
 			args = args || [];
 
 			// Collect and send any changed properties...
-			var props = {},
+			let props = {},
 				transfers = [];
-			propList.forEach(function(propName) {
-				var propVal = self.target[propName];
+			this.propList.forEach((propName) => {
+				let propVal = this.target[propName];
 
-				if (sentProps[propName] !== propVal) {
+				if (this.sentProps[propName] !== propVal) {
 					// Save this value for later reference...
-					sentProps[propName] = propVal;
+					this.sentProps[propName] = propVal;
 
-					if (propName == 'duration' && isNaN(propVal) && isNaN(sentProps[propName])) {
+					if (propName == 'duration' && isNaN(propVal) && isNaN(this.sentProps[propName])) {
 						// NaN is not === itself. Nice!
 						// no need to update it here.
 					} else if (propName == 'audioBuffer') {
@@ -79,7 +89,7 @@ function OGVWorkerSupport(propList, handlers) {
 						propVal = copyAudioBuffer(propVal);
 						props[propName] = propVal;
 						if (propVal) {
-							for (var i = 0; i < propVal.length; i++) {
+							for (let i = 0; i < propVal.length; i++) {
 								transfers.push(propVal[i].buffer);
 							}
 						}
@@ -98,13 +108,13 @@ function OGVWorkerSupport(propList, handlers) {
 				}
 			});
 
-			var out = {
+			let out = {
 				action: 'callback',
 				callbackId: data.callbackId,
 				args: args,
 				props: props
 			};
-			if (transferables) {
+			if (this.transferables) {
 				postMessage(out, transfers);
 			} else {
 				postMessage(out);
@@ -112,23 +122,8 @@ function OGVWorkerSupport(propList, handlers) {
 		});
 	}
 
-	handlers.construct = function(args, callback) {
-		var className = args[0],
-			options = args[1];
-
-		OGVLoader.loadClass(className, function(classObj) {
-			classObj(options).then(function(target) {
-				self.target = target;
-				callback();
-				while (pendingEvents.length) {
-					handleEvent(pendingEvents.shift());
-				}
-			});
-		});
-	};
-
-	addEventListener('message', function workerOnMessage(event) {
-		var data = event.data;
+	workerOnMessage(event) {
+		let data = event.data;
 		if (!data || typeof data !== 'object') {
 			// invalid
 			return;
@@ -136,19 +131,18 @@ function OGVWorkerSupport(propList, handlers) {
 			// ignore
 		} else if (typeof data.action !== 'string' || typeof data.callbackId !== 'string' || typeof data.args !== 'object') {
 			console.log('invalid message data', data);
-		} else if (!(data.action in handlers)) {
+		} else if (!(data.action in this.handlers)) {
 			console.log('invalid message action', data.action);
 		} else if (data.action == 'construct') {
 			// always handle constructor
-			handleEvent(data);
-		} else if (!self.target) {
+			this.handleEvent(data);
+		} else if (!this.target) {
 			// queue until constructed
-			pendingEvents.push(data);
+			this.pendingEvents.push(data);
 		} else {
-			handleEvent(data);
+			this.handleEvent(data);
 		}
-	});
-
+	}
 }
 
-module.exports = OGVWorkerSupport;
+export default OGVWorkerSupport;
