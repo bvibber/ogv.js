@@ -160,9 +160,8 @@ class  OGVWrapperCodec {
 	// Wrapper for callbacks to drop them after a flush
 	flushSafe(func) {
 		var savedFlushIter = this.flushIter;
-		var self = this;
-		return function(arg) {
-			if (self.flushIter <= savedFlushIter) {
+		return (arg) => {
+			if (this.flushIter <= savedFlushIter) {
 				func(arg);
 			}
 		};
@@ -171,23 +170,22 @@ class  OGVWrapperCodec {
 	// - public methods
 	init(callback) {
 		this.processing = true;
-		var self = this;
 		var demuxerClassName;
 		if (this.options.type === 'video/webm' || this.options.type === 'audio/webm') {
 			demuxerClassName = this.options.wasm ? 'OGVDemuxerWebMW' : 'OGVDemuxerWebM';
 		} else {
 			demuxerClassName = this.options.wasm ? 'OGVDemuxerOggW' : 'OGVDemuxerOgg';
 		}
-		OGVLoader.loadClass(demuxerClassName, function(demuxerClass) {
-			demuxerClass().then(function(demuxer) {
-				self.demuxer = demuxer;
-				demuxer.onseek = function(offset) {
-					if (self.onseek) {
-						self.onseek(offset);
+		OGVLoader.loadClass(demuxerClassName, (demuxerClass) => {
+			demuxerClass().then((demuxer) => {
+				this.demuxer = demuxer;
+				demuxer.onseek = (offset) => {
+					if (this.onseek) {
+						this.onseek(offset);
 					}
 				};
-				demuxer.init(function() {
-					self.processing = false;
+				demuxer.init(() => {
+					this.processing = false;
 					callback();
 				});
 			});
@@ -218,26 +216,25 @@ class  OGVWrapperCodec {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
 		this.processing = true;
-		var self = this;
 
-		function finish(result) {
-			self.processing = false;
+		let finish = (result) => {
+			this.processing = false;
 			callback(result);
 		}
 
-		function doProcessData() {
-			self.demuxer.process(finish);
+		let doProcessData = () => {
+			this.demuxer.process(finish);
 		}
 
 		if (this.demuxer.loadedMetadata && !this.loadedDemuxerMetadata) {
 
 			// Demuxer just reached its metadata. Load the relevant codecs!
-			this.loadAudioCodec(function() {
-				self.loadVideoCodec(function() {
-					self.loadedDemuxerMetadata = true;
-					self.loadedAudioMetadata = !self.audioDecoder;
-					self.loadedVideoMetadata = !self.videoDecoder;
-					self.loadedAllMetadata = self.loadedAudioMetadata && self.loadedVideoMetadata;
+			this.loadAudioCodec(() => {
+				this.loadVideoCodec(() => {
+					this.loadedDemuxerMetadata = true;
+					this.loadedAudioMetadata = !this.audioDecoder;
+					this.loadedVideoMetadata = !this.videoDecoder;
+					this.loadedAllMetadata = this.loadedAudioMetadata && this.loadedVideoMetadata;
 					finish(true);
 				});
 			});
@@ -252,9 +249,9 @@ class  OGVWrapperCodec {
 
 			} else if (this.demuxer.audioReady) {
 
-				this.demuxer.dequeueAudioPacket(function(packet) {
-					self.audioBytes += packet.byteLength;
-					self.audioDecoder.processHeader(packet, function(ret) {
+				this.demuxer.dequeueAudioPacket((packet) => {
+					this.audioBytes += packet.byteLength;
+					this.audioDecoder.processHeader(packet, (ret) => {
 						finish(true);
 					});
 				});
@@ -276,9 +273,9 @@ class  OGVWrapperCodec {
 			} else if (this.demuxer.frameReady) {
 
 				this.processing = true;
-				this.demuxer.dequeueVideoPacket(function(packet) {
-					self.videoBytes += packet.byteLength;
-					self.videoDecoder.processHeader(packet, function() {
+				this.demuxer.dequeueVideoPacket((packet) => {
+					this.videoBytes += packet.byteLength;
+					this.videoDecoder.processHeader(packet, () => {
 						finish(true);
 					});
 				});
@@ -314,12 +311,11 @@ class  OGVWrapperCodec {
 		var cb = this.flushSafe(callback),
 			timestamp = this.frameTimestamp,
 			keyframeTimestamp = this.keyframeTimestamp;
-		var self = this;
-		this.demuxer.dequeueVideoPacket(function(packet) {
-			self.videoBytes += packet.byteLength;
-			self.videoDecoder.processFrame(packet, function(ok) {
+		this.demuxer.dequeueVideoPacket((packet) => {
+			this.videoBytes += packet.byteLength;
+			this.videoDecoder.processFrame(packet, (ok) => {
 				// hack
-				var fb = self.videoDecoder.frameBuffer;
+				var fb = this.videoDecoder.frameBuffer;
 				if (fb) {
 					fb.timestamp = timestamp;
 					fb.keyframeTimestamp = keyframeTimestamp;
@@ -331,25 +327,22 @@ class  OGVWrapperCodec {
 
 	decodeAudio(callback) {
 		var cb = this.flushSafe(callback);
-		var self = this;
-		this.demuxer.dequeueAudioPacket(function(packet) {
-			self.audioBytes += packet.byteLength;
-			self.audioDecoder.processAudio(packet, cb);
+		this.demuxer.dequeueAudioPacket((packet) => {
+			this.audioBytes += packet.byteLength;
+			this.audioDecoder.processAudio(packet, cb);
 		});
 	}
 
 	discardFrame(callback) {
-		var self = this;
-		this.demuxer.dequeueVideoPacket(function(packet) {
-			self.videoBytes += packet.byteLength;
+		this.demuxer.dequeueVideoPacket((packet) => {
+			this.videoBytes += packet.byteLength;
 			callback();
 		});
 	}
 
 	discardAudio(callback) {
-		var self = this;
-		this.demuxer.dequeueAudioPacket(function(packet) {
-			self.audioBytes += packet.byteLength;
+		this.demuxer.dequeueAudioPacket((packet) => {
+			this.audioBytes += packet.byteLength;
 			callback();
 		});
 	}
@@ -376,17 +369,16 @@ class  OGVWrapperCodec {
 			};
 			var className = audioClassMap[this.demuxer.audioCodec];
 			this.processing = true;
-			var self = this;
-			OGVLoader.loadClass(className, function(audioCodecClass) {
+			OGVLoader.loadClass(className, (audioCodecClass) => {
 				var audioOptions = {};
-				if (self.demuxer.audioFormat) {
-					audioOptions.audioFormat = self.demuxer.audioFormat;
+				if (this.demuxer.audioFormat) {
+					audioOptions.audioFormat = this.demuxer.audioFormat;
 				}
-				audioCodecClass(audioOptions).then(function(decoder) {
-					self.audioDecoder = decoder;
-					decoder.init(function() {
-						self.loadedAudioMetadata = decoder.loadedMetadata;
-						self.processing = false;
+				audioCodecClass(audioOptions).then((decoder) => {
+					this.audioDecoder = decoder;
+					decoder.init(() => {
+						this.loadedAudioMetadata = decoder.loadedMetadata;
+						this.processing = false;
 						callback();
 					});
 				});
@@ -410,25 +402,24 @@ class  OGVWrapperCodec {
 			};
 			var className = videoClassMap[this.demuxer.videoCodec];
 			this.processing = true;
-			var self = this;
-			OGVLoader.loadClass(className, function(videoCodecClass) {
+			OGVLoader.loadClass(className, (videoCodecClass) => {
 				var videoOptions = {};
-				if (self.demuxer.videoFormat) {
-					videoOptions.videoFormat = self.demuxer.videoFormat;
+				if (this.demuxer.videoFormat) {
+					videoOptions.videoFormat = this.demuxer.videoFormat;
 				}
-				if (self.options.memoryLimit) {
-					videoOptions.memoryLimit = self.options.memoryLimit;
+				if (this.options.memoryLimit) {
+					videoOptions.memoryLimit = this.options.memoryLimit;
 				}
-				videoCodecClass(videoOptions).then(function(decoder) {
-					self.videoDecoder = decoder;
-					self.videoDecoder.init(function() {
-						self.loadedVideoMetadata = self.videoDecoder.loadedMetadata;
-						self.processing = false;
+				videoCodecClass(videoOptions).then((decoder) => {
+					this.videoDecoder = decoder;
+					decoder.init(() => {
+						this.loadedVideoMetadata = decoder.loadedMetadata;
+						this.processing = false;
 						callback();
 					});
 				});
 			}, {
-				worker: self.options.worker && !self.options.threading
+				worker: this.options.worker && !this.options.threading
 			});
 		} else {
 			callback();
