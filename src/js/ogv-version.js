@@ -4,17 +4,11 @@
 // Copyright (c) 2013-2019 Brion Vibber
 //
 
-(function() {
+const OGVVersion = __OGV_FULL_VERSION__;
 
-  var OGVVersion = __OGV_FULL_VERSION__;
-
-  if (window) {
+if (typeof window === 'object') {
     // 1.0-compat globals
     window.OGVVersion = OGVVersion;
-  }
+}
 
-  module.exports = {
-    OGVVersion: OGVVersion
-  };
-
-})();
+export {OGVVersion};
