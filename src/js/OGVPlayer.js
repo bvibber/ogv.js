@@ -11,7 +11,7 @@ var YUVCanvas = require('yuv-canvas'),
 // Internal deps
 var OGVLoader = require('./OGVLoader.js'),
 	Bisector = require('./Bisector.js'),
-	extend = require('./extend.js'),
+	extend = require('./extend.js').default,
 	OGVMediaError = require('./OGVMediaError.js').default,
 	OGVMediaType = require('./OGVMediaType.js').default,
 	OGVTimeRanges = require('./OGVTimeRanges.js').default,
