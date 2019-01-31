@@ -13,6 +13,21 @@ var plugins = [
   }),
 ];
 
+var babelRule = {
+  test: /\.m?js$/,
+  exclude: /node_modules/,
+  use: {
+    loader: 'babel-loader',
+    options: {
+      presets: ['@babel/preset-env'],
+      plugins: [
+        '@babel/plugin-transform-modules-commonjs',
+        '@babel/plugin-transform-runtime'
+      ]
+    }
+  }
+};
+
 module.exports = [
   {
     // Main entry point!
@@ -35,11 +50,7 @@ module.exports = [
             'name': '[name].[ext]?version=[hash]'
           }
         },
-        {
-          test: /\.js$/,
-          include: /node_modules\/es6-promise/,
-          loader: 'strip-sourcemap-loader'
-        }
+        babelRule
       ]
     }
   },
@@ -52,7 +63,12 @@ module.exports = [
       publicPath: publicPath(),
       filename: 'ogv-support.js'
     },
-    plugins: plugins
+    plugins: plugins,
+    module: {
+      rules: [
+        babelRule
+      ]
+    }
   },
   {
     // Alt limited entry point for just exposting the version marker string
@@ -63,7 +79,12 @@ module.exports = [
       publicPath: publicPath(),
       filename: 'ogv-version.js'
     },
-    plugins: plugins
+    plugins: plugins,
+    module: {
+      rules: [
+        babelRule
+      ]
+    }
   },
 	{
 	  entry: './src/js/workers/ogv-worker-audio.js',
@@ -73,7 +94,12 @@ module.exports = [
       publicPath: publicPath(),
 	    filename: 'ogv-worker-audio.js'
 	  },
-    plugins: plugins
+    plugins: plugins,
+    module: {
+      rules: [
+        babelRule
+      ]
+    }
 	},
   {
     entry: './src/js/workers/ogv-worker-video.js',
@@ -83,6 +109,11 @@ module.exports = [
       publicPath: publicPath(),
       filename: 'ogv-worker-video.js'
     },
-    plugins: plugins
+    plugins: plugins,
+    module: {
+      rules: [
+        babelRule
+      ]
+    }
   },
 ];

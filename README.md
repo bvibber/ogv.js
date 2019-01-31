@@ -13,6 +13,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * fix a stray global
 * add "use strict" to most sources
 * starting to move to prototype-oriented classes in prep for ES6 classes
+* building using a babel step for future ES2015-ish code
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
