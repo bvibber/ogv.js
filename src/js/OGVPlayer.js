@@ -15,6 +15,44 @@ import OGVMediaType from './OGVMediaType.js';
 import OGVTimeRanges from './OGVTimeRanges.js';
 import OGVWrapperCodec from './OGVWrapperCodec.js';
 
+const constants = {
+	/**
+	 * Constants for networkState
+	 */
+	NETWORK_EMPTY: 0,
+	NETWORK_IDLE: 1,
+	NETWORK_LOADING: 2,
+	NETWORK_NO_SOURCE: 3,
+
+	/**
+	 * Constants for readyState
+	 */
+	HAVE_NOTHING: 0,
+	HAVE_METADATA: 1,
+	HAVE_CURRENT_DATA: 2,
+	HAVE_FUTURE_DATA: 3,
+	HAVE_ENOUGH_DATA: 4
+};
+
+const State = {
+	INITIAL: 'INITIAL',
+	SEEKING_END: 'SEEKING_END',
+	LOADED: 'LOADED',
+	PRELOAD: 'PRELOAD',
+	READY: 'READY',
+	PLAYING: 'PLAYING',
+	SEEKING: 'SEEKING',
+	ENDED: 'ENDED',
+	ERROR: 'ERROR'
+};
+
+const SeekState = {
+	NOT_SEEKING: 'NOT_SEEKING',
+	BISECT_TO_TARGET: 'BISECT_TO_TARGET',
+	BISECT_TO_KEYPOINT: 'BISECT_TO_KEYPOINT',
+	LINEAR_TO_TARGET: 'LINEAR_TO_TARGET'
+};
+
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
  * which has a similar interface to the HTML audio/video elements.
@@ -28,9 +66,6 @@ function OGVPlayer(options) {
 	options = options || {};
 
 	var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
-
-	var codecClass = null,
-		codecType = null;
 
 	var canvasOptions = {};
 	if (options.webGL !== undefined) {
@@ -65,24 +100,9 @@ function OGVPlayer(options) {
 		options.sync = 'skip-frames';
 	}
 
-	var State = {
-		INITIAL: 'INITIAL',
-		SEEKING_END: 'SEEKING_END',
-		LOADED: 'LOADED',
-		PRELOAD: 'PRELOAD',
-		READY: 'READY',
-		PLAYING: 'PLAYING',
-		SEEKING: 'SEEKING',
-		ENDED: 'ENDED',
-		ERROR: 'ERROR'
-	}, state = State.INITIAL;
+	var state = State.INITIAL;
 
-	var SeekState = {
-		NOT_SEEKING: 'NOT_SEEKING',
-		BISECT_TO_TARGET: 'BISECT_TO_TARGET',
-		BISECT_TO_KEYPOINT: 'BISECT_TO_KEYPOINT',
-		LINEAR_TO_TARGET: 'LINEAR_TO_TARGET'
-	}, seekState = SeekState.NOT_SEEKING;
+	var seekState = SeekState.NOT_SEEKING;
 
 	var audioOptions = {},
 		codecOptions = {};
@@ -404,8 +424,7 @@ function OGVPlayer(options) {
 		// timeline offset to 0?
 	}
 
-	var lastFrameTime = getTimestamp(),
-		frameEndTimestamp = 0.0,
+	var frameEndTimestamp = 0.0,
 		audioEndTimestamp = 0.0,
 		decodedFrames = [],
 		pendingFrames = [];
@@ -500,11 +519,9 @@ function OGVPlayer(options) {
 
 	// -- seek functions
 	var seekTargetTime = 0.0,
-		seekTargetKeypoint = 0.0,
 		bisectTargetTime = 0.0,
 		seekMode,
 		lastSeekPosition,
-		lastFrameSkipped,
 		seekBisector,
 		didSeek;
 
@@ -541,7 +558,6 @@ function OGVPlayer(options) {
 					return false;
 				} else {
 					lastSeekPosition = position;
-					lastFrameSkipped = false;
 					codec.flush(function() {
 						seekStream(position);
 					});
@@ -617,8 +633,6 @@ function OGVPlayer(options) {
 		ended = false;
 		state = State.SEEKING;
 		seekTargetTime = toTime;
-		seekTargetKeypoint = -1;
-		lastFrameSkipped = false;
 		lastSeekPosition = -1;
 
 		decodedFrames = [];
@@ -1562,7 +1576,7 @@ function OGVPlayer(options) {
 			log('i/o promise canceled; ignoring');
 		} else {
 			log("i/o error: " + err);
-			mediaError = new OGVMediaError(OGVMediaError.MEDIA_ERR_NETWORK, '' + err);
+			mediaError = new OGVMediaError(OGVMediaError.MEDIA_ERR_NETWORK, String(err));
 			state = State.ERROR;
 			stopPlayback();
 		}
@@ -1620,7 +1634,7 @@ function OGVPlayer(options) {
 		started = true;
 		ended = false;
 
-		codec = new codecClass(codecOptions);
+		codec = new OGVWrapperCodec(codecOptions);
 		lastVideoCpuTime = 0;
 		lastAudioCpuTime = 0;
 		lastDemuxerCpuTime = 0;
@@ -1671,7 +1685,6 @@ function OGVPlayer(options) {
 				codecOptions.type = 'video/ogg';
 			}
 
-			codecClass = OGVWrapperCodec;
 			// Pass that first buffer in to the demuxer!
 			callback(buf);
 		});
@@ -1906,7 +1919,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement src property
 		 */
-		"src": {
+		src: {
 			get: function getSrc() {
 				return self.getAttribute('src') || '';
 			},
@@ -1920,7 +1933,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement buffered property
 		 */
-		"buffered": {
+		buffered: {
 			get: function getBuffered() {
 				var ranges;
 				if (stream && byteLength && duration) {
@@ -1939,7 +1952,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement seekable property
 		 */
-		"seekable": {
+		seekable: {
 			get: function getSeekable() {
 				if (self.duration < Infinity && stream && stream.seekable && codec && codec.seekable) {
 					return new OGVTimeRanges([[0, duration]]);
@@ -1952,7 +1965,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement currentTime property
 		 */
-		"currentTime": {
+		currentTime: {
 			get: function getCurrentTime() {
 				if (state == State.SEEKING) {
 					return seekTargetTime;
@@ -1976,7 +1989,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement duration property
 		 */
-		"duration": {
+		duration: {
 			get: function getDuration() {
 				if (codec && codec.loadedMetadata) {
 					if (duration !== null) {
@@ -1993,7 +2006,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement paused property
 		 */
-		"paused": {
+		paused: {
 			get: function getPaused() {
 				return paused;
 			}
@@ -2002,7 +2015,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement ended property
 		 */
-		"ended": {
+		ended: {
 			get: function getEnded() {
 				return ended;
 			}
@@ -2011,7 +2024,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement ended property
 		 */
-		"seeking": {
+		seeking: {
 			get: function getSeeking() {
 				return (state == State.SEEKING);
 			}
@@ -2020,7 +2033,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement muted property
 		 */
-		"muted": {
+		muted: {
 			get: function getMuted() {
 				return muted;
 			},
@@ -2040,7 +2053,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement poster property
 		 */
-		"poster": {
+		poster: {
 			get: function getPoster() {
 				return poster;
 			},
@@ -2078,7 +2091,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement video width property
 		 */
-		"videoWidth": {
+		videoWidth: {
 			get: function getVideoWidth() {
 				if (videoInfo) {
 					return videoInfo.displayWidth;
@@ -2091,7 +2104,7 @@ function OGVPlayer(options) {
 		/**
 		 * HTMLMediaElement video height property
 		 */
-		"videoHeight": {
+		videoHeight: {
 			get: function getVideoHeight() {
 				if (videoInfo) {
 					return videoInfo.displayHeight;
@@ -2104,7 +2117,7 @@ function OGVPlayer(options) {
 		/**
 		 * Custom video framerate property
 		 */
-		"ogvjsVideoFrameRate": {
+		ogvjsVideoFrameRate: {
 			get: function getOgvJsVideoFrameRate() {
 				if (videoInfo) {
 					if (videoInfo.fps == 0) {
@@ -2121,7 +2134,7 @@ function OGVPlayer(options) {
 		/**
 		 * Custom audio metadata property
 		 */
-		"ogvjsAudioChannels": {
+		ogvjsAudioChannels: {
 			get: function getOgvJsAudioChannels() {
 				if (audioInfo) {
 					return audioInfo.channels;
@@ -2134,7 +2147,7 @@ function OGVPlayer(options) {
 		/**
 		 * Custom audio metadata property
 		 */
-		"ogvjsAudioSampleRate": {
+		ogvjsAudioSampleRate: {
 			get: function getOgvJsAudioChannels() {
 				if (audioInfo) {
 					return audioInfo.rate;
@@ -2148,7 +2161,7 @@ function OGVPlayer(options) {
 		 * @property width
 		 * @todo reflect to the width attribute?
 		 */
-		"width": {
+		width: {
 			get: function getWidth() {
 				return width;
 			},
@@ -2163,7 +2176,7 @@ function OGVPlayer(options) {
 		 * @property height
 		 * @todo reflect to the height attribute?
 		 */
-		"height": {
+		height: {
 			get: function getHeight() {
 				return height;
 			},
@@ -2179,7 +2192,7 @@ function OGVPlayer(options) {
 		 * @todo reflect to the autoplay attribute?
 		 * @todo implement actual autoplay behavior
 		 */
-		"autoplay": {
+		autoplay: {
 			get: function getAutoplay() {
 				return false;
 			},
@@ -2193,7 +2206,7 @@ function OGVPlayer(options) {
 		 * @todo reflect to the controls attribute?
 		 * @todo implement actual control behavior
 		 */
-		"controls": {
+		controls: {
 			get: function getControls() {
 				return false;
 			},
@@ -2207,7 +2220,7 @@ function OGVPlayer(options) {
 		 * @todo reflect to the controls attribute?
 		 * @todo implement actual loop behavior
 		 */
-		"loop": {
+		loop: {
 			get: function getLoop() {
 				return false;
 			},
@@ -2221,7 +2234,7 @@ function OGVPlayer(options) {
 		 * @todo reflect to the crossorigin attribute?
 		 * @todo implement actual behavior
 		 */
-		"crossOrigin": {
+		crossOrigin: {
 			get: function getCrossOrigin() {
 				return null;
 			},
@@ -2234,20 +2247,20 @@ function OGVPlayer(options) {
 		 * Returns the URL to the currently-playing resource.
 		 * @property currentSrc {string|null}
 		 */
-		"currentSrc": {
+		currentSrc: {
 			get: function getCurrentSrc() {
 				// @todo return absolute URL per spec
 				return currentSrc;
 			}
 		},
 
-		"defaultMuted": {
+		defaultMuted: {
 			get: function getDefaultMuted() {
 				return false;
 			}
 		},
 
-		"defaultPlaybackRate": {
+		defaultPlaybackRate: {
 			get: function getDefaultPlaybackRate() {
 				return 1;
 			}
@@ -2256,7 +2269,7 @@ function OGVPlayer(options) {
 		/**
 		 * @property error {OGVMediaError|null}
 		 */
-		"error": {
+		error: {
 			get: function getError() {
 				if (state === State.ERROR) {
 					if (mediaError) {
@@ -2273,7 +2286,7 @@ function OGVPlayer(options) {
 		/**
 	 	 * @property preload {string}
 		 */
-		"preload": {
+		preload: {
 			get: function getPreload() {
 				return self.getAttribute('preload') || '';
 			},
@@ -2286,7 +2299,7 @@ function OGVPlayer(options) {
 		 * @property readyState {number}
 		 * @todo return more accurate info about availability of data
 		 */
-		"readyState": {
+		readyState: {
 			get: function getReadyState() {
 				if (stream && codec && codec.loadedMetadata) {
 					// for now we don't really calc this stuff
@@ -2302,7 +2315,7 @@ function OGVPlayer(options) {
 		 * @property networkState {number}
 		 * @todo implement
 		 */
-		"networkState": {
+		networkState: {
 			get: function getNetworkState() {
 				if (stream) {
 					if (stream.waiting) {
@@ -2324,7 +2337,7 @@ function OGVPlayer(options) {
 		 * @property playbackRate {number}
 		 * @todo implement
 		 */
-		"playbackRate": {
+		playbackRate: {
 			get: function getPlaybackRate() {
 				return 1;
 			},
@@ -2337,7 +2350,7 @@ function OGVPlayer(options) {
 		 * @property played {OGVTimeRanges}
 		 * @todo implement correctly more or less
 		 */
-		"played": {
+		played: {
 			get: function getPlayed() {
 				return new OGVTimeRanges([[0, self.currentTime]]);
 			}
@@ -2346,7 +2359,7 @@ function OGVPlayer(options) {
 		/**
 		 * @property volume {number}
 		 */
-		"volume": {
+		volume: {
 			get: function getVolume() {
 				return _volume;
 			},
@@ -2482,24 +2495,6 @@ OGVPlayer.initSharedAudioContext = function() {
 /**
  * Set up constants on the class and instances
  */
-var constants = {
-	/**
-	 * Constants for networkState
-	 */
-	NETWORK_EMPTY: 0,
-	NETWORK_IDLE: 1,
-	NETWORK_LOADING: 2,
-	NETWORK_NO_SOURCE: 3,
-
-	/**
-	 * Constants for readyState
-	 */
-	HAVE_NOTHING: 0,
-	HAVE_METADATA: 1,
-	HAVE_CURRENT_DATA: 2,
-	HAVE_FUTURE_DATA: 3,
-	HAVE_ENOUGH_DATA: 4
-};
 extend(OGVPlayer, constants);
 
 OGVPlayer.instanceCount = 0;
