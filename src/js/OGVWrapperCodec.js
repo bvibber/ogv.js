@@ -7,7 +7,7 @@
  * @copyright 2015-2019 Brion Vibber
  * @license MIT-style
  */
-import OGVLoader from './OGVLoader.js';
+import OGVLoader from './OGVLoaderWeb.js';
 
 class OGVWrapperCodec {
 	constructor(options) {

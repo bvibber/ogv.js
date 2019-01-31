@@ -9,7 +9,7 @@ var YUVCanvas = require('yuv-canvas'),
 	dynamicaudio_swf = require('audio-feeder/dist/dynamicaudio.swf');
 
 // Internal deps
-var OGVLoader = require('./OGVLoader.js'),
+var OGVLoader = require('./OGVLoaderWeb.js').default,
 	Bisector = require('./Bisector.js').default,
 	extend = require('./extend.js').default,
 	OGVMediaError = require('./OGVMediaError.js').default,

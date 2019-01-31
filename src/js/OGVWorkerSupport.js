@@ -2,7 +2,7 @@
 
 /* global ArrayBuffer */
 
-var OGVLoader = require('./OGVLoader.js');
+var OGVLoader = require('./OGVLoaderWorker.js').default;
 
 /**
  * Web Worker wrapper for codec fun
