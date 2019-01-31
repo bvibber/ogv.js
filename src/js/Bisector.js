@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Give as your 'process' function something that will trigger an async
  * operation, then call the left() or right() methods to run another
@@ -13,33 +11,35 @@
  *   process: function(start, position, end)
  * }
  */
-function Bisector(options) {
-	var start = options.start,
-		end = options.end,
-		position = 0,
-		self = this,
-		n = 0;
-
-	function iterate() {
-		n++;
-		position = Math.floor((start + end) / 2);
-		return options.process(start, end, position);
+class Bisector {
+	constructor(options) {
+		this.lower = options.start;
+		this.upper = options.end;
+		this.onprocess = options.process;
+		this.position = 0;
+		this.n = 0;
 	}
 
-	self.start = function() {
-		iterate();
-		return self;
-	};
+	iterate() {
+		this.n++;
+		this.position = Math.floor((this.lower + this.upper) / 2);
+		return this.onprocess(this.lower, this.upper, this.position);
+	}
 
-	self.left = function() {
-		end = position;
-		return iterate();
-	};
+	start() {
+		this.iterate();
+		return this;
+	}
 
-	self.right = function() {
-		start = position;
-		return iterate();
+	left() {
+		this.upper = this.position;
+		return this.iterate();
+	}
+
+	right() {
+		this.lower = this.position;
+		return this.iterate();
 	};
 }
 
-module.exports = Bisector;
+export default Bisector;
