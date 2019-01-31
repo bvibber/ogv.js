@@ -1,24 +1,30 @@
-"use strict";
-
 /**
- * Constructor for an analogue of the TimeRanges class
- * returned by various HTMLMediaElement properties
- *
- * Pass an array of two-element arrays, each containing a start and end time.
+ * Analogue of the TimeRanges class returned by various
+ * HTMLMediaElement properties
  */
-function OGVTimeRanges(ranges) {
-	Object.defineProperty(this, 'length', {
-		get: function getLength() {
-			return ranges.length;
-		}
-	});
-	this.start = function(i) {
-		return ranges[i][0];
-	};
-	this.end = function(i) {
-		return ranges[i][1];
-	};
-	return this;
-};
+class OGVTimeRanges {
+	/**
+	 * Pass an array of two-element arrays, each containing a start and end time.
+	 */
+	constructor(ranges) {
+		this._ranges = ranges;
+		this.length = ranges.length;
+	}
 
-module.exports = OGVTimeRanges;
+	start(i) {
+		if (i < 0 || i > this.length || i !== (i|0)) {
+			throw new RangeError("Invalid index");
+		}
+		return this._ranges[i][0];
+	}
+
+	end(i) {
+		if (i < 0 || i > this.length || i !== (i|0)) {
+			throw new RangeError("Invalid index");
+		}
+		return this._ranges[i][1];
+	}
+}
+
+
+export default OGVTimeRanges;
