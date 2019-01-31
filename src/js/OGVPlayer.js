@@ -1,21 +1,19 @@
 // OGVPlayer.js
 
 // External deps
-var YUVCanvas = require('yuv-canvas'),
-	StreamFile = require('stream-file'),
-	AudioFeeder = require('audio-feeder'),
-	dynamicaudio_swf = require('audio-feeder/dist/dynamicaudio.swf');
+import YUVCanvas from 'yuv-canvas';
+import StreamFile from 'stream-file';
+import AudioFeeder from 'audio-feeder';
+import dynamicaudio_swf from 'audio-feeder/dist/dynamicaudio.swf';
 
 // Internal deps
-var OGVLoader = require('./OGVLoaderWeb.js').default,
-	Bisector = require('./Bisector.js').default,
-	extend = require('./extend.js').default,
-	OGVMediaError = require('./OGVMediaError.js').default,
-	OGVMediaType = require('./OGVMediaType.js').default,
-	OGVTimeRanges = require('./OGVTimeRanges.js').default,
-	OGVWrapperCodec = require('./OGVWrapperCodec.js').default,
-	OGVDecoderAudioProxy = require('./OGVDecoderAudioProxy.js').default,
-	OGVDecoderVideoProxy = require('./OGVDecoderVideoProxy.js').default;
+import OGVLoader from './OGVLoaderWeb.js';
+import Bisector from './Bisector.js';
+import extend from './extend.js';
+import OGVMediaError from './OGVMediaError.js';
+import OGVMediaType from './OGVMediaType.js';
+import OGVTimeRanges from './OGVTimeRanges.js';
+import OGVWrapperCodec from './OGVWrapperCodec.js';
 
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
@@ -2601,4 +2599,4 @@ if (OGVPlayer.supportsObjectFit) {
 	document.addEventListener('MSFullscreenChange', fullResizeVideo);
 }
 
-module.exports = OGVPlayer;
+export default OGVPlayer;
