@@ -60,6 +60,25 @@ if (typeof performance === 'undefined' || typeof performance.now === undefined) 
 	getTimestamp = performance.now.bind(performance);
 }
 
+function OGVJSElement() {
+	// Stub constructor so we can extend this and
+	// still have it work in IE11 without a big
+	// polyfill.
+	// IE 11 or pre-custom-elements browser
+	// Note we're not ready to use custom elements without an API break,
+	// as we require an options param for some setup that isn't possible
+	let el = document.createElement('ogvjs');
+	if (Object.setPrototypeOf) {
+		// Modernish browser
+		Object.setPrototypeOf(el, Object.getPrototypeOf(this));
+	} else {
+		// IE icky!
+		el.__proto__ = this.__proto__;
+	}
+	return el;
+}
+OGVJSElement.prototype = Object.create(HTMLElement.prototype, {});
+
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
  * which has a similar interface to the HTML audio/video elements.
@@ -69,9 +88,12 @@ if (typeof performance === 'undefined' || typeof performance.now === undefined) 
  *                 'webGL': bool; pass true to use WebGL acceleration if available
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
  */
-class OGVPlayer {
+class OGVPlayer extends OGVJSElement {
 	constructor(options) {
+		super();
+
 		options = options || {};
+		this._options = options;
 
 		var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
 
@@ -145,15 +167,10 @@ class OGVPlayer {
 		var canvas = document.createElement('canvas');
 		var frameSink;
 
-		// Return a magical custom element!
-		var self = document.createElement('ogvjs');
+		var self = this;
 		self.className = instanceId;
 
 		extend(self, constants);
-
-		// Copy in the methods for now.
-		// @todo use a better prototype chain
-		extend(self, OGVPlayer.prototype);
 
 		canvas.style.position = 'absolute';
 		canvas.style.top = '0';
@@ -163,31 +180,11 @@ class OGVPlayer {
 		canvas.style.objectFit = 'contain';
 		self.appendChild(canvas);
 
-		function time(cb) {
-			var start = getTimestamp();
-			cb();
-			var delta = getTimestamp() - start;
-			lastFrameDecodeTime += delta;
-			return delta;
-		}
 
-		var then = getTimestamp();
-		function log(msg) {
-			if (options.debug) {
-				var now = getTimestamp(),
-					delta = now - then;
-
-				//console.log('+' + delta + 'ms ' + msg);
-				//then = now;
-
-				if (!options.debugFilter || msg.match(options.debugFilter)) {
-					console.log('[' + (Math.round(delta * 10) / 10) + 'ms] ' + msg);
-				}
-			}
-		}
+		self._startTime = getTimestamp();
 
 		function fireEvent(eventName, props) {
-			log('fireEvent ' + eventName);
+			self._log('fireEvent ' + eventName);
 			var event;
 			props = props || {};
 
@@ -217,7 +214,7 @@ class OGVPlayer {
 			}
 		}
 		function fireEventAsync(eventName, props) {
-			log('fireEventAsync ' + eventName);
+			self._log('fireEventAsync ' + eventName);
 			setTimeout(function() {
 				fireEvent(eventName, props);
 			}, 0);
@@ -255,7 +252,7 @@ class OGVPlayer {
 			// audioFeeder will call us when buffers need refilling,
 			// without any throttling.
 			audioFeeder.onbufferlow = function audioCallback() {
-				log('onbufferlow');
+				self._log('onbufferlow');
 				if ((stream && (stream.buffering || stream.seeking)) || pendingAudio) {
 					// We're waiting on input or other async processing;
 					// we'll get triggered later.
@@ -271,9 +268,9 @@ class OGVPlayer {
 				if (dataEnded) {
 					// Probably end of file.
 					// Do nothing!
-					log('onstarved: appear to have reached end of audio');
+					self._log('onstarved: appear to have reached end of audio');
 				} else {
-					log('onstarved: halting audio due to starvation');
+					self._log('onstarved: halting audio due to starvation');
 					stopPlayback();
 					prebufferingAudio = true;
 				}
@@ -300,12 +297,12 @@ class OGVPlayer {
 			}
 			// Clear the late flag if it was set.
 			prebufferingAudio = false;
-			log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
+			self._log('continuing at ' + initialPlaybackPosition + ', ' + initialPlaybackOffset);
 		}
 
 		function stopPlayback() {
 			initialPlaybackOffset = getPlaybackTime();
-			log('pausing at ' + initialPlaybackOffset);
+			self._log('pausing at ' + initialPlaybackOffset);
 			if (audioFeeder) {
 				audioFeeder.stop();
 			}
@@ -367,7 +364,7 @@ class OGVPlayer {
 
 		// called when stopping old video on load()
 		function stopVideo() {
-			log("STOPPING");
+			self._log("STOPPING");
 			// kill the previous video if any
 			state = State.INITIAL;
 			seekState = SeekState.NOT_SEEKING;
@@ -376,7 +373,7 @@ class OGVPlayer {
 			ended = false;
 			frameEndTimestamp = 0.0;
 			audioEndTimestamp = 0.0;
-			lastFrameDecodeTime = 0.0;
+			self._lastFrameDecodeTime = 0.0;
 			prebufferingAudio = false;
 
 			// Abort all queued actions
@@ -432,8 +429,8 @@ class OGVPlayer {
 			audioEndTimestamp = 0.0,
 			decodedFrames = [],
 			pendingFrames = [];
-		var lastFrameDecodeTime = 0.0,
-			lastFrameVideoCpuTime = 0,
+		self._lastFrameDecodeTime = 0.0;
+		var lastFrameVideoCpuTime = 0,
 			lastFrameAudioCpuTime = 0,
 			lastFrameDemuxerCpuTime = 0,
 			lastFrameDrawingTime = 0,
@@ -470,7 +467,7 @@ class OGVPlayer {
 			playTime += wallClockTime;
 
 			var timing = {
-				cpuTime: lastFrameDecodeTime,
+				cpuTime: self._lastFrameDecodeTime,
 				drawingTime: drawingTime - lastFrameDrawingTime,
 				bufferTime: bufferTime - lastFrameBufferTime,
 				proxyTime: proxyTime - lastFrameProxyTime,
@@ -490,7 +487,7 @@ class OGVPlayer {
 				timing.audioTime += (codec.audioCpuTime - lastFrameAudioCpuTime);
 			}
 			timing.cpuTime += timing.demuxerTime;
-			lastFrameDecodeTime = 0;
+			self._lastFrameDecodeTime = 0;
 			lastFrameTimestamp = newFrameTimestamp;
 			if (codec) {
 				lastFrameVideoCpuTime = currentVideoCpuTime;
@@ -508,7 +505,7 @@ class OGVPlayer {
 			function n(x) {
 				return Math.round(x * 10) / 10;
 			}
-			log('drew frame ' + data.frameEndTimestamp + ': ' +
+			self._log('drew frame ' + data.frameEndTimestamp + ': ' +
 				'clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
 				'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ' proxy: ' + n(timing.proxyTime) + ') ' +
 				'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
@@ -573,10 +570,10 @@ class OGVPlayer {
 		}
 
 		function seek(toTime, mode) {
-			log('requested seek to ' + toTime + ', mode ' + mode);
+			self._log('requested seek to ' + toTime + ', mode ' + mode);
 
 			if (self.readyState == self.HAVE_NOTHING) {
-				log('not yet loaded; saving seek position for later');
+				self._log('not yet loaded; saving seek position for later');
 				initialSeekTime = toTime;
 				return;
 			}
@@ -748,7 +745,7 @@ class OGVPlayer {
 							// need more packets
 							pingProcessing();
 						} else if (streamEnded) {
-							log('stream ended during linear seeking on video');
+							self._log('stream ended during linear seeking on video');
 							dataEnded = true;
 							continueSeekedPlayback();
 						} else {
@@ -789,7 +786,7 @@ class OGVPlayer {
 							// need more packets
 							pingProcessing();
 						} else if (streamEnded) {
-							log('stream ended during linear seeking on audio');
+							self._log('stream ended during linear seeking on audio');
 							dataEnded = true;
 							continueSeekedPlayback();
 						} else {
@@ -831,12 +828,12 @@ class OGVPlayer {
 						// need more data
 						pingProcessing();
 					} else if (streamEnded) {
-						log('stream ended during bisection seek');
+						self._log('stream ended during bisection seek');
 						// We may have to go back further to find packets.
 						if (seekBisector.right()) {
 							// wait for new data to come in
 						} else {
-							log('failed going back');
+							self._log('failed going back');
 							throw new Error('not sure what to do');
 						}
 					} else {
@@ -847,7 +844,7 @@ class OGVPlayer {
 				if (seekBisector.left()) {
 					// wait for new data to come in
 				} else {
-					log('close enough (left)');
+					self._log('close enough (left)');
 
 					// We're having trouble finding a new packet position;
 					// likely it's an audio file with lots of small packets.
@@ -859,7 +856,7 @@ class OGVPlayer {
 				if (seekBisector.right()) {
 					// wait for new data to come in
 				} else {
-					log('close enough (right)');
+					self._log('close enough (right)');
 
 					// We're having trouble finding a new packet position;
 					// likely it's an audio file with lots of small packets.
@@ -871,11 +868,11 @@ class OGVPlayer {
 				// Reached the bisection target!
 				if (seekState == SeekState.BISECT_TO_TARGET && (codec.hasVideo && codec.keyframeTimestamp < codec.frameTimestamp)) {
 					// We have to go back and find a keyframe. Sigh.
-					log('finding the keypoint now');
+					self._log('finding the keypoint now');
 					seekState = SeekState.BISECT_TO_KEYPOINT;
 					startBisection(codec.keyframeTimestamp);
 				} else {
-					log('straight seeking now');
+					self._log('straight seeking now');
 					// Switch to linear mode to find the final target.
 					seekState = SeekState.LINEAR_TO_TARGET;
 					pingProcessing();
@@ -935,7 +932,7 @@ class OGVPlayer {
 					throw new Error('REENTRANCY FAIL: waiting on input or codec but asked to keep processing');
 				}
 				if (++iters > 500) {
-					log('stuck in processing loop; breaking with timer');
+					self._log('stuck in processing loop; breaking with timer');
 					needProcessing = 0;
 					pingProcessing(0);
 				}
@@ -995,7 +992,7 @@ class OGVPlayer {
 							throw new Error('end of file before headers found');
 						} else {
 							// Read more data!
-							log('reading more cause we are out of data');
+							self._log('reading more cause we are out of data');
 							readBytesAndWait();
 						}
 					});
@@ -1005,13 +1002,13 @@ class OGVPlayer {
 
 				// Look for the last item.
 				if (codec.frameReady) {
-					log('saw frame with ' + codec.frameTimestamp);
+					self._log('saw frame with ' + codec.frameTimestamp);
 					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.frameTimestamp);
 					codec.discardFrame(function() {
 						pingProcessing();
 					});
 				} else if (codec.audioReady) {
-					log('saw audio with ' + codec.audioTimestamp);
+					self._log('saw audio with ' + codec.audioTimestamp);
 					lastSeenTimestamp = Math.max(lastSeenTimestamp, codec.audioTimestamp);
 					codec.discardAudio(function() {
 						pingProcessing();
@@ -1027,7 +1024,7 @@ class OGVPlayer {
 								readBytesAndWait();
 							} else {
 								// We are at the end!
-								log('seek-duration: we are at the end: ' + lastSeenTimestamp);
+								self._log('seek-duration: we are at the end: ' + lastSeenTimestamp);
 								if (lastSeenTimestamp > 0) {
 									duration = lastSeenTimestamp;
 								}
@@ -1076,24 +1073,24 @@ class OGVPlayer {
 				}
 
 			} else if (state == State.READY) {
-				log('initial seek to ' + initialSeekTime);
+				self._log('initial seek to ' + initialSeekTime);
 
 				if (initialSeekTime > 0) {
 
 					var target = initialSeekTime;
 					initialSeekTime = 0;
-					log('initial seek to ' + target);
+					self._log('initial seek to ' + target);
 					doSeek(target);
 
 				} else if (paused) {
 
 					// Paused? stop here.
-					log('paused while in ready');
+					self._log('paused while in ready');
 
 				} else {
 
 					function finishStartPlaying() {
-						log('finishStartPlaying');
+						self._log('finishStartPlaying');
 
 						state = State.PLAYING;
 						lastFrameTimestamp = getTimestamp();
@@ -1135,12 +1132,12 @@ class OGVPlayer {
 
 				function doProcessPlay() {
 
-					//console.log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
+					//console.self._log(more, codec.audioReady, codec.frameReady, codec.audioTimestamp, codec.frameTimestamp);
 
 					if (paused) {
 
 						// ok we're done for now!
-						log('paused during playback; stopping loop');
+						self._log('paused during playback; stopping loop');
 
 					} else {
 
@@ -1169,16 +1166,16 @@ class OGVPlayer {
 								audioEnded = (dataEnded && audioFeeder.durationBuffered == 0);
 
 								if (prebufferingAudio && (audioFeeder.durationBuffered >= audioFeeder.bufferThreshold * 2 || dataEnded)) {
-									log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
+									self._log('prebuffering audio done; buffered to ' + audioFeeder.durationBuffered);
 									startPlayback(playbackPosition);
 									prebufferingAudio = false;
 								}
 
 								if (audioState.dropped != droppedAudio) {
-									log('dropped ' + (audioState.dropped - droppedAudio));
+									self._log('dropped ' + (audioState.dropped - droppedAudio));
 								}
 								if (audioState.delayed != delayedAudio) {
-									log('delayed ' + (audioState.delayed - delayedAudio));
+									self._log('delayed ' + (audioState.delayed - delayedAudio));
 								}
 								droppedAudio = audioState.dropped;
 								delayedAudio = audioState.delayed;
@@ -1193,7 +1190,7 @@ class OGVPlayer {
 									readyForAudioDecode = false;
 								} else if (pendingAudio >= audioPipelineDepth) {
 									// We'll check in when done decoding
-									log('audio decode disabled: ' + pendingAudio + ' packets in flight');
+									self._log('audio decode disabled: ' + pendingAudio + ' packets in flight');
 									readyForAudioDecode = false;
 								}
 
@@ -1221,12 +1218,12 @@ class OGVPlayer {
 								var audioSyncThreshold = targetPerFrameTime;
 								if (prebufferingAudio) {
 									if (readyForFrameDecode) {
-										log('decoding a frame during prebuffering');
+										self._log('decoding a frame during prebuffering');
 									}
 									readyForFrameDraw = false;
 								} else if (readyForFrameDraw && dataEnded && audioEnded) {
 									// If audio timeline reached end, make sure the last frame draws
-									log('audio timeline ended? ready to draw frame');
+									self._log('audio timeline ended? ready to draw frame');
 								} else if (readyForFrameDraw && -frameDelay >= audioSyncThreshold) {
 									// late frame!
 									var skipPast = -1;
@@ -1239,7 +1236,7 @@ class OGVPlayer {
 										while (skipPast-- >= 0) {
 											lateFrames++;
 											var frame = decodedFrames.shift();
-											log('skipping already-decoded late frame at ' + frame.frameEndTimestamp);
+											self._log('skipping already-decoded late frame at ' + frame.frameEndTimestamp);
 											frameDelay = (frame.frameEndTimestamp - playbackPosition) * 1000;
 											frameEndTimestamp = frame.frameEndTimestamp;
 											actualPerFrameTime = targetPerFrameTime - frameDelay;
@@ -1258,7 +1255,7 @@ class OGVPlayer {
 									var timeToResync = nextKeyframe - videoSyncPadding;
 
 									if (nextKeyframe >= 0 && nextKeyframe != codec.frameTimestamp && playbackPosition  >= timeToResync) {
-										log('skipping late frame at ' + decodedFrames[0].frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
+										self._log('skipping late frame at ' + decodedFrames[0].frameEndTimestamp + ' vs ' + playbackPosition + ', expect to see keyframe at ' + nextKeyframe);
 
 										// First skip any already-decoded frames
 										for (var i = 0; i < decodedFrames.length; i++) {
@@ -1316,7 +1313,7 @@ class OGVPlayer {
 
 							if (readyForFrameDecode) {
 
-								log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
+								self._log('play loop: ready to decode frame; thread depth: ' + pendingFrame + ', have buffered: ' + decodedFrames.length);
 
 								if (videoInfo.fps == 0 && (codec.frameTimestamp - frameEndTimestamp) > 0) {
 									// WebM doesn't encode a frame rate
@@ -1332,13 +1329,13 @@ class OGVPlayer {
 								});
 								var currentPendingFrames = pendingFrames;
 								var wasAsync = false;
-								var frameDecodeTime = time(function() {
+								var frameDecodeTime = self._time(function() {
 									codec.decodeFrame(function processingDecodeFrame(ok) {
 										if (currentPendingFrames !== pendingFrames) {
-											log('play loop callback after flush, discarding');
+											self._log('play loop callback after flush, discarding');
 											return;
 										}
-										log('play loop callback: decoded frame');
+										self._log('play loop callback: decoded frame');
 										pendingFrame--;
 										pendingFrames.shift();
 										if (ok) {
@@ -1350,7 +1347,7 @@ class OGVPlayer {
 											});
 										} else {
 											// Bad packet or something.
-											log('Bad video packet or something');
+											self._log('Bad video packet or something');
 										}
 										codec.process(function() {
 											if (isProcessing()) {
@@ -1370,14 +1367,14 @@ class OGVPlayer {
 
 							} else if (readyForAudioDecode) {
 
-								log('play loop: ready for audio; depth: ' + pendingAudio);
+								self._log('play loop: ready for audio; depth: ' + pendingAudio);
 
 								pendingAudio++;
 								var nextAudioEndTimestamp = codec.audioTimestamp;
-								var audioDecodeTime = time(function() {
+								var audioDecodeTime = self._time(function() {
 									codec.decodeAudio(function processingDecodeAudio(ok) {
 										pendingAudio--;
-										log('play loop callback: decoded audio');
+										self._log('play loop callback: decoded audio');
 										audioEndTimestamp = nextAudioEndTimestamp;
 
 										if (ok) {
@@ -1385,7 +1382,7 @@ class OGVPlayer {
 											if (buffer) {
 												// Keep track of how much time we spend queueing audio as well
 												// This is slow when using the Flash shim on IE 10/11
-												bufferTime += time(function() {
+												bufferTime += self._time(function() {
 													if (audioFeeder) {
 														audioFeeder.bufferData(buffer);
 													}
@@ -1420,7 +1417,7 @@ class OGVPlayer {
 
 							} else if (readyForFrameDraw) {
 
-								log('play loop: ready to draw frame');
+								self._log('play loop: ready to draw frame');
 
 								if (nextFrameTimer) {
 									clearTimeout(nextFrameTimer);
@@ -1436,7 +1433,7 @@ class OGVPlayer {
 								var frame = decodedFrames.shift();
 								currentVideoCpuTime = frame.videoCpuTime;
 
-								drawingTime += time(function() {
+								drawingTime += self._time(function() {
 									frameSink.drawFrame(frame.yCbCrBuffer);
 								});
 
@@ -1450,23 +1447,23 @@ class OGVPlayer {
 
 								var targetTimer = frameDelay;
 								// @todo consider using requestAnimationFrame
-								log('play loop: setting a timer for drawing ' + targetTimer);
+								self._log('play loop: setting a timer for drawing ' + targetTimer);
 								nextFrameTimer = setTimeout(function() {
 									nextFrameTimer = null;
 									pingProcessing();
 								}, targetTimer);
 
 							} else if (dataEnded && !(pendingAudio || pendingFrame || decodedFrames.length)) {
-								log('play loop: playback reached end of data ' + [pendingAudio, pendingFrame, decodedFrames.length]);
+								self._log('play loop: playback reached end of data ' + [pendingAudio, pendingFrame, decodedFrames.length]);
 								var finalDelay = 0;
 								if (codec.hasAudio && audioFeeder) {
 									finalDelay = audioFeeder.durationBuffered * 1000;
 								}
 								if (finalDelay > 0) {
-									log('play loop: ending pending ' + finalDelay + ' ms');
+									self._log('play loop: ending pending ' + finalDelay + ' ms');
 									pingProcessing(Math.max(0, finalDelay));
 								} else {
-									log('play loop: ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
+									self._log('play loop: ENDING NOW: playback time ' + getPlaybackTime() + '; frameEndTimestamp: ' + frameEndTimestamp);
 									stopPlayback();
 									prebufferingAudio = false;
 									initialPlaybackOffset = Math.max(audioEndTimestamp, frameEndTimestamp);
@@ -1479,13 +1476,13 @@ class OGVPlayer {
 
 							} else {
 
-								log('play loop: waiting on async/timers');
+								self._log('play loop: waiting on async/timers');
 
 							}
 
 						} else {
 
-							log('play loop: demuxing');
+							self._log('play loop: demuxing');
 
 							doProcessPlayDemux();
 						}
@@ -1497,21 +1494,21 @@ class OGVPlayer {
 						wasAudioReady = codec.audioReady;
 					codec.process(function doProcessPlayDemuxHandler(more) {
 						if ((codec.frameReady && !wasFrameReady) || (codec.audioReady && !wasAudioReady)) {
-							log('demuxer has packets');
+							self._log('demuxer has packets');
 							pingProcessing();
 						} else if (more) {
 							// Have to process some more pages to find data.
-							log('demuxer processing to find more packets');
+							self._log('demuxer processing to find more packets');
 							pingProcessing();
 						} else {
-							log('demuxer ran out of data');
+							self._log('demuxer ran out of data');
 							if (!streamEnded) {
 								// Ran out of buffered input
-								log('demuxer loading more data');
+								self._log('demuxer loading more data');
 								readBytesAndWait();
 							} else {
 								// Ran out of stream!
-								log('demuxer reached end of data stream');
+								self._log('demuxer reached end of data stream');
 								dataEnded = true;
 								pingProcessing();
 							}
@@ -1542,14 +1539,14 @@ class OGVPlayer {
 
 		function readBytesAndWait() {
 			if (stream.buffering || stream.seeking) {
-				log('readBytesAndWait during i/o');
+				self._log('readBytesAndWait during i/o');
 				return;
 			}
 			// keep i/o size small to reduce CPU impact of demuxing on slow machines
 			// @todo make buffer size larger when packets are larger?
 			var bufferSize = 32768;
 			stream.read(bufferSize).then(function(data) {
-				log('got input ' + [data.byteLength]);
+				self._log('got input ' + [data.byteLength]);
 
 				if (data.byteLength) {
 					// Save chunk to pass into the codec's buffer
@@ -1561,7 +1558,7 @@ class OGVPlayer {
 				}
 				if (stream.eof) {
 					// @todo record doneness in networkState
-					log('stream is at end!');
+					self._log('stream is at end!');
 					streamEnded = true;
 				}
 				if (isProcessing()) {
@@ -1576,9 +1573,9 @@ class OGVPlayer {
 		function onStreamError(err) {
 			if (err.name === 'AbortError') {
 				// do nothing
-				log('i/o promise canceled; ignoring');
+				self._log('i/o promise canceled; ignoring');
 			} else {
-				log("i/o error: " + err);
+				self._log("i/o error: " + err);
 				mediaError = new OGVMediaError(OGVMediaError.MEDIA_ERR_NETWORK, String(err));
 				state = State.ERROR;
 				stopPlayback();
@@ -1592,30 +1589,30 @@ class OGVPlayer {
 			/*
 			if (isProcessing()) {
 				// We'll get pinged again when whatever we were doing returns...
-				log('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
+				self._log('REENTRANCY FAIL: asked to pingProcessing() while already waiting');
 				return;
 			}
 			*/
 			if (stream && stream.waiting) {
 				// wait for this input pls
-				log('waiting on input');
+				self._log('waiting on input');
 				return;
 			}
 			if (nextProcessingTimer) {
-				log('canceling old processing timer');
+				self._log('canceling old processing timer');
 				clearTimeout(nextProcessingTimer);
 				nextProcessingTimer = null;
 			}
 			var fudge = -1 / 256;
 			if (delay > fudge) {
-				//log('pingProcessing delay: ' + delay);
+				//self._log('pingProcessing delay: ' + delay);
 				nextProcessingTimer = setTimeout(function() {
 					// run through pingProcessing again to check
 					// in case some io started asynchronously in the meantime
 					pingProcessing();
 				}, delay);
 			} else if (depth) {
-				//log('pingProcessing tail call (' + delay + ')');
+				//self._log('pingProcessing tail call (' + delay + ')');
 				needProcessing = true;
 			} else {
 				doProcessing();
@@ -1806,11 +1803,11 @@ class OGVPlayer {
 
 					if (ended && stream && byteLength) {
 
-						log('.play() starting over after end');
+						self._log('.play() starting over after end');
 						seek(0);
 
 					} else {
-						log('.play() while already started');
+						self._log('.play() while already started');
 					}
 
 					state = State.READY;
@@ -1822,11 +1819,11 @@ class OGVPlayer {
 
 				} else if (loading) {
 
-					log('.play() while loading');
+					self._log('.play() while loading');
 
 				} else {
 
-					log('.play() before started');
+					self._log('.play() before started');
 
 					// Let playback begin when metadata loading is complete
 					if (!stream) {
@@ -2045,7 +2042,7 @@ class OGVPlayer {
 					if (audioFeeder) {
 						audioFeeder.muted = muted;
 					} else if (started && !muted && codec && codec.hasAudio) {
-						log('unmuting: switching from timer to audio clock');
+						self._log('unmuting: switching from timer to audio clock');
 						initAudioFeeder();
 						startPlayback(audioEndTimestamp);
 					}
@@ -2489,6 +2486,29 @@ class OGVPlayer {
 		self.onvolumechange = null;
 
 		return self;
+	}
+
+	_time(cb) {
+		let start = getTimestamp();
+		cb();
+		let delta = getTimestamp() - start;
+		this._lastFrameDecodeTime += delta;
+		return delta;
+	}
+
+	_log(msg) {
+		let options = this._options;
+		if (options.debug) {
+			let now = getTimestamp(),
+				delta = now - this._startTime;
+
+			//console.log('+' + delta + 'ms ' + msg);
+			//then = now;
+
+			if (!options.debugFilter || msg.match(options.debugFilter)) {
+				console.log('[' + (Math.round(delta * 10) / 10) + 'ms] ' + msg);
+			}
+		}
 	}
 
 	static initSharedAudioContext() {
