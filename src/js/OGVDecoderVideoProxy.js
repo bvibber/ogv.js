@@ -1,26 +1,26 @@
 import OGVProxyClass from './OGVProxyClass.js';
 
-const OGVDecoderVideoProxy = OGVProxyClass({
+class OGVDecoderVideoProxy extends OGVProxyClass({
 	loadedMetadata: false,
 	videoFormat: null,
 	frameBuffer: null,
 	cpuTime: 0
-}, {
-	init: function(callback) {
+}) {
+	init(callback) {
 		this.proxy('init', [], callback);
-	},
+	}
 
-	processHeader: function(data, callback) {
+	processHeader(data, callback) {
 		this.proxy('processHeader', [data], callback, [data]);
-	},
+	}
 
-	processFrame: function(data, callback) {
+	processFrame(data, callback) {
 		this.proxy('processFrame', [data], callback, [data]);
-	},
+	}
 
-	close: function() {
+	close() {
 		this.terminate();
 	}
-});
+}
 
 export default OGVDecoderVideoProxy;

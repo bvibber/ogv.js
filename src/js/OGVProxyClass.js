@@ -9,8 +9,8 @@
  * @copyright 2015-2019 Brion Vibber
  * @license MIT-style
  */
-function OGVProxyClass(initialProps, methods) {
-	let classObj = class {
+function OGVProxyClass(initialProps) {
+	return class {
 		constructor(worker, className, options) {
 			options = options || {};
 			this.worker = worker;
@@ -118,15 +118,6 @@ function OGVProxyClass(initialProps, methods) {
 			}
 		}
 	};
-
-	// Set up proxied methods
-	for (let method in methods) {
-		if (methods.hasOwnProperty(method)) {
-			classObj.prototype[method] = methods[method];
-		}
-	}
-
-	return classObj;
 }
 
 export default OGVProxyClass;
