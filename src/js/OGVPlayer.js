@@ -15,7 +15,7 @@ var OGVLoader = require('./OGVLoader.js'),
 	OGVMediaError = require('./OGVMediaError.js'),
 	OGVMediaType = require('./OGVMediaType.js'),
 	OGVTimeRanges = require('./OGVTimeRanges.js'),
-	OGVWrapperCodec = require('./OGVWrapperCodec.js'),
+	OGVWrapperCodec = require('./OGVWrapperCodec.js').default,
 	OGVDecoderAudioProxy = require('./OGVDecoderAudioProxy.js'),
 	OGVDecoderVideoProxy = require('./OGVDecoderVideoProxy.js');
 

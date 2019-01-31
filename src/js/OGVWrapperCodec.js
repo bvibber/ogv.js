@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Proxy object for web worker interface for codec classes.
  *
@@ -9,10 +7,9 @@
  * @copyright 2015-2019 Brion Vibber
  * @license MIT-style
  */
-var OGVLoader = require("./OGVLoader.js");
-var extend = require("./extend.js");
+import OGVLoader from './OGVLoader.js';
 
-class  OGVWrapperCodec {
+class OGVWrapperCodec {
 	constructor(options) {
 		this.options = options || {};
 
@@ -159,7 +156,7 @@ class  OGVWrapperCodec {
 
 	// Wrapper for callbacks to drop them after a flush
 	flushSafe(func) {
-		var savedFlushIter = this.flushIter;
+		let savedFlushIter = this.flushIter;
 		return (arg) => {
 			if (this.flushIter <= savedFlushIter) {
 				func(arg);
@@ -170,7 +167,7 @@ class  OGVWrapperCodec {
 	// - public methods
 	init(callback) {
 		this.processing = true;
-		var demuxerClassName;
+		let demuxerClassName;
 		if (this.options.type === 'video/webm' || this.options.type === 'audio/webm') {
 			demuxerClassName = this.options.wasm ? 'OGVDemuxerWebMW' : 'OGVDemuxerWebM';
 		} else {
@@ -308,14 +305,14 @@ class  OGVWrapperCodec {
 	}
 
 	decodeFrame(callback) {
-		var cb = this.flushSafe(callback),
+		let cb = this.flushSafe(callback),
 			timestamp = this.frameTimestamp,
 			keyframeTimestamp = this.keyframeTimestamp;
 		this.demuxer.dequeueVideoPacket((packet) => {
 			this.videoBytes += packet.byteLength;
 			this.videoDecoder.processFrame(packet, (ok) => {
 				// hack
-				var fb = this.videoDecoder.frameBuffer;
+				let fb = this.videoDecoder.frameBuffer;
 				if (fb) {
 					fb.timestamp = timestamp;
 					fb.keyframeTimestamp = keyframeTimestamp;
@@ -326,7 +323,7 @@ class  OGVWrapperCodec {
 	}
 
 	decodeAudio(callback) {
-		var cb = this.flushSafe(callback);
+		let cb = this.flushSafe(callback);
 		this.demuxer.dequeueAudioPacket((packet) => {
 			this.audioBytes += packet.byteLength;
 			this.audioDecoder.processAudio(packet, cb);
@@ -362,15 +359,15 @@ class  OGVWrapperCodec {
 	
 	loadAudioCodec(callback) {
 		if (this.demuxer.audioCodec) {
-			var wasm = !!this.options.wasm;
-			var audioClassMap = {
+			let wasm = !!this.options.wasm;
+			let audioClassMap = {
 				vorbis: wasm ? 'OGVDecoderAudioVorbisW' : 'OGVDecoderAudioVorbis',
 				opus: wasm ? 'OGVDecoderAudioOpusW' : 'OGVDecoderAudioOpus'
 			};
-			var className = audioClassMap[this.demuxer.audioCodec];
+			let className = audioClassMap[this.demuxer.audioCodec];
 			this.processing = true;
 			OGVLoader.loadClass(className, (audioCodecClass) => {
-				var audioOptions = {};
+				let audioOptions = {};
 				if (this.demuxer.audioFormat) {
 					audioOptions.audioFormat = this.demuxer.audioFormat;
 				}
@@ -392,18 +389,18 @@ class  OGVWrapperCodec {
 
 	loadVideoCodec(callback) {
 		if (this.demuxer.videoCodec) {
-			var wasm = !!this.options.wasm,
+			let wasm = !!this.options.wasm,
 				threading = !!this.options.threading;
-			var videoClassMap = {
+			let videoClassMap = {
 				theora: wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
 				vp8: wasm ? 'OGVDecoderVideoVP8W' : (threading ? 'OGVDecoderVideoVP8MT' : 'OGVDecoderVideoVP8'),
 				vp9: wasm ? 'OGVDecoderVideoVP9W' : (threading ? 'OGVDecoderVideoVP9MT' : 'OGVDecoderVideoVP9'),
 				av1: wasm ? 'OGVDecoderVideoAV1W' : 'OGVDecoderVideoAV1'
 			};
-			var className = videoClassMap[this.demuxer.videoCodec];
+			let className = videoClassMap[this.demuxer.videoCodec];
 			this.processing = true;
 			OGVLoader.loadClass(className, (videoCodecClass) => {
-				var videoOptions = {};
+				let videoOptions = {};
 				if (this.demuxer.videoFormat) {
 					videoOptions.videoFormat = this.demuxer.videoFormat;
 				}
@@ -427,4 +424,4 @@ class  OGVWrapperCodec {
 	}
 }
 
-module.exports = OGVWrapperCodec;
+export default OGVWrapperCodec;
