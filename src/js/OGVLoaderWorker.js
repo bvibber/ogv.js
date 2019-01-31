@@ -1,3 +1,5 @@
+/* global importScripts */
+
 import OGVLoaderBase from './OGVLoaderBase.js';
 
 class OGVLoaderWorker extends OGVLoaderBase {

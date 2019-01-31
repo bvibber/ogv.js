@@ -12,8 +12,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * update buildchain to emscripten 1.38.25
 * fix a stray global
 * add "use strict" to most sources
-* starting to move to prototype-oriented classes in prep for ES6 classes
-* building using a babel step for future ES2015-ish code
+* starting to move to ES6 classes and modules
+* building with babel for ES5/IE11 compat
+* updated eslint
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
