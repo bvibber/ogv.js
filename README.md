@@ -12,6 +12,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * update buildchain to emscripten 1.38.25
 * fix a stray global
 * add "use strict" to most sources
+* starting to move to prototype-oriented classes in prep for ES6 classes
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
