@@ -4,7 +4,7 @@
 // Copyright (c) 2013-2019 Brion Vibber
 //
 
-var OGVCompat = require("./OGVCompat.js"),
+var OGVCompat = require("./OGVCompat.js").default,
 	OGVLoader = require("./OGVLoaderWeb.js").default,
 	OGVMediaError = require('./OGVMediaError.js').default,
 	OGVMediaType = require("./OGVMediaType.js").default,

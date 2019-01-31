@@ -7,7 +7,7 @@
 (function() {
   "use strict";
 
-  var OGVCompat = require('./OGVCompat.js'),
+  var OGVCompat = require('./OGVCompat.js').default,
     OGVVersion = __OGV_FULL_VERSION__;
 
   if (window) {

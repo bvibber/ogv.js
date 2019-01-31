@@ -1,63 +1,63 @@
-"use strict";
+import BogoSlow from './BogoSlow.js';
 
-var BogoSlow = require('./BogoSlow.js');
+let OGVCompat = new class {
+	constructor() {
+		this.benchmark = new BogoSlow();
+	}
 
-var OGVCompat = {
-	benchmark: new BogoSlow(),
-
-	hasTypedArrays: function() {
+	hasTypedArrays() {
 		// emscripten-compiled code requires typed arrays
 		return !!window.Uint32Array;
-	},
+	}
 
-	hasWebAudio: function() {
+	hasWebAudio() {
 		return !!(window.AudioContext || window.webkitAudioContext);
-	},
+	}
 
-	hasFlash: function() {
+	hasFlash() {
 		if (navigator.userAgent.indexOf('Trident') !== -1) {
 			// We only do the ActiveX test because we only need Flash in
 			// Internet Explorer 10/11. Other browsers use Web Audio directly
 			// (Edge, Safari) or native playback, so there's no need to test
 			// other ways of loading Flash.
 			try {
-				var obj = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+				let obj = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
 				return true;
 			} catch(e) {
 				return false;
 			}
 		}
 		return false;
-	},
+	}
 
-	hasAudio: function() {
+	hasAudio() {
 		return this.hasWebAudio() || this.hasFlash();
-	},
+	}
 
-	isBlacklisted: function(userAgent) {
+	isBlacklisted(userAgent) {
 		// JIT bugs in old Safari versions
-		var blacklist = [
+		let blacklist = [
 			/\(i.* OS [67]_.* like Mac OS X\).* Mobile\/.* Safari\//,
 			/\(Macintosh.* Version\/6\..* Safari\/\d/
 		];
-		var blacklisted = false;
-		blacklist.forEach(function(regex) {
+		let blacklisted = false;
+		blacklist.forEach((regex) => {
 			if (userAgent.match(regex)) {
 				blacklisted = true;
 			}
 		});
 		return blacklisted;
-	},
+	}
 
-	isSlow: function() {
+	isSlow() {
 		return this.benchmark.slow;
-	},
+	}
 
-	isTooSlow: function() {
+	isTooSlow() {
 		return this.benchmark.tooSlow;
-	},
+	}
 
-	supported: function(component) {
+	supported(component) {
 		if (component === 'OGVDecoder') {
 			return (this.hasTypedArrays() && !this.isBlacklisted(navigator.userAgent));
 		}
@@ -68,4 +68,4 @@ var OGVCompat = {
 	}
 };
 
-module.exports = OGVCompat;
+export default OGVCompat;
