@@ -12,154 +12,153 @@
 var OGVLoader = require("./OGVLoader.js");
 var extend = require("./extend.js");
 
-function OGVWrapperCodec(options) {
-	this.options = options || {};
+class  OGVWrapperCodec {
+	constructor(options) {
+		this.options = options || {};
 
-	this.demuxer = null;
-	this.videoDecoder = null;
-	this.audioDecoder = null;
-	this.flushIter = 0;
+		this.demuxer = null;
+		this.videoDecoder = null;
+		this.audioDecoder = null;
+		this.flushIter = 0;
 
-	this.loadedMetadata = false;
-	this.processing = false;
+		this.loadedMetadata = false;
+		this.processing = false;
 
-	Object.defineProperties(this, {
-		duration: {
-			get: function() {
-				if (this.loadedMetadata) {
-					return this.demuxer.duration;
-				} else {
-					return NaN;
+		Object.defineProperties(this, {
+			duration: {
+				get: function() {
+					if (this.loadedMetadata) {
+						return this.demuxer.duration;
+					} else {
+						return NaN;
+					}
+				}
+			},
+			hasAudio: {
+				get: function() {
+					return this.loadedMetadata && !!this.audioDecoder;
+				}
+			},
+			audioReady: {
+				get: function() {
+					return this.hasAudio && this.demuxer.audioReady;
+				}
+			},
+			audioTimestamp: {
+				get: function() {
+					return this.demuxer.audioTimestamp;
+				}
+			},
+			audioFormat: {
+				get: function() {
+					if (this.hasAudio) {
+						return this.audioDecoder.audioFormat;
+					} else {
+						return null;
+					}
+				}
+			},
+			audioBuffer: {
+				get: function() {
+					if (this.hasAudio) {
+						return this.audioDecoder.audioBuffer;
+					} else {
+						return null;
+					}
+				}
+			},
+			hasVideo: {
+				get: function() {
+					return this.loadedMetadata && !!this.videoDecoder;
+				}
+			},
+			frameReady: {
+				get: function() {
+					return this.hasVideo && this.demuxer.frameReady;
+				}
+			},
+			frameTimestamp: {
+				get: function() {
+					return this.demuxer.frameTimestamp;
+				}
+			},
+			keyframeTimestamp: {
+				get: function() {
+					return this.demuxer.keyframeTimestamp;
+				}
+			},
+			nextKeyframeTimestamp: {
+				get: function() {
+					return this.demuxer.nextKeyframeTimestamp;
+				}
+			},
+			videoFormat: {
+				get: function() {
+					if (this.hasVideo) {
+						return this.videoDecoder.videoFormat;
+					} else {
+						return null;
+					}
+				}
+			},
+			frameBuffer: {
+				get: function() {
+					if (this.hasVideo) {
+						return this.videoDecoder.frameBuffer;
+					} else {
+						return null;
+					}
+				}
+			},
+			seekable: {
+				get: function() {
+					return this.demuxer.seekable;
+				}
+			},
+			demuxerCpuTime: {
+				get: function() {
+					if (this.demuxer) {
+						return this.demuxer.cpuTime;
+					} else {
+						return 0;
+					}
+				}
+			},
+			audioCpuTime: {
+				get: function() {
+					if (this.audioDecoder) {
+						return this.audioDecoder.cpuTime;
+					} else {
+						return 0;
+					}
+				}
+			},
+			videoCpuTime: {
+				get: function() {
+					if (this.videoDecoder) {
+						return this.videoDecoder.cpuTime;
+					} else {
+						return 0;
+					}
 				}
 			}
-		},
-		hasAudio: {
-			get: function() {
-				return this.loadedMetadata && !!this.audioDecoder;
-			}
-		},
-		audioReady: {
-			get: function() {
-				return this.hasAudio && this.demuxer.audioReady;
-			}
-		},
-		audioTimestamp: {
-			get: function() {
-				return this.demuxer.audioTimestamp;
-			}
-		},
-		audioFormat: {
-			get: function() {
-				if (this.hasAudio) {
-					return this.audioDecoder.audioFormat;
-				} else {
-					return null;
-				}
-			}
-		},
-		audioBuffer: {
-			get: function() {
-				if (this.hasAudio) {
-					return this.audioDecoder.audioBuffer;
-				} else {
-					return null;
-				}
-			}
-		},
-		hasVideo: {
-			get: function() {
-				return this.loadedMetadata && !!this.videoDecoder;
-			}
-		},
-		frameReady: {
-			get: function() {
-				return this.hasVideo && this.demuxer.frameReady;
-			}
-		},
-		frameTimestamp: {
-			get: function() {
-				return this.demuxer.frameTimestamp;
-			}
-		},
-		keyframeTimestamp: {
-			get: function() {
-				return this.demuxer.keyframeTimestamp;
-			}
-		},
-		nextKeyframeTimestamp: {
-			get: function() {
-				return this.demuxer.nextKeyframeTimestamp;
-			}
-		},
-		videoFormat: {
-			get: function() {
-				if (this.hasVideo) {
-					return this.videoDecoder.videoFormat;
-				} else {
-					return null;
-				}
-			}
-		},
-		frameBuffer: {
-			get: function() {
-				if (this.hasVideo) {
-					return this.videoDecoder.frameBuffer;
-				} else {
-					return null;
-				}
-			}
-		},
-		seekable: {
-			get: function() {
-				return this.demuxer.seekable;
-			}
-		},
-		demuxerCpuTime: {
-			get: function() {
-				if (this.demuxer) {
-					return this.demuxer.cpuTime;
-				} else {
-					return 0;
-				}
-			}
-		},
-		audioCpuTime: {
-			get: function() {
-				if (this.audioDecoder) {
-					return this.audioDecoder.cpuTime;
-				} else {
-					return 0;
-				}
-			}
-		},
-		videoCpuTime: {
-			get: function() {
-				if (this.videoDecoder) {
-					return this.videoDecoder.cpuTime;
-				} else {
-					return 0;
-				}
-			}
-		}
-	});
+		});
 
-	this.loadedDemuxerMetadata = false;
-	this.loadedAudioMetadata = false;
-	this.loadedVideoMetadata = false;
-	this.loadedAllMetadata = false;
+		this.loadedDemuxerMetadata = false;
+		this.loadedAudioMetadata = false;
+		this.loadedVideoMetadata = false;
+		this.loadedAllMetadata = false;
 
-	this.onseek = null;
+		this.onseek = null;
 
-	this.videoBytes = 0;
-	this.audioBytes = 0;
+		this.videoBytes = 0;
+		this.audioBytes = 0;
 
-	return this;
-}
+		return this;
+	}
 
-
-// Wrapper for callbacks to drop them after a flush
-extend(OGVWrapperCodec.prototype, {
-	flushSafe: function(func) {
+	// Wrapper for callbacks to drop them after a flush
+	flushSafe(func) {
 		var savedFlushIter = this.flushIter;
 		var self = this;
 		return function(arg) {
@@ -167,10 +166,10 @@ extend(OGVWrapperCodec.prototype, {
 				func(arg);
 			}
 		};
-	},
+	}
 
 	// - public methods
-	init: function(callback) {
+	init(callback) {
 		this.processing = true;
 		var self = this;
 		var demuxerClassName;
@@ -193,9 +192,9 @@ extend(OGVWrapperCodec.prototype, {
 				});
 			});
 		});
-	},
+	}
 
-	close: function() {
+	close() {
 		if (this.demuxer) {
 			this.demuxer.close();
 			this.demuxer = null;
@@ -208,13 +207,13 @@ extend(OGVWrapperCodec.prototype, {
 			this.audioDecoder.close();
 			this.audioDecoder = null;
 		}
-	},
+	}
 
-	receiveInput: function(data, callback) {
+	receiveInput(data, callback) {
 		this.demuxer.receiveInput(data, callback);
-	},
+	}
 
-	process: function(callback) {
+	process(callback) {
 		if (this.processing) {
 			throw new Error('reentrancy fail on OGVWrapperCodec.process');
 		}
@@ -309,9 +308,9 @@ extend(OGVWrapperCodec.prototype, {
 
 		}
 
-	},
+	}
 
-	decodeFrame: function(callback) {
+	decodeFrame(callback) {
 		var cb = this.flushSafe(callback),
 			timestamp = this.frameTimestamp,
 			keyframeTimestamp = this.keyframeTimestamp;
@@ -328,47 +327,47 @@ extend(OGVWrapperCodec.prototype, {
 				cb(ok);
 			});
 		});
-	},
+	}
 
-	decodeAudio: function(callback) {
+	decodeAudio(callback) {
 		var cb = this.flushSafe(callback);
 		var self = this;
 		this.demuxer.dequeueAudioPacket(function(packet) {
 			self.audioBytes += packet.byteLength;
 			self.audioDecoder.processAudio(packet, cb);
 		});
-	},
+	}
 
-	discardFrame: function(callback) {
+	discardFrame(callback) {
 		var self = this;
 		this.demuxer.dequeueVideoPacket(function(packet) {
 			self.videoBytes += packet.byteLength;
 			callback();
 		});
-	},
+	}
 
-	discardAudio: function(callback) {
+	discardAudio(callback) {
 		var self = this;
 		this.demuxer.dequeueAudioPacket(function(packet) {
 			self.audioBytes += packet.byteLength;
 			callback();
 		});
-	},
+	}
 
-	flush: function(callback) {
+	flush(callback) {
 		this.flushIter++;
 		this.demuxer.flush(callback);
-	},
+	}
 
-	getKeypointOffset: function(timeSeconds, callback) {
+	getKeypointOffset(timeSeconds, callback) {
 		this.demuxer.getKeypointOffset(timeSeconds, callback);
-	},
+	}
 
-	seekToKeypoint: function(timeSeconds, callback) {
+	seekToKeypoint(timeSeconds, callback) {
 		this.demuxer.seekToKeypoint(timeSeconds, this.flushSafe(callback));
-	},
+	}
 	
-	loadAudioCodec: function(callback) {
+	loadAudioCodec(callback) {
 		if (this.demuxer.audioCodec) {
 			var wasm = !!this.options.wasm;
 			var audioClassMap = {
@@ -397,8 +396,9 @@ extend(OGVWrapperCodec.prototype, {
 		} else {
 			callback();
 		}
-	},
-	loadVideoCodec: function(callback) {
+	}
+
+	loadVideoCodec(callback) {
 		if (this.demuxer.videoCodec) {
 			var wasm = !!this.options.wasm,
 				threading = !!this.options.threading;
@@ -434,6 +434,6 @@ extend(OGVWrapperCodec.prototype, {
 			callback();
 		}
 	}
-});
+}
 
 module.exports = OGVWrapperCodec;
