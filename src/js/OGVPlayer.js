@@ -53,6 +53,13 @@ const SeekState = {
 	LINEAR_TO_TARGET: 'LINEAR_TO_TARGET'
 };
 
+let getTimestamp;
+if (typeof performance === 'undefined' || typeof performance.now === undefined) {
+	getTimestamp = Date.now;
+} else {
+	getTimestamp = performance.now.bind(performance);
+}
+
 /**
  * Player class -- instantiate one of these to get an 'ogvjs' HTML element
  * which has a similar interface to the HTML audio/video elements.
@@ -144,6 +151,10 @@ class OGVPlayer {
 
 		extend(self, constants);
 
+		// Copy in the methods for now.
+		// @todo use a better prototype chain
+		extend(self, OGVPlayer.prototype);
+
 		canvas.style.position = 'absolute';
 		canvas.style.top = '0';
 		canvas.style.left = '0';
@@ -152,13 +163,6 @@ class OGVPlayer {
 		canvas.style.objectFit = 'contain';
 		self.appendChild(canvas);
 
-		var getTimestamp;
-		// FIXME: don't use window scope, see BogoSlow.js
-		if (window.performance === undefined || window.performance.now === undefined) {
-			getTimestamp = Date.now;
-		} else {
-			getTimestamp = window.performance.now.bind(window.performance);
-		}
 		function time(cb) {
 			var start = getTimestamp();
 			cb();
@@ -344,7 +348,6 @@ class OGVPlayer {
 			ended = false,
 			startedPlaybackInDocument = false;
 
-		var framesPlayed = 0;
 		// Benchmark data, exposed via getPlaybackStats()
 		var framesProcessed = 0, // frames
 			targetPerFrameTime = 1000 / 60, // ms
@@ -1438,7 +1441,6 @@ class OGVPlayer {
 								});
 
 								framesProcessed++;
-								framesPlayed++;
 
 								doFrameComplete(frame);
 
@@ -2488,11 +2490,11 @@ class OGVPlayer {
 
 		return self;
 	}
-}
 
-OGVPlayer.initSharedAudioContext = function() {
-	AudioFeeder.initSharedAudioContext();
-};
+	static initSharedAudioContext() {
+		AudioFeeder.initSharedAudioContext();
+	}
+}
 
 /**
  * Set up constants on the class and instances
