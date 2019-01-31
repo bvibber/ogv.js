@@ -1,8 +1,6 @@
-"use strict";
+import extend from './extend.js';
 
-var extend = require('./extend.js');
-
-var OGVMediaErrorConstants = {
+const OGVMediaErrorConstants = {
 	MEDIA_ERR_ABORTED: 1,
 	MEDIA_ERR_NETWORK: 2,
 	MEDIA_ERR_DECODE: 3,
@@ -10,14 +8,17 @@ var OGVMediaErrorConstants = {
 };
 
 /**
- * Constructor for analogue of the MediaError class
- * returned by HTMLMediaElement.error property
+ * Analogue of the MediaError class returned by
+ * HTMLMediaElement.error property
  */
-function OGVMediaError(code, message) {
-	this.code = code;
-	this.message = message;
-};
+class OGVMediaError {
+	constructor(code, message) {
+		this.code = code;
+		this.message = message;
+	}
+}
+
 extend(OGVMediaError, OGVMediaErrorConstants);
 extend(OGVMediaError.prototype, OGVMediaErrorConstants);
 
-module.exports = OGVMediaError;
+export default OGVMediaError;

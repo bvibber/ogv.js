@@ -6,7 +6,7 @@
 
 var OGVCompat = require("./OGVCompat.js"),
 	OGVLoader = require("./OGVLoader.js"),
-	OGVMediaError = require('./OGVMediaError.js'),
+	OGVMediaError = require('./OGVMediaError.js').default,
 	OGVMediaType = require("./OGVMediaType.js").default,
 	OGVPlayer = require("./OGVPlayer.js"),
 	OGVTimeRanges = require('./OGVTimeRanges.js').default,
