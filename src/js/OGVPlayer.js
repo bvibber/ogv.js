@@ -864,9 +864,9 @@ class OGVPlayer extends OGVJSElement {
 
 	_fireEventAsync(eventName, props={}) {
 		this._log('fireEventAsync ' + eventName);
-		setTimeout(() => {
+		setImmediate(() => {
 			this._fireEvent(eventName, props);
-		}, 0);
+		});
 	}
 
 	static initSharedAudioContext() {
@@ -1056,9 +1056,9 @@ class OGVPlayer extends OGVJSElement {
 		if (this._startedPlaybackInDocument && !document.body.contains(this)) {
 			// We've been de-parented since we last ran
 			// Stop playback at next opportunity!
-			setTimeout(() => {
+			setImmediate(() => {
 				this.stop();
-			}, 0);
+			});
 		}
 
 		let newFrameTimestamp = getTimestamp(),
@@ -2608,7 +2608,7 @@ if (OGVPlayer.supportsObjectFit) {
 	};
 	var fullResizeVideo = function() {
 		// fullscreens may ping us before the resize happens
-		setTimeout(OGVPlayer.updatePositionOnResize, 0);
+		setImmediate(OGVPlayer.updatePositionOnResize);
 	};
 
 	window.addEventListener('resize', OGVPlayer.updatePositionOnResize);

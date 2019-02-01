@@ -15,6 +15,7 @@
         "ActiveXObject": true,
         "MSStreamReader": true,
         "Float32Array": true,
-        "Uint8Array": true
+        "Uint8Array": true,
+        "setImmediate": true
     }
 }
