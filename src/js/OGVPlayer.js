@@ -95,39 +95,26 @@ class OGVPlayer extends OGVJSElement {
 		options = options || {};
 		this._options = options;
 
-		var instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
-
-		var canvasOptions = {};
-		if (options.webGL !== undefined) {
-			// @fixme confirm format of webGL option
-			canvasOptions.webGL = options.webGL;
-		}
-		if(!!options.forceWebGL) {
-			canvasOptions.webGL = 'required';
-		}
+		this._instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
 
 		// Running the codec in a worker thread equals happy times!
-		var enableWorker = !!window.Worker;
+		let enableWorker = !!window.Worker;
 		if (typeof options.worker !== 'undefined') {
 			enableWorker = !!options.worker;
 		}
 
 		// Use the WebAssembly build by default if available;
 		// it should load and compile faster than asm.js.
-		var enableWASM = OGVLoader.wasmSupported();
+		let enableWASM = OGVLoader.wasmSupported();
 		if (typeof options.wasm !== 'undefined') {
 			enableWASM = !!options.wasm;
 		}
 
 		// Experimental pthreads multithreading mode, if built.
-		var enableThreading = !!options.threading;
+		let enableThreading = !!options.threading;
 		if (enableWASM) {
 			// No MT WASM yet.
 			enableThreading = false;
-		}
-
-		if (options.sync === undefined) {
-			options.sync = 'skip-frames';
 		}
 
 		var state = State.INITIAL;
@@ -168,7 +155,7 @@ class OGVPlayer extends OGVJSElement {
 		var frameSink;
 
 		var self = this;
-		self.className = instanceId;
+		self.className = this._instanceId;
 
 		extend(self, constants);
 
@@ -889,11 +876,20 @@ class OGVPlayer extends OGVJSElement {
 
 			canvas.width = videoInfo.displayWidth;
 			canvas.height = videoInfo.displayHeight;
-			OGVPlayer.styleManager.appendRule('.' + instanceId, {
+			OGVPlayer.styleManager.appendRule('.' + self._instanceId, {
 				width: videoInfo.displayWidth + 'px',
 				height: videoInfo.displayHeight + 'px'
 			});
 			OGVPlayer.updatePositionOnResize();
+
+			let canvasOptions = {};
+			if (self._options.webGL !== undefined) {
+				// @fixme confirm format of webGL option
+				canvasOptions.webGL = self._options.webGL;
+			}
+			if(!!self._options.forceWebGL) {
+				canvasOptions.webGL = 'required';
+			}
 
 			frameSink = YUVCanvas.attach(canvas, canvasOptions);
 		}
@@ -2075,7 +2071,7 @@ class OGVPlayer extends OGVJSElement {
 						thumbnail.style.visibility = 'hidden';
 						thumbnail.addEventListener('load', function() {
 							if (thumbnail === this) {
-								OGVPlayer.styleManager.appendRule('.' + instanceId, {
+								OGVPlayer.styleManager.appendRule('.' + self._instanceId, {
 									width: thumbnail.naturalWidth + 'px',
 									height: thumbnail.naturalHeight + 'px'
 								});
