@@ -13,13 +13,51 @@ var plugins = [
   }),
 ];
 
-var babelRule = {
+var babelRuleModule = {
   test: /\.m?js$/,
   exclude: /node_modules/,
   use: {
     loader: 'babel-loader',
     options: {
-      presets: ['@babel/preset-env'],
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            targets: {
+              esmodules: true
+            }
+          }
+        ]
+      ],
+      plugins: [
+        '@babel/plugin-transform-modules-commonjs',
+        '@babel/plugin-transform-runtime'
+      ]
+    }
+  }
+};
+
+var babelRuleES5 = {
+  test: /\.m?js$/,
+  exclude: /node_modules/,
+  use: {
+    loader: 'babel-loader',
+    options: {
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            targets: {
+              firefox: '4',
+              chrome: '7',
+              ie: '11',
+              edge: '12',
+              safari: '6',
+              ios: '10'
+            }
+          }
+        ]
+      ],
       plugins: [
         '@babel/plugin-transform-modules-commonjs',
         '@babel/plugin-transform-runtime'
@@ -30,7 +68,32 @@ var babelRule = {
 
 module.exports = [
   {
-    // Main entry point!
+    // Main entry point! - ES Module
+    entry: './src/js/ogv.js',
+    mode: 'production',
+    output: {
+      path: path.resolve(__dirname, BUILD_DIR),
+      publicPath: publicPath(),
+      filename: 'ogv-es2017.js',
+      libraryTarget: 'umd',
+      library: 'ogvjs'
+    },
+    plugins: plugins,
+    module: {
+      rules: [
+        {
+          test: /\.swf$/,
+          loader: 'file-loader',
+          options: {
+            'name': '[name].[ext]?version=[hash]'
+          }
+        },
+        babelRuleModule
+      ]
+    }
+  },
+  {
+    // Main entry point! - ES5
     entry: './src/js/ogv.js',
     mode: 'production',
     output: {
@@ -50,7 +113,7 @@ module.exports = [
             'name': '[name].[ext]?version=[hash]'
           }
         },
-        babelRule
+        babelRuleES5
       ]
     }
   },
@@ -66,7 +129,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRule
+        babelRuleES5
       ]
     }
   },
@@ -82,7 +145,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRule
+        babelRuleES5
       ]
     }
   },
@@ -97,7 +160,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRule
+        babelRuleES5
       ]
     }
 	},
@@ -112,7 +175,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRule
+        babelRuleES5
       ]
     }
   },

@@ -44,9 +44,9 @@ class OGVLoaderWeb extends OGVLoaderBase {
     }
 
     defaultBase() {
-		// for browser, try to autodetect
+        // for browser, try to autodetect
 		let scriptNodes = document.querySelectorAll('script'),
-			regex = /^(?:|(.*)\/)ogv(?:-support)?\.js(?:\?|#|$)/,
+			regex = /^(?:|(.*)\/)ogv(?:-support|-es2017)?\.js(?:\?|#|$)/,
 			path,
 			matches;
 		for (let i = 0; i < scriptNodes.length; i++) {
