@@ -98,58 +98,30 @@ class OGVPlayer extends OGVJSElement {
 		this._instanceId = 'ogvjs' + (++OGVPlayer.instanceCount);
 
 		// Running the codec in a worker thread equals happy times!
-		let enableWorker = !!window.Worker;
 		if (typeof options.worker !== 'undefined') {
-			enableWorker = !!options.worker;
+			this._enableWorker = !!options.worker;
+		} else {
+			this._enableWorker = !!window.Worker;
 		}
 
 		// Use the WebAssembly build by default if available;
 		// it should load and compile faster than asm.js.
-		let enableWASM = OGVLoader.wasmSupported();
 		if (typeof options.wasm !== 'undefined') {
-			enableWASM = !!options.wasm;
+			this._enableWASM = !!options.wasm;
+		} else {
+			this._enableWASM = OGVLoader.wasmSupported();
 		}
 
 		// Experimental pthreads multithreading mode, if built.
-		let enableThreading = !!options.threading;
-		if (enableWASM) {
-			// No MT WASM yet.
-			enableThreading = false;
-		}
+		this._enableThreading = !!options.threading;
 
 		var state = State.INITIAL;
 
 		var seekState = SeekState.NOT_SEEKING;
 
-		var audioOptions = {},
-			codecOptions = {};
 		options.base = options.base || OGVLoader.base;
-		if (typeof options.base === 'string') {
-			// Pass the resource dir down to AudioFeeder, so it can load the dynamicaudio.swf
-			audioOptions.base = options.base;
 
-			// And to the worker thread, so it can load the codec JS
-			codecOptions.base = options.base;
-		}
-		if (typeof options.audioContext !== 'undefined') {
-			// Try passing a pre-created audioContext in?
-			audioOptions.audioContext = options.audioContext;
-		}
-		if (typeof options.audioDestination !== 'undefined') {
-			// Try passing a pre-created audioContext in?
-			audioOptions.output = options.audioDestination;
-		}
-		// Buffer in largeish chunks to survive long CPU spikes on slow CPUs (eg, 32-bit iOS)
-		audioOptions.bufferSize = 8192;
-
-		codecOptions.worker = enableWorker;
-		codecOptions.threading = enableThreading;
-		codecOptions.wasm = enableWASM;
-		if (typeof options.memoryLimit === 'number' && !enableWASM) {
-			// Optional memory limit override for asm.js build;
-			// can be useful for very large frame sizes.
-			codecOptions.memoryLimit = options.memoryLimit;
-		}
+		this._detectedType = undefined;
 
 		var canvas = document.createElement('canvas');
 		var frameSink;
@@ -218,7 +190,23 @@ class OGVPlayer extends OGVJSElement {
 			prebufferingAudio = false,
 			initialSeekTime = 0.0;
 		function initAudioFeeder() {
-			audioFeeder = new AudioFeeder( audioOptions );
+			let options = self._options;
+			let audioOptions = {
+				// Pass the resource dir down to AudioFeeder, so it can load the dynamicaudio.swf
+				base: options.base || OGVLoader.base,
+
+				// Buffer in largeish chunks to survive long CPU spikes on slow CPUs (eg, 32-bit iOS)
+				bufferSize: 8192,
+			};
+			if (options.audioContext) {
+				// Try passing a pre-created AudioContext in?
+				audioOptions.audioContext = options.audioContext;
+			}
+			if (options.audioDestination) {
+				// Try passing a pre-created output node in?
+				audioOptions.output = options.audioDestination;
+			}
+			audioFeeder = new AudioFeeder(audioOptions);
 			audioFeeder.init(audioInfo.channels, audioInfo.rate);
 
 			// At our requested 8192 buffer size, bufferDuration should be
@@ -1630,7 +1618,22 @@ class OGVPlayer extends OGVJSElement {
 			started = true;
 			ended = false;
 
+			let options = self._options;
+			let codecOptions = {
+				// Base to the worker thread, so it can load the codec JS
+				base: options.base,
+				worker: self._enableWorker,
+				threading: self._enableThreading,
+				wasm: self._enableWASM,
+			};
+			if (options.memoryLimit && !(self._enableWASM)) {
+				codecOptions.memoryLimit = options.memoryLimit;
+			}
+			if (self._detectedType) {
+				codecOptions.type = self._detectedType;
+			}
 			codec = new OGVWrapperCodec(codecOptions);
+
 			lastVideoCpuTime = 0;
 			lastAudioCpuTime = 0;
 			lastDemuxerCpuTime = 0;
@@ -1667,7 +1670,7 @@ class OGVPlayer extends OGVJSElement {
 					hdr[3] == 'S'.charAt(0)
 				) {
 					// Ogg stream
-					codecOptions.type = 'video/ogg';
+					self._detectedType = 'video/ogg';
 				} else if (hdr.length > 4 &&
 							hdr[0] == 0x1a &&
 							hdr[1] == 0x45 &&
@@ -1675,10 +1678,10 @@ class OGVPlayer extends OGVJSElement {
 								hdr[3] == 0xa3
 				) {
 					// Matroska or WebM
-					codecOptions.type = 'video/webm';
+					self._detectedType = 'video/webm';
 				} else {
 					// @todo handle unknown file types gracefully
-					codecOptions.type = 'video/ogg';
+					self._detectedType = 'video/ogg';
 				}
 
 				// Pass that first buffer in to the demuxer!
@@ -1782,7 +1785,7 @@ class OGVPlayer extends OGVJSElement {
 		 * HTMLMediaElement play method
 		 */
 		self.play = function() {
-			if (!muted && !audioOptions.audioContext) {
+			if (!muted && !self._options.audioContext) {
 				OGVPlayer.initSharedAudioContext();
 			}
 
