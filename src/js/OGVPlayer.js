@@ -127,9 +127,9 @@ class OGVPlayer extends OGVJSElement {
 		var frameSink;
 
 		var self = this;
-		self.className = this._instanceId;
+		this.className = this._instanceId;
 
-		extend(self, constants);
+		extend(this, constants);
 
 		canvas.style.position = 'absolute';
 		canvas.style.top = '0';
@@ -137,47 +137,10 @@ class OGVPlayer extends OGVJSElement {
 		canvas.style.width = '100%';
 		canvas.style.height = '100%';
 		canvas.style.objectFit = 'contain';
-		self.appendChild(canvas);
+		this.appendChild(canvas);
 
-
-		self._startTime = getTimestamp();
-
-		function fireEvent(eventName, props) {
-			self._log('fireEvent ' + eventName);
-			var event;
-			props = props || {};
-
-			var standard = (typeof window.Event == 'function');
-			if (standard) {
-				// standard event creation
-				event = new CustomEvent(eventName);
-			} else {
-				// IE back-compat mode
-				// https://msdn.microsoft.com/en-us/library/dn905219%28v=vs.85%29.aspx
-				event = document.createEvent('Event');
-				event.initEvent(eventName, false, false);
-			}
-
-			for (var prop in props) {
-				if (props.hasOwnProperty(prop)) {
-					event[prop] = props[prop];
-				}
-			}
-
-			var allowDefault = self.dispatchEvent(event);
-			if (!standard && eventName === 'resize' && self.onresize && allowDefault) {
-				// resize demands special treatment!
-				// in IE 11 it doesn't fire through to the .onresize handler
-				// for some crazy reason
-				self.onresize.call(self, event);
-			}
-		}
-		function fireEventAsync(eventName, props) {
-			self._log('fireEventAsync ' + eventName);
-			setTimeout(function() {
-				fireEvent(eventName, props);
-			}, 0);
-		}
+		// Used for relative timestamp in _log()
+		this._startTime = getTimestamp();
 
 		var codec = null,
 			videoInfo = null,
@@ -484,11 +447,11 @@ class OGVPlayer extends OGVJSElement {
 				'clock time ' + n(wallClockTime) + ' (jitter ' + n(jitter) + ') ' +
 				'cpu: ' + n(timing.cpuTime) + ' (mux: ' + n(timing.demuxerTime) + ' buf: ' + n(timing.bufferTime) + ' draw: ' + n(timing.drawingTime) + ' proxy: ' + n(timing.proxyTime) + ') ' +
 				'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
-			fireEventAsync('framecallback', timing);
+			self._fireEventAsync('framecallback', timing);
 
 			if (!lastTimeUpdate || (newFrameTimestamp - lastTimeUpdate) >= timeUpdateInterval) {
 				lastTimeUpdate = newFrameTimestamp;
-				fireEventAsync('timeupdate');
+				self._fireEventAsync('timeupdate');
 			}
 		}
 
@@ -620,7 +583,7 @@ class OGVPlayer extends OGVJSElement {
 			codec.seekToKeypoint(toTime, function(seeking) {
 				if (seeking) {
 					seekState = SeekState.LINEAR_TO_TARGET;
-					fireEventAsync('seeking');
+					self._fireEventAsync('seeking');
 
 					if (didSeek) {
 						// wait for i/o to trigger readBytesAndWait
@@ -650,7 +613,7 @@ class OGVPlayer extends OGVJSElement {
 						startBisection(seekTargetTime);
 					}
 
-					fireEventAsync('seeking');
+					self._fireEventAsync('seeking');
 				});
 			});
 		}
@@ -669,8 +632,8 @@ class OGVPlayer extends OGVJSElement {
 
 			function finishedSeeking() {
 				lastTimeUpdate = seekTargetTime;
-				fireEventAsync('timeupdate');
-				fireEventAsync('seeked');
+				self._fireEventAsync('timeupdate');
+				self._fireEventAsync('seeked');
 				if (isProcessing()) {
 					// wait for whatever's going on to complete
 				} else {
@@ -1028,10 +991,10 @@ class OGVPlayer extends OGVJSElement {
 			} else if (state == State.LOADED) {
 
 				state = State.PRELOAD;
-				fireEventAsync('loadedmetadata');
-				fireEventAsync('durationchange');
+				self._fireEventAsync('loadedmetadata');
+				self._fireEventAsync('durationchange');
 				if (codec.hasVideo) {
-					fireEventAsync('resize');
+					self._fireEventAsync('resize');
 				}
 				pingProcessing(0);
 
@@ -1041,7 +1004,7 @@ class OGVPlayer extends OGVJSElement {
 					(codec.audioReady || !codec.hasAudio)) {
 
 					state = State.READY;
-					fireEventAsync('loadeddata');
+					self._fireEventAsync('loadeddata');
 					pingProcessing();
 				} else {
 					codec.process(function doProcessPreload(more) {
@@ -1086,8 +1049,8 @@ class OGVPlayer extends OGVJSElement {
 							startPlayback();
 						}
 						pingProcessing(0);
-						fireEventAsync('play');
-						fireEventAsync('playing');
+						self._fireEventAsync('play');
+						self._fireEventAsync('playing');
 					}
 
 					if (codec.hasAudio && !audioFeeder && !muted) {
@@ -1454,8 +1417,8 @@ class OGVPlayer extends OGVJSElement {
 									ended = true;
 									// @todo implement loop behavior
 									paused = true;
-									fireEventAsync('pause');
-									fireEventAsync('ended');
+									self._fireEventAsync('pause');
+									self._fireEventAsync('ended');
 								}
 
 							} else {
@@ -1891,7 +1854,7 @@ class OGVPlayer extends OGVJSElement {
 				stopPlayback();
 				prebufferingAudio = false;
 				paused = true;
-				fireEvent('pause');
+				self._fireEvent('pause');
 			}
 		};
 
@@ -2045,7 +2008,7 @@ class OGVPlayer extends OGVJSElement {
 						initAudioFeeder();
 						startPlayback(audioEndTimestamp);
 					}
-					fireEventAsync('volumechange');
+					self._fireEventAsync('volumechange');
 				}
 			},
 
@@ -2367,7 +2330,7 @@ class OGVPlayer extends OGVJSElement {
 					if (audioFeeder) {
 						audioFeeder.volume = _volume;
 					}
-					fireEventAsync('volumechange');
+					self._fireEventAsync('volumechange');
 				}
 			}
 		});
@@ -2508,6 +2471,43 @@ class OGVPlayer extends OGVJSElement {
 				console.log('[' + (Math.round(delta * 10) / 10) + 'ms] ' + msg);
 			}
 		}
+	}
+
+	_fireEvent(eventName, props={}) {
+		this._log('fireEvent ' + eventName);
+
+		let standard = (typeof Event == 'function');
+		let event;
+		if (standard) {
+			// standard event creation
+			event = new CustomEvent(eventName);
+		} else {
+			// IE back-compat mode
+			// https://msdn.microsoft.com/en-us/library/dn905219%28v=vs.85%29.aspx
+			event = document.createEvent('Event');
+			event.initEvent(eventName, false, false);
+		}
+
+		for (let prop in props) {
+			if (props.hasOwnProperty(prop)) {
+				event[prop] = props[prop];
+			}
+		}
+
+		let allowDefault = this.dispatchEvent(event);
+		if (!standard && eventName === 'resize' && this.onresize && allowDefault) {
+			// resize demands special treatment!
+			// in IE 11 it doesn't fire through to the .onresize handler
+			// for some crazy reason
+			this.onresize.call(self, event);
+		}
+	}
+
+	_fireEventAsync(eventName, props={}) {
+		this._log('fireEventAsync ' + eventName);
+		setTimeout(() => {
+			this._fireEvent(eventName, props);
+		}, 0);
 	}
 
 	static initSharedAudioContext() {
