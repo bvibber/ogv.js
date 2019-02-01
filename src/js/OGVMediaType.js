@@ -30,7 +30,8 @@ class OGVMediaType {
 				this.minor = bits[1];
 			}
 
-			for (let str of parts) {
+			for (let i in parts) {
+				let str = parts[i];
 				let matches = str.match(/^codecs\s*=\s*"(.*?)"$/);
 				if (matches) {
 					this.codecs = split(matches[1], ',');
