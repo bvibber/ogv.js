@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 
 ## Updates
 
-1.5.9 - 2019-01-??
+1.6.0 - 2019-02-??
 * experimental support for AV1 video in WebM
 * update buildchain to emscripten 1.38.25
 * fix a stray global
