@@ -3,7 +3,6 @@
 . ./buildscripts/compile-options.sh
 
 # compile wrapper around libvpx
-
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_ASMJS_OPTIONS \
