@@ -1555,183 +1555,28 @@ class OGVPlayer extends OGVJSElement {
 
 		} else if (this._state == State.INITIAL) {
 
-			if (this._codec.loadedMetadata) {
-				// we just fell over from headers into content; call onloadedmetadata etc
-				if (!this._codec.hasVideo && !this._codec.hasAudio) {
-					throw new Error('No audio or video found, something is wrong');
-				}
-				if (this._codec.hasAudio) {
-					this._audioInfo = this._codec.audioFormat;
-				}
-				if (this._codec.hasVideo) {
-					this._videoInfo = this._codec.videoFormat;
-					this._setupVideo();
-				}
-				if (!isNaN(this._codec.duration)) {
-					this._duration = this._codec.duration;
-				}
-				if (this._duration === null) {
-					if (this._stream.seekable) {
-						// fixme this is ogg-specific maybe?
-						this._state = State.SEEKING_END;
-						this._lastSeenTimestamp = -1;
-						this._codec.flush(() => {
-							this._seekStream(Math.max(0, this._stream.length - 65536 * 2));
-						});
-					} else {
-						// Stream not seekable and no x-content-duration; assuming infinite stream.
-						this._state = State.LOADED;
-						this._pingProcessing();
-					}
-				} else {
-					// We already know the duration.
-					this._state = State.LOADED;
-					this._pingProcessing();
-				}
-			} else {
-				this._codec.process((more) => {
-					if (more) {
-						// Keep processing headers
-						this._pingProcessing();
-					} else if (this._streamEnded) {
-						throw new Error('end of file before headers found');
-					} else {
-						// Read more data!
-						this._log('reading more cause we are out of data');
-						this._readBytesAndWait();
-					}
-				});
-			}
+			this._doProcessInitial();
 
 		} else if (this._state == State.SEEKING_END) {
 
-			// Look for the last item.
-			if (this._codec.frameReady) {
-				this._log('saw frame with ' + this._codec.frameTimestamp);
-				this._lastSeenTimestamp = Math.max(this._lastSeenTimestamp, this._codec.frameTimestamp);
-				this._codec.discardFrame(() => {
-					this._pingProcessing();
-				});
-			} else if (this._codec.audioReady) {
-				this._log('saw audio with ' + this._codec.audioTimestamp);
-				this._lastSeenTimestamp = Math.max(this._lastSeenTimestamp, this._codec.audioTimestamp);
-				this._codec.discardAudio(() => {
-					this._pingProcessing();
-				});
-			} else {
-				this._codec.process((more) => {
-					if (more) {
-						// Keep processing headers
-						this._pingProcessing();
-					} else {
-						// Read more data!
-						if (!this._stream.eof) {
-							this._readBytesAndWait();
-						} else {
-							// We are at the end!
-							this._log('seek-duration: we are at the end: ' + this._lastSeenTimestamp);
-							if (this._lastSeenTimestamp > 0) {
-								this._duration = this._lastSeenTimestamp;
-							}
-
-							// Ok, seek back to the beginning and resync the streams.
-							this._state = State.LOADED;
-							this._codec.flush(() => {
-								this._streamEnded = false;
-								this._dataEnded = false;
-								this._seekStream(0);
-							});
-						}
-					}
-				});
-			}
+			this._doProcessSeekingEnd();
 
 		} else if (this._state == State.LOADED) {
 
-			this._state = State.PRELOAD;
-			this._fireEventAsync('loadedmetadata');
-			this._fireEventAsync('durationchange');
-			if (this._codec.hasVideo) {
-				this._fireEventAsync('resize');
-			}
-			this._pingProcessing(0);
+			this._doProcessLoaded();
 
 		} else if (this._state == State.PRELOAD) {
 
-			if ((this._codec.frameReady || !this._codec.hasVideo) &&
-				(this._codec.audioReady || !this._codec.hasAudio)) {
-
-				this._state = State.READY;
-				this._fireEventAsync('loadeddata');
-				this._pingProcessing();
-			} else {
-				this._codec.process((more) => {
-					if (more) {
-						this._pingProcessing();
-					} else if (this._streamEnded) {
-						// Ran out of data before data available...?
-						this._ended = true;
-					} else {
-						this._readBytesAndWait();
-					}
-				});
-			}
+			this._doProcessPreload();
 
 		} else if (this._state == State.READY) {
-			this._log('initial seek to ' + this._initialSeekTime);
 
-			if (this._initialSeekTime > 0) {
+			this._doProcessReady();
 
-				let target = this._initialSeekTime;
-				this._initialSeekTime = 0;
-				this._log('initial seek to ' + target);
-				this._doSeek(target);
-
-			} else if (this._paused) {
-
-				// Paused? stop here.
-				this._log('paused while in ready');
-
-			} else {
-
-				let finishStartPlaying = () => {
-					this._log('finishStartPlaying');
-
-					this._state = State.PLAYING;
-					this._lastFrameTimestamp = getTimestamp();
-
-					if (this._codec.hasAudio && this._audioFeeder) {
-						// Pre-queue audio before we start the clock
-						this._prebufferingAudio = true;
-					} else {
-						this._startPlayback();
-					}
-					this._pingProcessing(0);
-					this._fireEventAsync('play');
-					this._fireEventAsync('playing');
-				}
-
-				if (this._codec.hasAudio && !this._audioFeeder && !this._muted) {
-					this._initAudioFeeder();
-					this._audioFeeder.waitUntilReady(finishStartPlaying);
-				} else {
-					finishStartPlaying();
-				}
-			}
 
 		} else if (this._state == State.SEEKING) {
 
-			if (this._seekState == SeekState.NOT_SEEKING) {
-				throw new Error('seeking in invalid state (not seeking?)');
-			} else if (this._seekState == SeekState.BISECT_TO_TARGET) {
-				this._doProcessBisectionSeek();
-			} else if (this._seekState == SeekState.BISECT_TO_KEYPOINT) {
-				this._doProcessBisectionSeek();
-			} else if (this._seekState == SeekState.LINEAR_TO_TARGET) {
-				this._doProcessLinearSeeking();
-			} else {
-				throw new Error('Invalid seek state ' + this._seekState);
-			}
+			this._doProcessSeeking();
 
 		} else if (this._state == State.PLAYING) {
 
@@ -1739,8 +1584,7 @@ class OGVPlayer extends OGVJSElement {
 
 		} else if (this._state == State.ERROR) {
 
-			// Nothing to do.
-			//console.log("Reached error state. Sorry bout that.");
+			this._doProcessError();
 
 		} else {
 
@@ -1749,6 +1593,186 @@ class OGVPlayer extends OGVJSElement {
 		}
 	}
 
+	_doProcessInitial() {
+		if (this._codec.loadedMetadata) {
+			// we just fell over from headers into content; call onloadedmetadata etc
+			if (!this._codec.hasVideo && !this._codec.hasAudio) {
+				throw new Error('No audio or video found, something is wrong');
+			}
+			if (this._codec.hasAudio) {
+				this._audioInfo = this._codec.audioFormat;
+			}
+			if (this._codec.hasVideo) {
+				this._videoInfo = this._codec.videoFormat;
+				this._setupVideo();
+			}
+			if (!isNaN(this._codec.duration)) {
+				this._duration = this._codec.duration;
+			}
+			if (this._duration === null) {
+				if (this._stream.seekable) {
+					// fixme this is ogg-specific maybe?
+					this._state = State.SEEKING_END;
+					this._lastSeenTimestamp = -1;
+					this._codec.flush(() => {
+						this._seekStream(Math.max(0, this._stream.length - 65536 * 2));
+					});
+				} else {
+					// Stream not seekable and no x-content-duration; assuming infinite stream.
+					this._state = State.LOADED;
+					this._pingProcessing();
+				}
+			} else {
+				// We already know the duration.
+				this._state = State.LOADED;
+				this._pingProcessing();
+			}
+		} else {
+			this._codec.process((more) => {
+				if (more) {
+					// Keep processing headers
+					this._pingProcessing();
+				} else if (this._streamEnded) {
+					throw new Error('end of file before headers found');
+				} else {
+					// Read more data!
+					this._log('reading more cause we are out of data');
+					this._readBytesAndWait();
+				}
+			});
+		}
+	}
+
+	_doProcessSeekingEnd() {
+		// Look for the last item.
+		if (this._codec.frameReady) {
+			this._log('saw frame with ' + this._codec.frameTimestamp);
+			this._lastSeenTimestamp = Math.max(this._lastSeenTimestamp, this._codec.frameTimestamp);
+			this._codec.discardFrame(() => {
+				this._pingProcessing();
+			});
+		} else if (this._codec.audioReady) {
+			this._log('saw audio with ' + this._codec.audioTimestamp);
+			this._lastSeenTimestamp = Math.max(this._lastSeenTimestamp, this._codec.audioTimestamp);
+			this._codec.discardAudio(() => {
+				this._pingProcessing();
+			});
+		} else {
+			this._codec.process((more) => {
+				if (more) {
+					// Keep processing headers
+					this._pingProcessing();
+				} else {
+					// Read more data!
+					if (!this._stream.eof) {
+						this._readBytesAndWait();
+					} else {
+						// We are at the end!
+						this._log('seek-duration: we are at the end: ' + this._lastSeenTimestamp);
+						if (this._lastSeenTimestamp > 0) {
+							this._duration = this._lastSeenTimestamp;
+						}
+
+						// Ok, seek back to the beginning and resync the streams.
+						this._state = State.LOADED;
+						this._codec.flush(() => {
+							this._streamEnded = false;
+							this._dataEnded = false;
+							this._seekStream(0);
+						});
+					}
+				}
+			});
+		}
+	}
+
+	_doProcessLoaded() {
+		this._state = State.PRELOAD;
+		this._fireEventAsync('loadedmetadata');
+		this._fireEventAsync('durationchange');
+		if (this._codec.hasVideo) {
+			this._fireEventAsync('resize');
+		}
+		this._pingProcessing(0);
+	}
+
+	_doProcessPreload() {
+		if ((this._codec.frameReady || !this._codec.hasVideo) &&
+			(this._codec.audioReady || !this._codec.hasAudio)) {
+
+			this._state = State.READY;
+			this._fireEventAsync('loadeddata');
+			this._pingProcessing();
+		} else {
+			this._codec.process((more) => {
+				if (more) {
+					this._pingProcessing();
+				} else if (this._streamEnded) {
+					// Ran out of data before data available...?
+					this._ended = true;
+				} else {
+					this._readBytesAndWait();
+				}
+			});
+		}
+	}
+
+	_doProcessReady() {
+		this._log('initial seek to ' + this._initialSeekTime);
+
+		if (this._initialSeekTime > 0) {
+
+			let target = this._initialSeekTime;
+			this._initialSeekTime = 0;
+			this._log('initial seek to ' + target);
+			this._doSeek(target);
+
+		} else if (this._paused) {
+
+			// Paused? stop here.
+			this._log('paused while in ready');
+
+		} else {
+
+			let finishStartPlaying = () => {
+				this._log('finishStartPlaying');
+
+				this._state = State.PLAYING;
+				this._lastFrameTimestamp = getTimestamp();
+
+				if (this._codec.hasAudio && this._audioFeeder) {
+					// Pre-queue audio before we start the clock
+					this._prebufferingAudio = true;
+				} else {
+					this._startPlayback();
+				}
+				this._pingProcessing(0);
+				this._fireEventAsync('play');
+				this._fireEventAsync('playing');
+			}
+
+			if (this._codec.hasAudio && !this._audioFeeder && !this._muted) {
+				this._initAudioFeeder();
+				this._audioFeeder.waitUntilReady(finishStartPlaying);
+			} else {
+				finishStartPlaying();
+			}
+		}
+	}
+
+	_doProcessSeeking() {
+		if (this._seekState == SeekState.NOT_SEEKING) {
+			throw new Error('seeking in invalid state (not seeking?)');
+		} else if (this._seekState == SeekState.BISECT_TO_TARGET) {
+			this._doProcessBisectionSeek();
+		} else if (this._seekState == SeekState.BISECT_TO_KEYPOINT) {
+			this._doProcessBisectionSeek();
+		} else if (this._seekState == SeekState.LINEAR_TO_TARGET) {
+			this._doProcessLinearSeeking();
+		} else {
+			throw new Error('Invalid seek state ' + this._seekState);
+		}
+	}
 
 	_doProcessPlay() {
 
@@ -2112,7 +2136,7 @@ class OGVPlayer extends OGVJSElement {
 	_doProcessPlayDemux() {
 		let wasFrameReady = this._codec.frameReady,
 			wasAudioReady = this._codec.audioReady;
-			this._codec.process((more) => {
+		this._codec.process((more) => {
 			if ((this._codec.frameReady && !wasFrameReady) || (this._codec.audioReady && !wasAudioReady)) {
 				this._log('demuxer has packets');
 				this._pingProcessing();
@@ -2134,6 +2158,11 @@ class OGVPlayer extends OGVJSElement {
 				}
 			}
 		});
+	}
+
+	_doProcessError() {
+		// Nothing to do.
+		//console.log("Reached error state. Sorry bout that.");
 	}
 
 	/**
