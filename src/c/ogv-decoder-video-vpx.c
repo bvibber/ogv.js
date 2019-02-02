@@ -56,10 +56,10 @@ static void do_init() {
 
 	vpx_codec_dec_cfg_t cfg;
 #ifdef __EMSCRIPTEN_PTHREADS__
+	const int max_cores = 2;
 	int cores = emscripten_num_logical_cores();
-	if (cores > 4) {
-		// we only prelaunched enough threads for 4
-		cores = 4;
+	if (cores > max_cores) {
+		cores = max_cores;
 	}
 	printf("libvpx will use up to %d cores\n", cores);
 	cfg.threads = cores;
