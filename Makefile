@@ -34,6 +34,8 @@ C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
 JSMT_ROOT_BUILD_DIR:=build/js-mt/root
+WASM_ROOT_BUILD_DIR:=build/wasm/root
+WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 
 .PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
 
@@ -204,6 +206,10 @@ $(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDS
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxJsMT.sh
 
+$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
+
 $(JS_ROOT_BUILD_DIR)/lib/libdav1d.so : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
@@ -322,6 +328,7 @@ build/ogv-decoder-video-vp8-mt.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                     $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
                                     $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                     $(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+									$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
                                     $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                     $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8MT.sh
 	test -d build || mkdir -p build
@@ -334,6 +341,7 @@ build/ogv-decoder-video-vp9-mt.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                     $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
                                     $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                     $(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+									$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
                                     $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                     $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 	test -d build || mkdir -p build
