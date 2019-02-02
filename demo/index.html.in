@@ -35,6 +35,7 @@
 					<option value="wasm">Web Assembly</option>
 					<option value="wasm-noworker">&nbsp;&nbsp;WASM no Worker</option>
 					<option value="wasm-cpu">&nbsp;&nbsp;WASM no WebGL</option>
+					<option value="wasm-mt">&nbsp;&nbsp;WASM pthreads (VP8/VP9)</option>
 					<option value="native">native</option>
 				</select>
 			</div>

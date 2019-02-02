@@ -875,6 +875,14 @@
                     webGL: false, // force 2d canvas
                     wasm: true // force
                 });
+            } else if (playerBackend == 'wasm-mt') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    memoryLimit: maxmem,
+                    wasm: true,
+                    threading: true // experimental
+                });
             } else if (playerBackend == 'webgl') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,

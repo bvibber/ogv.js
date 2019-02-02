@@ -113,15 +113,23 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-theora-wasm.js \
 	      build/ogv-decoder-video-theora-wasm.wasm \
 	      build/ogv-decoder-video-vp8.js \
-	      build/ogv-decoder-video-vp8-mt.js \
-	      build/ogv-decoder-video-vp8-mt.worker.js \
-	      build/ogv-decoder-video-vp9-mt.js \
-	      build/ogv-decoder-video-vp9-mt.worker.js \
 	      build/ogv-decoder-video-vp8-wasm.js \
 	      build/ogv-decoder-video-vp8-wasm.wasm \
+	      build/ogv-decoder-video-vp8-mt.js \
+	      build/ogv-decoder-video-vp8-mt.worker.js \
+	      build/ogv-decoder-video-vp8-mt-wasm.js \
+	      build/ogv-decoder-video-vp8-mt-wasm.js.mem \
+	      build/ogv-decoder-video-vp8-mt-wasm.wasm \
+	      build/ogv-decoder-video-vp8-mt-wasm.worker.js \
 	      build/ogv-decoder-video-vp9.js \
 	      build/ogv-decoder-video-vp9-wasm.js \
 	      build/ogv-decoder-video-vp9-wasm.wasm \
+	      build/ogv-decoder-video-vp9-mt.js \
+	      build/ogv-decoder-video-vp9-mt.worker.js \
+	      build/ogv-decoder-video-vp9-mt-wasm.js \
+	      build/ogv-decoder-video-vp9-mt-wasm.js.mem \
+	      build/ogv-decoder-video-vp9-mt-wasm.wasm \
+	      build/ogv-decoder-video-vp9-mt-wasm.worker.js \
 	      build/ogv-decoder-video-av1.js \
 	      build/ogv-decoder-video-av1-wasm.js \
 	      build/ogv-decoder-video-av1-wasm.wasm \
