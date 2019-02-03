@@ -56,7 +56,7 @@ static void do_init() {
 
 	vpx_codec_dec_cfg_t cfg;
 #ifdef __EMSCRIPTEN_PTHREADS__
-	const int max_cores = 8; // max threads for tiled decoding
+	const int max_cores = 4; // max threads for HD tiled decoding
 	int cores = emscripten_num_logical_cores();
 	if (cores > max_cores) {
 		cores = max_cores;
