@@ -21,9 +21,8 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
-## Uncomment for pthreads:
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
 EMSCRIPTEN_MODULE_FILES:=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.js")
 EMSCRIPTEN_MODULE_FILES+= $(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.json")
@@ -33,7 +32,6 @@ C_FILES:=$(shell find $(C_SRC_DIR) -type f -name "*.c")
 C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 JS_ROOT_BUILD_DIR:=build/js/root
-JSMT_ROOT_BUILD_DIR:=build/js-mt/root
 WASM_ROOT_BUILD_DIR:=build/wasm/root
 WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 
@@ -117,8 +115,6 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-decoder-video-vp8-wasm.js \
 	      build/ogv-decoder-video-vp8-wasm.wasm \
-	      build/ogv-decoder-video-vp8-mt.js \
-	      build/ogv-decoder-video-vp8-mt.worker.js \
 	      build/ogv-decoder-video-vp8-mt-wasm.js \
 	      build/ogv-decoder-video-vp8-mt-wasm.js.mem \
 	      build/ogv-decoder-video-vp8-mt-wasm.wasm \
@@ -126,8 +122,6 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-vp9.js \
 	      build/ogv-decoder-video-vp9-wasm.js \
 	      build/ogv-decoder-video-vp9-wasm.wasm \
-	      build/ogv-decoder-video-vp9-mt.js \
-	      build/ogv-decoder-video-vp9-mt.worker.js \
 	      build/ogv-decoder-video-vp9-mt-wasm.js \
 	      build/ogv-decoder-video-vp9-mt-wasm.js.mem \
 	      build/ogv-decoder-video-vp9-mt-wasm.wasm \
@@ -201,10 +195,6 @@ $(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/configureVpx.sh $(BUILDS
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureVpx.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxJs.sh
-
-$(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxJsMT.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileVpxJsMT.sh
 
 $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 	test -d build || mkdir -p build
@@ -321,29 +311,27 @@ build/ogv-decoder-video-av1.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
 
-build/ogv-decoder-video-vp8-mt.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                    $(C_SRC_DIR)/ogv-decoder-video.h \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                    $(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a \
-									$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                    $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8MT.sh
+build/ogv-decoder-video-vp8-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+                                         $(C_SRC_DIR)/ogv-decoder-video.h \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                         $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+									     $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                         $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                         $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8MT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8MT.sh
 
-build/ogv-decoder-video-vp9-mt.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                    $(C_SRC_DIR)/ogv-decoder-video.h \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                    $(JSMT_ROOT_BUILD_DIR)/lib/libvpx.a \
-									$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                    $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
+build/ogv-decoder-video-vp9-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+                                         $(C_SRC_DIR)/ogv-decoder-video.h \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                         $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+						                 $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                         $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                         $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 

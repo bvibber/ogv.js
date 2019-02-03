@@ -847,14 +847,6 @@
                     worker: false, // experimental
                     wasm: false
                 });
-            } else if (playerBackend == 'js-mt') {
-                player = new OGVPlayer({
-                    debug: !!debugFilter,
-                    debugFilter: debugFilter,
-                    memoryLimit: maxmem,
-                    wasm: false,
-                    threading: true // experimental
-                });
             } else if (playerBackend == 'wasm') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
