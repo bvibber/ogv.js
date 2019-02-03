@@ -2,7 +2,6 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/threading.h>
 #include <pthread.h>
-#include <stdio.h>
 #endif
 
 #include <assert.h>
@@ -61,7 +60,6 @@ static void do_init() {
 	if (cores > max_cores) {
 		cores = max_cores;
 	}
-	printf("libvpx will use up to %d cores\n", cores);
 	cfg.threads = cores;
 #else
 	cfg.threads = 0;
@@ -75,7 +73,7 @@ void ogv_video_decoder_init() {
 #ifdef __EMSCRIPTEN_PTHREADS__
 	int ret = pthread_create(&decode_thread, NULL, decode_thread_run, NULL);
 	if (ret) {
-		printf("Error launching decode thread: %d\n", ret);
+		abort();
 	}
 	pthread_mutex_init(&decode_mutex, NULL);
 	pthread_cond_init(&ping_cond, NULL);
