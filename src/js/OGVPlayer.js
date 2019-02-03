@@ -1113,8 +1113,8 @@ class OGVPlayer extends OGVJSElement {
 			'vid: ' + n(timing.videoTime) + ' aud: ' + n(timing.audioTime));
 		this._fireEventAsync('framecallback', timing);
 
-		if (!this._lastTimeUpdate || (this._newFrameTimestamp - this._lastTimeUpdate) >= this._timeUpdateInterval) {
-			this._lastTimeUpdate = this._newFrameTimestamp;
+		if (!this._lastTimeUpdate || (newFrameTimestamp - this._lastTimeUpdate) >= this._timeUpdateInterval) {
+			this._lastTimeUpdate = newFrameTimestamp;
 			this._fireEventAsync('timeupdate');
 		}
 	}
