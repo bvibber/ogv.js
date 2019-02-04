@@ -24,10 +24,9 @@ const builders = types.builders;
  */
 function strip_imul(input_js) {
   // hacky detection first
-  const initialMatch = input_js.match(/var (\w+)=global\.Math\.imul/);
+  const initialMatch = input_js.match(/(\w+)=global\.Math\.imul/);
   if (!initialMatch) {
     // hack something changed, worry about it later
-    return input_js;
     throw new Error('Did not find Math.imul in emscripten output.');
   }
   const minifiedName = initialMatch[1];

@@ -283,7 +283,8 @@ build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh \
+	                             $(BUILDSCRIPTS_DIR)/strip-imul.js
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 
@@ -295,7 +296,8 @@ build/ogv-decoder-video-vp9.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh \
+	                             $(BUILDSCRIPTS_DIR)/strip-imul.js
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
 
