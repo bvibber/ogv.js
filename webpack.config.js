@@ -1,5 +1,6 @@
 var webpack = require('webpack');
 var path = require("path");
+const TerserPlugin = require('terser-webpack-plugin');
 
 const BUILD_DIR = 'build';
 
@@ -66,6 +67,16 @@ var babelRuleES5 = {
   }
 };
 
+var optopts = {
+  minimizer: [
+    new TerserPlugin({
+      terserOptions: {
+        keep_fnames: true
+      }
+    })
+  ]
+};
+
 module.exports = [
   {
     // Main entry point! - ES Module
@@ -90,7 +101,8 @@ module.exports = [
         },
         babelRuleModule
       ]
-    }
+    },
+    optimization: optopts,
   },
   {
     // Main entry point! - ES5
@@ -115,7 +127,8 @@ module.exports = [
         },
         babelRuleES5
       ]
-    }
+    },
+    optimization: optopts,
   },
   {
     // Alt limited entry point for compat testing before loading
@@ -147,7 +160,8 @@ module.exports = [
       rules: [
         babelRuleES5
       ]
-    }
+    },
+    optimization: optopts,
   },
 	{
 	  entry: './src/js/workers/ogv-worker-audio.js',
@@ -162,7 +176,8 @@ module.exports = [
       rules: [
         babelRuleES5
       ]
-    }
+    },
+    optimization: optopts,
 	},
   {
     entry: './src/js/workers/ogv-worker-video.js',
@@ -177,6 +192,7 @@ module.exports = [
       rules: [
         babelRuleES5
       ]
-    }
+    },
+    optimization: optopts,
   },
 ];
