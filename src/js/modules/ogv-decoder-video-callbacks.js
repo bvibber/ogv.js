@@ -51,25 +51,47 @@ mergeInto(LibraryManager.library, {
 		var chromaPicX = outPicX * chromaWidth / width;
 		var chromaPicY = outPicY * chromaHeight / height;
 
+		function xmemcpy(destBuf, dest, srcBuf, src, len) {
+			// Unrolled loop to byte-copy stuff.
+			// Avoids creating temporary typed arrays for each line,
+			// and is faster than TypedArray `set()` on IE 11.
+			var start = src;
+			var unrolled = src + len & ~7;
+			var end = src + len;
+
+			var inPtr = start;
+			var outPtr = dest;
+			for (; inPtr < unrolled; inPtr += 8, outPtr += 8) {
+				destBuf[outPtr] = srcBuf[inPtr];
+				destBuf[outPtr + 1] = srcBuf[inPtr + 1];
+				destBuf[outPtr + 2] = srcBuf[inPtr + 2];
+				destBuf[outPtr + 3] = srcBuf[inPtr + 3];
+				destBuf[outPtr + 4] = srcBuf[inPtr + 4];
+				destBuf[outPtr + 5] = srcBuf[inPtr + 5];
+				destBuf[outPtr + 6] = srcBuf[inPtr + 6];
+				destBuf[outPtr + 7] = srcBuf[inPtr + 7];
+			}
+			for (; inPtr < end; inPtr++, outPtr++) {
+				destBuf[outPtr] = srcBuf[inPtr];
+			}
+		}
+
 		var outBytesY = new Uint8Array(outStride * outHeight);
 		for (y = 0; y < outHeight; y++) {
 			var start = bufferY + (y + outPicY) * strideY + picX;
-			var src = HEAPU8.subarray(start, start + outStride);
-			outBytesY.set(src, outStride * y);
+			xmemcpy(outBytesY, outStride * y, HEAPU8, start, outStride);
 		}
 
 		var outBytesU = new Uint8Array(outChromaStride * outChromaHeight);
 		for (y = 0; y < outChromaHeight; y++) {
 			var start = bufferCb + (y + chromaPicY) * strideCb + chromaPicX;
-			var src = HEAPU8.subarray(start, start + outChromaStride);
-			outBytesU.set(src, outChromaStride * y);
+			xmemcpy(outBytesU, outChromaStride * y, HEAPU8, start, outChromaStride);
 		}
 
 		var outBytesV = new Uint8Array(outChromaStride * outChromaHeight);
 		for (y = 0; y < outChromaHeight; y++) {
 			var start = bufferCr + (y + chromaPicY) * strideCr + chromaPicX;
-			var src = HEAPU8.subarray(start, start + outChromaStride);
-			outBytesV.set(src, outChromaStride * y);
+			xmemcpy(outBytesV, outChromaStride * y, HEAPU8, start, outChromaStride);
 		}
 
 		var format = Module['videoFormat'];
