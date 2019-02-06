@@ -1,6 +1,6 @@
 {
   "name": "audio-feeder",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "Abstraction for streaming raw PCM audio in browser via Web Audio API.",
   "main": "dist/AudioFeeder.js",
   "repository": {
@@ -29,14 +29,14 @@
     "webpack.config.js"
   ],
   "devDependencies": {
-    "eslint": "^1.7.3",
+    "eslint": "^5.13.0",
     "file-loader": "^0.8.5",
     "grunt": "^1.0.1",
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-eslint": "^18.1.0",
     "grunt-webpack": "^1.0.11",
     "webpack": "^1.12.2",
-    "webpack-dev-server": "^1.14.1"
+    "webpack-dev-server": "^3.1.14"
   },
   "scripts": {
     "build": "grunt",

@@ -53,6 +53,7 @@
 	function AudioFeeder(options) {
 		this._options = options || {};
 		this._backend = null; // AudioBackend instance, after init...
+		this._resampleFractional = 0;
 	};
 
 	/**
@@ -293,6 +294,17 @@
 			return sampleData;
 		} else {
 			var newSamples = [];
+
+			// Mind that packet boundaries won't always align on
+			// sample boundaries in the resamples output, so maintain
+			// a running rounding fractional offset.
+			var bump = Math.trunc(this._resampleFractional),
+				inputLen = sampleData[0].length,
+				outputLen = inputLen * targetRate / rate + bump,
+				outputSamples = Math.round(outputLen);
+			this._resampleFractional -= bump;
+			this._resampleFractional += (outputLen - outputSamples);
+
 			for (var channel = 0; channel < targetChannels; channel++) {
 				var inputChannel = channel;
 				if (channel >= channels) {
@@ -300,9 +312,9 @@
 					inputChannel = 0;
 				}
 				var input = sampleData[inputChannel],
-					output = new Float32Array(Math.round(input.length * targetRate / rate));
+					output = new Float32Array(outputSamples);
 				for (var i = 0; i < output.length; i++) {
-					output[i] = input[(i * rate / targetRate) | 0];
+					output[i] = input[(i * inputLen / outputLen) | 0];
 				}
 				newSamples.push(output);
 			}
