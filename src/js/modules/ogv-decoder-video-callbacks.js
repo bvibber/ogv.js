@@ -74,23 +74,35 @@ mergeInto(LibraryManager.library, {
 
 		var outBytesY = new Uint8Array(outStride * outHeight);
 		var outQuadY = new Uint32Array(outBytesY.buffer);
+		var bufferYStart = bufferY + outPicY * strideY + outPicX;
+		var inBytesY = new Uint8Array(HEAPU8.buffer, bufferYStart);
+		var inQuadY = new Uint32Array(HEAPU8.buffer, bufferYStart);
 		for (y = 0; y < outHeight; y++) {
-			var start = bufferY + (y + outPicY) * strideY + picX;
-			xmemcpy(outBytesY, outQuadY, outStride * y, HEAPU8, HEAPU32, start, outStride);
+			xmemcpy(outBytesY, outQuadY, outStride * y,
+					inBytesY, inQuadY, strideY * y,
+					outStride);
 		}
 
 		var outBytesU = new Uint8Array(outChromaStride * outChromaHeight);
 		var outQuadU = new Uint32Array(outBytesU.buffer);
+		var bufferCbStart = bufferCb + chromaPicY * strideCb + chromaPicX;
+		var inBytesU = new Uint8Array(HEAPU8.buffer, bufferCbStart);
+		var inQuadU = new Uint32Array(HEAPU8.buffer, bufferCbStart);
 		for (y = 0; y < outChromaHeight; y++) {
-			var start = bufferCb + (y + chromaPicY) * strideCb + chromaPicX;
-			xmemcpy(outBytesU, outQuadU, outChromaStride * y, HEAPU8, HEAPU32, start, outChromaStride);
+			xmemcpy(outBytesU, outQuadU, outChromaStride * y,
+					inBytesU, inQuadU, strideCb * y,
+					outChromaStride);
 		}
 
 		var outBytesV = new Uint8Array(outChromaStride * outChromaHeight);
 		var outQuadV = new Uint32Array(outBytesV.buffer);
+		var bufferCrStart = bufferCr + chromaPicY * strideCr + chromaPicX;
+		var inBytesV = new Uint8Array(HEAPU8.buffer, bufferCrStart);
+		var inQuadV = new Uint32Array(HEAPU8.buffer, bufferCrStart);
 		for (y = 0; y < outChromaHeight; y++) {
-			var start = bufferCr + (y + chromaPicY) * strideCr + chromaPicX;
-			xmemcpy(outBytesV, outQuadV, outChromaStride * y, HEAPU8, HEAPU32, start, outChromaStride);
+			xmemcpy(outBytesV, outQuadV, outChromaStride * y,
+					inBytesV, inQuadV, strideCr * y,
+					outChromaStride);
 		}
 
 		var format = Module['videoFormat'];
