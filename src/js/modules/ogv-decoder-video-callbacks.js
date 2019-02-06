@@ -38,10 +38,41 @@ mergeInto(LibraryManager.library, {
 
 		// Create typed array copies of the source buffers from the emscripten heap:
 		var HEAPU8 = Module['HEAPU8'],
-			format = Module['videoFormat'],
-			countBytesY = strideY * height,
-			countBytesCb = strideCb * chromaHeight,
-			countBytesCr = strideCr * chromaHeight;
+			format = Module['videoFormat'];
+
+		function copyAndTrim(buffer, stride, height, picX, picY, picWidth, picHeight, fill) {
+			var arr = copyByteArray(HEAPU8.subarray(buffer, buffer +  stride * height));
+
+			// Trim out anything outside the visible area
+			// Protected against green stripes in some codecs (VP9)
+			var x, y, ptr;
+			for (ptr = 0, y = 0; y < picY; y++, ptr += stride) {
+				for (x = 0; x < stride; x++) {
+					arr[ptr + x] = fill;
+				}
+			}
+			for (; y < picY + picHeight; y++, ptr += stride) {
+				for (x = 0; x < picX; x++) {
+					arr[ptr + x] = fill;
+				}
+				for (x = picX + picWidth; x < stride; x++) {
+					arr[ptr + x] = fill;
+				}
+			}
+			for (; y < height; y++, ptr += stride) {
+				for (x = 0; x < stride; x++) {
+					arr[ptr + x] = fill;
+				}
+			}
+			return arr;
+		}
+
+		var outPicX = picX & ~1; // round down to divisible by 2
+		var outPicY = picY & ~1; // round down to divisible by 2
+		var chromaPicX = outPicX * chromaWidth / width;
+		var chromaPicY = outPicY * chromaHeight / height;
+		var chromaPicWidth = picWidth * chromaWidth / width;
+		var chromaPicHeight = picHeight * chromaHeight / height;
 
 		var isOriginal = (picWidth === format['cropWidth'])
 					  && (picHeight === format['cropHeight']);
@@ -72,15 +103,15 @@ mergeInto(LibraryManager.library, {
 				'displayHeight': displayHeight
 			},
 			'y': {
-				'bytes': copyByteArray(HEAPU8.subarray(bufferY, bufferY + countBytesY)),
+				'bytes': copyAndTrim(bufferY, strideY, height, picX, picY, picWidth, picHeight, 0),
 				'stride': strideY
 			},
 			'u': {
-				'bytes': copyByteArray(HEAPU8.subarray(bufferCb, bufferCb + countBytesCb)),
+				'bytes': copyAndTrim(bufferCb, strideCb, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128),
 				'stride': strideCb
 			},
 			'v': {
-				'bytes': copyByteArray(HEAPU8.subarray(bufferCr, bufferCr + countBytesCr)),
+				'bytes': copyAndTrim(bufferCr, strideCr, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128),
 				'stride': strideCr
 			}
 		};
