@@ -16,6 +16,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * building with babel for ES5/IE11 compat
 * updated eslint
 * updated yuv-canvas to 1.2.3; fixes for software GL rendering
+* updated audio-feeder to 0.4.10; fixes for resampling
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
