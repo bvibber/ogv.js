@@ -62,6 +62,13 @@ mergeInto(LibraryManager.library, {
 			var outPtr32 = dest >> 2;
 			var len32 = len >> 2;
 			var end32 = inPtr32 + len32;
+			var unrolled32 = end32 & 3;
+			for (; inPtr32 < unrolled32; inPtr32 += 4, outPtr32 += 4) {
+				dest32[outPtr32] = src32[inPtr32];
+				dest32[outPtr32 + 1] = src32[inPtr32 + 1];
+				dest32[outPtr32 + 2] = src32[inPtr32 + 2];
+				dest32[outPtr32 + 3] = src32[inPtr32 + 3];
+			}
 			for (; inPtr32 < end32; inPtr32++, outPtr32++) {
 				dest32[outPtr32] = src32[inPtr32];
 			}
