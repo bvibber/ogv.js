@@ -14,6 +14,8 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.11 - 2019-02-06
+    * Flash: use binary string instead of hex, half the bytes
 * 0.4.10 - 2019-02-05
     * Avoid possible clock drift when resampling
 * 0.4.9 - 2018-02-12
