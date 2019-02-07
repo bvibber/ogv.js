@@ -226,8 +226,8 @@ class OGVPlayer extends OGVJSElement {
 		this._needProcessing = false;
 		this._pendingFrame = 0;
 		this._pendingAudio = 0;
-		this._framePipelineDepth = 3;
-		this._audioPipelineDepth = 4;
+		this._framePipelineDepth = 4;
+		this._audioPipelineDepth = 8;
 
 		this._videoInfo = null;
 		this._audioInfo = null;
@@ -1886,7 +1886,7 @@ class OGVPlayer extends OGVJSElement {
 								this._actualPerFrameTime = this._targetPerFrameTime - frameDelay;
 								this._framesProcessed++; // pretend!
 								frame.dropped = true;
-								this._doFrameComplete();
+								this._doFrameComplete(frame);
 							}
 						}
 
