@@ -105,18 +105,22 @@ BufferQueue.prototype.appendBuffer = function(sampleData) {
   var firstChannel = sampleData[0],
     sampleCount = firstChannel.length;
 
-  // @todo this seems hella inefficient
+  // @todo this still seems kinda inefficient
+  var channels = this.channels;
+  var pendingPos = this._pendingPos;
+  var pendingBuffer = this._pendingBuffer;
+  var bufferSize = this.bufferSize;
   for (var i = 0; i < sampleCount; i++) {
-    for (var channel = 0; channel < this.channels; channel++) {
-      this._pendingBuffer[channel][this._pendingPos] = sampleData[channel][i];
+    for (var channel = 0; channel < channels; channel++) {
+      pendingBuffer[channel][pendingPos] = sampleData[channel][i];
     }
-    if (++this._pendingPos == this.bufferSize) {
-      this._buffers.push(this._pendingBuffer);
-      this._pendingPos = 0;
-      this._pendingBuffer = this.createBuffer(this.bufferSize);
+    if (++pendingPos == bufferSize) {
+      this._buffers.push(pendingBuffer);
+      pendingPos = this._pendingPos = 0;
+      pendingBuffer = this._pendingBuffer = this.createBuffer(bufferSize);
     }
   }
-
+  this._pendingPos = pendingPos;
 };
 
 /**
