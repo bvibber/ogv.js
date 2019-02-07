@@ -234,15 +234,13 @@
     var chunk = this._flashBuffer,
       flashElement = this._flashaudio.flashElement;
 
-    if (this._cachedFlashState) {
-        this._cachedFlashState.samplesQueued += chunk.length / 8;
-    }
     this._flashBuffer = '';
     this._flushTimeout = null;
 
     if (chunk.length > 0) {
       this.waitUntilReady(function() {
-        flashElement.write(chunk);
+        this._cachedFlashState = flashElement.write(chunk);
+        this._cachedFlashTime = Date.now();
       });
     }
   };

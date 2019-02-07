@@ -71,9 +71,10 @@ package {
         // Note we are using a binary string of 32-bit float samples instead of an
         // array. Flash's stupid ExternalInterface passes every sample as XML,
         // which is incredibly expensive to encode/decode
-        public function write(s:String):void {
+        public function write(s:String):Object {
             log('writing ' + s.length);
             queue.append(new BufferQueueItem(s, logger));
+            return getPlaybackState();
         }
 
         public function startPlayback():void {
