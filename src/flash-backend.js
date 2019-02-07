@@ -235,7 +235,7 @@
       flashElement = this._flashaudio.flashElement;
 
     if (this._cachedFlashState) {
-        this._cachedFlashState.samplesQueued += chunk.length / 16;
+        this._cachedFlashState.samplesQueued += chunk.length / 8;
     }
     this._flashBuffer = '';
     this._flushTimeout = null;
@@ -292,7 +292,7 @@
         this._cachedFlashState = state;
         this._cachedFlashTime = now;
       }
-      state.samplesQueued += this._flashBuffer.length / 16;
+      state.samplesQueued += this._flashBuffer.length / 8;
       return state;
     } else {
       //console.log('getPlaybackState USED TOO EARLY');
