@@ -211,23 +211,18 @@
   	return newSamples;
   };
 
-  var hexDigits = ['0', '1', '2', '3', '4', '5', '6', '7',
-           '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
-  var hexBytes = [];
+  var binBytes = [];
   for (var i = 0; i < 256; i++) {
-    hexBytes[i] = hexDigits[(i & 0xf0) >> 4] +
-                  hexDigits[(i & 0x0f)];
+    binBytes[i] = String.fromCharCode(i + 0xe000);
   }
-  function hexString(buffer) {
+  function binaryString(buffer) {
     var samples = new Uint8Array(buffer);
-    var digits = "",
-      len = samples.length;
+    var len = samples.length;
+    var str = '';
     for (var i = 0; i < len; i++) {
-      // Note that in IE 11 string concatenation is twice as fast as
-      // the traditional make-an-array-and-join here.
-      digits += hexBytes[samples[i]];
+      str += binBytes[samples[i]];
     }
-    return digits;
+    return str;
   }
 
   /**
@@ -263,7 +258,7 @@
   FlashBackend.prototype.appendBuffer = function(sampleData) {
     var resamples = this._resampleFlash(sampleData);
     if (resamples.length > 0) {
-      var str = hexString(resamples.buffer);
+      var str = binaryString(resamples.buffer);
       this._flashBuffer += str;
       if (!this._flushTimeout) {
         // consolidate multiple consecutive tiny buffers in one pass;
