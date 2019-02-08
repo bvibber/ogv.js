@@ -34,8 +34,8 @@ package {
 
         public function splitAt(sample:int, callback:Function):void {
             var mid:int = sample * charsPerSample;
-            callback(new BufferQueueItem(str, 0, mid, logger),
-                     new BufferQueueItem(str, mid, len - mid, logger));
+            callback(new BufferQueueItem(str, start, mid, logger),
+                     new BufferQueueItem(str, start + mid, len - mid, logger));
         }
 
         public function writeToOutput(out:IDataOutput):void {
@@ -54,7 +54,7 @@ package {
             // Read them as native-endian float32s and write to output;
             // note out.writeBytes(bytes) doesn't work.
             bytes.position = 0;
-            for (i = 0; i < len; i += 8) {
+            for (i = 0; i < bytes.length; i += 8) {
               out.writeFloat(bytes.readFloat());
               out.writeFloat(bytes.readFloat());
             }
