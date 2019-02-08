@@ -73,7 +73,7 @@ package {
         // which is incredibly expensive to encode/decode
         public function write(s:String):Object {
             log('writing ' + s.length);
-            queue.append(new BufferQueueItem(s, logger));
+            queue.append(new BufferQueueItem(s, 0, s.length, logger));
             return getPlaybackState();
         }
 

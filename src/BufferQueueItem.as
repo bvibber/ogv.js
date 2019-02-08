@@ -13,24 +13,29 @@ package {
         public var prev:BufferQueueItem;
         public var next:BufferQueueItem;
         private var str:String;
+        private var start:int;
+        private var len:int;
         private var logger:ILogger;
 
         static private const charsPerSample:int = 8;
 
-        public function BufferQueueItem(binString:String, aLogger:ILogger=null) {
+        public function BufferQueueItem(binString:String, _start:int, _len:int, aLogger:ILogger=null) {
             str = binString;
+            start = _start;
+            len = _len;
             prev = null;
             next = null;
             logger = aLogger;
         }
 
         public function sampleCount():int {
-            return str.length / charsPerSample;
+            return len / charsPerSample;
         }
 
         public function splitAt(sample:int, callback:Function):void {
-            callback(new BufferQueueItem(str.slice(0, sample * charsPerSample), logger),
-                     new BufferQueueItem(str.slice(sample * charsPerSample), logger));
+            var mid:int = sample * charsPerSample;
+            callback(new BufferQueueItem(str, 0, mid, logger),
+                     new BufferQueueItem(str, mid, len - mid, logger));
         }
 
         public function writeToOutput(out:IDataOutput):void {
@@ -39,16 +44,17 @@ package {
 
             // Convert binary string to byte array...
             var i:int;
-            for (i = 0; i < str.length; i++) {
+            var end:int = start + len;
+            for (i = start; i < end; i++) {
                 // remove the private use area offset
-                var byte:int = str.charCodeAt(i) - 0xe000;
+                var byte:int = str.charCodeAt(i) & 0xff;
                 bytes.writeByte(byte);
             }
 
             // Read them as native-endian float32s and write to output;
             // note out.writeBytes(bytes) doesn't work.
             bytes.position = 0;
-            for (i = 0; i < bytes.length; i += 8) {
+            for (i = 0; i < len; i += 8) {
               out.writeFloat(bytes.readFloat());
               out.writeFloat(bytes.readFloat());
             }
