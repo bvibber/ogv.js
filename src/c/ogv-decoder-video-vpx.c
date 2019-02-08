@@ -121,19 +121,29 @@ static int process_frame_return() {
 		}
 		foundImage = 1;
 
+		// image->h is inexplicably large for small sizes.
+		// don't both copying the extra, but make sure it's chroma-safe.
+		int height = image->d_h;
+		if ((height & 1) == 1) {
+			// copy one extra row if need be
+			// not sure this is even possible
+			// but defend in depth
+			height++;
+		}
+
 		int chromaWidth, chromaHeight;
 		switch(image->fmt) {
 			case VPX_IMG_FMT_I420:
 				chromaWidth = image->w >> 1;
-				chromaHeight = image->h >> 1;
+				chromaHeight = height >> 1;
 				break;
 			case VPX_IMG_FMT_I422:
 				chromaWidth = image->w >> 1;
-				chromaHeight = image->h;
+				chromaHeight = height;
 				break;
 			case VPX_IMG_FMT_I444:
 				chromaWidth = image->w;
-				chromaHeight = image->h;
+				chromaHeight = height;
 				break;
 			default:
 				//printf("Skipping frame with unknown picture type %d\n", (int)image->fmt);
@@ -142,7 +152,7 @@ static int process_frame_return() {
 		ogvjs_callback_frame(image->planes[0], image->stride[0],
 							 image->planes[1], image->stride[1],
 							 image->planes[2], image->stride[2],
-							 image->w, image->h,
+							 image->w, height,
 							 chromaWidth, chromaHeight,
 							 image->d_w, image->d_h, // crop size
 							 0, 0, // crop pos
