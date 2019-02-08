@@ -16,6 +16,7 @@ emcc \
   --js-library src/js/modules/ogv-decoder-audio-callbacks.js \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-decoder-audio.js \
+  --js-transform 'node buildscripts/strip-imul.js' \
   src/c/ogv-decoder-audio-opus.c \
   src/c/ogv-ogg-support.c \
   src/c/opus_header.c \
