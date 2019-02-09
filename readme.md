@@ -14,6 +14,8 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.15 - 2019-02-09
+    * Flash: replace flush timer with a buffer size limit
 * 0.4.14 - 2019-02-08
     * Flash: fix clicking regression from 0.4.13
 * 0.4.13 - 2019-02-08
