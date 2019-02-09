@@ -29,11 +29,9 @@
 
     this._flashaudio = new DynamicAudio(flashOptions);
     this._flashBuffer = '';
-    this._flushTimeout = null;
-    this._flushInterval = 40; // flush added buffers no more often than every X ms
     this._cachedFlashState = null;
     this._cachedFlashTime = 0;
-    this._cachedFlashInterval = 40; // resync state no more often than every X ms
+    this._cachedFlashInterval = 185; // resync state no more often than every X ms
 
     this._waitUntilReadyQueue = [];
     this.onready = function() {
@@ -196,13 +194,12 @@
    * @todo handle input with higher channel counts better
    */
   FlashBackend.prototype._resampleFlash = function(samples) {
-    var sampleincr = 1;
   	var samplecount = samples[0].length;
   	var newSamples = new Float32Array(samplecount * 2);
   	var chanLeft = samples[0];
   	var chanRight = this.channels > 1 ? samples[1] : chanLeft;
   	for(var s = 0; s < samplecount; s++) {
-  		var idx = (s * sampleincr) | 0;
+  		var idx = s;
   		var idx_out = s * 2;
 
   		newSamples[idx_out] = chanLeft[idx];
@@ -219,8 +216,15 @@
     var samples = new Uint8Array(buffer);
     var len = samples.length;
     var str = '';
-    for (var i = 0; i < len; i++) {
+    for (var i = 0; i < len; i += 8) {
       str += binBytes[samples[i]];
+      str += binBytes[samples[i + 1]];
+      str += binBytes[samples[i + 2]];
+      str += binBytes[samples[i + 3]];
+      str += binBytes[samples[i + 4]];
+      str += binBytes[samples[i + 5]];
+      str += binBytes[samples[i + 6]];
+      str += binBytes[samples[i + 7]];
     }
     return str;
   }
@@ -235,13 +239,10 @@
       flashElement = this._flashaudio.flashElement;
 
     this._flashBuffer = '';
-    this._flushTimeout = null;
 
     if (chunk.length > 0) {
-      this.waitUntilReady(function() {
-        this._cachedFlashState = flashElement.write(chunk);
-        this._cachedFlashTime = Date.now();
-      });
+      this._cachedFlashState = flashElement.write(chunk);
+      this._cachedFlashTime = Date.now();
     }
   };
 
@@ -258,10 +259,10 @@
     if (resamples.length > 0) {
       var str = binaryString(resamples.buffer);
       this._flashBuffer += str;
-      if (!this._flushTimeout) {
+      if (this._flashBuffer.length >= this.bufferSize * 8) {
         // consolidate multiple consecutive tiny buffers in one pass;
         // pushing data to Flash is relatively expensive on slow machines
-        this._flushTimeout = setTimeout(this._flushFlashBuffer.bind(this), this._flushInterval);
+        this._flushFlashBuffer();
       }
     }
   };
@@ -324,6 +325,7 @@
    * or starvation may occur immediately.
    */
   FlashBackend.prototype.start = function() {
+    this._flushFlashBuffer();
     this._flashaudio.flashElement.start();
     this._paused = false;
     this._cachedFlashState = null;
@@ -343,6 +345,7 @@
    * Flush any queued data out of the system.
    */
   FlashBackend.prototype.flush = function() {
+    this._flashBuffer = '';
     this._flashaudio.flashElement.flush();
     this._cachedFlashState = null;
   };
