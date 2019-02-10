@@ -2,19 +2,6 @@
 
 import OGVLoader from './OGVLoaderWorker.js';
 
-function copyAudioBuffer(data) {
-	if (data == null) {
-		return null;
-	} else {
-		// Array of Float32Arrays
-		var copy = [];
-		for (var i = 0; i < data.length; i++) {
-			copy[i] = new Float32Array(data[i]);
-		}
-		return copy;
-	}
-}
-
 /**
  * Web Worker wrapper for codec fun
  */
@@ -85,8 +72,8 @@ class OGVWorkerSupport {
 						// NaN is not === itself. Nice!
 						// no need to update it here.
 					} else if (propName == 'audioBuffer') {
-						// Don't send the entire emscripten heap!
-						propVal = copyAudioBuffer(propVal);
+						// Buffers are already extracted from the heap.
+						// Don't copy; they are safe to transfer.
 						props[propName] = propVal;
 						if (propVal) {
 							for (let i = 0; i < propVal.length; i++) {
