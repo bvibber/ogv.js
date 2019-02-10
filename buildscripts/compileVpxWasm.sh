@@ -6,8 +6,8 @@ dir=`pwd`
 mkdir -p build
 cd build
 
-mkdir -p js
-cd js
+mkdir -p wasm
+cd wasm
 
 mkdir -p root
 mkdir -p libvpx
@@ -18,9 +18,9 @@ cd libvpx
 # finally, run configuration script
 EMCONFIGURE_JS=1 \
   emconfigure ../../../libvpx/configure \
-    --prefix="$dir/build/js/root" \
+    --prefix="$dir/build/wasm/root" \
     --target=generic-gnu \
-    --extra-cflags=-s\ WASM=0\ -DASMJS\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
+    --extra-cflags=-s\ WASM=1\ -DWASM\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
     --disable-multithread \
     --enable-vp9-decoder \
     --disable-vp8-encoder \
