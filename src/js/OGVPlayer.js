@@ -2324,10 +2324,18 @@ class OGVPlayer extends OGVJSElement {
 
 		let doLoad = () => {
 			// @todo networkState == NETWORK_LOADING
-			this._stream = new StreamFile({
-				url: this.src,
-				cacheSize: 16 * 1024 * 1024,
-			});
+			if (this._options.stream) {
+				// Allow replacement compatible with the StreamFile interface.
+				// This interface may not be fully stable in future, but should
+				// help folks doing custom streaming until the MSE interfaces
+				// are built up.
+				this._stream = this._options.stream;
+			} else {
+				this._stream = new StreamFile({
+					url: this.src,
+					cacheSize: 16 * 1024 * 1024,
+				});
+			}
 			this._stream.load().then(() => {
 				this._loading = false;
 
