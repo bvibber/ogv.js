@@ -354,6 +354,7 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
                         build/demo/media/curiosity.ogv \
+                        build/demo/media/llama-drama-av1.webm \
                         build/demo/lib/ogv.js
 	test -d build/demo || mkdir -p build/demo
 	sed 's/OGV_VERSION/$(FULLVER)/g' < $(DEMO_DIR)/index.html.in > build/demo/index.html
@@ -393,6 +394,10 @@ build/demo/media/pixel_aspect_ratio.ogg : $(DEMO_DIR)/media/pixel_aspect_ratio.o
 build/demo/media/curiosity.ogv : $(DEMO_DIR)/media/curiosity.ogv
 	test -d build/demo/media || mkdir -p build/demo/media
 	cp $(DEMO_DIR)/media/curiosity.ogv build/demo/media/curiosity.ogv
+
+build/demo/media/llama-drama-av1.webm : $(DEMO_DIR)/media/llama-drama-av1.webm
+	test -d build/demo/media || mkdir -p build/demo/media
+	cp $(DEMO_DIR)/media/llama-drama-av1.webm build/demo/media/llama-drama-av1.webm
 
 build/demo/lib/ogv.js : dist
 	test -d build/demo/lib || mkdir -p build/demo/lib
