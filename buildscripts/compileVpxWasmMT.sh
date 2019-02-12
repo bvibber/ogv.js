@@ -25,13 +25,14 @@ EMCONFIGURE_JS=1 \
     --enable-vp9-decoder \
     --disable-vp8-encoder \
     --disable-vp9-encoder \
-    --enable-shared \
+    --disable-shared \
     --disable-docs \
-    --disable-examples
+    --disable-examples \
+|| exit 1
 
 # compile libvpx
-emmake make -j4
-emmake make install
+emmake make -j4 || exit 1
+emmake make install || exit 1
 
 cd ..
 cd ..

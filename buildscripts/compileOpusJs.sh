@@ -21,11 +21,12 @@ emconfigure ../../../libopus/configure \
   --disable-doc \
   --disable-extra-programs \
   --prefix="$dir/build/js/root" \
-  CFLAGS="-O3"
+  --disable-shared \
+  CFLAGS="-O3" || exit 1
 
 # compile libopus
-emmake make -j4
-emmake make install
+emmake make -j4 || exit 1
+emmake make install || exit 1
 
 cd ..
 cd ..

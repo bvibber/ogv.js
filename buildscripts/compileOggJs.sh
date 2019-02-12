@@ -14,11 +14,14 @@ mkdir -p libogg
 cd libogg
 
 # finally, run configuration script
-emconfigure ../../../libogg/configure --prefix="$dir/build/js/root"
+emconfigure ../../../libogg/configure \
+    --prefix="$dir/build/js/root" \
+    --disable-shared \
+|| exit 1
 
 # compile libogg
-emmake make -j4
-emmake make install
+emmake make -j4 || exit 1
+emmake make install || exit 1
 
 cd ..
 cd ..

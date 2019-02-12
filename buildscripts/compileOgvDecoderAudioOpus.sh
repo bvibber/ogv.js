@@ -10,9 +10,6 @@ emcc \
   -s EXPORT_NAME="'OGVDecoderAudioOpus'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
   -Ibuild/js/root/include \
-  -Lbuild/js/root/lib \
-  build/js/root/lib/libogg.$suffix \
-  build/js/root/lib/libopus.$suffix \
   --js-library src/js/modules/ogv-decoder-audio-callbacks.js \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-decoder-audio.js \
@@ -21,6 +18,9 @@ emcc \
   src/c/ogv-ogg-support.c \
   src/c/opus_header.c \
   src/c/opus_helper.c \
+  -Lbuild/js/root/lib \
+  -lopus \
+  -logg \
   -o build/ogv-decoder-audio-opus.js \
 && \
 emcc \
@@ -30,9 +30,6 @@ emcc \
   -s EXPORT_NAME="'OGVDecoderAudioOpusW'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
   -Ibuild/js/root/include \
-  -Lbuild/js/root/lib \
-  build/js/root/lib/libogg.$suffix \
-  build/js/root/lib/libopus.$suffix \
   --js-library src/js/modules/ogv-decoder-audio-callbacks.js \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-decoder-audio.js \
@@ -40,4 +37,7 @@ emcc \
   src/c/ogv-ogg-support.c \
   src/c/opus_header.c \
   src/c/opus_helper.c \
+  -Lbuild/js/root/lib \
+  -lopus \
+  -logg \
   -o build/ogv-decoder-audio-opus-wasm.js \

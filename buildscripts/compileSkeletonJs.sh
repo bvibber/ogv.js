@@ -16,11 +16,12 @@ cd libskeleton
 # finally, run configuration script
 emconfigure ../../../libskeleton/configure \
 	--prefix="$dir/build/js/root" \
-	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig"
+	PKG_CONFIG_PATH="$dir/build/js/root/lib/pkgconfig" \
+	--disable-shared
 
 # compile libskeleton
-emmake make -j4
-emmake make install
+emmake make -j4 || exit 1
+emmake make install || exit 1
 
 cd ..
 cd ..

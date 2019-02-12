@@ -201,7 +201,7 @@ $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUIL
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 
-$(JS_ROOT_BUILD_DIR)/lib/libdav1d.so : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
+$(JS_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
 
@@ -308,7 +308,7 @@ build/ogv-decoder-video-av1.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                 $(JS_ROOT_BUILD_DIR)/lib/libdav1d.so \
+                                 $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a \
                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
 	test -d build || mkdir -p build

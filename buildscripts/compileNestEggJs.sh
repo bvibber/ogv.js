@@ -14,11 +14,15 @@ mkdir -p libnestegg
 cd libnestegg
 
 # finally, run configuration script
-EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure ../../../libnestegg/configure --prefix="$dir/build/js/root"
+EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure \
+    ../../../libnestegg/configure \
+    --prefix="$dir/build/js/root" \
+    --disable-shared \
+|| exit 1
 
 # compile libnestegg
-emmake make -j4
-emmake make install
+emmake make -j4 || exit 1
+emmake make install || exit 1
 
 cd ..
 cd ..

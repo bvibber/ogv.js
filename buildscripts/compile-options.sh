@@ -1,8 +1,3 @@
-suffix=so
-if [ `uname -s` == "Darwin" ]; then
-  suffix=dylib
-fi
-
 EMCC_COMMON_OPTIONS="
 -O3
 -s VERBOSE=1
