@@ -69,13 +69,14 @@ mergeInto(LibraryManager.library, {
 		});
 	},
 
-	ogvjs_callback_audio_packet: function(buffer, len, audioTimestamp) {
+	ogvjs_callback_audio_packet: function(buffer, len, audioTimestamp, discardPadding) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
 		Module['audioPackets'].push({
 			'data': Module['HEAPU8'].buffer.slice
 				? Module['HEAPU8'].buffer.slice(buffer, buffer + len)
 				: (new Uint8Array(new Uint8Array(Module['HEAPU8'].buffer, buffer, len))).buffer,
-			'timestamp': audioTimestamp
+			'timestamp': audioTimestamp,
+			'discardPadding': discardPadding
 		});
 	},
 

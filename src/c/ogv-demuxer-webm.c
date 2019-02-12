@@ -274,7 +274,7 @@ static int processBegin() {
                 	abort();
                 }
                 // ... store these!
-                ogvjs_callback_audio_packet((char *)data, len, -1);
+                ogvjs_callback_audio_packet((char *)data, len, -1, 0.0);
 			}
 		}
 	}
@@ -361,7 +361,9 @@ static int processDecoding() {
       }
 			ogvjs_callback_video_packet((char *)data, data_len, timestamp, lastKeyframeKimestamp, isKeyframe);
 		} else if (hasAudio && track == audioTrack) {
-			ogvjs_callback_audio_packet((char *)data, data_len, timestamp);
+            int64_t discard_padding = 0;
+            nestegg_packet_discard_padding(packet, &discard_padding);
+			ogvjs_callback_audio_packet((char *)data, data_len, timestamp, (double)discard_padding);
 		} else {
 			// throw away unknown packets
 		}

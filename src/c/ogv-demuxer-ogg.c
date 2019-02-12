@@ -78,7 +78,7 @@ static int processBegin(oggz_packet *packet, long serialno)
         audioCodec = content;
         audioCodecName = "vorbis";
         audioStream = serialno;
-        ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, -1);
+        ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, -1, 0.0);
         return OGGZ_CONTINUE;
     }
 
@@ -87,7 +87,7 @@ static int processBegin(oggz_packet *packet, long serialno)
         audioCodec = content;
         audioCodecName = "opus";
         audioStream = serialno;
-        ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, -1);
+        ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, -1, 0.0);
         return OGGZ_CONTINUE;
     }
 
@@ -153,7 +153,7 @@ static int processSkeleton(oggz_packet *packet, long serialno)
     }
 
     if (hasAudio && serialno == audioStream) {
-    	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp);
+    	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, 0.0);
     }
 
 	return OGGZ_CONTINUE;
@@ -172,7 +172,7 @@ static int processDecoding(oggz_packet *packet, long serialno) {
     }
 
     if (hasAudio && serialno == audioStream) {
-    	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp);
+    	ogvjs_callback_audio_packet((const char *)packet->op.packet, packet->op.bytes, timestamp, 0.0);
 		return OGGZ_STOP_OK;
     }
 

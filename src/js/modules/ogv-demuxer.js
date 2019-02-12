@@ -176,8 +176,8 @@ Module['dequeueVideoPacket'] = function(callback) {
 
 Module['dequeueAudioPacket'] = function(callback) {
 	if (Module['audioPackets'].length) {
-		var packet = Module['audioPackets'].shift()['data'];
-		callback(packet);
+		var packet = Module['audioPackets'].shift();
+		callback(packet['data'], packet['discardPadding']);
 	} else {
 		callback(null);
 	}

@@ -246,7 +246,7 @@ class OGVWrapperCodec {
 
 			} else if (this.demuxer.audioReady) {
 
-				this.demuxer.dequeueAudioPacket((packet) => {
+				this.demuxer.dequeueAudioPacket((packet, _discardPadding) => {
 					this.audioBytes += packet.byteLength;
 					this.audioDecoder.processHeader(packet, (ret) => {
 						finish(true);
@@ -324,9 +324,28 @@ class OGVWrapperCodec {
 
 	decodeAudio(callback) {
 		let cb = this.flushSafe(callback);
-		this.demuxer.dequeueAudioPacket((packet) => {
+		this.demuxer.dequeueAudioPacket((packet, discardPadding) => {
 			this.audioBytes += packet.byteLength;
-			this.audioDecoder.processAudio(packet, cb);
+			this.audioDecoder.processAudio(packet, (ret) => {
+				if (discardPadding) {
+					// discardPadding is in nanoseconds
+					// negative value trims from beginning
+					// positive value trims from end
+					let samples = this.audioDecoder.audioBuffer;
+					let trimmed = [];
+					for (let channel of samples) {
+						let trim = Math.round(discardPadding * this.audioFormat.rate / 1000000000);
+						if (trim > 0) {
+							trimmed.push(channel.subarray(0, channel.length - Math.min(trim, channel.length)));
+						} else {
+							trimmed.push(channel.subarray(Math.min(Math.abs(trim), channel.length), channel.length));
+						}
+					}
+					// kinda hacky for now
+					this.audioDecoder.audioBuffer = trimmed;
+				}
+				return cb(ret);
+			});
 		});
 	}
 
@@ -338,7 +357,7 @@ class OGVWrapperCodec {
 	}
 
 	discardAudio(callback) {
-		this.demuxer.dequeueAudioPacket((packet) => {
+		this.demuxer.dequeueAudioPacket((packet, _discardPadding) => {
 			this.audioBytes += packet.byteLength;
 			callback();
 		});

@@ -10,7 +10,7 @@ extern void ogvjs_callback_init_video(int frameWidth, int frameHeight,
 
 extern void ogvjs_callback_loaded_metadata(const char *videoCodec, const char *audioCodec);
 extern void ogvjs_callback_video_packet(const char *buffer, size_t len, float frameTimestamp, float keyframeTimestamp, int isKeyframe);
-extern void ogvjs_callback_audio_packet(const char *buffer, size_t len, float audioTimestamp);
+extern void ogvjs_callback_audio_packet(const char *buffer, size_t len, float audioTimestamp, double discardPadding);
 extern int ogvjs_callback_frame_ready(void);
 extern int ogvjs_callback_audio_ready(void);
 extern void ogvjs_callback_seek(int64_t offset);
