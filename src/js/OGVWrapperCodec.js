@@ -407,6 +407,11 @@ class OGVWrapperCodec {
 				if (this.options.memoryLimit) {
 					videoOptions.memoryLimit = this.options.memoryLimit;
 				}
+				if (threading) {
+					// Hack around multiple-instantiation pthreads/modularize bug
+					// in emscripten 1.38.27
+					delete window.ENVIRONMENT_IS_PTHREAD;
+				}
 				videoCodecClass(videoOptions).then((decoder) => {
 					this.videoDecoder = decoder;
 					decoder.init(() => {
