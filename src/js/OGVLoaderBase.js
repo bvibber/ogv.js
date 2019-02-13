@@ -15,14 +15,13 @@ const scriptMap = {
 	OGVDecoderVideoTheoraW: 'ogv-decoder-video-theora-wasm.js',
 	OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
 	OGVDecoderVideoVP8W: 'ogv-decoder-video-vp8-wasm.js',
-	OGVDecoderVideoVP8MT: 'ogv-decoder-video-vp8-mt.js',
 	OGVDecoderVideoVP8MTW: 'ogv-decoder-video-vp8-mt-wasm.js',
 	OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js',
 	OGVDecoderVideoVP9W: 'ogv-decoder-video-vp9-wasm.js',
-	OGVDecoderVideoVP9MT: 'ogv-decoder-video-vp9-mt.js',
 	OGVDecoderVideoVP9MTW: 'ogv-decoder-video-vp9-mt-wasm.js',
 	OGVDecoderVideoAV1: 'ogv-decoder-video-av1.js',
-	OGVDecoderVideoAV1W: 'ogv-decoder-video-av1-wasm.js'
+	OGVDecoderVideoAV1W: 'ogv-decoder-video-av1-wasm.js',
+	OGVDecoderVideoAV1MTW: 'ogv-decoder-video-av1-mt-wasm.js',
 };
 
 class OGVLoaderBase {

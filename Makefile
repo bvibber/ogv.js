@@ -23,6 +23,7 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
 EMSCRIPTEN_MODULE_FILES:=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.js")
 EMSCRIPTEN_MODULE_FILES+= $(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.json")
@@ -129,6 +130,10 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-av1.js \
 	      build/ogv-decoder-video-av1-wasm.js \
 	      build/ogv-decoder-video-av1-wasm.wasm \
+	      build/ogv-decoder-video-av1-mt-wasm.js \
+	      build/ogv-decoder-video-av1-mt-wasm.js.mem \
+	      build/ogv-decoder-video-av1-mt-wasm.wasm \
+	      build/ogv-decoder-video-av1-mt-wasm.worker.js \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      build/dynamicaudio.swf \
@@ -204,6 +209,10 @@ $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUIL
 $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
+
+$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
 
 # Compile our Emscripten modules
 
@@ -337,6 +346,18 @@ build/ogv-decoder-video-vp9-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                          $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
+
+build/ogv-decoder-video-av1-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
+                                         $(C_SRC_DIR)/ogv-decoder-video.h \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                         $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                         $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+						                 $(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a \
+                                         $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                         $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1MT.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1MT.sh
 
 # Install dev dependencies
 
