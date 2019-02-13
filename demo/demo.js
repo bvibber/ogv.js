@@ -94,6 +94,10 @@
         if (sourceMode == 'clean') {
             baseUrl = 'https://media-streaming.wmflabs.org/clean';
         }
+        if (sourceMode == 'av1') {
+            // quick hack
+            return 'https://brionv.com/misc/ogv.js/demo2/media/llama-drama-av1.webm';
+        }
         return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
     }
 
@@ -149,6 +153,27 @@
                 var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
                     widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
                     formats = ['ogv', 'webm', 'vp9.webm'];
+                sizes.forEach(function(size, i) {
+                    formats.forEach(function(format) {
+                        // fixme: tweak if necessary
+                        var width = widths[i],
+                            aspect = imageinfo.width / imageinfo.height,
+                            height = Math.round(width / aspect);
+                        if (width <= imageinfo.width) {
+                            sources.push({
+                                key: size + 'p.' + format,
+                                format: format,
+                                width: width,
+                                height: height,
+                                url: transcodeUrl(imageinfo.url, size, format),
+                            });
+                        }
+                    });
+                });
+            } else if (sourceMode == 'av1') {
+                var sizes = [180],
+                    widths = [320],
+                    formats = ['av1.webm'];
                 sizes.forEach(function(size, i) {
                     formats.forEach(function(format) {
                         // fixme: tweak if necessary
@@ -500,6 +525,15 @@
               ]
           ];
           processList(shortlist);
+        } else if (sourceMode === 'av1') {
+            var shortlist = [
+                [
+                    "File:Caminandes, Gran Dillama - Blender Foundation.webm",
+                    '1080p24',
+                    'animation'
+                ]
+            ];
+            processList(shortlist);
         } else {
             throw new Error('unexpected sourceMode');
         }
