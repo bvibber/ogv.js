@@ -27,19 +27,20 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
     return 0;
 }
 
-static void fake_free_callback(uint8_t *buf, void *user_data) {
+static void fake_free_callback(const uint8_t *buf, void *user_data) {
     // do nothing
 }
 
 int ogv_video_decoder_process_frame(const char *buf, size_t buf_len)
 {
     Dav1dData data;
-    dav1d_data_wrap(&data, buf, buf_len, &fake_free_callback, NULL);
+    dav1d_data_wrap(&data, (const uint8_t*)buf, buf_len, &fake_free_callback, NULL);
     //dav1d_data_create(&data, buf_len);
     //memcpy(data.data, buf, buf_len);
 
     Dav1dPicture picture = {0};
-    dav1d_decode(context, &data, &picture);
+    dav1d_send_data(context, &data);
+    dav1d_get_picture(context, &picture);
 
     ogvjs_callback_frame(picture.data[0], picture.stride[0],
                          picture.data[1], picture.stride[1],

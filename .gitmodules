@@ -27,4 +27,4 @@
 	url = https://github.com/brion/liboggz.git
 [submodule "dav1d"]
 	path = dav1d
-	url = https://code.videolan.org/ePirat/dav1d.git
+	url = https://code.videolan.org/videolan/dav1d.git
