@@ -20,6 +20,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * retooled buffer copies
 * sync fix for audio packets with discard padding
 * clients can pass a custom `StreamFile` instance as `{stream:foo}` in options. This can be useful for custom streaming until MSE interfaces are ready.
+* refactored WebM keyframe detection
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
