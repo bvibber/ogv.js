@@ -1809,7 +1809,12 @@ class OGVPlayer extends OGVJSElement {
 					playbackPosition = this._getPlaybackTime(audioState);
 					audioEnded = (this._dataEnded && this._audioFeeder.durationBuffered == 0);
 
-					if (this._prebufferingAudio && (this._audioFeeder.durationBuffered >= this._audioFeeder.bufferThreshold * 2 || this._dataEnded)) {
+					if (this._prebufferingAudio && (
+						(
+							this._audioFeeder.durationBuffered >= this._audioFeeder.bufferThreshold * 2 &&
+							(!codec.hasVideo || this._decodedFrames.length >= this._framePipelineDepth)
+						) || this._dataEnded)
+					) {
 						this._log('prebuffering audio done; buffered to ' + this._audioFeeder.durationBuffered);
 						this._startPlayback(playbackPosition);
 						this._prebufferingAudio = false;
@@ -2117,6 +2122,14 @@ class OGVPlayer extends OGVJSElement {
 						this._fireEventAsync('pause');
 						this._fireEventAsync('ended');
 					}
+
+				} else if (this._prebufferingAudio &&
+					((codec.hasVideo && !codec.frameReady) || (codec.hasAudio && !codec.audioReady))
+				) {
+
+					this._log('play loop: prebuffering demuxing');
+
+					this._doProcessPlayDemux();
 
 				} else {
 
