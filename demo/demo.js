@@ -94,18 +94,25 @@
         if (sourceMode == 'clean') {
             baseUrl = 'https://media-streaming.wmflabs.org/clean';
         }
-        if (sourceMode == 'av1') {
-            // quick hack
-            return 'https://brionv.com/misc/ogv.js/demo2/media/llama-drama-av1.webm';
-        }
         return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
     }
+
+    var av1base = 'https://media-streaming.wmflabs.org/clean/av1/';
+    window.av1map = {
+        "File:Caminandes- Llama Drama - Short Movie.ogv":
+            av1base + 'caminandes-llama-drama.ogv',
+        "File:Caminandes, Gran Dillama - Blender Foundation.webm":
+            av1base + 'caminandes-gran-dillama.webm',
+        "File:Caminandes 3 - Llamigos - Blender Animated Short.webm":
+            av1base + 'caminandes-llamigos.webm',
+    };
 
     /**
      * @param String media
      * @param function({duration}, [{format, title, width, height, url}]) callback
      */
     function findSourcesForMedia(media, callback) {
+        media = media.replace(/_/g, ' ');
         commonsApi({
             action: 'query',
             prop: 'videoinfo',
@@ -171,8 +178,8 @@
                     });
                 });
             } else if (sourceMode == 'av1') {
-                var sizes = [180],
-                    widths = [320],
+                var sizes = [120, 180, 240, 360, 480],
+                    widths = [213, 320, 426, 640, 854],
                     formats = ['av1.webm'];
                 sizes.forEach(function(size, i) {
                     formats.forEach(function(format) {
@@ -186,7 +193,7 @@
                                 format: format,
                                 width: width,
                                 height: height,
-                                url: transcodeUrl(imageinfo.url, size, format),
+                                url: av1map[media] + '.' + width + 'x' + height + '.' + format,
                             });
                         }
                     });
@@ -528,7 +535,19 @@
         } else if (sourceMode === 'av1') {
             var shortlist = [
                 [
+                    "File:Caminandes- Llama Drama - Short Movie.ogv",
+                    '1080p24',
+                    'animation'
+                ],
+                /*
+                [
                     "File:Caminandes, Gran Dillama - Blender Foundation.webm",
+                    '1080p24',
+                    'animation'
+                ],
+                */
+                [
+                    "File:Caminandes 3 - Llamigos - Blender Animated Short.webm",
                     '1080p24',
                     'animation'
                 ]
@@ -771,6 +790,8 @@
                         return res + ' WebM VP8 low-CPU';
                     } else if (format == 'vp9.webm') {
                         return res + ' WebM VP9';
+                    } else if (format == 'av1.webm') {
+                        return res + ' WebM AV1';
                     } else {
                         return res + ' ' + format;
                     }
