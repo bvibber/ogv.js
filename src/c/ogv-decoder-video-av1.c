@@ -57,11 +57,30 @@ static int process_frame_return(void)
         return 0;
     }
 
+    int width = picture.p.w;
+    if (width & 1) {
+        // Don't esplode on 213x120
+        width++;
+    }
+    int height = picture.p.h;
+    if (height & 1) {
+        height++;
+    }
+    int chromaWidth, chromaHeight;
+    switch (picture.p.layout) {
+        case DAV1D_PIXEL_LAYOUT_I420:
+            chromaWidth = width >> 1;
+            chromaHeight = height >> 1;
+            break;
+        default:
+            // not yet supported
+            abort();
+    }
     ogvjs_callback_frame(picture.data[0], picture.stride[0],
                          picture.data[1], picture.stride[1],
                          picture.data[2], picture.stride[1],
-                         picture.p.w, picture.p.h,
-                         picture.p.w >> 1, picture.p.h >> 1, // @FIXME handle correctly
+                         width, height,
+                         chromaWidth, chromaHeight,
                          picture.p.w, picture.p.h,
                          0, 0,
                          picture.p.w, picture.p.h);
