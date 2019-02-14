@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include <limits.h>
 
+#include <stdio.h>
+
 #include <dav1d/dav1d.h>
 
 #include "ogv-decoder-video.h"
@@ -44,10 +46,19 @@ static void process_frame_decode(const char *buf, size_t buf_len)
     //dav1d_data_create(&data, buf_len);
     //memcpy(data.data, buf, buf_len);
 
-    decode_success = !dav1d_send_data(context, &data);
+    int ret = dav1d_send_data(context, &data);
+    decode_success = !ret;
     if (decode_success) {
         memset(&picture, 0, sizeof(Dav1dPicture));
-        decode_success = !dav1d_get_picture(context, &picture);
+        ret = dav1d_get_picture(context, &picture);
+        decode_success = !ret;
+        if (decode_success) {
+            // yay
+        } else {
+            printf("dav1d_get_picture returned %d\n", ret);
+        }
+    } else {
+        printf("dav1d_send_data returned %d\n", ret);
     }
 }
 
