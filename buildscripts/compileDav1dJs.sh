@@ -20,8 +20,9 @@ CFLAGS="-O3" meson ../../../dav1d \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
   -Dbitdepths='["8"]' \
-  -Ddefault_library=static && \
-ninja && \
+  -Ddefault_library=static \
+  --buildtype release && \
+ninja -v && \
 mkdir -p "$dir/build/js/root/lib" && \
 cp -p src/libdav1d.a "$dir/build/js/root/lib/libdav1d.a" && \
 mkdir -p "$dir/build/js/root/include/dav1d" && \

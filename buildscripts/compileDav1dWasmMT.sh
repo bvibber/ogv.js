@@ -20,8 +20,9 @@ CFLAGS="-O3 -s USE_PTHREADS=1" meson ../../../dav1d \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
   -Dbitdepths='["8"]' \
-  -Ddefault_library=static && \
-ninja && \
+  -Ddefault_library=static \
+  --buildtype release && \
+ninja -v && \
 mkdir -p "$dir/build/wasm-mt/root/lib" && \
 cp -p src/libdav1d.a "$dir/build/wasm-mt/root/lib/libdav1d.a" && \
 mkdir -p "$dir/build/wasm-mt/root/include/dav1d" && \
