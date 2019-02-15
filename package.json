@@ -59,7 +59,7 @@
     "file-loader": "^3.0.1",
     "node-static": "^0.7.7",
     "recast": "^0.15.0",
-    "stream-file": "0.2.3",
+    "stream-file": "^0.2.4",
     "strip-sourcemap-loader": "0.0.1",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1",

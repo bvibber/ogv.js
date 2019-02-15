@@ -298,7 +298,7 @@ static int processDecoding() {
 		return 0;
 	} else if (ret < 0) {
 		// Unknown unrecoverable error
-		//printf("webm processDecoding: error %d\n", ret);
+		printf("webm processDecoding: error %d\n", ret);
 		return 0;
 	} else {
 		//printf("webm processDecoding: got packet?\n");

@@ -23,6 +23,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * refactored WebM keyframe detection
 * prefill the frame pipeline as well as the audio pipeline before starting audio
 * removed BINARYEN_IGNORE_IMPLICIT_TRAPS=1 option which can cause intermittent breakages
+* changed download streaming method to avoid data corruption problem on certain files
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals

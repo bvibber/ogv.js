@@ -2347,6 +2347,12 @@ class OGVPlayer extends OGVJSElement {
 				this._stream = new StreamFile({
 					url: this.src,
 					cacheSize: 16 * 1024 * 1024,
+
+					// Workaround for https://github.com/brion/ogv.js/issues/514
+					// binary string used for progressive downloads can cause
+					// data corruption when UTF-16 BOM markers appear at chunk
+					// boundaries.
+					progressive: false,
 				});
 			}
 			this._stream.load().then(() => {
