@@ -178,8 +178,8 @@
                     });
                 });
             } else if (sourceMode == 'av1') {
-                var sizes = [120, 180, 240, 360, 480],
-                    widths = [213, 320, 426, 640, 854],
+                var sizes = [120, 180, 240, 360, 480, 720],
+                    widths = [213, 320, 426, 640, 854, 1280],
                     formats = ['av1.webm'];
                 sizes.forEach(function(size, i) {
                     formats.forEach(function(format) {
