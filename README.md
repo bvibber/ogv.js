@@ -22,6 +22,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * clients can pass a custom `StreamFile` instance as `{stream:foo}` in options. This can be useful for custom streaming until MSE interfaces are ready.
 * refactored WebM keyframe detection
 * prefill the frame pipeline as well as the audio pipeline before starting audio
+* removed BINARYEN_IGNORE_IMPLICIT_TRAPS=1 option which can cause intermittent breakages
 
 1.5.8 - 2018-08-08
 * fixes for a few stray globals
