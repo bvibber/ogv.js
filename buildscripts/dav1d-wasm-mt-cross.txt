@@ -1,0 +1,18 @@
+[binaries]
+c = 'emcc'
+ar = 'llvm-ar'
+install_name_tool = 'echo'
+#exe_wrapper = 'node'
+# disable exe_wrapper for the "sanity check" file which is an .exe so doesn't get made as JS/wasm
+exe_wrapper = 'echo'
+
+[properties]
+c_args = ['-s', 'WASM=1', '-s', 'USE_PTHREADS=1']
+c_link_args = []
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86'
+cpu = 'x86'
+endian = 'little'

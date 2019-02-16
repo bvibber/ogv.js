@@ -14,8 +14,8 @@ mkdir -p dav1d
 cd dav1d
 
 # finally, run configuration script
-CFLAGS="-O3" meson ../../../dav1d \
-  --cross-file=../../../buildscripts/dav1d-emscripten-cross.txt \
+meson ../../../dav1d \
+  --cross-file=../../../buildscripts/dav1d-asmjs-cross.txt \
   --prefix="$dir/build/js/root" \
   -Dbuild_asm=false \
   -Dbuild_tests=false \

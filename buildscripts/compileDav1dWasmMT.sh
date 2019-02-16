@@ -14,8 +14,8 @@ mkdir -p dav1d
 cd dav1d
 
 # finally, run configuration script
-CFLAGS="-O3 -s USE_PTHREADS=1" meson ../../../dav1d \
-  --cross-file=../../../buildscripts/dav1d-emscripten-cross.txt \
+meson ../../../dav1d \
+  --cross-file=../../../buildscripts/dav1d-wasm-mt-cross.txt \
   --prefix="$dir/build/wasm-mt/root" \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
