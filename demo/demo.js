@@ -539,13 +539,11 @@
                     '1080p24',
                     'animation'
                 ],
-                /*
                 [
                     "File:Caminandes, Gran Dillama - Blender Foundation.webm",
                     '1080p24',
                     'animation'
                 ],
-                */
                 [
                     "File:Caminandes 3 - Llamigos - Blender Animated Short.webm",
                     '1080p24',
