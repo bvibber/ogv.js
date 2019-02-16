@@ -17,7 +17,7 @@ typedef struct {
 	size_t data_len;
 } decode_queue_t;
 
-static const int decode_queue_size = 16;
+static const int decode_queue_size = 32;
 static decode_queue_t decode_queue[decode_queue_size];
 static int decode_queue_start = 0;
 static int decode_queue_end = 0;
@@ -68,7 +68,6 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 
 // Send to background worker, then wake main thread on callback
 int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
-	printf("requesting process frame (%p)\n", data);
 	pthread_mutex_lock(&decode_mutex);
 
 	decode_queue[decode_queue_end].data = data;
@@ -86,8 +85,8 @@ static void main_thread_return(void *user_data) {
 	pthread_mutex_lock(&decode_mutex);
 	double delta = cpu_time;
 	cpu_time = 0;
-	busy = 0;
-	pthread_cond_signal(&ping_cond);
+	//busy = 0;
+	//pthread_cond_signal(&ping_cond);
 	pthread_mutex_unlock(&decode_mutex);
 
 	ogvjs_callback_async_complete(ret, delta);

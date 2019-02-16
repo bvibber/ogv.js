@@ -45,58 +45,53 @@ typedef struct _DecodeState {
 
 static void process_frame_decode(const char *buf, size_t buf_len)
 {
-    printf("decode thingy (%p)\n", buf);
     if (buf) {
         Dav1dData data;
         dav1d_data_wrap(&data, (const uint8_t*)buf, buf_len, &fake_free_callback, NULL);
-        for (;;) {
+        do {
             int ret = dav1d_send_data(context, &data);
             if (!ret) {
                 // All right! success.
-                printf("sent data\n");
             } else if (ret == -EAGAIN) {
                 // Too many decoded pictures in buffer; drain them.
-                printf("can't send data yet; need to drain\n");
             } else {
                 printf("dav1d_send_data returned %d\n", ret);
                 break;
             }
 
             DecodedFrame *frame = calloc(1, sizeof(DecodedFrame));
-            ret = dav1d_get_picture(context, &frame->picture);
-            if (!ret) {
+            int ret2 = dav1d_get_picture(context, &frame->picture);
+            if (!ret2) {
                 // yay
-                printf("found a picture\n");
                 frame->success = 1;
                 call_main_return(frame);
                 continue;
-            } else if (ret == -EAGAIN) {
+            } else if (ret2 == -EAGAIN) {
                 free(frame);
                 // Out of pictures. Go home and wait for more frames.
-                printf("no more pictures\n");
-                break;
+                continue;
             } else {
                 free(frame);
-                printf("dav1d_get_picture returned %d\n", ret);
+                printf("dav1d_get_picture returned %d\n", ret2);
                 break;
             }
-        }
-    } else {
-        // Asked for a sync.
+        } while (data.sz);
+    }
 
+    if (!buf) {
+
+        // Drain any remaining pictures so we have them. (?)
         for (;;) {
             DecodedFrame *frame = calloc(1, sizeof(DecodedFrame));
             int ret = dav1d_get_picture(context, &frame->picture);
             if (!ret) {
                 // yay
-                printf("found a picture\n");
                 frame->success = 1;
                 call_main_return(frame);
                 continue;
             } else if (ret == -EAGAIN) {
                 free(frame);
                 // Out of pictures. Go home and wait for more frames.
-                printf("no more pictures\n");
                 break;
             } else {
                 free(frame);
@@ -106,7 +101,6 @@ static void process_frame_decode(const char *buf, size_t buf_len)
         }
 
         // Issue a null callback
-        printf("issuing sync return\n");
         call_main_return(NULL);
     }
 }
