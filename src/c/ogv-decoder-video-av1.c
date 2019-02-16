@@ -27,6 +27,9 @@ static void do_init(void) {
 		cores = max_cores;
 	}
     /*if (cores >= 4) {
+        // Unclear how beneficial this is
+        // tile threads = 2 gives up to 25% boost by itself
+        // but frame threads = 4 gives more?
         settings.n_tile_threads = 2;
         settings.n_frame_threads = cores / 2;
     } else*/ if (cores >= 2) {
@@ -71,8 +74,13 @@ static void process_frame_decode(const char *buf, size_t buf_len)
                 continue;
             } else if (ret2 == -EAGAIN) {
                 free(frame);
-                // Out of pictures. Go home and wait for more frames.
-                continue;
+                if (ret == -EAGAIN) {
+                    // Time to send more data in!
+                    continue;
+                } else {
+                    // Out of pictures. Go home and wait for more packets.
+                    break;
+                }
             } else {
                 free(frame);
                 printf("dav1d_get_picture returned %d\n", ret2);
