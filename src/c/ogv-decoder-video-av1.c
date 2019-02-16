@@ -67,24 +67,17 @@ static void process_frame_decode(const char *buf, size_t buf_len)
 
             DecodedFrame *frame = calloc(1, sizeof(DecodedFrame));
             int ret2 = dav1d_get_picture(context, &frame->picture);
-            if (!ret2) {
-                // yay
-                frame->success = 1;
-                call_main_return(frame);
-                continue;
-            } else if (ret2 == -EAGAIN) {
-                free(frame);
-                if (ret == -EAGAIN) {
-                    // Time to send more data in!
-                    continue;
-                } else {
+            if (ret2 < 0) {
+                if (ret2 != -EAGAIN) {
                     // Out of pictures. Go home and wait for more packets.
+                    free(frame);
+                    printf("dav1d_get_picture returned %d\n", ret2);
                     break;
                 }
             } else {
-                free(frame);
-                printf("dav1d_get_picture returned %d\n", ret2);
-                break;
+                // yay
+                frame->success = 1;
+                call_main_return(frame);
             }
         } while (data.sz);
     }
