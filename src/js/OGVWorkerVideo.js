@@ -20,6 +20,11 @@ let proxy = new OGVWorkerSupport([
 		this.target.processFrame(args[0], (ok) => {
 			callback([ok]);
 		});
+	},
+
+	sync: function(args, callback) {
+		this.target.sync();
+		callback();
 	}
 });
 

@@ -47,12 +47,21 @@ void do_destroy(void)
 }
 
 static void process_frame_decode(const char *data, size_t data_len) {
+	if (!data) {
+		// NULL data signals syncing the decoder state
+		call_main_return(NULL);
+		return;
+	}
+
 	vpx_codec_decode(&vpxContext, (const uint8_t *)data, data_len, NULL, 1);
 	// @todo check return value
 	vpx_codec_decode(&vpxContext, NULL, 0, NULL, 1);
+
+	// one-in, one-out. send back to the main thread for extraction.
+	call_main_return(NULL);
 }
 
-static int process_frame_return(void) {
+static int process_frame_return(void *user_data) {
 	vpx_codec_iter_t iter = NULL;
 	vpx_image_t *image = NULL;
 	int foundImage = 0;

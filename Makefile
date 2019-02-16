@@ -287,6 +287,7 @@ build/ogv-decoder-video-theora.js : $(C_SRC_DIR)/ogv-decoder-video-theora.c \
 
 build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
+								 $(C_SRC_DIR)/ogv-thread-support.h \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
@@ -300,6 +301,7 @@ build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
 
 build/ogv-decoder-video-vp9.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
+								 $(C_SRC_DIR)/ogv-thread-support.h \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
@@ -313,6 +315,7 @@ build/ogv-decoder-video-vp9.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
 
 build/ogv-decoder-video-av1.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
+                                 $(C_SRC_DIR)/ogv-thread-support.h \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                  $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
@@ -325,6 +328,7 @@ build/ogv-decoder-video-av1.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
 
 build/ogv-decoder-video-vp8-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                          $(C_SRC_DIR)/ogv-decoder-video.h \
+                                         $(C_SRC_DIR)/ogv-thread-support.h \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
@@ -337,6 +341,7 @@ build/ogv-decoder-video-vp8-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
 
 build/ogv-decoder-video-vp9-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                          $(C_SRC_DIR)/ogv-decoder-video.h \
+                                         $(C_SRC_DIR)/ogv-thread-support.h \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
@@ -349,6 +354,7 @@ build/ogv-decoder-video-vp9-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
 
 build/ogv-decoder-video-av1-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                          $(C_SRC_DIR)/ogv-decoder-video.h \
+                                         $(C_SRC_DIR)/ogv-thread-support.h \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
                                          $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \

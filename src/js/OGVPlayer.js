@@ -227,6 +227,7 @@ class OGVPlayer extends OGVJSElement {
 		this._pendingFrame = 0;
 		this._pendingAudio = 0;
 		this._framePipelineDepth = 4;
+		this._frameParallelism = this._enableThreading ? (navigator.hardwareConcurrency || 1) : 0;
 		this._audioPipelineDepth = 8;
 
 		this._videoInfo = null;
@@ -1319,6 +1320,7 @@ class OGVPlayer extends OGVJSElement {
 				}
 				finishedSeeking();
 			} );
+			this._codec.sync();
 			return;
 		} else {
 			finishedSeeking();
@@ -1365,6 +1367,7 @@ class OGVPlayer extends OGVJSElement {
 				this._codec.decodeFrame(() => {
 					this._pingProcessing();
 				});
+				this._codec.sync();
 				return;
 			} else {
 				// Reached or surpassed the target time.
@@ -1855,7 +1858,7 @@ class OGVPlayer extends OGVJSElement {
 
 				if (this._codec.hasVideo) {
 					readyForFrameDraw = this._decodedFrames.length > 0;
-					readyForFrameDecode = (this._pendingFrame + this._decodedFrames.length < this._framePipelineDepth) && this._codec.frameReady;
+					readyForFrameDecode = (this._pendingFrame + this._decodedFrames.length < this._framePipelineDepth + this._frameParallelism) && this._codec.frameReady;
 
 					if (readyForFrameDraw) {
 						frameDelay = (this._decodedFrames[0].frameEndTimestamp - playbackPosition) * 1000;
@@ -2012,6 +2015,10 @@ class OGVPlayer extends OGVJSElement {
 						this._proxyTime += frameDecodeTime;
 						// We can process something else while that's running
 						this._pingProcessing();
+
+						if (this._dataEnded) {
+							this._codec.sync();
+						}
 					}
 
 				} else if (readyForAudioDecode) {

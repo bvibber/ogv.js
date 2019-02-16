@@ -368,6 +368,12 @@ class OGVWrapperCodec {
 		this.demuxer.flush(callback);
 	}
 
+	sync() {
+		if (this.videoDecoder) {
+			this.videoDecoder.sync();
+		}
+	}
+
 	getKeypointOffset(timeSeconds, callback) {
 		this.demuxer.getKeypointOffset(timeSeconds, callback);
 	}

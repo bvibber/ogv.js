@@ -21,6 +21,10 @@ class OGVDecoderVideoProxy extends OGVProxyClass({
 	close() {
 		this.terminate();
 	}
+
+	sync() {
+		this.proxy('sync', [], () => {})
+	}
 }
 
 export default OGVDecoderVideoProxy;

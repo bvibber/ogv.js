@@ -28,7 +28,7 @@ static void *decode_thread_run(void *arg);
 static void do_init(void);
 static void do_destroy(void);
 static void process_frame_decode(const char *data, size_t data_len);
-static int process_frame_return(void);
+static int process_frame_return(void *user_data);
 
 void ogv_video_decoder_init() {
 #ifdef __EMSCRIPTEN_PTHREADS__
@@ -68,6 +68,7 @@ int ogv_video_decoder_process_header(const char *data, size_t data_len) {
 
 // Send to background worker, then wake main thread on callback
 int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
+	printf("requesting process frame (%p)\n", data);
 	pthread_mutex_lock(&decode_mutex);
 
 	decode_queue[decode_queue_end].data = data;
@@ -79,8 +80,8 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 	return 1;
 }
 
-static void main_thread_return() {
-	int ret = process_frame_return();
+static void main_thread_return(void *user_data) {
+	int ret = process_frame_return(user_data);
 
 	pthread_mutex_lock(&decode_mutex);
 	double delta = cpu_time;
@@ -96,7 +97,7 @@ static void *decode_thread_run(void *arg) {
 	do_init();
 	while (1) {
 		pthread_mutex_lock(&decode_mutex);
-		while (busy || decode_queue_end == decode_queue_start) {
+		while (/*busy || */ decode_queue_end == decode_queue_start) {
 			pthread_cond_wait(&ping_cond, &decode_mutex);
 		}
 		busy = 1;
@@ -112,9 +113,11 @@ static void *decode_thread_run(void *arg) {
 		pthread_mutex_lock(&decode_mutex);
 		cpu_time += delta;
 		pthread_mutex_unlock(&decode_mutex);
-
-		emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_V, main_thread_return);
 	}
+}
+
+static void call_main_return(void *user_data) {
+	emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_VI, main_thread_return, user_data);
 }
 
 #else
@@ -122,7 +125,11 @@ static void *decode_thread_run(void *arg) {
 // Single-threaded
 int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 	process_frame_decode(data, data_len);
-	return process_frame_return();
+	return 1;
+}
+
+static void call_main_return(void *user_data) {
+	process_frame_return(user_data);
 }
 
 #endif

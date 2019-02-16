@@ -26,7 +26,9 @@ static void do_init(void) {
 	if (cores > max_cores) {
 		cores = max_cores;
 	}
-	settings.n_tile_threads = cores;
+    if (cores >= 2) {
+        settings.n_frame_threads = cores;
+    }
 #endif
 
     dav1d_open(&context, &settings);
@@ -36,49 +38,101 @@ static void fake_free_callback(const uint8_t *buf, void *user_data) {
     // do nothing
 }
 
-static Dav1dPicture picture = {0};
-static int decode_success = 0;
+typedef struct _DecodeState {
+    Dav1dPicture picture;
+    int success;
+} DecodedFrame;
 
 static void process_frame_decode(const char *buf, size_t buf_len)
 {
-    Dav1dData data;
-    dav1d_data_wrap(&data, (const uint8_t*)buf, buf_len, &fake_free_callback, NULL);
-    //dav1d_data_create(&data, buf_len);
-    //memcpy(data.data, buf, buf_len);
+    printf("decode thingy (%p)\n", buf);
+    if (buf) {
+        Dav1dData data;
+        dav1d_data_wrap(&data, (const uint8_t*)buf, buf_len, &fake_free_callback, NULL);
+        for (;;) {
+            int ret = dav1d_send_data(context, &data);
+            if (!ret) {
+                // All right! success.
+                printf("sent data\n");
+            } else if (ret == -EAGAIN) {
+                // Too many decoded pictures in buffer; drain them.
+                printf("can't send data yet; need to drain\n");
+            } else {
+                printf("dav1d_send_data returned %d\n", ret);
+                break;
+            }
 
-    int ret = dav1d_send_data(context, &data);
-    decode_success = !ret;
-    if (decode_success) {
-        memset(&picture, 0, sizeof(Dav1dPicture));
-        ret = dav1d_get_picture(context, &picture);
-        decode_success = !ret;
-        if (decode_success) {
-            // yay
-        } else {
-            printf("dav1d_get_picture returned %d\n", ret);
+            DecodedFrame *frame = calloc(1, sizeof(DecodedFrame));
+            ret = dav1d_get_picture(context, &frame->picture);
+            if (!ret) {
+                // yay
+                printf("found a picture\n");
+                frame->success = 1;
+                call_main_return(frame);
+                continue;
+            } else if (ret == -EAGAIN) {
+                free(frame);
+                // Out of pictures. Go home and wait for more frames.
+                printf("no more pictures\n");
+                break;
+            } else {
+                free(frame);
+                printf("dav1d_get_picture returned %d\n", ret);
+                break;
+            }
         }
     } else {
-        printf("dav1d_send_data returned %d\n", ret);
+        // Asked for a sync.
+
+        for (;;) {
+            DecodedFrame *frame = calloc(1, sizeof(DecodedFrame));
+            int ret = dav1d_get_picture(context, &frame->picture);
+            if (!ret) {
+                // yay
+                printf("found a picture\n");
+                frame->success = 1;
+                call_main_return(frame);
+                continue;
+            } else if (ret == -EAGAIN) {
+                free(frame);
+                // Out of pictures. Go home and wait for more frames.
+                printf("no more pictures\n");
+                break;
+            } else {
+                free(frame);
+                printf("dav1d_get_picture returned %d\n", ret);
+                break;
+            }
+        }
+
+        // Issue a null callback
+        printf("issuing sync return\n");
+        call_main_return(NULL);
     }
 }
 
-static int process_frame_return(void)
+static int process_frame_return(void *user_data)
 {
-    if (!decode_success) {
+    if (!user_data) {
+        // NULL indicated a sync point.
+        return 0;
+    }
+    DecodedFrame *frame = (DecodedFrame *)user_data;    
+    if (!frame->success) {
         return 0;
     }
 
-    int width = picture.p.w;
+    int width = frame->picture.p.w;
     if (width & 1) {
         // Don't esplode on 213x120
         width++;
     }
-    int height = picture.p.h;
+    int height = frame->picture.p.h;
     if (height & 1) {
         height++;
     }
     int chromaWidth, chromaHeight;
-    switch (picture.p.layout) {
+    switch (frame->picture.p.layout) {
         case DAV1D_PIXEL_LAYOUT_I420:
             chromaWidth = width >> 1;
             chromaHeight = height >> 1;
@@ -87,15 +141,16 @@ static int process_frame_return(void)
             // not yet supported
             abort();
     }
-    ogvjs_callback_frame(picture.data[0], picture.stride[0],
-                         picture.data[1], picture.stride[1],
-                         picture.data[2], picture.stride[1],
+    ogvjs_callback_frame(frame->picture.data[0], frame->picture.stride[0],
+                         frame->picture.data[1], frame->picture.stride[1],
+                         frame->picture.data[2], frame->picture.stride[1],
                          width, height,
                          chromaWidth, chromaHeight,
-                         picture.p.w, picture.p.h,
+                         frame->picture.p.w, frame->picture.p.h,
                          0, 0,
-                         picture.p.w, picture.p.h);
-    dav1d_picture_unref(&picture);
+                         frame->picture.p.w, frame->picture.p.h);
+    dav1d_picture_unref(&frame->picture);
+    free(frame);
 
     return 1;
 }

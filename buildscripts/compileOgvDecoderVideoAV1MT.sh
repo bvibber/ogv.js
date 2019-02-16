@@ -7,7 +7,7 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_THREADED_OPTIONS \
-  -s TOTAL_MEMORY=67108864 \
+  -s TOTAL_MEMORY=134217728 \
   -s EXPORT_NAME="'OGVDecoderVideoAV1MTW'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/wasm-mt/root/include \

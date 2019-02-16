@@ -142,3 +142,20 @@ Module['processFrame'] = function(data, callback) {
 Module['close'] = function() {
 	// no-op
 };
+
+/**
+ * Force an async decoder to flush any decoded frames out,
+ * without losing any state.
+ */
+Module['sync'] = function() {
+	var isAsync = Module['_ogv_video_decoder_async']();
+	if (isAsync) {
+		Module.callbacks.push(function() {
+			console.log('synced video decoder');
+		});
+		console.log('syncing video decoder');
+		time(function() {
+			Module['_ogv_video_decoder_process_frame'](0, 0)
+		});
+	}
+}
