@@ -26,7 +26,10 @@ static void do_init(void) {
 	if (cores > max_cores) {
 		cores = max_cores;
 	}
-    if (cores >= 2) {
+    if (cores >= 4) {
+        settings.n_tile_threads = 2;
+        settings.n_frame_threads = cores / 2;
+    } else if (cores >= 2) {
         settings.n_frame_threads = cores;
     }
 #endif
