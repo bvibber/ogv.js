@@ -81,7 +81,7 @@ class OGVLoaderBase {
 				}
 			};
 			options.pthreadMainPrefixURL = this.base + '/';
-			options.mainScriptUrlOrBlob = this.scriptForClass(className);
+			options.mainScriptUrlOrBlob = this.scriptForClass(className) + '?version=' + encodeURIComponent(OGVVersion);
 			// Note: these pseudoclasses should not use 'new',
 			// which breaks in emscripten 1.38.10
 			return global[className](options);
