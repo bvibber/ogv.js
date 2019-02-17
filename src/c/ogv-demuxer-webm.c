@@ -357,11 +357,13 @@ static int processSeeking()
             bufferQueue->pos = target;
             ogvjs_callback_seek(target);
         }
+        // Return false to indicate we need i/o
         return 0;
     } else {
         appState = STATE_DECODING;
-        //printf("is seeking processing... LOOKS ROLL OVER\n");
-        return 0;
+        // Roll over to packet processing.
+        // Return true to indicate we should keep reading.
+        return 1;
     }
 }
 
