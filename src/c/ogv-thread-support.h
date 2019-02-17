@@ -6,7 +6,7 @@
 #include <pthread.h>
 
 static double cpu_time = 0.0;
-static int busy = 0;
+static double cpu_delta = 0.0;
 
 static pthread_t decode_thread;
 static pthread_mutex_t decode_mutex; // to hold critical section
@@ -79,44 +79,36 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 	return 1;
 }
 
-static void main_thread_return(void *user_data) {
+static void main_thread_return(void *user_data, float delta) {
 	int ret = process_frame_return(user_data);
 
-	pthread_mutex_lock(&decode_mutex);
-	double delta = cpu_time;
-	cpu_time = 0;
-	//busy = 0;
-	//pthread_cond_signal(&ping_cond);
-	pthread_mutex_unlock(&decode_mutex);
-
-	ogvjs_callback_async_complete(ret, delta);
+	ogvjs_callback_async_complete(ret, (double)delta);
 }
 
 static void *decode_thread_run(void *arg) {
 	do_init();
 	while (1) {
 		pthread_mutex_lock(&decode_mutex);
-		while (/*busy || */ decode_queue_end == decode_queue_start) {
+		while (decode_queue_end == decode_queue_start) {
 			pthread_cond_wait(&ping_cond, &decode_mutex);
 		}
-		busy = 1;
 		decode_queue_t item;
 		item = decode_queue[decode_queue_start];
 		decode_queue_start = (decode_queue_start + 1) % decode_queue_size;
 		pthread_mutex_unlock(&decode_mutex);
 
-		double start = emscripten_get_now();
+		cpu_time = emscripten_get_now() - cpu_delta;
 		process_frame_decode(item.data, item.data_len);
-		double delta = emscripten_get_now() - start;
-
-		pthread_mutex_lock(&decode_mutex);
-		cpu_time += delta;
-		pthread_mutex_unlock(&decode_mutex);
+		// Capture any CPU time that didn't result in a frame
+		cpu_delta = emscripten_get_now() - cpu_time;
 	}
 }
 
 static void call_main_return(void *user_data) {
-	emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_VI, main_thread_return, user_data);
+	double right_now = emscripten_get_now();
+	double delta = right_now - cpu_time;
+	cpu_time = right_now;
+	emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_VIF, main_thread_return, user_data, (float)delta);
 }
 
 #else
