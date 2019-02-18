@@ -7,11 +7,14 @@ const OGVDecoderVideoVP8 = require('../dist/ogv-decoder-video-vp8.js');
 const OGVDecoderVideoVP8W = require('../dist/ogv-decoder-video-vp8-wasm.js');
 const OGVDecoderVideoVP9 = require('../dist/ogv-decoder-video-vp9.js');
 const OGVDecoderVideoVP9W = require('../dist/ogv-decoder-video-vp9-wasm.js');
+const OGVDecoderVideoAV1 = require('../dist/ogv-decoder-video-av1.js');
+const OGVDecoderVideoAV1W = require('../dist/ogv-decoder-video-av1-wasm.js');
 
 let demuxerClass = OGVDemuxerWebMW;
 let decoderClass = {
   'vp8': OGVDecoderVideoVP8W,
-  'vp9': OGVDecoderVideoVP9W
+  'vp9': OGVDecoderVideoVP9W,
+  'av1': OGVDecoderVideoAV1W
 };
 let checksum = false;
 
@@ -19,7 +22,7 @@ function locateFile(url) {
   if (url.slice(0, 5) === 'data:') {
     return url;
   } else {
-    return '../dist/' + url;
+    return __dirname + '/../dist/' + url;
   }
 }
 
@@ -37,7 +40,10 @@ function decodeFile(filename) {
   let demuxer;
   let frames = 0;
   const start = Date.now();
-  
+  let checkin = 24;
+  let last = 0;
+  let lastFrames = 0;
+
   function getData(callback) {
     const bufsize = 65536;
     buf = new ArrayBuffer(bufsize);
@@ -69,9 +75,9 @@ function decodeFile(filename) {
     if (demuxer.frameReady) {
       demuxer.dequeueVideoPacket((packet) => {
         //console.log(packet);
-        if (!checksum) {
-          console.log('processing frame ' + frames);
-        }
+        //if (!checksum) {
+          //console.log('processing frame ' + frames);
+        //}
         frames++;
         decoder.processFrame(packet, (ok) => {
           if (ok) {
@@ -79,9 +85,14 @@ function decodeFile(filename) {
             if (checksum) {
               console.log(frameChecksum(decoder.frameBuffer));
             } else {
-              const delta = (Date.now() - start) / 1000;
-              const fps = frames / delta;
-              console.log(fps + ' fps decoding');
+              const now = Date.now();
+              const delta = (now - last) / 1000;
+              if (frames % checkin == 0) {
+                const fps = (frames - lastFrames) / delta;
+                console.log(fps + ' fps decoding');
+                lastFrames = frames;
+                last = now;
+              }
             }
           } else {
             //console.log('frame failed');
@@ -109,7 +120,7 @@ function decodeFile(filename) {
           console.log('done and done');
           const delta = (Date.now() - start) / 1000;
           const fps = frames / delta;
-          console.log(fps + ' fps decoding');
+          console.log(fps + ' fps decoding average');
           process.exit(0);
         } else {
           //console.log('loading more data');
@@ -135,14 +146,16 @@ while (args.length >= 1) {
     demuxerClass = OGVDemuxerWebM;
     decoderClass = {
       'vp8': OGVDecoderVideoVP8,
-      'vp9': OGVDecoderVideoVP9
+      'vp9': OGVDecoderVideoVP9,
+      'av1': OGVDecoderVideoAV1
     };
     args.shift();
   } else if (args[0] == '--wasm') {
     demuxerClass = OGVDemuxerWebMW;
     decoderClass = {
       'vp8': OGVDecoderVideoVP8W,
-      'vp9': OGVDecoderVideoVP9W
+      'vp9': OGVDecoderVideoVP9W,
+      'av1': OGVDecoderVideoAV1W
     };
     args.shift();
   } else if (args[0] == '--checksum') {
