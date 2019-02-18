@@ -108,7 +108,7 @@ static void call_main_return(void *user_data) {
 	double right_now = emscripten_get_now();
 	double delta = right_now - cpu_time;
 	cpu_time = right_now;
-	emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_VIF, main_thread_return, user_data, (float)delta);
+	emscripten_sync_run_in_main_runtime_thread_(EM_FUNC_SIG_VIF, main_thread_return, user_data, (float)delta);
 }
 
 #else
