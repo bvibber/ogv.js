@@ -1,9 +1,9 @@
 ogv.js
 ======
 
-Media decoder and player for Ogg Vorbis/Opus/Theora and WebM video.
+Media decoder and player for Ogg Vorbis/Opus/Theora and WebM VP8/VP9/AV1 video.
 
-Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compiled to JavaScript with Emscripten.
+Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d compiled to JavaScript and WebAssembly with Emscripten.
 
 ## Updates
 
@@ -16,7 +16,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * building with babel for ES5/IE11 compat
 * updated eslint
 * updated yuv-canvas to 1.2.4; fixes for software GL rendering
-* updated audio-feeder to 0.4.12; fixes for resampling and Flash perf
+* updated audio-feeder to 0.4.15; fixes for resampling and Flash perf
 * retooled buffer copies
 * sync fix for audio packets with discard padding
 * clients can pass a custom `StreamFile` instance as `{stream:foo}` in options. This can be useful for custom streaming until MSE interfaces are ready.
@@ -26,130 +26,6 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, and libnestegg compi
 * changed download streaming method to avoid data corruption problem on certain files
 * fix for seek on very short WebM files
 * fix for replay-after-end-of-playback in WebM
-
-1.5.8 - 2018-08-08
-* fixes for a few stray globals
-* update buildchain to emscripten 1.38.11
-* update webpack to 4.x
-    * minified main ogv.js endpoints
-* opus built with --enable-float-approx
-* fix display of WebM files with resolution changes
-* fix green edges on some VP9 files
-* update opus to 1.2.1
-* update ogg to 1.3.3
-* update vorbis to 1.3.6
-* remove old 'delay-audio' A/V sync behavior mode
-* added video, audio bitrate to stats & demo
-
-1.5.7 - 2018-02-19
-* fix for linear seek in audio/webm
-* updated build chain to emscripten 1.37.34
-* performance optimization for VP8 and VP9 on IE 11
-    * roughly 15-25% performance improvement
-    * uses direct multiplication instead of slow polyfill of Math.imul
-* performance optimization for VP8 loop filter
-    * roughly 10% performance improvement in Safari, Edge wasm builds
-    * smaller improvement in JS
-* performance optimization for Opus audio
-    * now compiled with optimization, about 4x faster
-* built module wrappers with closure compiler
-    * shaves a few kilobites off load size
-* updated audio-feeder to 0.4.9
-    * volume changes now apply immediately on IE
-    * float precision for audio on IE
-
-1.5.6 - 2018-01-29
-* detect and work around WebAssembly failure on iOS 11.2.2/11.2.5
-
-1.5.5 - 2018-01-22
-* allow linear seeking on WebM files without cues, such as audio/webm
-
-1.5.4 - 2018-01-19
-* updated yuv-canvas to 1.2.1
-    * fixes playback on iOS 9
-* fix loading of WebM files under 256kb
-
-1.5.3 - 2018-01-18
-* fix canPlayType() to recognize WebM
-* updated build chain to emscripten 1.37.28
-* minor internal source cleanup
-
-1.5.2 - 2017-12-09
-* use magic bytes sniffing to choose demuxer
-    * fixes WebM in blobs and in Safari
-* update to stream-file 0.2.3
-    * fixes error loading blob URLs in Safari
-
-1.5.1 - 2017-12-05
-* use Content-Type to choose demuxer instead of URL extension (rolled back in 1.5.2)
-
-1.5.0 - 2017-11-09
-* cleaned up console logging
-* enable WebM by default
-* enable WebAssembly by default if available
-* allow memory growth on WebAssembly
-* build modules with -O3 instead of -O2
-* disabled experimental pthreads build for now
-* updated yuv-canvas
-    * improved image filtering/scaling on Windows
-    * work around broken object-fit on Edge 16
-* updated stream-file to 0.2.1
-    * fixes error on abort during network load
-
-1.4.2 - 2017-04-24
-* support 8-bit 4:2:2 and 4:4:4 subsampling in VP9
-
-1.4.1 - 2017-04-07
-* fix for seek shortly after initialization
-* fix for some missing instance constants
-
-1.4.0 - 2017-04-06
-* fastSeek() is now fast; seeks to first keyframe found.
-* VP9 base profile support in WebM container (8-bit 4:2:0 only).
-* Safari no longer complains about missing es6-promise.map source map
-* Smoother playback on low-end machines prone to lag spikes: when A/V sync lags, keep audio running smoothly and resync video at the next keyframe. To restore previous behavior, set `sync: 'delay-audio'` in options.
-* Experimental Web Assembly builds of all modules; set `wasm: true` in options to force on.
-* `error` property now returns an `OGVMediaError` object instead of string.
-* Decode pipeline up to 3 frames deep to aid in momentary spikes.
-* Experimental multithreaded JS builds for VP8 and VP9; set `threading: true` in options to force on.
-* Fixed bad autodetection of files in root dir
-
-1.3.1 - 2017-02-24
-* Fix for seeking before load completes
-* Fix for bisection seeking in very short Ogg files
-
-1.3.0 - 2017-02-08
-* Separated XHR and caching out to stream-file package
-* more aggressive in-memory buffering should improve audio seek performance
-* improved seek precision on audio files
-* fix for Ogg files with stream id of 0
-
-1.2.1 - 2016-09-24
-* Performance fixed for playback of Ogg Theora with many duplicate frames ("1000fps" files from ffmpeg)
-* Report actual fps (ignoring dupe frames) for Ogg Theora
-* Delay loading when using preload="none"
-* Fix regression in IE 10 network layer
-
-1.2.0 - 2016-09-19
-* Separated software and WebGL paths to yuv-canvas package
-* fixed regression in WebM frame rate handling
-* buffer up to 3 decoded frames for smoother playback
-* smoother audio in the face of short delays (drop late frame if next one is already decoded)
-* fixed regression in seeking non-indexed Ogg files
-* updated libvpx
-
-1.1.3 - 2016-06-27
-* fix play-during-seek bug that interacted with video.js badly
-
-1.1.2 - 2016-06-27
-* better a/v sync
-* muted autoplay works on iOS
-* numerous seeking-related race-condition fixes
-* more consistent performance on low-end machines
-* supports cross-domain hosting of worker and Flash audio shim
-* seeking now works in WebM as well as Ogg
-* cleaner multithreading
-* lots of little fixes
 
 See more details and history in [CHANGES.md](https://github.com/brion/ogv.js/blob/master/CHANGES.md)
 
@@ -168,7 +44,7 @@ See also a standalone demo with performance metrics at https://brionv.com/misc/o
 * GPU accelerated decoding: no
 * SIMD acceleration: no
 * Web Assembly: yes (with asm.js fallback)
-* multithreaded VP8, VP9: in development (experimental; add back to Makefile; set `options.threading` to `true`; requires `SharedArrayBuffer`)
+* multithreaded VP8, VP9, AV1: in development (set `options.threading` to `true`; requires flags to be enabled in Firefox 65 and Chrome 72, no support yet in Safari)
 * controls: no (currently provided by demo or other UI harness)
 
 Ogg and WebM files are fairly well supported.
@@ -297,7 +173,7 @@ Dynamically loaded assets:
 * `ogv-decoder-video-theora.js` is used in playing .ogg and .ogv video files.
 * `ogv-decoder-video-vp8.js` and `ogv-decoder-video-vp9.js` are used in playing .webm video files.
 * `*-wasm.js` and `*-wasm.wasm` files are the Web Assembly versions of the above modules.
-* `*-mt.js` are the multithreaded versions of some of the above modules, if built.
+* `*-mt.js` are the multithreaded versions of some of the above modules, if built. They have additional support files.
 * `dynamicaudio.swf` is the Flash audio shim, used for Internet Explorer 10/11.
 
 If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
@@ -309,6 +185,8 @@ As of 2015, for SD-or-less resolution basic Ogg Theora decoding speed is reliabl
 
 WebM VP8/VP9 is slower, but works pretty well at a resolution step below Theora.
 
+AV1 is slower still, and tops out around 360p for single-threaded decoding on a fast desktop or iOS device.
+
 *Low-res targets*
 
 I've gotten acceptable performance for Vorbis audio and 160p/15fps Theora files on 32-bit iOS devices: iPhone 4s, iPod Touch 5th-gen and iPad 3. These have difficulty at 240p and above, and just won't keep up with higher resolutions.
@@ -318,10 +196,10 @@ Meanwhile, newer 64-bit iPhones and iPads are comparable to low-end laptops, and
 (On iOS, Safari performs significantly better than some alternative browsers that are unable to enable the JIT due to use of the old UIWebView API. Chrome 49 and Firefox for iOS are known to work using the newer WKWebView API internally. Again, a benchmark must be used to detect slow performance, as the browser remains otherwise compatible.)
 
 
-Windows on 32-bit ARM platforms is similar... IE 11 on Windows RT 8.1 on a Surface tablet (NVidia Tegra 3), and Edge on Windows 10 Mobile build 10166 on a Lumia 635, perform acceptably with audio and with 160p/15fps videos but have trouble starting around 240p.
+Windows on 32-bit ARM platforms is similar... IE 11 on Windows RT 8.1 on a Surface tablet (NVidia Tegra 3) does not work (crashes IE), while Edge on Windows 10 Mobile works ok at low resolutions, having trouble starting around 240p.
 
 
-In both cases, a native application looms as a possibly better alternative. See [OGVKit ](https://github.com/brion/OGVKit) and [OgvRt](https://github.com/brion/OgvRT) projects for experiments in those directions.
+In both cases, a native application looms as a possibly better alternative. See [OGVKit](https://github.com/brion/OGVKit) and [OgvRt](https://github.com/brion/OgvRT) projects for experiments in those directions.
 
 
 Note that at these lower resolutions, Vorbis audio and Theora video decoding are about equally expensive operations -- dual-core phones and tablets should be able to eek out a little parallelism here thanks to audio and video being in separate Worker threads.
@@ -338,18 +216,15 @@ It may be possible to do further acceleration of actual decoding operations usin
 
 *Threading*
 
-Currently the video and audio codecs run in worker threads by default, while the demuxer
-and player logic run on the UI thread. This seems to work pretty well.
+Currently the video and audio codecs run in worker threads by default, while the demuxer and player logic run on the UI thread. This seems to work pretty well.
 
 There is some overhead in extracting data out of each emscripten module's heap and in the thread-to-thread communications, but the parallelism and smoother main thread makes up for it.
 
 *Streaming download*
 
-In Firefox, the 'moz-chunked-array' responseType on XHR is used to read data as ArrayBuffer chunks during download. Safari and Chrome use a 'binary string' read which requires manually converting input to ArrayBuffer chunks. In IE and Edge have an (MS-prefixed) Stream/StreamReader interface which can be used to read data on demand into ArrayBuffer objects, but it has proved problematic especially with intermediate proxies; as of 1.1.2 IE and Edge use the same chunked binary-string method as Safari and Chrome.
+Streaming buffering is done by chunking the requests at up to a megabyte each, using the HTTP Range header. For cross-site playback, this requires CORS setup to whitelist the Range header! Chunks are downloaded as ArrayBuffers, so a chunk must be loaded in full before demuxing or playback can start.
 
-The Firefox and Safari/Chrome cases have been hacked up to do streaming buffering by chunking the requests at up to a megabyte each, using the HTTP Range header. For cross-site playback, this requires CORS setup to whitelist the Range header!
-
-[Safari has a bug with Range headers](https://bugs.webkit.org/show_bug.cgi?id=82672) which is worked around as necessary with a 'cache-busting' URL string parameter. Hopefully this will be fixed in future versions of Mac OS X and iOS.
+Old versions of [Safari have a bug with Range headers](https://bugs.webkit.org/show_bug.cgi?id=82672) which is worked around as necessary with a 'cache-busting' URL string parameter.
 
 
 *Seeking*
@@ -371,8 +246,7 @@ Firefox, Safari, Chrome, and Edge support the W3C Web Audio API.
 
 IE doesn't support Web Audio, but does bundle the Flash player in Windows 8/8.1/RT. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
 
-A/V synchronization is performed on files with both audio and video, and seems to
-actually work. Yay!
+A/V synchronization is performed on files with both audio and video, and seems to actually work. Yay!
 
 Note that autoplay with audio doesn't work on iOS Safari due to limitations with starting audio playback from event handlers; if playback is started outside an event handler, the player will hang due to broken audio.
 
@@ -398,6 +272,15 @@ For best WebM decode speed, consider encoding VP8 with "profile 1" (simple deblo
 
 It is also recommended to use the `-slices` option for VP8, or `-tile-columns` for VP9, to maximize ability to use multithreaded decoding when available in the future.
 
+*AV1*
+
+WebM files containing the AV1 codec are supported as of 1.6.0 (February 2019) using the [dav1d](https://code.videolan.org/videolan/dav1d) decoder.
+
+Currently this is experimental, and does not advertise support via `canPlayType`.
+
+Performance is about 2-3x slower than VP8 or VP9, and may require bumping down a resolution step or two to maintain frame rate. There may be further optimizations that can be done to improve this a bit, but the best improvements will come from future improvements to WebAssembly multithreading and SIMD.
+
+Currently AV1 in MP4 container is not supported.
 
 ## Upstream library notes
 
@@ -419,25 +302,23 @@ Safari 12 and Edge 16 include WASM support, as do current versions of Firefox an
 
 ## Multithreading
 
-Experimental multithreaded VP8 and VP9 decoding up to 4 cores is in development for VP8 and VP9 video, but not currently built due to needing a patched emscripten compiler.
+Experimental multithreaded VP8, VP9, and AV1 decoding up to 4 cores is in development, requiring emscripten 1.38.27 to build.
 
-If built, multithreading is used if `options.threading` is true. This requires browser support for the new `SharedArrayBuffer` and `Atomics` APIs, currently available in Safari 10.1 / iOS 10.3, Edge 16, and current Firefox and Chrome builds.
+Multithreading is used only if `options.threading` is true. This requires browser support for the new `SharedArrayBuffer` and `Atomics` APIs, currently available in Firefox and Chrome with experimental flags enabled.
 
-Threading is not currently compatible with Web Assembly.
+Threading currently requires WebAssembly; JavaScript builds are possible but perform poorly.
 
 Speedups will only be noticeable when using the "slices" or "token partitions" option for VP8 encoding, or the "tile columns" option for VP9 encoding.
 
-Currently, getting a successful multithreaded build requires a [patch to the emscripten compiler](https://github.com/kripken/emscripten/pull/5016); without this patch, the resulting multithreaded modules will build but fail to initialize correctly.
-
-If you are making a slim build and will not use the `threading` option, you can leave out the `*-mt.js` files, as well as `pthread-main.js`. These are not currently included in the default build.
+If you are making a slim build and will not use the `threading` option, you can leave out the `*-mt.*` files.
 
 
 ## Building JS components
 
-Building ogv.js is known to work on Mac OS X and Linux (tested Ubuntu 15.04).
+Building ogv.js is known to work on Mac OS X and Linux (tested Fedora 29 and Ubuntu 18.10 with Meson manually updated).
 
-1. You will need autoconf, automake, libtool, pkg-config, meson, ninja, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux.
-2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently building with 1.38.13. (For pthreads builds, emscripten needs a [multithreading patch](https://github.com/kripken/emscripten/pull/5016))
+1. You will need autoconf, automake, libtool, pkg-config, meson, ninja, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux. For meson, you may need a newer version than your distro packages -- install it manually with `pip3`.
+2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently building with 1.38.27.
 3. `git submodule update --init`
 4. Run `npm install` to install build utilities
 5. Run `make js` to configure and build the libraries and the C wrapper
