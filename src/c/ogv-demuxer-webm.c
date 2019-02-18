@@ -334,7 +334,7 @@ static int processDecoding() {
 
 static int processSeeking()
 {
-    bufferQueue->lastSeekTarget = 0;
+    bufferQueue->lastSeekTarget = -1;
     int r;
     if (nestegg_has_cues(demuxContext)) {
       r = nestegg_track_seek(demuxContext, seekTrack, seekTime);
@@ -346,7 +346,7 @@ static int processSeeking()
     }
     
     if (r) {
-        if (bufferQueue->lastSeekTarget == 0) {
+        if (bufferQueue->lastSeekTarget == -1) {
             // Maybe we just need more data?
             //printf("is seeking processing... FAILED at %lld %lld %lld\n", bufferQueue->pos, bq_start(bufferQueue), bq_end(bufferQueue));
         } else {

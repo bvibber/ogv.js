@@ -72,6 +72,7 @@ void bq_flush(BufferQueue *queue) {
         queue->items[i].bytes = NULL;
     }
     queue->len = 0;
+    queue->pos = 0;
 }
 
 void bq_append(BufferQueue *queue, const char *data, size_t len) {
