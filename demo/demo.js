@@ -105,6 +105,8 @@
             av1base + 'caminandes-gran-dillama.webm',
         "File:Caminandes 3 - Llamigos - Blender Animated Short.webm":
             av1base + 'caminandes-llamigos.webm',
+        "File:Mosquitoes vs painted turtle (Chrysemys picta).webm":
+            av1base + 'mosquitos.webm'
     };
 
     /**
@@ -548,6 +550,11 @@
                     "File:Caminandes 3 - Llamigos - Blender Animated Short.webm",
                     '1080p24',
                     'animation'
+                ],
+                [
+                    "File:Mosquitoes vs painted turtle (Chrysemys picta).webm",
+                    '1080p29.97',
+                    'live-action nature'
                 ]
             ];
             processList(shortlist);
