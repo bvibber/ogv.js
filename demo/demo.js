@@ -105,6 +105,8 @@
             av1base + 'caminandes-gran-dillama.webm',
         "File:Caminandes 3 - Llamigos - Blender Animated Short.webm":
             av1base + 'caminandes-llamigos.webm',
+        "File:Curiosity's Seven Minutes of Terror.ogv":
+            av1base + 'curiosity.ogv',
         "File:Mosquitoes vs painted turtle (Chrysemys picta).webm":
             av1base + 'mosquitos.webm'
     };
@@ -550,6 +552,11 @@
                     "File:Caminandes 3 - Llamigos - Blender Animated Short.webm",
                     '1080p24',
                     'animation'
+                ],
+                [
+                    "File:Curiosity's Seven Minutes of Terror.ogv",
+                    '720p23.98',
+                    'live-action with CG elements'
                 ],
                 [
                     "File:Mosquitoes vs painted turtle (Chrysemys picta).webm",
