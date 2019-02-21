@@ -14,6 +14,7 @@ mkdir -p liboggz
 cd liboggz
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 emconfigure ../../../liboggz/configure \
     --prefix="$dir/build/wasm/root" \
     --disable-write \

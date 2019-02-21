@@ -14,6 +14,7 @@ mkdir -p libnestegg
 cd libnestegg
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure \
     ../../../libnestegg/configure \
     --prefix="$dir/build/wasm/root" \

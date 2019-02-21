@@ -14,6 +14,7 @@ mkdir -p libvorbis
 cd libvorbis
   
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 emconfigure ../../../libvorbis/configure \
     --disable-oggtest \
     --prefix="$dir/build/wasm/root" \

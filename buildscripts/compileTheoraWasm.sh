@@ -14,6 +14,7 @@ mkdir -p libtheora
 cd libtheora
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 emconfigure ../../../libtheora/configure \
     --disable-oggtest \
     --prefix="$dir/build/wasm/root" \

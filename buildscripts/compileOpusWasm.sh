@@ -14,6 +14,7 @@ mkdir -p libopus
 cd libopus
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 emconfigure ../../../libopus/configure \
   --disable-asm \
   --disable-intrinsics \

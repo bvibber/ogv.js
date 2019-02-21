@@ -14,6 +14,7 @@ mkdir -p libskeleton
 cd libskeleton
   
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 emconfigure ../../../libskeleton/configure \
 	--prefix="$dir/build/wasm/root" \
 	PKG_CONFIG_PATH="$dir/build/wasm/root/lib/pkgconfig" \

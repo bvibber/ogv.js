@@ -3,6 +3,7 @@
 . ./buildscripts/compile-options.sh
 
 # compile wrapper around libogg + libtheora
+export EMCC_WASM_BACKEND=1
 emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \

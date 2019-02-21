@@ -16,6 +16,7 @@ cd libvpx
 #
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 EMCONFIGURE_JS=1 \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/wasm/root" \

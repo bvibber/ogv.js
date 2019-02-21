@@ -14,6 +14,7 @@ mkdir -p libogg
 cd libogg
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 emconfigure ../../../libogg/configure \
     --prefix="$dir/build/wasm/root" \
     --disable-shared \
