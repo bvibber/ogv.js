@@ -18,6 +18,7 @@ emconfigure ../../../libvorbis/configure \
     --disable-oggtest \
     --prefix="$dir/build/js/root" \
     --disable-shared \
+    CFLAGS='-s WASM=0' \
 || exit 1
 
 # compile libvorbis

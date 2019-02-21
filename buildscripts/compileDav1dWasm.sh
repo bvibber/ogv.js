@@ -14,6 +14,7 @@ mkdir -p dav1d
 cd dav1d
 
 # finally, run configuration script
+export EMCC_WASM_BACKEND=1
 meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-wasm-cross.txt \
   --prefix="$dir/build/wasm/root" \

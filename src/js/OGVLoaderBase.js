@@ -22,6 +22,7 @@ const scriptMap = {
 	OGVDecoderVideoAV1: 'ogv-decoder-video-av1.js',
 	OGVDecoderVideoAV1W: 'ogv-decoder-video-av1-wasm.js',
 	OGVDecoderVideoAV1MTW: 'ogv-decoder-video-av1-mt-wasm.js',
+	OGVDecoderVideoAV1SIMDW: 'ogv-decoder-video-av1-simd-wasm.js',
 };
 
 class OGVLoaderBase {

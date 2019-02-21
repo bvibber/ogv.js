@@ -18,6 +18,7 @@ EMCONFIGURE_JS=1 NM=/usr/bin/nm emconfigure \
     ../../../libnestegg/configure \
     --prefix="$dir/build/js/root" \
     --disable-shared \
+    CFLAGS="-s WASM=0" \
 || exit 1
 
 # compile libnestegg

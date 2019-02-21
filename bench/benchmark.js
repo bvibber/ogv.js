@@ -9,6 +9,7 @@ const OGVDecoderVideoVP9 = require('../dist/ogv-decoder-video-vp9.js');
 const OGVDecoderVideoVP9W = require('../dist/ogv-decoder-video-vp9-wasm.js');
 const OGVDecoderVideoAV1 = require('../dist/ogv-decoder-video-av1.js');
 const OGVDecoderVideoAV1W = require('../dist/ogv-decoder-video-av1-wasm.js');
+const OGVDecoderVideoAV1SIMDW = require('../dist/ogv-decoder-video-av1-simd-wasm.js');
 
 let demuxerClass = OGVDemuxerWebMW;
 let decoderClass = {
@@ -157,6 +158,9 @@ while (args.length >= 1) {
       'vp9': OGVDecoderVideoVP9W,
       'av1': OGVDecoderVideoAV1W
     };
+    args.shift();
+  } else if (args[0] == '--simd') {
+    decoderClass['av1'] = OGVDecoderVideoAV1SIMDW;
     args.shift();
   } else if (args[0] == '--checksum') {
     checksum = true;

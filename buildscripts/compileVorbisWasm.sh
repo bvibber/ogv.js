@@ -6,22 +6,21 @@ dir=`pwd`
 mkdir -p build
 cd build
 
-mkdir -p js
-cd js
+mkdir -p wasm
+cd wasm
 
 mkdir -p root
-mkdir -p liboggz
-cd liboggz
-
+mkdir -p libvorbis
+cd libvorbis
+  
 # finally, run configuration script
-emconfigure ../../../liboggz/configure \
-    --prefix="$dir/build/js/root" \
-    --disable-write \
+emconfigure ../../../libvorbis/configure \
+    --disable-oggtest \
+    --prefix="$dir/build/wasm/root" \
     --disable-shared \
-    CFLAGS="-s WASM=0" \
 || exit 1
 
-# compile liboggz
+# compile libvorbis
 emmake make -j4 || exit 1
 emmake make install || exit 1
 

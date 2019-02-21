@@ -17,6 +17,7 @@ cd libogg
 emconfigure ../../../libogg/configure \
     --prefix="$dir/build/js/root" \
     --disable-shared \
+    CFLAGS="-s WASM=0" \
 || exit 1
 
 # compile libogg

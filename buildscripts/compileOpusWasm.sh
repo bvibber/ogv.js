@@ -6,8 +6,8 @@ dir=`pwd`
 mkdir -p build
 cd build
 
-mkdir -p js
-cd js
+mkdir -p wasm
+cd wasm
 
 mkdir -p root
 mkdir -p libopus
@@ -20,9 +20,9 @@ emconfigure ../../../libopus/configure \
   --enable-float-approx \
   --disable-doc \
   --disable-extra-programs \
-  --prefix="$dir/build/js/root" \
+  --prefix="$dir/build/wasm/root" \
   --disable-shared \
-  CFLAGS="-O3 -s WASM=0" || exit 1
+  CFLAGS="-O3" || exit 1
 
 # compile libopus
 emmake make -j4 || exit 1

@@ -6,8 +6,8 @@ dir=`pwd`
 mkdir -p build
 cd build
 
-mkdir -p js
-cd js
+mkdir -p wasm
+cd wasm
 
 mkdir -p root
 mkdir -p liboggz
@@ -15,10 +15,9 @@ cd liboggz
 
 # finally, run configuration script
 emconfigure ../../../liboggz/configure \
-    --prefix="$dir/build/js/root" \
+    --prefix="$dir/build/wasm/root" \
     --disable-write \
     --disable-shared \
-    CFLAGS="-s WASM=0" \
 || exit 1
 
 # compile liboggz

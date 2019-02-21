@@ -6,8 +6,8 @@ dir=`pwd`
 mkdir -p build
 cd build
 
-mkdir -p js
-cd js
+mkdir -p wasm
+cd wasm
 
 mkdir -p root
 mkdir -p libtheora
@@ -16,13 +16,12 @@ cd libtheora
 # finally, run configuration script
 emconfigure ../../../libtheora/configure \
     --disable-oggtest \
-    --prefix="$dir/build/js/root" \
-    --with-ogg="$dir/build/js/root" \
+    --prefix="$dir/build/wasm/root" \
+    --with-ogg="$dir/build/wasm/root" \
     --disable-asm \
     --disable-examples \
     --disable-encode \
     --disable-shared \
-    CFLAGS='-s WASM=0' \
 || exit 1
 
 # compile libtheora
