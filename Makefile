@@ -180,7 +180,7 @@ $(JS_ROOT_BUILD_DIR)/lib/liboggz.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSC
 	./$(BUILDSCRIPTS_DIR)/configureOggz.sh
 	./$(BUILDSCRIPTS_DIR)/compileOggzJs.sh
 
-$(WASM_ROOT_BUILD_DIR)/lib/liboggz.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOggz.sh $(BUILDSCRIPTS_DIR)/compileOggzWasm.sh
+$(WASM_ROOT_BUILD_DIR)/lib/liboggz.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOggz.sh $(BUILDSCRIPTS_DIR)/compileOggzWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureOggz.sh
 	./$(BUILDSCRIPTS_DIR)/compileOggzWasm.sh
@@ -190,7 +190,7 @@ $(JS_ROOT_BUILD_DIR)/lib/libvorbis.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILD
 	./$(BUILDSCRIPTS_DIR)/configureVorbis.sh
 	./$(BUILDSCRIPTS_DIR)/compileVorbisJs.sh
 
-$(WASM_ROOT_BUILD_DIR)/lib/libvorbis.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureVorbis.sh $(BUILDSCRIPTS_DIR)/compileVorbisWasm.sh
+$(WASM_ROOT_BUILD_DIR)/lib/libvorbis.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureVorbis.sh $(BUILDSCRIPTS_DIR)/compileVorbisWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureVorbis.sh
 	./$(BUILDSCRIPTS_DIR)/compileVorbisWasm.sh
@@ -200,7 +200,7 @@ $(JS_ROOT_BUILD_DIR)/lib/libopus.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSC
 	./$(BUILDSCRIPTS_DIR)/configureOpus.sh
 	./$(BUILDSCRIPTS_DIR)/compileOpusJs.sh
 
-$(WASM_ROOT_BUILD_DIR)/lib/libopus.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOpus.sh $(BUILDSCRIPTS_DIR)/compileOpusWasm.sh
+$(WASM_ROOT_BUILD_DIR)/lib/libopus.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOpus.sh $(BUILDSCRIPTS_DIR)/compileOpusWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureOpus.sh
 	./$(BUILDSCRIPTS_DIR)/compileOpusWasm.sh
@@ -210,7 +210,7 @@ $(JS_ROOT_BUILD_DIR)/lib/libskeleton.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUI
 	./$(BUILDSCRIPTS_DIR)/configureSkeleton.sh
 	./$(BUILDSCRIPTS_DIR)/compileSkeletonJs.sh
 
-$(WASM_ROOT_BUILD_DIR)/lib/libskeleton.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureSkeleton.sh $(BUILDSCRIPTS_DIR)/compileSkeletonWasm.sh
+$(WASM_ROOT_BUILD_DIR)/lib/libskeleton.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureSkeleton.sh $(BUILDSCRIPTS_DIR)/compileSkeletonWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureSkeleton.sh
 	./$(BUILDSCRIPTS_DIR)/compileSkeletonWasm.sh
@@ -220,7 +220,7 @@ $(JS_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BU
 	./$(BUILDSCRIPTS_DIR)/configureTheora.sh
 	./$(BUILDSCRIPTS_DIR)/compileTheoraJs.sh
 
-$(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(JS_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureTheora.sh $(BUILDSCRIPTS_DIR)/compileTheoraWasm.sh
+$(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureTheora.sh $(BUILDSCRIPTS_DIR)/compileTheoraWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureTheora.sh
 	./$(BUILDSCRIPTS_DIR)/compileTheoraWasm.sh
@@ -245,7 +245,7 @@ $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/configureVpx.sh $(BUIL
 	./$(BUILDSCRIPTS_DIR)/configureVpx.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
 
-$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
+$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 
