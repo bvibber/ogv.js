@@ -23,6 +23,7 @@ emconfigure ../../../libtheora/configure \
     --disable-examples \
     --disable-encode \
     --disable-shared \
+    CFLAGS="-s WASM_OBJECT_FILES=0" \
 || exit 1
 
 # compile libtheora

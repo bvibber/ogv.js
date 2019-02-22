@@ -18,6 +18,7 @@ export EMCC_WASM_BACKEND=1
 emconfigure ../../../libogg/configure \
     --prefix="$dir/build/wasm/root" \
     --disable-shared \
+    CFLAGS="-s WASM_OBJECT_FILES=0" \
 || exit 1
 
 # compile libogg

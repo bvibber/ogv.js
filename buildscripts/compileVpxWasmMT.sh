@@ -21,7 +21,7 @@ EMCONFIGURE_JS=1 \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/wasm-mt/root" \
     --target=generic-gnu \
-    --extra-cflags=-s\ USE_PTHREADS=1\ -s\ WASM=1\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
+    --extra-cflags=-s\ USE_PTHREADS=1\ -s\ WASM=1\ -s\ WASM_OBJECT_FILES=0\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
     --enable-multithread \
     --enable-vp9-decoder \
     --disable-vp8-encoder \

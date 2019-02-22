@@ -23,7 +23,7 @@ emconfigure ../../../libopus/configure \
   --disable-extra-programs \
   --prefix="$dir/build/wasm/root" \
   --disable-shared \
-  CFLAGS="-O3" || exit 1
+  CFLAGS="-O3 -s WASM_OBJECT_FILES=0" || exit 1
 
 # compile libopus
 emmake make -j4 || exit 1

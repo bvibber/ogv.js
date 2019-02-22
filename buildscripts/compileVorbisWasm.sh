@@ -19,6 +19,7 @@ emconfigure ../../../libvorbis/configure \
     --disable-oggtest \
     --prefix="$dir/build/wasm/root" \
     --disable-shared \
+    CFLAGS="-s WASM_OBJECT_FILES=0" \
 || exit 1
 
 # compile libvorbis

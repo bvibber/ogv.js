@@ -24,11 +24,11 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-wasm.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-wasm.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
@@ -104,6 +104,20 @@ clean:
 dist: js README.md COPYING
 	rm -rf dist
 	mkdir -p dist
+	#cp -p build/ogv-decoder-video-vp8-wasm.js \
+	#      build/ogv-decoder-video-vp8-wasm.wasm \
+	#      build/ogv-decoder-video-vp8-mt-wasm.js \
+	#      build/ogv-decoder-video-vp8-mt-wasm.js.mem \
+	#      build/ogv-decoder-video-vp8-mt-wasm.wasm \
+	#      build/ogv-decoder-video-vp8-mt-wasm.worker.js \
+	#      build/ogv-decoder-video-vp9-wasm.js \
+	#      build/ogv-decoder-video-vp9-wasm.wasm \
+	#      build/ogv-decoder-video-vp9-mt-wasm.js \
+	#      build/ogv-decoder-video-vp9-mt-wasm.js.mem \
+	#      build/ogv-decoder-video-vp9-mt-wasm.wasm \
+	#      build/ogv-decoder-video-vp9-mt-wasm.worker.js \
+	#      dist/
+
 	cp -p build/ogv.js \
 	      build/ogv-es2017.js \
 	      build/ogv-support.js \
@@ -118,18 +132,6 @@ dist: js README.md COPYING
 	      build/ogv-decoder-audio-vorbis-wasm.wasm \
 	      build/ogv-decoder-video-theora-wasm.js \
 	      build/ogv-decoder-video-theora-wasm.wasm \
-	      build/ogv-decoder-video-vp8-wasm.js \
-	      build/ogv-decoder-video-vp8-wasm.wasm \
-	      build/ogv-decoder-video-vp8-mt-wasm.js \
-	      build/ogv-decoder-video-vp8-mt-wasm.js.mem \
-	      build/ogv-decoder-video-vp8-mt-wasm.wasm \
-	      build/ogv-decoder-video-vp8-mt-wasm.worker.js \
-	      build/ogv-decoder-video-vp9-wasm.js \
-	      build/ogv-decoder-video-vp9-wasm.wasm \
-	      build/ogv-decoder-video-vp9-mt-wasm.js \
-	      build/ogv-decoder-video-vp9-mt-wasm.js.mem \
-	      build/ogv-decoder-video-vp9-mt-wasm.wasm \
-	      build/ogv-decoder-video-vp9-mt-wasm.worker.js \
 	      build/ogv-decoder-video-av1-wasm.js \
 	      build/ogv-decoder-video-av1-wasm.wasm \
 	      build/ogv-decoder-video-av1-mt-wasm.js \
