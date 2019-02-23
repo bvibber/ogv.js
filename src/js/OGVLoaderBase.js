@@ -74,6 +74,13 @@ class OGVLoaderBase {
 			options.locateFile = (filename) => {
 				// Allow secondary resources like the .wasm payload
 				// to be loaded by the emscripten code.
+
+				if (filename.slice(0, 6) === 'build/') {
+					// LLVM Wasm backend stores paths for memory init file
+					// unexpectedly, different from fastcomp.
+					filename = filename.slice(6);
+				}
+
 				if (filename.slice(0, 5) === 'data:') {
 					// emscripten 1.37.25 loads memory initializers as data: URI
 					return filename;
