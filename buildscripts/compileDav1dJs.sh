@@ -21,6 +21,7 @@ meson ../../../dav1d \
   -Dbuild_tests=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
+  -Dfake_atomics=true \
   --buildtype release && \
 ninja -v && \
 mkdir -p "$dir/build/js/root/lib" && \
