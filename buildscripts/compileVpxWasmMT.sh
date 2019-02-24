@@ -29,6 +29,7 @@ EMCONFIGURE_JS=1 \
     --disable-shared \
     --disable-docs \
     --disable-examples \
+    --disable-tools \
 || exit 1
 
 # compile libvpx
