@@ -30,6 +30,9 @@ EMCONFIGURE_JS=1 STRIP="$dir/buildscript/strip.sh"  \
     --disable-docs \
     --disable-examples \
     --disable-tools \
+    --disable-unit-tests \
+    --disable-webm-io \
+    --disable-libyuv \
 || exit 1
 
 # compile libvpx
