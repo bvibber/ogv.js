@@ -1,13 +1,13 @@
 const fs = require('fs');
 const crc32 = require('./crc32.js');
 
-const OGVDemuxerWebM = require('../dist/ogv-demuxer-webm.js');
+//const OGVDemuxerWebM = require('../dist/ogv-demuxer-webm.js');
 const OGVDemuxerWebMW = require('../dist/ogv-demuxer-webm-wasm.js');
-const OGVDecoderVideoVP8 = require('../dist/ogv-decoder-video-vp8.js');
+//const OGVDecoderVideoVP8 = require('../dist/ogv-decoder-video-vp8.js');
 const OGVDecoderVideoVP8W = require('../dist/ogv-decoder-video-vp8-wasm.js');
-const OGVDecoderVideoVP9 = require('../dist/ogv-decoder-video-vp9.js');
+//const OGVDecoderVideoVP9 = require('../dist/ogv-decoder-video-vp9.js');
 const OGVDecoderVideoVP9W = require('../dist/ogv-decoder-video-vp9-wasm.js');
-const OGVDecoderVideoAV1 = require('../dist/ogv-decoder-video-av1.js');
+//const OGVDecoderVideoAV1 = require('../dist/ogv-decoder-video-av1.js');
 const OGVDecoderVideoAV1W = require('../dist/ogv-decoder-video-av1-wasm.js');
 const OGVDecoderVideoAV1SIMDW = require('../dist/ogv-decoder-video-av1-simd-wasm.js');
 
@@ -144,12 +144,15 @@ function decodeFile(filename) {
 let args = process.argv.slice(2);
 while (args.length >= 1) {
   if (args[0] == '--js') {
+    /*
     demuxerClass = OGVDemuxerWebM;
     decoderClass = {
       'vp8': OGVDecoderVideoVP8,
       'vp9': OGVDecoderVideoVP9,
       'av1': OGVDecoderVideoAV1
     };
+    */
+    throw new Error('js not currently supported on llvm backend');
     args.shift();
   } else if (args[0] == '--wasm') {
     demuxerClass = OGVDemuxerWebMW;
