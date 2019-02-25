@@ -17,7 +17,7 @@ cd libvpx
 
 # finally, run configuration script
 export EMCC_WASM_BACKEND=1
-EMCONFIGURE_JS=1 \
+EMCONFIGURE_JS=1 STRIP="$dir/buildscript/strip.sh"  \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/wasm-mt/root" \
     --target=generic-gnu \
@@ -29,6 +29,10 @@ EMCONFIGURE_JS=1 \
     --disable-shared \
     --disable-docs \
     --disable-examples \
+    --disable-tools \
+    --disable-unit-tests \
+    --disable-webm-io \
+    --disable-libyuv \
 || exit 1
 
 # compile libvpx

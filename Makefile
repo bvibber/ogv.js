@@ -251,19 +251,19 @@ $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a $(BU
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 
-$(JS_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
+$(JS_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh $(BUILDSCRIPTS_DIR)/dav1d-asmjs-cross.txt
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
 
-$(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
+$(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh $(BUILDSCRIPTS_DIR)/dav1d-wasm-cross.txt
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 
-$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
+$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh $(BUILDSCRIPTS_DIR)/dav1d-wasm-mt-cross.txt
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
+$(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh $(BUILDSCRIPTS_DIR)/dav1d-wasm-simd-cross.txt
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
 
