@@ -77,8 +77,9 @@ QUnit.test("OGVCompat", function(assert) {
 	assert.ok(OGVCompat.isBlacklisted('Mozilla/5.0 (iPhone; CPU iPhone OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25'), 'iPhone 6.1 safari blacklisted');
 	assert.ok(OGVCompat.isBlacklisted('Mozilla/5.0 (iPad; CPU OS 7_0 like Mac OS X) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11A465 Safari/9537.53'), 'iPad 7 safari blacklisted');
 	assert.ok(OGVCompat.isBlacklisted('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/536.29.13 (KHTML, like Gecko) Version/6.0.4 Safari/536.29.13'), 'Mac Safari 6 blacklisted');
+	assert.ok(OGVCompat.isBlacklisted('Mozilla/5.0 (iPad; CPU OS 8_0 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12A365 Safari/600.1.4'), 'iPad 8 safari blacklisted');
 
-	assert.ok(!OGVCompat.isBlacklisted('Mozilla/5.0 (iPad; CPU OS 8_0 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Version/8.0 Mobile/12A365 Safari/600.1.4'), 'iPad 8 safari not blacklisted');
+	assert.ok(!OGVCompat.isBlacklisted('Mozilla/5.0 (iPad; CPU OS 11_0 like Mac OS X) AppleWebKit/604.1.25 (KHTML, like Gecko) Version/11.0 Mobile/15A5304j Safari/604.1'), 'iPad 11 Safari not blacklisted');
 	assert.ok(!OGVCompat.isBlacklisted('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A'), 'Mac Safari 7 not blacklisted');
 });
 
