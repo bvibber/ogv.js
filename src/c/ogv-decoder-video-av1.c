@@ -21,18 +21,18 @@ static void do_init(void) {
     dav1d_default_settings(&settings);
 
 #ifdef __EMSCRIPTEN_PTHREADS__
-	const int max_cores = 4; // max threads for HD tiled decoding
+	const int max_cores = 8; // max threads for HD tiled decoding
 	int cores = emscripten_num_logical_cores();
 	if (cores > max_cores) {
 		cores = max_cores;
 	}
-    /*if (cores >= 4) {
-        // Unclear how beneficial this is
-        // tile threads = 2 gives up to 25% boost by itself
-        // but frame threads = 4 gives more?
+    if (cores >= 8) {
+        settings.n_tile_threads = 4;
+        settings.n_frame_threads = cores / 4;
+    } else if (cores >= 4) {
         settings.n_tile_threads = 2;
         settings.n_frame_threads = cores / 2;
-    } else*/ if (cores >= 2) {
+    } else if (cores >= 2) {
         settings.n_frame_threads = cores;
     }
 #endif
