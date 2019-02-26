@@ -97,7 +97,7 @@
         return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
     }
 
-    var av1base = 'https://media-streaming.wmflabs.org/clean/av1/';
+    var av1base = 'https://media-streaming.wmflabs.org/clean/av1-2/';
     window.av1map = {
         "File:Caminandes- Llama Drama - Short Movie.ogv":
             av1base + 'caminandes-llama-drama.ogv',
@@ -108,7 +108,11 @@
         "File:Curiosity's Seven Minutes of Terror.ogv":
             av1base + 'curiosity.ogv',
         "File:Mosquitoes vs painted turtle (Chrysemys picta).webm":
-            av1base + 'mosquitos.webm'
+            av1base + 'mosquitos.webm',
+        "File:Spring Morning over a Frog Pond at the base of a face of Okanagan Mountain.webm":
+            av1base + 'spring-morning.webm',
+        "File:Tears of Steel in 4k - Official Blender Foundation release.webm":
+            av1base + 'tears.webm',
     };
 
     /**
@@ -197,7 +201,7 @@
                                 format: format,
                                 width: width,
                                 height: height,
-                                url: av1map[media] + '.' + width + 'x' + height + '.' + format,
+                                url: av1map[media] + '.' + width + 'x' + size + '.' + format,
                             });
                         }
                     });
@@ -562,6 +566,19 @@
                     "File:Mosquitoes vs painted turtle (Chrysemys picta).webm",
                     '1080p29.97',
                     'live-action nature'
+                ],
+                /*
+                [
+                    // Currently generated at wrong resolutions. whoops!
+                    "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
+                    '2160p23.98',
+                    'sci-fi live action with CGI'
+                ],
+                */
+                [
+                    "File:Spring Morning over a Frog Pond at the base of a face of Okanagan Mountain.webm",
+                    '720p29.97',
+                    'live action drone nature footage'
                 ]
             ];
             processList(shortlist);

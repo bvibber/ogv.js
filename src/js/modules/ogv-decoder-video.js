@@ -151,9 +151,8 @@ Module['sync'] = function() {
 	var isAsync = Module['_ogv_video_decoder_async']();
 	if (isAsync) {
 		Module.callbacks.push(function() {
-			console.log('synced video decoder');
+			// no-op
 		});
-		console.log('syncing video decoder');
 		time(function() {
 			Module['_ogv_video_decoder_process_frame'](0, 0)
 		});
