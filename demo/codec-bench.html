@@ -3,10 +3,10 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-	<title>benchmark bogoslow measurement</title>
+	<title>ogv.js codec benchmark</title>
 
 <body>
-    <h1>ogv.js in-browser benchmark</h1>
+    <h1>ogv.js codec benchmark</h1>
 
     <h2>Options</h2>
     <div>
@@ -150,6 +150,7 @@
             var filename = document.querySelector('#url').value;
             document.getElementById('output').innerHTML = '';
             log('starting');
+            log('ogv.js ' + OGVVersion);
             decodeFile(filename, function() {
                 prog.value = 100;
                 prog.disabled = true;
