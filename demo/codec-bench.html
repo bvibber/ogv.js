@@ -8,9 +8,15 @@
 <body>
     <h1>ogv.js in-browser benchmark</h1>
 
-    <h2>Source</h2>
+    <h2>Options</h2>
     <div>
-        <input name=url id=url size=72 value="https://media-streaming.wmflabs.org/clean/av1-2/caminandes-llamigos.webm.640x360.av1.webm">
+        <label for=url>Source:</label>&nbsp;<input name=url id=url size=72 value="https://media-streaming.wmflabs.org/clean/av1-2/caminandes-llamigos.webm.640x360.av1.webm">
+    </div>
+    <div>
+        <input type=checkbox name=wasm id=wasm checked>&nbsp;<label for=wasm>WebAssembly</label>
+        <input type=checkbox name=worker id=worker>&nbsp;<label for=worker>Worker</label>
+        <input type=checkbox name=threading id=threading>&nbsp;<label for=threading>Threading</label>
+        <input type=checkbox name=simd id=simd>&nbsp;<label for=simd>SIMD</label>
     </div>
     <div>
         <button id=bench>Bench!</button>
@@ -39,13 +45,18 @@
 
         function decodeFile(filename, ondone) {
             log('opening ' + filename);
-            var player = new OGVPlayer();
+            var player = new OGVPlayer({
+                wasm: document.getElementById('wasm').checked,
+                worker: document.getElementById('worker').checked,
+                threading: document.getElementById('threading').checked,
+                simd: document.getElementById('simd').checked,
+            });
             let eof = false;
             let buf;
             let decoder;
             let demuxer;
             let frames = 0;
-            const start = Date.now();
+            let start = Date.now();
             let checkin = 24;
             let last = 0;
             let lastFrames = 0;
@@ -122,6 +133,7 @@
             player.src = filename;
             player.load();
             player.onloadedmetadata = function() {
+                start = Date.now();
                 demuxer = player._codec.demuxer;
                 decoder = player._codec.videoDecoder;
                 log('loaded; codec is ' + demuxer.videoCodec);
