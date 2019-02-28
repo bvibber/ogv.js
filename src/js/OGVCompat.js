@@ -37,7 +37,7 @@ let OGVCompat = new class {
 	isBlacklisted(userAgent) {
 		// JIT bugs in old Safari versions
 		let blacklist = [
-			/\(i.* OS [67]_.* like Mac OS X\).* Mobile\/.* Safari\//,
+			/\(i.* OS [6789]_.* like Mac OS X\).* Mobile\/.* Safari\//,
 			/\(Macintosh.* Version\/6\..* Safari\/\d/
 		];
 		let blacklisted = false;

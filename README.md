@@ -7,11 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.6.0 - 2019-02-??
+1.6.0 - 2019-02-26
 * experimental support for AV1 video in WebM
-* update buildchain to emscripten 1.38.27
+* update buildchain to emscripten 1.38.28
 * fix a stray global
-* add "use strict" to most sources
 * starting to move to ES6 classes and modules
 * building with babel for ES5/IE11 compat
 * updated eslint
@@ -62,23 +61,18 @@ The API isn't quite complete, but works pretty well.
 ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
 
 The primary target browsers are (testing 360p/30fps and up):
-* Safari 6.1-12 on Mac OS X 10.7-10.13
-* Safari on iOS 8-11 64-bit
+* Safari 6.1-12 on Mac OS X 10.7-10.14
+* Safari on iOS 10-11 64-bit
 * Edge on Windows 10 desktop/tablet
 * Internet Explorer 10-11 on Windows 7-10 (desktop/tablet)
 
-And for lower-resolution files (testing 160p/15fps):
-* Safari on iOS 8-10 32-bit
-* Edge on Windows 10 Mobile
-* Internet Explorer 10-11 on Windows RT
-
 Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arrays.
 
-(Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS, Windows RT, or Windows 10 Mobile.)
+(Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS where all browsers are really Safari.)
 
 Testing browsers (these support .ogv and .webm natively):
-* Firefox 56
-* Chrome 61
+* Firefox 65
+* Chrome 73
 
 
 ## Package installation
