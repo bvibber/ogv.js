@@ -18,7 +18,7 @@ export EMCC_WASM_BACKEND=1
 meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-wasm-simd-cross.txt \
   --prefix="$dir/build/wasm-simd/root" \
-  -Dbuild_asm=false \
+  -Dbuild_asm=true \
   -Dbuild_tests=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
