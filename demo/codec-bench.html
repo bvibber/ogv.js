@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<title>benchmark bogoslow measurement</title>
+
+<body>
+    <h1>ogv.js in-browser benchmark</h1>
+
+    <h2>Source</h2>
+    <div>
+        <input name=url id=url size=72 value="https://media-streaming.wmflabs.org/clean/av1-2/caminandes-llamigos.webm.640x360.av1.webm">
+    </div>
+    <div>
+        <button id=bench>Bench!</button>
+    </div>
+
+    <h2>Output</h2>
+    <progress id=prog value=0 max=100 disabled></progress>
+    <div id=output></div>
+
+	<script src="lib/ogv.js"></script>
+	<script type="text/javascript">
+        function nextTick(callback) {
+            if (typeof setImmediate === 'function') {
+                setImmediate(callback);
+            } else {
+                // we have a polyfill already
+                throw new Error('need setImmediate');
+            }
+        }
+
+        function log(msg) {
+            var line = document.createElement('div');
+            line.textContent = msg;
+            document.getElementById('output').appendChild(line);
+        }
+
+        function decodeFile(filename, ondone) {
+            log('opening ' + filename);
+            var player = new OGVPlayer();
+            let eof = false;
+            let buf;
+            let decoder;
+            let demuxer;
+            let frames = 0;
+            const start = Date.now();
+            let checkin = 24;
+            let last = 0;
+            let lastFrames = 0;
+
+            function getData(callback) {
+                var bufsize = 65536;
+                var stream = player._stream;
+                stream.read(bufsize).then(function(buf) {
+                    if (stream.eof) {
+                        eof = true;
+                    }
+                    demuxer.receiveInput(buf, callback);
+                }).catch(function(e) {
+                    log(e);
+                });
+            }
+
+            function nextFrame() {
+                while (demuxer.audioReady) {
+                    demuxer.dequeueAudioPacket((packet) => {});
+                }
+                if (demuxer.frameReady) {
+                    var timestamp = demuxer.frameTimestamp;
+                    demuxer.dequeueVideoPacket((packet) => {
+                        frames++;
+                        decoder.processFrame(packet, (ok) => {
+                            if (ok) {
+                                const now = Date.now();
+                                const delta = (now - last) / 1000;
+                                if (frames % checkin == 0) {
+                                    //const fps = (frames - lastFrames) / delta;
+                                    //log(fps + ' fps decoding');
+                                    lastFrames = frames;
+                                    last = now;
+
+                                    var prog = document.getElementById('prog');
+                                    prog.value = 100 * timestamp / demuxer.duration;
+                                }
+                            } else {
+                                //log('frame failed');
+                            }
+                            nextTick(processData);
+                        });
+                    });
+                } else {
+                    nextTick(processData);
+                }
+            }
+
+            function processData() {
+                if (demuxer.frameReady) {
+                    nextFrame();
+                } else {
+                    demuxer.process((more) => {
+                        if (more) {
+                            nextTick(processData);
+                        } else if (eof) {
+                            log('done and done');
+                            var delta = (Date.now() - start) / 1000;
+                            var fps = frames / delta;
+                            log(fps + ' fps decoding average');
+                            log(delta + ' seconds total');
+                            // end!
+                            ondone();
+                        } else {
+                            nextTick(() => {
+                                getData(processData);
+                            });
+                        }
+                    });
+                }
+            }
+
+            player.src = filename;
+            player.load();
+            player.onloadedmetadata = function() {
+                demuxer = player._codec.demuxer;
+                decoder = player._codec.videoDecoder;
+                log('loaded; codec is ' + demuxer.videoCodec);
+                getData(processData);
+            };
+        }
+
+        document.querySelector('#bench').addEventListener('click', function() {
+            var bench = this;
+            var prog = document.getElementById('prog');
+            bench.disabled = true;
+            prog.disabled = false;
+
+            var filename = document.querySelector('#url').value;
+            document.getElementById('output').innerHTML = '';
+            log('starting');
+            decodeFile(filename, function() {
+                prog.value = 100;
+                prog.disabled = true;
+                bench.disabled = false;
+            });
+        });
+	</script>
+</body>
+
+</html>

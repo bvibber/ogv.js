@@ -382,6 +382,7 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/demo.js \
                         build/demo/iconfont.css \
                         build/demo/benchmark.html \
+                        build/demo/codec-bench.html \
                         build/demo/minimal.html \
                         build/demo/media/ehren-paper_lights-96.opus \
                         build/demo/media/pixel_aspect_ratio.ogg \
@@ -410,6 +411,10 @@ build/demo/iconfont.css : $(DEMO_DIR)/iconfont.css
 build/demo/benchmark.html : $(DEMO_DIR)/benchmark.html
 	test -d build/demo || mkdir -p build/demo
 	cp $(DEMO_DIR)/benchmark.html build/demo/benchmark.html
+
+build/demo/codec-bench.html : $(DEMO_DIR)/codec-bench.html
+	test -d build/demo || mkdir -p build/demo
+	cp $(DEMO_DIR)/codec-bench.html build/demo/codec-bench.html
 
 build/demo/minimal.html : $(DEMO_DIR)/minimal.html.in
 	test -d build/demo || mkdir -p build/demo
