@@ -113,10 +113,15 @@
                             nextTick(processData);
                         } else if (eof) {
                             log('done and done');
+
                             var delta = (Date.now() - start) / 1000;
                             var fps = frames / delta;
                             log(fps + ' fps decoding average');
-                            log(delta + ' seconds total');
+                            log(delta + ' seconds total (elapsed)');
+
+                            var delta2 = decoder.cpuTime / 1000;
+                            log(delta2 + ' seconds total (codec only)');
+
                             // end!
                             ondone();
                         } else {
