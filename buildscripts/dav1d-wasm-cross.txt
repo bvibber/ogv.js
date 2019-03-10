@@ -7,12 +7,12 @@ install_name_tool = 'echo'
 exe_wrapper = 'echo'
 
 [properties]
-c_args = ['-s', 'WASM=1', '-g4', '-s', 'WASM_OBJECT_FILES=0']
+c_args = ['-s', 'WASM=1', '-s', 'WASM_OBJECT_FILES=0']
 c_link_args = []
 needs_exe_wrapper = true
 
 [host_machine]
 system = 'linux'
-cpu_family = 'wasm32'
+cpu_family = 'wasm'
 cpu = 'wasm32'
 endian = 'little'
