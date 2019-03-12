@@ -21,7 +21,7 @@ static void do_init(void) {
     dav1d_default_settings(&settings);
 
 #ifdef __EMSCRIPTEN_PTHREADS__
-	const int max_cores = 8; // max threads for HD tiled decoding
+	const int max_cores = 12; // max threads for ....????
 	int cores = emscripten_num_logical_cores();
 	if (cores > max_cores) {
 		cores = max_cores;
