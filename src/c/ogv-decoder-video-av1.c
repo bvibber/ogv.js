@@ -21,17 +21,35 @@ static void do_init(void) {
     dav1d_default_settings(&settings);
 
 #ifdef __EMSCRIPTEN_PTHREADS__
-	const int max_cores = 12; // max threads for ....????
+	const int max_cores = 8; // max threads for UHD tiled decoding
 	int cores = emscripten_num_logical_cores();
 	if (cores > max_cores) {
 		cores = max_cores;
 	}
+
+    // As of March 2019, dav1d uses two threading settings, creating
+    // multiple small thread pools. This is kind of funky, but works.
+    // However it will create _a lot more threads_ than you might
+    // expect. Each frame thread will spawn one thread of its own
+    // plus one thread per tile, so it's roughly 5*tiles*frames total
+    // threads, even though they won't all be engaged at the same time.
+
+    // It's currently recommended to specify the target number of tiles
+    // which possibly should be something we can scale dynamically.
+    // We don't know ahead of time how many tiles will actually be used
+    // and if doing adaptive streaming it may change.
     if (cores > 4) {
-        settings.n_tile_threads = cores / 4;
-        settings.n_frame_threads = 4;
+        settings.n_tile_threads = 4;
     } else if (cores > 1) {
-        settings.n_frame_threads = cores;
+        settings.n_tile_threads = 2;
     }
+
+    // Current recommendations are to use the number of logical processors
+    // as the number of frame threads, for maximum parallelism. This will
+    // buffer up frames and release them later, so don't forget the JS side
+    // needs to occasionally sync the state to force a frame early, such as
+    // after a seek or after the end of input.
+    settings.n_frame_threads = cores;
 #endif
 
     dav1d_open(&context, &settings);

@@ -17,7 +17,9 @@ typedef struct {
 	size_t data_len;
 } decode_queue_t;
 
-static const int decode_queue_size = 32;
+// Leave lots of room since this is a static buffer for now.
+// Maybe it should be a linked list.
+static const int decode_queue_size = 128;
 static decode_queue_t decode_queue[decode_queue_size];
 static int decode_queue_start = 0;
 static int decode_queue_end = 0;

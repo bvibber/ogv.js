@@ -227,7 +227,7 @@ class OGVPlayer extends OGVJSElement {
 		this._pendingFrame = 0;
 		this._pendingAudio = 0;
 		this._framePipelineDepth = 8;
-		this._frameParallelism = this._enableThreading ? (Math.min(4, navigator.hardwareConcurrency) || 1) : 0;
+		this._frameParallelism = this._enableThreading ? (Math.min(8, navigator.hardwareConcurrency) || 1) : 0;
 		this._audioPipelineDepth = 12;
 
 		this._videoInfo = null;
