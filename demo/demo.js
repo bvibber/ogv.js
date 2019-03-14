@@ -971,6 +971,8 @@
             } else {
                 throw new Error('unknown player backend');
             }
+            // for convenience
+            window.o = player;
 
 
             document.getElementById('video-fps').textContent = '';

@@ -1306,8 +1306,19 @@ class OGVPlayer extends OGVJSElement {
 			}
 		}
 
-		// Decode and show first frame immediately
-		if (this._codec.hasVideo && this._codec.frameReady) {
+		if (this._codec.hasVideo && this._decodedFrames.length) {
+			// We landed between frames. Show the last frame.
+			if (this._thumbnail) {
+				this.removeChild(this._thumbnail);
+				this._thumbnail = null;
+			}
+			let frame = this._decodedFrames.shift();
+			this._frameSink.drawFrame(frame.yCbCrBuffer);
+			finishedSeeking();
+		} else if (this._codec.hasVideo && this._codec.frameReady) {
+			// Exact seek, no decoded frames.
+			//
+			// Decode and show first frame immediately
 			// hack! move this into the main loop when retooling
 			// to avoid maintaining this double draw
 			this._codec.decodeFrame((ok) => {
@@ -1361,10 +1372,25 @@ class OGVPlayer extends OGVJSElement {
 				// Found some frames? Go ahead now!
 				this._continueSeekedPlayback();
 				return;
-			} else if (this._codec.frameTimestamp + frameDuration < this._seekTargetTime) {
-				// Haven't found a time yet, or haven't reached the target time.
-				// Decode it in case we're at our keyframe or a following intraframe...
-				this._codec.decodeFrame(() => {
+			} else if (this._codec.frameTimestamp <= this._seekTargetTime) {
+				// Haven't found a time yet, or haven't reached the target time,
+				// Or reached the target time and ready to decode and show.
+				// Decode it in case we're at our keyframe or a following intraframe,
+				// or if it's a match because we need to show it immediately.
+				let nextFrameEndTimestamp = this._codec.frameTimestamp;
+				this._pendingFrame++;
+				this._pendingFrames.push({
+					frameEndTimestamp: nextFrameEndTimestamp
+				});
+				this._decodedFrames.splice(0, this._decodedFrames.length);
+				this._codec.decodeFrame((ok) => {
+					this._pendingFrame--;
+					this._pendingFrames.shift();
+					this._decodedFrames.push({
+						yCbCrBuffer: this._codec.frameBuffer,
+						videoCpuTime: this._codec.videoCpuTime,
+						frameEndTimestamp: nextFrameEndTimestamp
+					});
 					this._pingProcessing();
 				});
 				this._codec.sync();
