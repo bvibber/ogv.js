@@ -287,10 +287,9 @@ Build prerequisites:
 ```bash
 # Fetch build dependencies (webpack, eslint etc)
 npm install
-npm install -g grunt-cli
 
 # Lint and rebuild
-grunt
+npx grunt
 ```
 
 This will produce a 'dist' subdirectory containing a ready to use

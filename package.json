@@ -39,8 +39,8 @@
     "webpack-dev-server": "^3.1.14"
   },
   "scripts": {
-    "build": "grunt",
-    "prepublish": "grunt",
-    "lint": "eslint src"
+    "build": "npx grunt",
+    "prepublish": "npx grunt",
+    "lint": "npx eslint src"
   }
 }
