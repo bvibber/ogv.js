@@ -305,6 +305,29 @@
 			this._resampleFractional -= bump;
 			this._resampleFractional += (outputLen - outputSamples);
 
+			var interpolate;
+			if (rate < targetRate) {
+				// Input rate is lower than the target rate,
+				// use linear interpolation to minimize "tinny" artifacts.
+				interpolate = function(input, output) {
+					for (var i = 0; i < output.length; i++) {
+						var j = (i * (input.length - 1) / (output.length - 1));
+						var a = Math.floor(j);
+						var b = Math.ceil(j);
+						output[i] = input[a] * (b - j) +
+						            input[b] * (j - a);
+					}
+				};
+			} else {
+				// Input rate is higher than the target rate.
+				// For now, discard extra samples.
+				interpolate = function(input, output) {
+					for (var i = 0; i < output.length; i++) {
+						output[i] = input[(i * input.length / output.length) | 0];
+					}
+				};
+			}
+
 			for (var channel = 0; channel < targetChannels; channel++) {
 				var inputChannel = channel;
 				if (channel >= channels) {
@@ -313,14 +336,13 @@
 				}
 				var input = sampleData[inputChannel],
 					output = new Float32Array(outputSamples);
-				for (var i = 0; i < output.length; i++) {
-					output[i] = input[(i * inputLen / outputLen) | 0];
-				}
+				interpolate(input, output);
 				newSamples.push(output);
 			}
 			return newSamples;
 		}
 	};
+
 
 	/**
 	 * Queue up some audio data for playback.

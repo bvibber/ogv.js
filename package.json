@@ -1,6 +1,6 @@
 {
   "name": "audio-feeder",
-  "version": "0.4.15",
+  "version": "0.4.16",
   "description": "Abstraction for streaming raw PCM audio in browser via Web Audio API.",
   "main": "dist/AudioFeeder.js",
   "repository": {
