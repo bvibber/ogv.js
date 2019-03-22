@@ -298,30 +298,59 @@
 			// Mind that packet boundaries won't always align on
 			// sample boundaries in the resamples output, so maintain
 			// a running rounding fractional offset.
-			var bump = Math.trunc(this._resampleFractional),
-				inputLen = sampleData[0].length,
-				outputLen = inputLen * targetRate / rate + bump,
-				outputSamples = Math.round(outputLen);
-			this._resampleFractional -= bump;
-			this._resampleFractional += (outputLen - outputSamples);
+			var inputLen = sampleData[0].length,
+				outputLen = inputLen * targetRate / rate + this._resampleFractional,
+				outputSamples = Math.trunc(outputLen),
+				bumpOutput = (outputLen - outputSamples),
+				bumpInput = bumpOutput * rate / targetRate;
+			this._resampleFractional = bumpOutput;
 
 			var interpolate;
 			if (rate < targetRate) {
+				// TODO:
+				// determine the lag in samples required for resampling
+				// eg, the number of samples we must synthesize at the start
+				// for the end of each sample to match up
+				// save that much
+				// it might just be one sample for upsampling
+				// or multiple for downsampling
+				// then use that again when starting the next!
+
 				// Input rate is lower than the target rate,
 				// use linear interpolation to minimize "tinny" artifacts.
-				interpolate = function(input, output) {
+				interpolate = function(input, output, previous) {
+					var inputSample = function(i) {
+						if (i < 0) {
+							if (previous) {
+								console.log('oh yeah', i);
+								return previous[previous.length - i];
+							} else {
+								// this probably shouldn't happen
+								// but if it does be safe ;)
+								return input[0];
+							}
+						} else {
+							return input[i];
+						}
+					};
+
 					for (var i = 0; i < output.length; i++) {
-						var j = (i * (input.length - 1) / (output.length - 1));
+						var j = Math.min(((i - bumpInput) * input.length / output.length),
+							             input.length - 1);
 						var a = Math.floor(j);
 						var b = Math.ceil(j);
-						output[i] = input[a] * (b - j) +
-						            input[b] * (j - a);
+						if (a === b) {
+							output[i] = inputSample(a);
+						} else {
+							output[i] = inputSample(a) * (b - j) +
+										inputSample(b) * (j - a);
+						}
 					}
 				};
 			} else {
 				// Input rate is higher than the target rate.
 				// For now, discard extra samples.
-				interpolate = function(input, output) {
+				interpolate = function(input, output, previous) {
 					for (var i = 0; i < output.length; i++) {
 						output[i] = input[(i * input.length / output.length) | 0];
 					}
@@ -335,10 +364,12 @@
 					inputChannel = 0;
 				}
 				var input = sampleData[inputChannel],
-					output = new Float32Array(outputSamples);
-				interpolate(input, output);
+					output = new Float32Array(outputSamples),
+					previous = this._resampleLastSampleData ? this._resampleLastSampleData[inputChannel] : undefined;
+				interpolate(input, output, previous);
 				newSamples.push(output);
 			}
+			this._resampleLastSampleData = sampleData;
 			return newSamples;
 		}
 	};
