@@ -44,8 +44,14 @@
      * Actual count of channels supported for output
      * @type {number}
      * @readonly
+     *
+     * Note currently this is forced to 2. More channels (5.1, etc)
+     * aren't well specified and need to be tested. Fewer channels
+     * (mono) ends up too loud unless we reduce amplitude in the
+     * resampling operation.
      */
-    this.channels = Math.min(numChannels, 2); // @fixme remove this limit
+    //this.channels = Math.min(numChannels, 2); // @fixme remove this limit
+    this.channels = 2; // @fixme remove this limit
 
     if (options.bufferSize) {
         this.bufferSize = (options.bufferSize | 0);

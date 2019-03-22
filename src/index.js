@@ -318,7 +318,7 @@
 
 				// Input rate is lower than the target rate,
 				// use linear interpolation to minimize "tinny" artifacts.
-				interpolate = function(input, output, previous) {
+				interpolate = function(input, output, previous, adjustment) {
 					var inputSample = function(i) {
 						if (i < 0) {
 							if (previous) {
@@ -339,22 +339,31 @@
 							             input.length - 1);
 						var a = Math.floor(j);
 						var b = Math.ceil(j);
+						var out;
 						if (a === b) {
-							output[i] = inputSample(a);
+							out = inputSample(a);
 						} else {
-							output[i] = inputSample(a) * (b - j) +
-										inputSample(b) * (j - a);
+							out = inputSample(a) * (b - j) +
+							      inputSample(b) * (j - a);
 						}
+						output[i] = adjustment * out;
 					}
 				};
 			} else {
 				// Input rate is higher than the target rate.
 				// For now, discard extra samples.
-				interpolate = function(input, output, previous) {
+				interpolate = function(input, output, previous, adjustment) {
 					for (var i = 0; i < output.length; i++) {
-						output[i] = input[(i * input.length / output.length) | 0];
+						output[i] = adjustment * input[(i * input.length / output.length) | 0];
 					}
 				};
+			}
+
+			var adjustment = 1;
+			if (targetChannels > channels) {
+				// assume mono -> stereo conversion
+				// tone down the loudness rather than duplicating to both channels
+				adjustment = Math.SQRT1_2;
 			}
 
 			for (var channel = 0; channel < targetChannels; channel++) {
@@ -366,7 +375,9 @@
 				var input = sampleData[inputChannel],
 					output = new Float32Array(outputSamples),
 					previous = this._resampleLastSampleData ? this._resampleLastSampleData[inputChannel] : undefined;
-				interpolate(input, output, previous);
+
+				interpolate(input, output, previous, adjustment);
+
 				newSamples.push(output);
 			}
 			this._resampleLastSampleData = sampleData;
