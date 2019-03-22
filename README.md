@@ -7,6 +7,11 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.6.1 - 2019-03-??
+* mono audio is now less loud, matching native playback better
+* audio resampling now uses linear interpolation for upscaling
+* fixes for seeks on low frame rate video
+
 1.6.0 - 2019-02-26
 * experimental support for AV1 video in WebM
 * update buildchain to emscripten 1.38.28
