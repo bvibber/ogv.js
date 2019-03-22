@@ -10,10 +10,13 @@ and is suitable for use in custom audio and video playback.
 
 ## Copyright and license
 
-* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2018 Brion Vibber
+* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2019 Brion Vibber
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.17 - 2019-03-22
+    * Resampling improvements
+    * Mono input is now adjusted for loudness, matching native media playback better
 * 0.4.16 - 2019-03-21
     * Use linear interpolation when upsampling audio
 * 0.4.15 - 2019-02-09
