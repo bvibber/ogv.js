@@ -297,33 +297,24 @@
 
 			// Mind that packet boundaries won't always align on
 			// sample boundaries in the resamples output, so maintain
-			// a running rounding fractional offset.
+			// a running rounding fractional offset of the portion of
+			// a sample we'll have to pull from the previous run on
+			// the next one.
 			var inputLen = sampleData[0].length,
-				outputLen = inputLen * targetRate / rate + this._resampleFractional,
+				previousFractional = this._resampleFractional,
+				outputLen = inputLen * targetRate / rate + previousFractional,
 				outputSamples = Math.trunc(outputLen),
-				bumpOutput = (outputLen - outputSamples),
-				bumpInput = bumpOutput * rate / targetRate;
-			this._resampleFractional = bumpOutput;
+				remainingFractional = (outputLen - outputSamples);
 
 			var interpolate;
 			if (rate < targetRate) {
-				// TODO:
-				// determine the lag in samples required for resampling
-				// eg, the number of samples we must synthesize at the start
-				// for the end of each sample to match up
-				// save that much
-				// it might just be one sample for upsampling
-				// or multiple for downsampling
-				// then use that again when starting the next!
-
 				// Input rate is lower than the target rate,
 				// use linear interpolation to minimize "tinny" artifacts.
 				interpolate = function(input, output, previous, adjustment) {
 					var inputSample = function(i) {
 						if (i < 0) {
 							if (previous) {
-								console.log('oh yeah', i);
-								return previous[previous.length - i];
+								return previous[previous.length + i];
 							} else {
 								// this probably shouldn't happen
 								// but if it does be safe ;)
@@ -335,16 +326,16 @@
 					};
 
 					for (var i = 0; i < output.length; i++) {
-						var j = Math.min(((i - bumpInput) * input.length / output.length),
-							             input.length - 1);
-						var a = Math.floor(j);
-						var b = Math.ceil(j);
+						var j = ((i - previousFractional) * rate / targetRate);
+						var k = ((i - previousFractional - 1) * rate / targetRate);
+						var a = Math.floor(k);
+						var b = Math.floor(j);
 						var out;
 						if (a === b) {
 							out = inputSample(a);
 						} else {
 							out = inputSample(a) * (b - j) +
-							      inputSample(b) * (j - a);
+								  inputSample(b) * (j - a);
 						}
 						output[i] = adjustment * out;
 					}
@@ -380,6 +371,7 @@
 
 				newSamples.push(output);
 			}
+			this._resampleFractional = remainingFractional;
 			this._resampleLastSampleData = sampleData;
 			return newSamples;
 		}
