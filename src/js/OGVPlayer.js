@@ -902,7 +902,7 @@ class OGVPlayer extends OGVJSElement {
 		audioFeeder.init(this._audioInfo.channels, this._audioInfo.rate);
 
 		//Fire when _audioFeeder is populated
-		if (this._audioFeeder)
+		if (this.onaudiofeedercreated)
 			this.onaudiofeedercreated(this._audioFeeder);
 
 		// At our requested 8192 buffer size, bufferDuration should be
