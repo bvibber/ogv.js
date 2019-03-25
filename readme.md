@@ -14,6 +14,8 @@ and is suitable for use in custom audio and video playback.
 * dynamicaudio.as and some Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman
 
 ## Updates
+* 0.4.19 - 2019-03-24
+    * Fixes to fixes to resampling
 * 0.4.18 - 2019-03-22
     * Fixes to resampling improvements
 * 0.4.17 - 2019-03-22
