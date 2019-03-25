@@ -54,6 +54,7 @@
 		this._options = options || {};
 		this._backend = null; // AudioBackend instance, after init...
 		this._resampleFractional = 0;
+		this._resampleLastSampleData = undefined;
 	};
 
 	/**
@@ -313,7 +314,8 @@
 				interpolate = function(input, output, previous, adjustment) {
 					var inputSample = function(i) {
 						if (i < 0) {
-							if (previous) {
+							if (previous && previous.length + i > 0) {
+								// Beware sometimes we have empty bits at start.
 								return previous[previous.length + i];
 							} else {
 								// this probably shouldn't happen
@@ -326,17 +328,20 @@
 					};
 
 					for (var i = 0; i < output.length; i++) {
-						var j = ((i - previousFractional) * rate / targetRate);
-						var k = ((i - previousFractional - 1) * rate / targetRate);
-						var a = Math.floor(k);
-						var b = Math.floor(j);
+						// Map the output sample to input space,
+						// offset by one to give us room to interpolate.
+						var j = ((i + 1 - previousFractional) * rate / targetRate) - 1;
+						var a = Math.floor(j);
+						var b = Math.ceil(j);
+
 						var out;
-						if (a === b) {
+						if (a == b) {
 							out = inputSample(a);
 						} else {
 							out = inputSample(a) * (b - j) +
-								  inputSample(b) * (j - a);
+							      inputSample(b) * (j - a);
 						}
+
 						output[i] = adjustment * out;
 					}
 				};
@@ -457,6 +462,8 @@
 	 * Flush any queued data out of the system.
 	 */
 	AudioFeeder.prototype.flush = function() {
+		this._resampleFractional = 0;
+		this._resampleLastSampleData = undefined;
 		if (this._backend) {
 			this._backend.flush();
 		} else {
