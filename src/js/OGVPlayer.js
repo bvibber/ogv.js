@@ -808,6 +808,12 @@ class OGVPlayer extends OGVJSElement {
 		 * @todo implement
 		 */
 		this.onvolumechange = null;
+
+		/**
+		 * Called when the audio feeder is created
+		 * This allows for modifying the instance for special audio processing
+		 */
+		this.onaudiofeedercreated = null;
 	}
 
 	_time(cb) {
@@ -894,6 +900,10 @@ class OGVPlayer extends OGVJSElement {
 
 		let audioFeeder = this._audioFeeder = new AudioFeeder(audioOptions);
 		audioFeeder.init(this._audioInfo.channels, this._audioInfo.rate);
+
+		//Fire when _audioFeeder is populated
+		if (this._audioFeeder)
+			this.onaudiofeedercreated(this._audioFeeder);
 
 		// At our requested 8192 buffer size, bufferDuration should be
 		// about 185ms at 44.1 kHz or 170ms at 48 kHz output, covering
