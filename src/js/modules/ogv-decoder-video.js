@@ -15,6 +15,7 @@ function reallocInputBuffer(size) {
 	}
 	inputBufferSize = size;
 	inputBuffer = Module['_malloc'](inputBufferSize);
+	updateGlobalBufferViews();
 	return inputBuffer;
 }
 
@@ -128,7 +129,7 @@ Module['processFrame'] = function(data, callback) {
 	}
 
 	var ret = time(function() {
-		Module['HEAPU8'].set(new Uint8Array(data), buffer);
+		(new Uint8Array(wasmMemory.buffer)).set(new Uint8Array(data), buffer);
 		return Module['_ogv_video_decoder_process_frame'](buffer, len)
 	});
 	if (!isAsync) {

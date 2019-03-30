@@ -13,6 +13,8 @@ mergeInto(LibraryManager.library, {
 	},
 
 	ogvjs_callback_audio: function(buffers, channels, sampleCount) {
+		updateGlobalBufferViews();
+
 		// buffers is an array of pointers to float arrays for each channel
 		var HEAPU32 = Module['HEAPU32'];
 		var HEAPF32 = Module['HEAPF32'];

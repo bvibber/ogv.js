@@ -37,7 +37,7 @@ mergeInto(LibraryManager.library, {
 								   displayWidth, displayHeight) {
 
 		// Create typed array copies of the source buffers from the emscripten heap:
-		var HEAPU8 = Module['HEAPU8'],
+		var HEAPU8 = new Uint8Array(wasmMemory.buffer),
 			format = Module['videoFormat'];
 
 		function copyAndTrim(buffer, stride, height, picX, picY, picWidth, picHeight, fill) {
