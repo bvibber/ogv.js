@@ -25,13 +25,13 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-wasm.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-wasm.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-wasm.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
+#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-wasm.js
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
 EMSCRIPTEN_MODULE_FILES:=$(shell find $(EMSCRIPTEN_MODULE_SRC_DIR) -type f -name "*.js")
@@ -106,17 +106,18 @@ dist: js README.md COPYING
 	mkdir -p dist
 	cp -p build/ogv-decoder-video-vp8-wasm.js \
 	      build/ogv-decoder-video-vp8-wasm.wasm \
-	      build/ogv-decoder-video-vp8-mt-wasm.js \
-	      build/ogv-decoder-video-vp8-mt-wasm.js.mem \
-	      build/ogv-decoder-video-vp8-mt-wasm.wasm \
-	      build/ogv-decoder-video-vp8-mt-wasm.worker.js \
 	      build/ogv-decoder-video-vp9-wasm.js \
 	      build/ogv-decoder-video-vp9-wasm.wasm \
-	      build/ogv-decoder-video-vp9-mt-wasm.js \
-	      build/ogv-decoder-video-vp9-mt-wasm.js.mem \
-	      build/ogv-decoder-video-vp9-mt-wasm.wasm \
-	      build/ogv-decoder-video-vp9-mt-wasm.worker.js \
 	      dist/
+
+	      #build/ogv-decoder-video-vp8-mt-wasm.js \
+	      #build/ogv-decoder-video-vp8-mt-wasm.js.mem \
+	      #build/ogv-decoder-video-vp8-mt-wasm.wasm \
+	      #build/ogv-decoder-video-vp8-mt-wasm.worker.js \
+	      #build/ogv-decoder-video-vp9-mt-wasm.js \
+	      #build/ogv-decoder-video-vp9-mt-wasm.js.mem \
+	      #build/ogv-decoder-video-vp9-mt-wasm.wasm \
+	      #build/ogv-decoder-video-vp9-mt-wasm.worker.js \
 
 	cp -p build/ogv.js \
 	      build/ogv-es2017.js \
@@ -134,10 +135,6 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-theora-wasm.wasm \
 	      build/ogv-decoder-video-av1-wasm.js \
 	      build/ogv-decoder-video-av1-wasm.wasm \
-	      build/ogv-decoder-video-av1-mt-wasm.js \
-	      build/ogv-decoder-video-av1-mt-wasm.js.mem \
-	      build/ogv-decoder-video-av1-mt-wasm.wasm \
-	      build/ogv-decoder-video-av1-mt-wasm.worker.js \
 	      build/ogv-decoder-video-av1-simd-wasm.js \
 	      build/ogv-decoder-video-av1-simd-wasm.wasm \
 	      build/ogv-worker-audio.js \
@@ -146,6 +143,11 @@ dist: js README.md COPYING
 	      README.md \
 	      COPYING \
 	      dist/
+
+	      #build/ogv-decoder-video-av1-mt-wasm.js \
+	      #build/ogv-decoder-video-av1-mt-wasm.js.mem \
+	      #build/ogv-decoder-video-av1-mt-wasm.wasm \
+	      #build/ogv-decoder-video-av1-mt-wasm.worker.js \
 
 	cp -p libogg/COPYING dist/COPYING-ogg.txt
 	cp -p libvorbis/COPYING dist/COPYING-vorbis.txt
