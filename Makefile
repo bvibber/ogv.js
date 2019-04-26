@@ -13,23 +13,23 @@ JS_SRC_DIR:=src/js
 JS_FILES:=$(shell find $(JS_SRC_DIR) -type f -name "*.js")
 JS_FILES+= $(shell find $(JS_SRC_DIR)/workers -type f -name "*.js")
 
-#EMSCRIPTEN_MODULE_TARGETS:=build/ogv-demuxer-ogg.js
-EMSCRIPTEN_MODULE_TARGETS:=build/ogv-demuxer-ogg-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-demuxer-webm.js
+EMSCRIPTEN_MODULE_TARGETS:=build/ogv-demuxer-ogg.js
+EMSCRIPTEN_MODULE_TARGETS+=build/ogv-demuxer-ogg-wasm.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-demuxer-webm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-demuxer-webm-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-vorbis.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-vorbis.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-vorbis-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-audio-opus-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-mt-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
-#EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-wasm.js
 #EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-wasm.js
@@ -104,8 +104,10 @@ clean:
 dist: js README.md COPYING
 	rm -rf dist
 	mkdir -p dist
-	cp -p build/ogv-decoder-video-vp8-wasm.js \
+	cp -p build/ogv-decoder-video-vp8.js \
+	      build/ogv-decoder-video-vp8-wasm.js \
 	      build/ogv-decoder-video-vp8-wasm.wasm \
+	      build/ogv-decoder-video-vp9.js \
 	      build/ogv-decoder-video-vp9-wasm.js \
 	      build/ogv-decoder-video-vp9-wasm.wasm \
 	      dist/
@@ -123,16 +125,22 @@ dist: js README.md COPYING
 	      build/ogv-es2017.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
+	      build/ogv-demuxer-ogg.js \
 	      build/ogv-demuxer-ogg-wasm.js \
 	      build/ogv-demuxer-ogg-wasm.wasm \
+	      build/ogv-demuxer-webm.js \
 	      build/ogv-demuxer-webm-wasm.js \
 	      build/ogv-demuxer-webm-wasm.wasm \
+	      build/ogv-decoder-audio-opus.js \
 	      build/ogv-decoder-audio-opus-wasm.js \
 	      build/ogv-decoder-audio-opus-wasm.wasm \
+	      build/ogv-decoder-audio-vorbis.js \
 	      build/ogv-decoder-audio-vorbis-wasm.js \
 	      build/ogv-decoder-audio-vorbis-wasm.wasm \
+	      build/ogv-decoder-video-theora.js \
 	      build/ogv-decoder-video-theora-wasm.js \
 	      build/ogv-decoder-video-theora-wasm.wasm \
+	      build/ogv-decoder-video-av1.js \
 	      build/ogv-decoder-video-av1-wasm.js \
 	      build/ogv-decoder-video-av1-wasm.wasm \
 	      build/ogv-decoder-video-av1-simd-wasm.js \
@@ -283,9 +291,9 @@ build/ogv-demuxer-ogg.js : $(C_SRC_DIR)/ogv-demuxer-ogg.c \
                            $(JS_ROOT_BUILD_DIR)/lib/liboggz.a \
                            $(JS_ROOT_BUILD_DIR)/lib/libskeleton.a \
                            $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                           $(BUILDSCRIPTS_DIR)/compileOgvDemuxerOgg.sh
+                           $(BUILDSCRIPTS_DIR)/compileOgvDemuxerOggJs.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerOgg.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerOggJs.sh
 
 build/ogv-demuxer-ogg-wasm.js : $(C_SRC_DIR)/ogv-demuxer-ogg.c \
                            $(C_SRC_DIR)/ogv-demuxer.h \
@@ -313,9 +321,9 @@ build/ogv-demuxer-webm.js : $(C_SRC_DIR)/ogv-demuxer-webm.c \
                             $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                             $(JS_ROOT_BUILD_DIR)/lib/libnestegg.a \
                             $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                            $(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
+                            $(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebMJs.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebMJs.sh
 
 build/ogv-demuxer-webm-wasm.js : $(C_SRC_DIR)/ogv-demuxer-webm.c \
                             $(C_SRC_DIR)/ogv-demuxer.h \
@@ -340,9 +348,9 @@ build/ogv-decoder-audio-vorbis.js : $(C_SRC_DIR)/ogv-decoder-audio-vorbis.c \
                                     $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                     $(JS_ROOT_BUILD_DIR)/lib/libvorbis.a \
                                     $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
+                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbisJs.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbisJs.sh
 
 build/ogv-decoder-audio-vorbis-wasm.js : $(C_SRC_DIR)/ogv-decoder-audio-vorbis.c \
                                     $(C_SRC_DIR)/ogv-decoder-audio.h \
@@ -366,9 +374,9 @@ build/ogv-decoder-audio-opus.js : $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
                                   $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                   $(JS_ROOT_BUILD_DIR)/lib/libopus.a \
                                   $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
+                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpusJs.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpusJs.sh
 
 build/ogv-decoder-audio-opus-wasm.js : $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
                                   $(C_SRC_DIR)/ogv-decoder-audio.h \
@@ -392,9 +400,9 @@ build/ogv-decoder-video-theora.js : $(C_SRC_DIR)/ogv-decoder-video-theora.c \
                                     $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                     $(JS_ROOT_BUILD_DIR)/lib/libtheoradec.a \
                                     $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
+                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheoraJs.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheoraJs.sh
 
 build/ogv-decoder-video-theora-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-theora.c \
                                     $(C_SRC_DIR)/ogv-decoder-video.h \
@@ -418,10 +426,10 @@ build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh \
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8Js.sh \
 	                             $(BUILDSCRIPTS_DIR)/strip-imul.js
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8Js.sh
 
 build/ogv-decoder-video-vp8-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
@@ -445,10 +453,10 @@ build/ogv-decoder-video-vp9.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                  $(JS_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh \
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9Js.sh \
 	                             $(BUILDSCRIPTS_DIR)/strip-imul.js
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9Js.sh
 
 build/ogv-decoder-video-vp9-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
@@ -473,9 +481,9 @@ build/ogv-decoder-video-av1.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
                                  $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a \
                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1Js.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1Js.sh
 
 build/ogv-decoder-video-av1-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                  $(C_SRC_DIR)/ogv-decoder-video.h \
