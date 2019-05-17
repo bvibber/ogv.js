@@ -443,17 +443,11 @@
    * Wrapper class for instantiating Flash plugin.
    *
    * @constructor
-   * @param {Object} args - pass 'swf' to override default dynamicaudio.swf URL
+   * @param {Object} opt - pass 'swf' to override default dynamicaudio.swf URL
    * @access private
    */
-	function DynamicAudio(args) {
-		if (this instanceof arguments.callee) {
-			if (typeof this.init === "function") {
-				this.init.apply(this, (args && args.callee) ? args : arguments);
-			}
-		} else {
-			return new arguments.callee(arguments);
-		}
+	function DynamicAudio(opt) {
+		this.init(opt);
 	}
 
 
