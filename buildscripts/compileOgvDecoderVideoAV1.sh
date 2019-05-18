@@ -7,7 +7,6 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_ASMJS_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
-  -s OUTLINING_LIMIT=10000 \
   -s TOTAL_MEMORY=33554432 \
   -s EXPORT_NAME="'OGVDecoderVideoAV1'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
