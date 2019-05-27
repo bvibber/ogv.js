@@ -36,6 +36,12 @@ document.getElementById("videoarea").appendChild(player);
 var vid = document.createElement('video');
 vid.controls = true;
 vid.playsInline = true;
+vid.addEventListener('play', function(event) {
+  player.play();
+});
+vid.addEventListener('pause', function(event) {
+  player.pause();
+});
 document.getElementById("videoarea").appendChild(vid);
 
 var captureStream;
@@ -49,7 +55,14 @@ player.addEventListener('loadedmetadata', function(_event) {
 		captureStream = canvas.captureStream(60);		
 	}
 	vid.srcObject = captureStream;
-	vid.play();
+	//vid.play();
+});
+
+player.addEventListener('play', function(_event) {
+  vid.play();
+});
+player.addEventListener('pause', function(_event) {
+  vid.pause();
 });
 
 player.addEventListener('framecallback', function(_event) {
