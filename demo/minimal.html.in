@@ -29,10 +29,6 @@ var paused = false;
 var sampleFile = 'media/llama-drama-av1.webm';
 
 player = new OGVPlayer({
-	// Bad flicker with WebGL on Firefox
-	// fixed Safari stuttery capture by tweaking WebGL options
-	// ok in Chrome
-	//webGL: false
 });
 document.getElementById("videoarea").appendChild(player);
 
