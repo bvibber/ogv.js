@@ -24,6 +24,8 @@
 
 <script language="JavaScript">
 
+//navigator.mediaDevices.getUserMedia({video: true});
+
 var player = null;
 var paused = false;
 var sampleFile = 'media/llama-drama-av1.webm';
