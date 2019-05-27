@@ -45,12 +45,15 @@ vid.addEventListener('pause', function(event) {
 document.getElementById("videoarea").appendChild(vid);
 
 var captureStream;
+var captureTrack;
 
 player.addEventListener('loadedmetadata', function(_event) {
 	console.log('loaded');
 	var canvas = player.querySelector('canvas');
 	captureStream = canvas.captureStream(0);
-	if (!captureStream.requestFrame) {
+  captureTrack = captureStream.getVideoTracks()[0];
+  console.log(captureTrack);
+	if (!captureStream.requestFrame && !captureTrack.requestFrame) {
 		console.log('warning: pulling at 60fps because no requestFrame support');
 		captureStream = canvas.captureStream(60);		
 	}
@@ -67,8 +70,12 @@ player.addEventListener('pause', function(_event) {
 
 player.addEventListener('framecallback', function(_event) {
 	if (captureStream && captureStream.requestFrame) {
+    // Firefox has it here
 		captureStream.requestFrame();
-	}
+	} else if (captureTrack && captureTrack.requestFrame) {
+    // Safari has it here
+    captureTrack.requestFrame();
+  }
 });
 
 function play(src) {
