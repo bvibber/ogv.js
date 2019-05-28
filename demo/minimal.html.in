@@ -24,27 +24,38 @@
 
 <script language="JavaScript">
 var ran = false;
-var sampleFile;
+var player = null;
+var paused = false;
+var sampleFile = 'media/llama-drama-av1.webm';
+
+var vid;
+var audioContext;
+var audioDestination;
+
+var captureStream;
+var captureTrack;
+
+var audioStream;
+var audioTrack;
+var combinedStream;
+
 function runstuff() {
 	if (ran) {
 		return;
 	}
 	ran = true;
 
-	var audioContext = OGVPlayer.initSharedAudioContext();
-	var audioDestination = audioContext.createMediaStreamDestination();
+	audioContext = OGVPlayer.initSharedAudioContext();
+	audioDestination = audioContext.createMediaStreamDestination();
 
-	var player = null;
-	var paused = false;
-	sampleFile = 'media/llama-drama-av1.webm';
 
 	player = new OGVPlayer({
-		//audioContext: audioContext,
+		audioContext: audioContext,
 		audioDestination: audioDestination
 	});
 	document.getElementById("videoarea").appendChild(player);
 
-	var vid = document.createElement('video');
+	vid = document.createElement('video');
 	vid.controls = true;
 	vid.playsInline = true;
 	vid.addEventListener('play', function(event) {
@@ -54,13 +65,6 @@ function runstuff() {
 		player.pause();
 	});
 	document.getElementById("videoarea").appendChild(vid);
-
-	var captureStream;
-	var captureTrack;
-
-	var audioStream;
-	var audioTrack;
-	var combinedStream;
 
 	player.addEventListener('loadedmetadata', function(_event) {
 		console.log('loaded');
@@ -159,9 +163,11 @@ function runstuff() {
 		if(player) {
 			if(!paused) {
 				player.pause();
+				vid.pause();
 				paused = true;
 			} else {
 				player.play();
+				vid.play();
 				paused = false;
 			}
 		}
