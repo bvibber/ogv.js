@@ -38,6 +38,11 @@
 					<option value="native">native</option>
 				</select>
 			</div>
+			<div>
+				Playback Rate:
+				<input type="range" min=10 max=200 height=1 id="pbr-slider"/>
+				<button id="pbr-reset" height=1>Reset</button>
+			</div>
 		</div>
 
 		<div id="player-aspect">

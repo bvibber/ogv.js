@@ -1080,6 +1080,15 @@
         }
     });
 
+    // Control for Playback Rate (pbr) slider and reset button
+    var pbrSlider = document.querySelector('#pbr-slider');
+    pbrSlider.addEventListener('change', function(evt) {
+        if (player) player.playbackRate = pbrSlider.value/100.0;
+    });
+    document.querySelector('#pbr-reset').addEventListener('click', function(evt) {
+        pbrSlider.value = 100; if (player) player.playbackRate = 1.0;
+    });
+
     window.setInterval(function() {
         if (player) {
             benchmark.update();
