@@ -237,6 +237,7 @@ class OGVPlayer extends OGVJSElement {
 		this._width = 0;
 		this._height = 0;
 		this._volume = 1;
+		this._playbackRate = 1;
 
 		Object.defineProperties(this, {
 			/**
@@ -659,14 +660,22 @@ class OGVPlayer extends OGVJSElement {
 
 			/**
 			 * @property playbackRate {number}
-			 * @todo implement
 			 */
 			playbackRate: {
 				get: function getPlaybackRate() {
-					return 1;
+					return this._playbackRate;
 				},
 				set: function setPlaybackRate(val) {
-					// ignore
+					var newRate = Number(val) || 1.0;
+					if (this._audioFeeder) {
+						this._audioFeeder.tempo = newRate;
+					} else if (!this._paused) { // Change while playing
+						// Move to the coordinate system created by the new tempo
+						this._initialPlaybackOffset = this._getPlaybackTime();
+						this._initialPlaybackPosition = newRate * getTimestamp() / 1000;
+					}
+					this._playbackRate = newRate;
+					this._fireEventAsync('ratechange');
 				}
 			},
 
@@ -918,6 +927,7 @@ class OGVPlayer extends OGVJSElement {
 
 		audioFeeder.volume = this.volume;
 		audioFeeder.muted = this.muted;
+		audioFeeder.tempo = this.playbackRate;
 
 		// If we're in a background tab, timers may be throttled.
 		// audioFeeder will call us when buffers need refilling,
@@ -961,7 +971,7 @@ class OGVPlayer extends OGVJSElement {
 			let state = this._audioFeeder.getPlaybackState();
 			this._initialPlaybackPosition = state.playbackPosition;
 		} else {
-			this._initialPlaybackPosition = getTimestamp() / 1000;
+			this._initialPlaybackPosition = this._playbackRate * getTimestamp() / 1000;
 		}
 		if (offset !== undefined) {
 			this._initialPlaybackOffset = offset;
@@ -994,7 +1004,7 @@ class OGVPlayer extends OGVJSElement {
 				position = state.playbackPosition;
 			} else {
 				// @fixme handle paused/stoped time better
-				position = getTimestamp() / 1000;
+				position = this._playbackRate * getTimestamp() / 1000;
 			}
 			return (position - this._initialPlaybackPosition) + this._initialPlaybackOffset;
 		}
