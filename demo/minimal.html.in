@@ -11,153 +11,172 @@
 
 <div id="videoarea"></div>
 
-<select onchange="switchmedia(this)">
+<select onchange="runstuff();switchmedia(this)">
 	<option value="media/llama-drama-av1.webm">Llama drama (AV1, Opus; 180p)</option>
 	<option value="media/curiosity.ogv">Curiosity's Seven Minutes of Terror (Vorbis, Theora; 160p)</option>
 	<option value="media/ehren-paper_lights-96.opus">Ehren - Paper Lights (Opus)</option>
 	<option value="media/pixel_aspect_ratio.ogg">Theora Test suite pixel_aspect_ratio.ogg</option>
 </select>
 <div>
-<button onclick="play(sampleFile);">Play</button><button onclick="pause();">Pause/Unpause</button>
+<button onclick="runstuff();play(sampleFile);">Play</button><button onclick="runstuff();pause();">Pause/Unpause</button>
 </div>
 
 
 <script language="JavaScript">
-
-var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-var audioDestination = audioContext.createMediaStreamDestination();
-
-var player = null;
-var paused = false;
-var sampleFile = 'media/llama-drama-av1.webm';
-
-player = new OGVPlayer({
-	audioContext: audioContext,
-	audioDestination: audioDestination
-});
-document.getElementById("videoarea").appendChild(player);
-
-var vid = document.createElement('video');
-vid.controls = true;
-vid.playsInline = true;
-vid.addEventListener('play', function(event) {
-	player.play();
-});
-vid.addEventListener('pause', function(event) {
-	player.pause();
-});
-document.getElementById("videoarea").appendChild(vid);
-
-var captureStream;
-var captureTrack;
-
-var audioStream;
-var audioTrack;
-var combinedStream;
-
-player.addEventListener('loadedmetadata', function(_event) {
-	console.log('loaded');
-	var canvas = player.querySelector('canvas');
-	captureStream = canvas.captureStream(0);
-	captureTrack = captureStream.getVideoTracks()[0];
-	if (!captureStream.requestFrame && !captureTrack.requestFrame) {
-		console.log('warning: pulling at 60fps because no requestFrame support');
-		captureStream = canvas.captureStream(60);		
+var ran = false;
+var sampleFile;
+function runstuff() {
+	if (ran) {
+		return;
 	}
+	ran = true;
 
-	audioStream = audioDestination.stream;
-	audioTrack = audioStream.getAudioTracks()[0];
+	var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+	var audioDestination = audioContext.createMediaStreamDestination();
 
-	combinedStream = new MediaStream([captureTrack, audioTrack]);
-	console.log(combinedStream);
-	vid.srcObject = combinedStream;
-});
+	var player = null;
+	var paused = false;
+	sampleFile = 'media/llama-drama-av1.webm';
 
-player.addEventListener('play', function(_event) {
-	vid.play();
-});
-player.addEventListener('pause', function(_event) {
-	vid.pause();
-});
+	player = new OGVPlayer({
+		audioContext: audioContext,
+		audioDestination: audioDestination
+	});
+	document.getElementById("videoarea").appendChild(player);
 
+	var vid = document.createElement('video');
+	vid.controls = true;
+	vid.playsInline = true;
+	vid.addEventListener('play', function(event) {
+		player.play();
+	});
+	vid.addEventListener('pause', function(event) {
+		player.pause();
+	});
+	document.getElementById("videoarea").appendChild(vid);
 
-// These don't apply to the in-browser controls,
-// unfortunately.
-// However they seem to work for external controls.
-// Be warned that while the output vid is paused,
-// it won't update in response to seeks. :(
-/*
-Object.defineProperties(vid, {
-	currentTime: {
-		get: function() {
-			return player.currentTime;
-		},
-		set: function(val) {
-			player.currentTime = val;
-		},
-	},
-	buffered: {
-		get: function() {
-			return player.buffered;
+	var captureStream;
+	var captureTrack;
+
+	var audioStream;
+	var audioTrack;
+	var combinedStream;
+
+	player.addEventListener('loadedmetadata', function(_event) {
+		console.log('loaded');
+		var canvas = player.querySelector('canvas');
+		captureStream = canvas.captureStream(0);
+		captureTrack = captureStream.getVideoTracks()[0];
+		if (!captureStream.requestFrame && !captureTrack.requestFrame) {
+			console.log('warning: pulling at 60fps because no requestFrame support');
+			captureStream = canvas.captureStream(60);		
 		}
-	},
-	seekable: {
-		get: function() {
-			return player.seekable;
-		}
-	},
-	seeking: {
-		get: function() {
-			return player.seeking;
-		}
-	},
-	networkState: {
-		get: function() {
-			return player.networkState;
-		}
-	},
-	duration: {
-		get: function() {
-			return player.duration;
-		}
-	},
-});
-*/
 
-player.addEventListener('framecallback', function(_event) {
-	if (captureStream && captureStream.requestFrame) {
-		// Firefox has it here
-		captureStream.requestFrame();
-	} else if (captureTrack && captureTrack.requestFrame) {
-		// Chrome and Safari have it here
-		captureTrack.requestFrame();
-	}
-});
+		if (player._codec.hasAudio) {
+			audioStream = audioDestination.stream;
+			audioTrack = audioStream.getAudioTracks()[0];
 
-function play(src) {
-	//player = new OgvSwfPlayer();
-	//player = document.createElement('video');
-	player.src = src;
-	player.play();	
-}
-
-function pause() {
-	if(player) {
-		if(!paused) {
-			player.pause();
-			paused = true;
+			combinedStream = new MediaStream([captureTrack, audioTrack]);
+			vid.srcObject = combinedStream;
 		} else {
-			player.play();
-			paused = false;
+			audioStream = null;
+			audioTrack = null;
+			combinedStream = null;
+			vid.srcObject = captureStream;
+		}
+	});
+
+	player.addEventListener('play', function(_event) {
+		//vid.play();
+	});
+	player.addEventListener('pause', function(_event) {
+		vid.pause();
+	});
+
+
+	// These don't apply to the in-browser controls,
+	// unfortunately.
+	// However they seem to work for external controls.
+	// Be warned that while the output vid is paused,
+	// it won't update in response to seeks. :(
+	/*
+	Object.defineProperties(vid, {
+		currentTime: {
+			get: function() {
+				return player.currentTime;
+			},
+			set: function(val) {
+				player.currentTime = val;
+			},
+		},
+		buffered: {
+			get: function() {
+				return player.buffered;
+			}
+		},
+		seekable: {
+			get: function() {
+				return player.seekable;
+			}
+		},
+		seeking: {
+			get: function() {
+				return player.seeking;
+			}
+		},
+		networkState: {
+			get: function() {
+				return player.networkState;
+			}
+		},
+		duration: {
+			get: function() {
+				return player.duration;
+			}
+		},
+	});
+	*/
+
+	player.addEventListener('framecallback', function(_event) {
+		if (captureStream && captureStream.requestFrame) {
+			// Firefox has it here
+			captureStream.requestFrame();
+		} else if (captureTrack && captureTrack.requestFrame) {
+			// Chrome and Safari have it here
+			captureTrack.requestFrame();
+		}
+	});
+
+	function play(src) {
+		//player = new OgvSwfPlayer();
+		//player = document.createElement('video');
+		player.src = src;
+		player.play();
+		vid.play();
+	}
+
+	function pause() {
+		if(player) {
+			if(!paused) {
+				player.pause();
+				paused = true;
+			} else {
+				player.play();
+				paused = false;
+			}
 		}
 	}
-}
 
-function switchmedia(src) {
-	sampleFile = src.value;
-	play(sampleFile);
-}
+	function switchmedia(src) {
+		sampleFile = src.value;
+		play(sampleFile);
+	}
 
+	window.play = play;
+	window.pause = pause;
+	window.switchmedia = switchmedia;
+
+}
 </script>
 
 </body></html>
