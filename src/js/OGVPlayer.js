@@ -877,7 +877,7 @@ class OGVPlayer extends OGVJSElement {
 	}
 
 	static initSharedAudioContext() {
-		AudioFeeder.initSharedAudioContext();
+		return AudioFeeder.initSharedAudioContext();
 	}
 
 	_initAudioFeeder() {

@@ -31,7 +31,7 @@ function runstuff() {
 	}
 	ran = true;
 
-	var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+	var audioContext = OGVPlayer.initSharedAudioContext();
 	var audioDestination = audioContext.createMediaStreamDestination();
 
 	var player = null;
@@ -39,7 +39,7 @@ function runstuff() {
 	sampleFile = 'media/llama-drama-av1.webm';
 
 	player = new OGVPlayer({
-		audioContext: audioContext,
+		//audioContext: audioContext,
 		audioDestination: audioDestination
 	});
 	document.getElementById("videoarea").appendChild(player);
@@ -87,7 +87,7 @@ function runstuff() {
 	});
 
 	player.addEventListener('play', function(_event) {
-		//vid.play();
+		vid.play();
 	});
 	player.addEventListener('pause', function(_event) {
 		vid.pause();
