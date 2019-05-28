@@ -24,11 +24,16 @@
 
 <script language="JavaScript">
 
+var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+var audioDestination = audioContext.createMediaStreamDestination();
+
 var player = null;
 var paused = false;
 var sampleFile = 'media/llama-drama-av1.webm';
 
 player = new OGVPlayer({
+	audioContext: audioContext,
+	audioDestination: audioDestination
 });
 document.getElementById("videoarea").appendChild(player);
 
@@ -46,6 +51,10 @@ document.getElementById("videoarea").appendChild(vid);
 var captureStream;
 var captureTrack;
 
+var audioStream;
+var audioTrack;
+var combinedStream;
+
 player.addEventListener('loadedmetadata', function(_event) {
 	console.log('loaded');
 	var canvas = player.querySelector('canvas');
@@ -55,7 +64,13 @@ player.addEventListener('loadedmetadata', function(_event) {
 		console.log('warning: pulling at 60fps because no requestFrame support');
 		captureStream = canvas.captureStream(60);		
 	}
-	vid.srcObject = captureStream;
+
+	audioStream = audioDestination.stream;
+	audioTrack = audioStream.getAudioTracks()[0];
+
+	combinedStream = new MediaStream([captureTrack, audioTrack]);
+	console.log(combinedStream);
+	vid.srcObject = combinedStream;
 });
 
 player.addEventListener('play', function(_event) {
@@ -64,6 +79,50 @@ player.addEventListener('play', function(_event) {
 player.addEventListener('pause', function(_event) {
 	vid.pause();
 });
+
+
+// These don't apply to the in-browser controls,
+// unfortunately.
+// However they seem to work for external controls.
+// Be warned that while the output vid is paused,
+// it won't update in response to seeks. :(
+/*
+Object.defineProperties(vid, {
+	currentTime: {
+		get: function() {
+			return player.currentTime;
+		},
+		set: function(val) {
+			player.currentTime = val;
+		},
+	},
+	buffered: {
+		get: function() {
+			return player.buffered;
+		}
+	},
+	seekable: {
+		get: function() {
+			return player.seekable;
+		}
+	},
+	seeking: {
+		get: function() {
+			return player.seeking;
+		}
+	},
+	networkState: {
+		get: function() {
+			return player.networkState;
+		}
+	},
+	duration: {
+		get: function() {
+			return player.duration;
+		}
+	},
+});
+*/
 
 player.addEventListener('framecallback', function(_event) {
 	if (captureStream && captureStream.requestFrame) {
