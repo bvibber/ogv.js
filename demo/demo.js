@@ -1020,6 +1020,7 @@
             }
             player.src = selectedUrl;
             player.muted = muted;
+            player.playbackRate = document.querySelector('#pbr-slider').value/100.0;
             player.addEventListener('loadedmetadata', function() {
                 if (startTime) {
                     player.currentTime = startTime;
