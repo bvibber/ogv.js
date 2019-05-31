@@ -40,7 +40,7 @@
 			</div>
 			<div>
 				Playback Rate:
-				<input type="range" min=10 max=200 height=1 id="pbr-slider"/>
+				<input type="range" min=10 max=200 value=100 height=1 id="pbr-slider"/>
 				<button id="pbr-reset" height=1>Reset</button>
 			</div>
 		</div>
