@@ -906,9 +906,9 @@ class OGVPlayer extends OGVJSElement {
 			// Try passing a pre-created output node in?
 			audioOptions.output = options.audioDestination;
 		}
-		if (options.audioBackendConstructor) {
+		if (options.audioBackendFactory) {
 			// Allow setting a custom backend for audioFeeder
-			audioOptions.backendConstructor = options.audioBackendConstructor;
+			audioOptions.backendFactory = options.audioBackendFactory;
 		}
 
 		let audioFeeder = this._audioFeeder = new AudioFeeder(audioOptions);
