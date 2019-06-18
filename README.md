@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.6.1 - 2019-05-??
+1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
 * updated audio-feeder to 0.4.21;
     * mono audio is now less loud, matching native playback better
@@ -17,8 +17,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 * updated yuv-canvas to 1.2.6;
     * fixes for capturing WebGL canvas as MediaStream
 * fixes for seeks on low frame rate video
-* note: fails to build on emscripten 1.38.31 due to an emscripten bug (fixed in their incoming branch)
-* drop OUTLINING_LIMIT from AV1 JS build; doesn't work in newer emscripten and not really needed
+* updated emscripten toolchain to 1.38.36
+    * drop OUTLINING_LIMIT from AV1 JS build; doesn't work in newer emscripten and not really needed
 
 1.6.0 - 2019-02-26
 * experimental support for AV1 video in WebM
