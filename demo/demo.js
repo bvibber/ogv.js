@@ -959,6 +959,14 @@
                     wasm: true,
                     threading: true // experimental
                 });
+            } else if (playerBackend == 'wasm-video') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    memoryLimit: maxmem,
+                    wasm: true,
+                    video: true // experimental
+                });
             } else if (playerBackend == 'webgl') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
