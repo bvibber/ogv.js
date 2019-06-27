@@ -27,7 +27,8 @@ function strip_imul(input_js) {
   const initialMatch = input_js.match(/(\w+)=global\.Math\.imul/);
   if (!initialMatch) {
     // hack something changed, worry about it later
-    throw new Error('Did not find Math.imul in emscripten output.');
+    console.warn('Did not find Math.imul in emscripten output.');
+    return input_js;
   }
   const minifiedName = initialMatch[1];
 
