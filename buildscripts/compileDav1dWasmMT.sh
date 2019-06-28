@@ -21,7 +21,7 @@ LDFLAGS=-pthread \
   --prefix="$dir/build/wasm-mt/root" \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
-  -Dbuild_tools=false\
+  -Dbuild_tools=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
   --buildtype release && \

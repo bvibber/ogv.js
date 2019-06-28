@@ -19,6 +19,7 @@ meson ../../../dav1d \
   --prefix="$dir/build/js/root" \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
+  -Dbuild_tools=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
   -Dfake_atomics=true \
