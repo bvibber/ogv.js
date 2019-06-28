@@ -14,11 +14,14 @@ mkdir -p dav1d
 cd dav1d
 
 # finally, run configuration script
-meson ../../../dav1d \
+CFLAGS=-pthread \
+LDFLAGS=-pthread \
+  meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-wasm-mt-cross.txt \
   --prefix="$dir/build/wasm-mt/root" \
   -Dbuild_asm=false \
   -Dbuild_tests=false \
+  -Dbuild_tools=false\
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
   --buildtype release && \
