@@ -27,6 +27,7 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
 
 ifdef SIMD
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-wasm.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-mt-wasm.js
 endif
 
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
@@ -152,6 +153,10 @@ dist: js README.md COPYING
 	else \
 		cp -p build/ogv-decoder-video-av1-simd-wasm.js \
 	          build/ogv-decoder-video-av1-simd-wasm.wasm \
+		      build/ogv-decoder-video-av1-simd-mt-wasm.js \
+		      build/ogv-decoder-video-av1-simd-mt-wasm.js.mem \
+	          build/ogv-decoder-video-av1-simd-mt-wasm.wasm \
+		      build/ogv-decoder-video-av1-simd-mt-wasm.worker.js \
 		      dist/ \
 			  ; \
 	fi
@@ -236,6 +241,10 @@ $(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a $(
 $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
+
+$(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
 
 # Compile our Emscripten modules
 
@@ -401,6 +410,19 @@ build/ogv-decoder-video-av1-simd-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c 
                                            $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
+
+build/ogv-decoder-video-av1-simd-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
+                                              $(C_SRC_DIR)/ogv-decoder-video.h \
+                                              $(C_SRC_DIR)/ogv-thread-support.h \
+                                              $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                              $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+						                      $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a \
+                                              $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                              $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMDMT.sh
 
 
 # Install dev dependencies

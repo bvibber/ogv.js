@@ -421,7 +421,8 @@ class OGVWrapperCodec {
 				theora: wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
 				vp8: wasm ? (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W') : 'OGVDecoderVideoVP8',
 				vp9: wasm ? (threading ? 'OGVDecoderVideoVP9MTW' : 'OGVDecoderVideoVP9W') : 'OGVDecoderVideoVP9',
-				av1: wasm ? (threading ? 'OGVDecoderVideoAV1MTW'
+				av1: wasm ? (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
+				                               : 'OGVDecoderVideoAV1MTW')
 				                       : (simd ? 'OGVDecoderVideoAV1SIMDW'
 										       : 'OGVDecoderVideoAV1W'))
 						  : 'OGVDecoderVideoAV1',

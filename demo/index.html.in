@@ -36,6 +36,7 @@
 					<option value="wasm-cpu">&nbsp;&nbsp;WASM no WebGL</option>
 					<option value="wasm-simd">&nbsp;&nbsp;WASM with SIMD</option>
 					<option value="wasm-mt">&nbsp;&nbsp;WASM threaded</option>
+					<option value="wasm-simd-mt">&nbsp;&nbsp;WASM SIMD+threads</option>
 					<option value="wasm-video">&nbsp;&nbsp;WASM &lt;video&gt;</option>
 					<option value="native">native</option>
 				</select>

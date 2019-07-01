@@ -14,9 +14,7 @@ mkdir -p dav1d
 cd dav1d
 
 # finally, run configuration script
-CFLAGS=-pthread \
-LDFLAGS=-pthread \
-  meson ../../../dav1d \
+meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-wasm-simd-cross.txt \
   --prefix="$dir/build/wasm-simd/root" \
   -Dbuild_asm=true \
