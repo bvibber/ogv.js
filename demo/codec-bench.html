@@ -116,9 +116,17 @@
             }
         }
 
-         function nextTick(callback) {
+        let next = null;
+        function nextTick(callback) {
             if (typeof setImmediate === 'function') {
-                setImmediate(callback);
+                next = callback;
+                setImmediate(() => {
+                    let was = next;
+                    next = null;
+                    if (was) {
+                        was();
+                    }
+                });
             } else {
                 // we have a polyfill already
                 throw new Error('need setImmediate');
@@ -144,10 +152,11 @@
 
         function decodeFile(filename, ondone) {
             log('opening ' + filename);
+            let threading = document.getElementById('threading').checked;
             var player = new OGVPlayer({
                 wasm: document.getElementById('wasm').checked,
                 worker: document.getElementById('worker').checked,
-                threading: document.getElementById('threading').checked,
+                threading: threading,
                 simd: document.getElementById('simd').checked,
             });
             let eof = false;
@@ -160,6 +169,8 @@
             let last = 0;
             let lastFrames = 0;
             let checksum = new crc32();
+            let framesInFlight = 0;
+            let framesBuffered = threading ? 12 : 1;
 
             function updateChecksumRow(row) {
                 checksum.update(row);
@@ -195,14 +206,21 @@
                 });
             }
 
+
             function nextFrame() {
                 while (demuxer.audioReady) {
                     demuxer.dequeueAudioPacket((packet) => {});
                 }
+                if (framesInFlight >= framesBuffered) {
+                    return;
+                }
                 if (demuxer.frameReady) {
                     var timestamp = demuxer.frameTimestamp;
+                    let async = true;
                     demuxer.dequeueVideoPacket((packet) => {
                         frames++;
+                        let frameNo = frames;
+                        framesInFlight++;
                         decoder.processFrame(packet, (ok) => {
                             if (ok) {
                                 const now = Date.now();
@@ -219,12 +237,18 @@
                                 if (document.getElementById('checksum').checked) {
                                     updateChecksum(decoder.frameBuffer);
                                 }
-                            } else {
-                                //log('frame failed');
                             }
-                            nextTick(processData);
+
+                            if (--framesInFlight < framesBuffered) {
+                                nextTick(processData);
+                            }
+
+                            async = false;
                         });
                     });
+                    if (async && framesInFlight < framesBuffered) {
+                        nextTick(processData);
+                    }
                 } else {
                     nextTick(processData);
                 }
@@ -237,7 +261,10 @@
                     demuxer.process((more) => {
                         if (more) {
                             nextTick(processData);
-                        } else if (eof) {
+                        } else if (eof && framesInFlight) {
+                            decoder.sync();
+                            nextTick(processData);
+                        } else if (eof && !framesInFlight) {
                             log('done and done');
 
                             var delta = (Date.now() - start) / 1000;
@@ -253,7 +280,7 @@
                                 log('crc32 checksum: ' + hex);
                             }
 
-// end!
+                            // end!
                             ondone();
                         } else {
                             nextTick(() => {
