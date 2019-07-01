@@ -415,12 +415,16 @@ class OGVWrapperCodec {
 	loadVideoCodec(callback) {
 		if (this.demuxer.videoCodec) {
 			let wasm = !!this.options.wasm,
+				simd = !!this.options.simd,
 				threading = !!this.options.threading;
 			let videoClassMap = {
 				theora: wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
 				vp8: wasm ? (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W') : 'OGVDecoderVideoVP8',
 				vp9: wasm ? (threading ? 'OGVDecoderVideoVP9MTW' : 'OGVDecoderVideoVP9W') : 'OGVDecoderVideoVP9',
-				av1: wasm ? (threading ? 'OGVDecoderVideoAV1MTW' : 'OGVDecoderVideoAV1W') : 'OGVDecoderVideoAV1',
+				av1: wasm ? (threading ? 'OGVDecoderVideoAV1MTW'
+				                       : (simd ? 'OGVDecoderVideoAV1SIMDW'
+										       : 'OGVDecoderVideoAV1W'))
+						  : 'OGVDecoderVideoAV1',
 			};
 			let className = videoClassMap[this.demuxer.videoCodec];
 			this.processing = true;
