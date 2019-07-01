@@ -7,6 +7,15 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.7.x - 2019-??-??
+* Optionally builds with emscripten's LLVM upstream backend
+    * Currently JS builds are broken
+* Experimental SIMD builds optional, with `make SIMD=1`
+    * These work in Chrome with the "WebAssembly SIMD" flag enabled in chrome://flags/
+    * Significant speed boost when available.
+    * Available with and without multithreading.
+    * Must enable explicitly with `simd: true` in `options`.
+
 1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
 * updated audio-feeder to 0.4.21;
