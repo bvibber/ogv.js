@@ -38,9 +38,9 @@ static void do_init(void) {
     // which possibly should be something we can scale dynamically.
     // We don't know ahead of time how many tiles will actually be used
     // and if doing adaptive streaming it may change.
-    if (cores > 4) {
+    if (cores >= 4) {
         settings.n_tile_threads = 4;
-    } else if (cores > 1) {
+    } else if (cores >= 2) {
         settings.n_tile_threads = 2;
     }
 
