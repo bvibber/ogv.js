@@ -34,12 +34,12 @@ static int process_frame_return(void *user_data);
 
 void ogv_video_decoder_init() {
 #ifdef __EMSCRIPTEN_PTHREADS__
+	pthread_mutex_init(&decode_mutex, NULL);
+	pthread_cond_init(&ping_cond, NULL);
 	int ret = pthread_create(&decode_thread, NULL, decode_thread_run, NULL);
 	if (ret) {
 		abort();
 	}
-	pthread_mutex_init(&decode_mutex, NULL);
-	pthread_cond_init(&ping_cond, NULL);
 #else
   do_init();
 #endif
