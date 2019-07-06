@@ -148,7 +148,7 @@ dist: js README.md COPYING
 	      COPYING \
 	      dist/
 
-	if [ "x$(SIMD)x" == "xx" ]; then \
+	if [ "x$(SIMD)x" = "xx" ]; then \
 		echo "Skipping SIMD, compile with 'make SIMD=1' if desired."; \
 	else \
 		cp -p build/ogv-decoder-video-av1-simd-wasm.js \
