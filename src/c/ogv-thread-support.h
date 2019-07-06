@@ -106,11 +106,15 @@ static void *decode_thread_run(void *arg) {
 	}
 }
 
-static void call_main_return(void *user_data) {
+static void call_main_return(void *user_data, int sync) {
 	double right_now = emscripten_get_now();
 	double delta = right_now - cpu_time;
 	cpu_time = right_now;
-	emscripten_sync_run_in_main_runtime_thread_(EM_FUNC_SIG_VIF, main_thread_return, user_data, (float)delta);
+	if (sync) {
+		emscripten_sync_run_in_main_runtime_thread_(EM_FUNC_SIG_VIF, main_thread_return, user_data, (float)delta);
+	} else {
+		emscripten_async_run_in_main_runtime_thread_(EM_FUNC_SIG_VIF, main_thread_return, user_data, (float)delta);
+	}
 }
 
 #else
@@ -121,7 +125,8 @@ int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
 	return 1;
 }
 
-static void call_main_return(void *user_data) {
+static void call_main_return(void *user_data, int sync) {
+	(void)sync;
 	process_frame_return(user_data);
 }
 

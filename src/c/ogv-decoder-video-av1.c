@@ -93,11 +93,15 @@ static void process_frame_decode(const char *buf, size_t buf_len)
                     free(frame);
                     printf("dav1d_get_picture returned %d\n", ret2);
                     break;
+                } else {
+                    // Is -EAGAIN? What does this mean exactly?
+                    free(frame);
+                    // fall through back to loop...?
                 }
             } else {
                 // yay
                 frame->success = 1;
-                call_main_return(frame);
+                call_main_return(frame, 0);
             }
         } while (data.sz);
     }
@@ -111,7 +115,7 @@ static void process_frame_decode(const char *buf, size_t buf_len)
             if (!ret) {
                 // yay
                 frame->success = 1;
-                call_main_return(frame);
+                call_main_return(frame, 0);
                 continue;
             } else if (ret == -EAGAIN) {
                 free(frame);
@@ -125,7 +129,7 @@ static void process_frame_decode(const char *buf, size_t buf_len)
         }
 
         // Issue a null callback
-        call_main_return(NULL);
+        call_main_return(NULL, 0);
     }
 }
 
