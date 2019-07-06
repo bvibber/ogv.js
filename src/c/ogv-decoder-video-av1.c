@@ -49,7 +49,12 @@ static void do_init(void) {
     // buffer up frames and release them later, so don't forget the JS side
     // needs to occasionally sync the state to force a frame early, such as
     // after a seek or after the end of input.
-    settings.n_frame_threads = cores;
+    if (cores >= 4) {
+        // Don't use more than 4 or it will eat a ton of memory.
+        settings.n_frame_threads = 4;
+    } else {
+        settings.n_frame_threads = cores;
+    }
 #endif
 
     dav1d_open(&context, &settings);
