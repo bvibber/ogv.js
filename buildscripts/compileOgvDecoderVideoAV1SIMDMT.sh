@@ -9,7 +9,6 @@ emcc \
   $EMCC_THREADED_OPTIONS \
   -s TOTAL_MEMORY=536870912 \
   -s DEFAULT_PTHREAD_STACK_SIZE=524288 \
-  -fno-vectorize \
   -s SIMD=1 \
   -s EXPORT_NAME="'OGVDecoderVideoAV1SIMDMTW'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \

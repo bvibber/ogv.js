@@ -7,7 +7,6 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
-  -fno-vectorize \
   -s SIMD=1 \
   -s EXPORT_NAME="'OGVDecoderVideoAV1SIMDW'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
