@@ -135,6 +135,7 @@ class OGVPlayer extends OGVJSElement {
 		if (options.video && this._canvas.captureStream) {
 			this._mediaStream = new MediaStream();
 			this._video = (typeof options.video === 'object') ? options.video : document.createElement('video');
+			this._video.playsInline = true; // for iOS to not fullscreen it
 			this._video.srcObject = this._mediaStream;
 		} else {
 			this._video = null;
@@ -936,6 +937,10 @@ class OGVPlayer extends OGVJSElement {
 
 			this._audioTrack = dest.stream.getAudioTracks()[0];
 			this._mediaStream.addTrack(this._audioTrack);
+			if (navigator.userAgent.match(/WebKit/)) {
+				// Safari drops after we change the stream, so reconnect it.
+				this._video.src = this._mediaStream;
+			}
 			this._video.play();
 
 			audioOptions.output = dest;
@@ -1396,6 +1401,12 @@ class OGVPlayer extends OGVJSElement {
 				this._canvasStream = this._canvas.captureStream(0);
 				this._videoTrack = this._canvasStream.getVideoTracks()[0];
 				this._mediaStream.addTrack(this._videoTrack);
+
+				if (navigator.userAgent.match(/WebKit/)) {
+					// Safari drops when we change tracks, so reconnect.
+					this._video.src = this._mediaStream;
+					this._video.play();
+				}
 			}
 
 			// Update the media stream with the new frame, so we don't
