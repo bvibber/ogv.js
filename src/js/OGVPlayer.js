@@ -1721,7 +1721,7 @@ class OGVPlayer extends OGVJSElement {
 				this._duration = this._codec.duration;
 			}
 			if (this._duration === null) {
-				if (this._stream.seekable) {
+				if (this._stream.seekable && this._detectedType == 'video/ogg') {
 					// fixme this is ogg-specific maybe?
 					this._state = State.SEEKING_END;
 					this._lastSeenTimestamp = -1;
