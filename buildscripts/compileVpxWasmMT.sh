@@ -30,6 +30,7 @@ EMCONFIGURE_JS=1 \
     --disable-docs \
     --disable-examples \
     --disable-tools \
+    --disable-unit-tests \
 || exit 1
 
 # compile libvpx

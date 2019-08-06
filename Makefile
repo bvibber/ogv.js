@@ -124,21 +124,18 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-vp8-wasm.js \
 	      build/ogv-decoder-video-vp8-wasm.wasm \
 	      build/ogv-decoder-video-vp8-mt-wasm.js \
-	      build/ogv-decoder-video-vp8-mt-wasm.js.mem \
 	      build/ogv-decoder-video-vp8-mt-wasm.wasm \
 	      build/ogv-decoder-video-vp8-mt-wasm.worker.js \
 	      build/ogv-decoder-video-vp9.js \
 	      build/ogv-decoder-video-vp9-wasm.js \
 	      build/ogv-decoder-video-vp9-wasm.wasm \
 	      build/ogv-decoder-video-vp9-mt-wasm.js \
-	      build/ogv-decoder-video-vp9-mt-wasm.js.mem \
 	      build/ogv-decoder-video-vp9-mt-wasm.wasm \
 	      build/ogv-decoder-video-vp9-mt-wasm.worker.js \
 	      build/ogv-decoder-video-av1.js \
 	      build/ogv-decoder-video-av1-wasm.js \
 	      build/ogv-decoder-video-av1-wasm.wasm \
 	      build/ogv-decoder-video-av1-mt-wasm.js \
-	      build/ogv-decoder-video-av1-mt-wasm.js.mem \
 	      build/ogv-decoder-video-av1-mt-wasm.wasm \
 	      build/ogv-decoder-video-av1-mt-wasm.worker.js \
 	      build/ogv-worker-audio.js \
@@ -154,7 +151,6 @@ dist: js README.md COPYING
 		cp -p build/ogv-decoder-video-av1-simd-wasm.js \
 	          build/ogv-decoder-video-av1-simd-wasm.wasm \
 		      build/ogv-decoder-video-av1-simd-mt-wasm.js \
-		      build/ogv-decoder-video-av1-simd-mt-wasm.js.mem \
 	          build/ogv-decoder-video-av1-simd-mt-wasm.wasm \
 		      build/ogv-decoder-video-av1-simd-mt-wasm.worker.js \
 		      dist/ \
