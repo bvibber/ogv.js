@@ -17,6 +17,7 @@ cd libvpx
 
 # finally, run configuration script
 EMCONFIGURE_JS=1 \
+STRIP=./buildscripts/fake-strip.sh \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/js/root" \
     --target=generic-gnu \

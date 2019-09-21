@@ -17,7 +17,8 @@ cd libvpx
 
 # finally, run configuration script
 EMCONFIGURE_JS=1 \
-  LDFLAGS=-pthread \
+STRIP=./buildscripts/fake-strip.sh \
+LDFLAGS=-pthread \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/wasm-mt/root" \
     --target=generic-gnu \
