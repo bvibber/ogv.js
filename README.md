@@ -9,8 +9,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 1.7.x - 2019-??-??
 * Optionally builds with emscripten's LLVM upstream backend
-    * Currently JS builds are broken
-* Experimental SIMD builds optional, with `make SIMD=1`
+    * Currently JS builds are slower, but working
+* Experimental SIMD builds of AV1 decoder optional, with `make SIMD=1`
     * These work in Chrome with the "WebAssembly SIMD" flag enabled in chrome://flags/
     * Significant speed boost when available.
     * Available with and without multithreading.
