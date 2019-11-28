@@ -14,12 +14,13 @@ emcc \
   --js-library src/js/modules/ogv-decoder-video-callbacks.js \
   --pre-js src/js/modules/ogv-module-pre.js \
   --post-js src/js/modules/ogv-decoder-video.js \
-  --js-transform 'node buildscripts/strip-imul.js' \
   -D OGV_VP9 \
   src/c/ogv-decoder-video-vpx.c \
   -Lbuild/js/root/lib \
   -lvpx \
   -o build/ogv-decoder-video-vp9.js \
+&& \
+node buildscripts/strip-imul.js build/ogv-decoder-video-vp9.js \
 && \
 emcc \
   $EMCC_COMMON_OPTIONS \

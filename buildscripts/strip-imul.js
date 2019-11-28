@@ -49,7 +49,11 @@ function strip_imul(input_js) {
       const node = path.node;
       if (node.type === 'CallExpression' &&
           node.callee.type === 'Identifier' &&
-          node.callee.name === minifiedName) {
+          node.callee.name === minifiedName &&
+          node.arguments.length == 2) {
+        // note the arguments length check is a hack
+        // it probably means the minifier sometimes
+        // reuses the symbol
         path.replace(
           builders.parenthesizedExpression(
             builders.binaryExpression('*',
