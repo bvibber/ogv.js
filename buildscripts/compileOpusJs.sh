@@ -17,7 +17,6 @@ cd libopus
 emconfigure ../../../libopus/configure \
   --disable-asm \
   --disable-intrinsics \
-  --enable-float-approx \
   --disable-doc \
   --disable-extra-programs \
   --prefix="$dir/build/js/root" \

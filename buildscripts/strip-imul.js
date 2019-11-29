@@ -62,7 +62,40 @@ function strip_imul(input_js) {
               )
             )
           );
-        return false;
+        //return false;
+      }
+      this.traverse(path);
+    }
+  });
+  return recast.print(ast).code;
+}
+
+function strip_fround(input_js) {
+  // hacky detection first
+  const initialMatch = input_js.match(/(\w+)=global\.Math\.fround/);
+  if (!initialMatch) {
+    // hack something changed, worry about it later
+    console.warn('Did not find Math.fround in emscripten output.');
+    return input_js;
+  }
+  const minifiedName = initialMatch[1];
+
+
+  let ast = recast.parse(input_js);
+  types.visit(ast, {
+    visitCallExpression: function(path) {
+      const node = path.node;
+      if (node.type === 'CallExpression' &&
+          node.callee.type === 'Identifier' &&
+          node.callee.name === minifiedName &&
+          node.arguments.length == 1) {
+        // note the arguments length check is a hack
+        // it probably means the minifier sometimes
+        // reuses the symbol
+        path.replace(
+          builders.parenthesizedExpression(node.arguments[0])
+        );
+        //return false;
       }
       this.traverse(path);
     }
@@ -82,7 +115,7 @@ if (require.main !== module) {
     const input = fs.readFileSync(filename, {
       encoding: 'utf8'
     });
-    const output = strip_imul(input);
+    const output = strip_fround(strip_imul(input));
     fs.writeFileSync(filename, output, {
       encoding: 'utf8'
     });
