@@ -24,7 +24,7 @@ const builders = types.builders;
  */
 function strip_imul(input_js) {
   // hacky detection first
-  const initialMatch = input_js.match(/(\w+)=global\.Math\.imul/);
+  const initialMatch = input_js.match(/(\w+)\s*=\s*global\.Math\.imul/);
   if (!initialMatch) {
     // hack something changed, worry about it later
     console.warn('Did not find Math.imul in emscripten output.');
@@ -75,7 +75,7 @@ function strip_imul(input_js) {
 
 function strip_fround(input_js) {
   // hacky detection first
-  const initialMatch = input_js.match(/(\w+)=global\.Math\.fround/);
+  const initialMatch = input_js.match(/(\w+)\s*=\s*global\.Math\.fround/);
   if (!initialMatch) {
     // hack something changed, worry about it later
     console.warn('Did not find Math.fround in emscripten output.');
