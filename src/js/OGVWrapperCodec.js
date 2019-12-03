@@ -434,9 +434,6 @@ class OGVWrapperCodec {
 				if (this.demuxer.videoFormat) {
 					videoOptions.videoFormat = this.demuxer.videoFormat;
 				}
-				if (this.options.memoryLimit) {
-					videoOptions.memoryLimit = this.options.memoryLimit;
-				}
 				if (threading) {
 					// Hack around multiple-instantiation pthreads/modularize bug
 					// in emscripten 1.38.27

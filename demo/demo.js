@@ -885,11 +885,6 @@
                 // this should not happen
                 stopVideo();
             }
-            var maxmem = undefined;
-            if (selected.height > 1080) {
-                // hack
-                maxmem = 1024 * 1024 * 128;
-            }
             var debugFilter;
             //debugFilter = /setting a timer|ready to draw frame|decode frame|decoded frame|drew frame/;
             //debugFilter = /drew frame/;
@@ -907,20 +902,17 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem
                 });
             } else if (playerBackend == 'js') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     wasm: false
                 });
             } else if (playerBackend == 'js-cpu') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     webGL: false, // force 2d canvas
                     wasm: false
                 });
@@ -928,7 +920,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     worker: false, // experimental
                     wasm: false
                 });
@@ -956,7 +947,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     wasm: true,
                     simd: true // experimental
                 });
@@ -964,7 +954,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     wasm: true,
                     threading: true // experimental
                 });
@@ -972,7 +961,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     wasm: true,
                     threading: true, // experimental
                     simd: true // experimental
@@ -981,7 +969,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     wasm: true,
                     video: true // experimental
                 });
@@ -989,7 +976,6 @@
                 player = new OGVPlayer({
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
-                    memoryLimit: maxmem,
                     forceWebGL: true
                 });
             } else if (playerBackend == 'native') {

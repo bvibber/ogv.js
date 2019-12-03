@@ -2383,9 +2383,6 @@ class OGVPlayer extends OGVJSElement {
 			wasm: this._enableWASM,
 			simd: this._enableSIMD,
 		};
-		if (this._options.memoryLimit && !(this._enableWASM)) {
-			codecOptions.memoryLimit = this._options.memoryLimit;
-		}
 		if (this._detectedType) {
 			codecOptions.type = this._detectedType;
 		}

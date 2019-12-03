@@ -9,6 +9,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 1.7.x - 2019-??-??
 * Builds with emscripten's LLVM upstream backend
+* Removed `memoryLimit` option
+    * memory usage is dynamic in JS builds now
+    * remains limited in threaded Wasm builds
 * Experimental SIMD builds of AV1 decoder optional, with `make SIMD=1`
     * These work in Chrome with the "WebAssembly SIMD" flag enabled in chrome://flags/
     * Significant speed boost when available.
