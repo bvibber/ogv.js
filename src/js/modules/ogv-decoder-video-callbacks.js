@@ -1,7 +1,9 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
+/* global checkMemoryGrowth */
 /* global copyByteArray */
+/* global HEAPU8 */
 
 mergeInto(LibraryManager.library, {
 
@@ -37,8 +39,8 @@ mergeInto(LibraryManager.library, {
 								   displayWidth, displayHeight) {
 
 		// Create typed array copies of the source buffers from the emscripten heap:
-		var HEAPU8 = Module['HEAPU8'],
-			format = Module['videoFormat'];
+		checkMemoryGrowth();
+		var format = Module['videoFormat'];
 
 		function copyAndTrim(buffer, stride, height, picX, picY, picWidth, picHeight, fill) {
 			var arr = copyByteArray(HEAPU8.subarray(buffer, buffer +  stride * height));

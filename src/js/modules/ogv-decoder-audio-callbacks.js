@@ -1,6 +1,10 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
+/* global checkMemoryGrowth */
+/* global HEAPU8 */
+/* global HEAPU32 */
+/* global HEAPF32 */
 
 mergeInto(LibraryManager.library, {
 
@@ -14,9 +18,7 @@ mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_audio: function(buffers, channels, sampleCount) {
 		// buffers is an array of pointers to float arrays for each channel
-		var HEAPU32 = Module['HEAPU32'];
-		var HEAPF32 = Module['HEAPF32'];
-
+		checkMemoryGrowth();
 		var outputBuffers = [];
 		if (buffers !== 0) {
 			var inPtr, inArray, inBuffer, outArray, i;

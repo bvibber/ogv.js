@@ -1,6 +1,9 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
+/* global checkMemoryGrowth */
+/* global HEAPU8 */
+
 mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_init_video: function(frameWidth, frameHeight,
@@ -34,12 +37,14 @@ mergeInto(LibraryManager.library, {
 	ogvjs_callback_loaded_metadata: function(videoCodecStr, audioCodecStr) {
 		function stringify(ptr) {
 			// Only works right on ASCII!
-			var str = "", heap = Module['HEAPU8'];
+			var str = "", heap = HEAPU8;
 			for (var i = ptr; heap[i] != 0; i++) {
 				str += String.fromCharCode(heap[i]);
 			}
 			return str;
 		}
+
+		checkMemoryGrowth();
 		if (videoCodecStr) {
 			Module['videoCodec'] = stringify(videoCodecStr);
 		}
@@ -59,10 +64,11 @@ mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp, isKeyframe) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
+		checkMemoryGrowth();
 		Module['videoPackets'].push({
-			'data': Module['HEAPU8'].buffer.slice
-				? Module['HEAPU8'].buffer.slice(buffer, buffer + len)
-				: (new Uint8Array(new Uint8Array(Module['HEAPU8'].buffer, buffer, len))).buffer,
+			'data': HEAPU8.buffer.slice
+				? HEAPU8.buffer.slice(buffer, buffer + len)
+				: (new Uint8Array(new Uint8Array(HEAPU8.buffer, buffer, len))).buffer,
 			'timestamp': frameTimestamp,
 			'keyframeTimestamp': keyframeTimestamp,
 			'isKeyframe': !!isKeyframe
@@ -71,10 +77,11 @@ mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_audio_packet: function(buffer, len, audioTimestamp, discardPadding) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
+		checkMemoryGrowth();
 		Module['audioPackets'].push({
-			'data': Module['HEAPU8'].buffer.slice
-				? Module['HEAPU8'].buffer.slice(buffer, buffer + len)
-				: (new Uint8Array(new Uint8Array(Module['HEAPU8'].buffer, buffer, len))).buffer,
+			'data': HEAPU8.buffer.slice
+				? HEAPU8.buffer.slice(buffer, buffer + len)
+				: (new Uint8Array(new Uint8Array(HEAPU8.buffer, buffer, len))).buffer,
 			'timestamp': audioTimestamp,
 			'discardPadding': discardPadding
 		});

@@ -1,4 +1,6 @@
 /* global Module */
+/* global checkMemoryGrowth */
+/* global HEAPU8 */
 
 // Resizable input buffer to store input packets
 
@@ -143,7 +145,8 @@ Module['receiveInput'] = function(data, callback) {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module['HEAPU8'].set(new Uint8Array(data), buffer);
+		checkMemoryGrowth();
+		HEAPU8.set(new Uint8Array(data), buffer);
 		Module['_ogv_demuxer_receive_input'](buffer, len);
 	});
 	callback();

@@ -1,5 +1,7 @@
 /* global Module */
 /* global options */
+/* global checkMemoryGrowth */
+/* global HEAPU8 */
 
 // Resizable input buffer to store input packets
 
@@ -85,7 +87,8 @@ Module['processHeader'] = function(data, callback) {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module['HEAPU8'].set(new Uint8Array(data), buffer);
+		checkMemoryGrowth();
+		HEAPU8.set(new Uint8Array(data), buffer);
 
 		return Module['_ogv_audio_decoder_process_header'](buffer, len);
 	});
@@ -103,7 +106,8 @@ Module['processAudio'] = function(data, callback) {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		Module['HEAPU8'].set(new Uint8Array(data), buffer);
+		checkMemoryGrowth();
+		HEAPU8.set(new Uint8Array(data), buffer);
 
 		return Module['_ogv_audio_decoder_process_audio'](buffer, len);
 	});
