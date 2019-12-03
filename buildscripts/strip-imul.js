@@ -56,12 +56,15 @@ function strip_imul(input_js) {
         // reuses the symbol
         path.replace(
           builders.parenthesizedExpression(
-            builders.binaryExpression('*',
-              builders.parenthesizedExpression(node.arguments[0]),
-              builders.parenthesizedExpression(node.arguments[1])
-              )
+            builders.binaryExpression('|',
+              builders.binaryExpression('*',
+                builders.parenthesizedExpression(node.arguments[0]),
+                builders.parenthesizedExpression(node.arguments[1])
+              ),
+              builders.literal(0)
             )
-          );
+          )
+        );
         //return false;
       }
       this.traverse(path);
