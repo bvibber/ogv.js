@@ -1,8 +1,7 @@
 /* global Module */
 /* global options */
 /* global ArrayBuffer */
-/* global checkMemoryGrowth */
-/* global HEAPU8 */
+/* global wasmMemory */
 
 // Resizable input buffer to store input packets
 
@@ -100,8 +99,8 @@ Module['processHeader'] = function(data, callback) {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
-		checkMemoryGrowth();
-		HEAPU8.set(new Uint8Array(data), buffer);
+		var dest = new Uint8Array(wasmMemory.buffer, buffer, len);
+		dest.set(new Uint8Array(data));
 
 		return Module['_ogv_video_decoder_process_header'](buffer, len);
 	});
@@ -122,7 +121,6 @@ Module['processFrame'] = function(data, callback) {
 	// Map the ArrayBuffer into emscripten's runtime heap
 	var len = data.byteLength;
 	var buffer = Module['_malloc'](len);
-	checkMemoryGrowth();
 	function callbackWrapper(ret) {
 		Module['_free'](buffer);
 		callback(ret);
@@ -132,7 +130,8 @@ Module['processFrame'] = function(data, callback) {
 	}
 
 	var ret = time(function() {
-		HEAPU8.set(new Uint8Array(data), buffer);
+		var dest = new Uint8Array(wasmMemory.buffer, buffer, len);
+		dest.set(new Uint8Array(data));
 		return Module['_ogv_video_decoder_process_frame'](buffer, len)
 	});
 	if (!isAsync) {

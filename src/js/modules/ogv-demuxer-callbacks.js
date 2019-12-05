@@ -1,8 +1,7 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
-/* global checkMemoryGrowth */
-/* global HEAPU8 */
+/* global wasmMemory */
 
 mergeInto(LibraryManager.library, {
 
@@ -37,14 +36,13 @@ mergeInto(LibraryManager.library, {
 	ogvjs_callback_loaded_metadata: function(videoCodecStr, audioCodecStr) {
 		function stringify(ptr) {
 			// Only works right on ASCII!
-			var str = "", heap = HEAPU8;
+			var str = "", heap = new Uint8Array(wasmMemory.buffer);
 			for (var i = ptr; heap[i] != 0; i++) {
 				str += String.fromCharCode(heap[i]);
 			}
 			return str;
 		}
 
-		checkMemoryGrowth();
 		if (videoCodecStr) {
 			Module['videoCodec'] = stringify(videoCodecStr);
 		}
@@ -64,11 +62,11 @@ mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp, isKeyframe) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
-		checkMemoryGrowth();
+		var heap = wasmMemory.buffer;
 		Module['videoPackets'].push({
-			'data': HEAPU8.buffer.slice
-				? HEAPU8.buffer.slice(buffer, buffer + len)
-				: (new Uint8Array(new Uint8Array(HEAPU8.buffer, buffer, len))).buffer,
+			'data': heap.slice
+				? heap.slice(buffer, buffer + len)
+				: (new Uint8Array(new Uint8Array(heap, buffer, len))).buffer,
 			'timestamp': frameTimestamp,
 			'keyframeTimestamp': keyframeTimestamp,
 			'isKeyframe': !!isKeyframe
@@ -77,11 +75,11 @@ mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_audio_packet: function(buffer, len, audioTimestamp, discardPadding) {
 		// Note IE 10 doesn't have ArrayBuffer.slice
-		checkMemoryGrowth();
+		var heap = wasmMemory.buffer;
 		Module['audioPackets'].push({
-			'data': HEAPU8.buffer.slice
-				? HEAPU8.buffer.slice(buffer, buffer + len)
-				: (new Uint8Array(new Uint8Array(HEAPU8.buffer, buffer, len))).buffer,
+			'data': heap.slice
+				? heap.slice(buffer, buffer + len)
+				: (new Uint8Array(new Uint8Array(heap, buffer, len))).buffer,
 			'timestamp': audioTimestamp,
 			'discardPadding': discardPadding
 		});

@@ -1,9 +1,8 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
-/* global checkMemoryGrowth */
 /* global copyByteArray */
-/* global HEAPU8 */
+/* global wasmMemory */
 
 mergeInto(LibraryManager.library, {
 
@@ -39,11 +38,11 @@ mergeInto(LibraryManager.library, {
 								   displayWidth, displayHeight) {
 
 		// Create typed array copies of the source buffers from the emscripten heap:
-		checkMemoryGrowth();
+		var heap = wasmMemory.buffer;
 		var format = Module['videoFormat'];
 
 		function copyAndTrim(buffer, stride, height, picX, picY, picWidth, picHeight, fill) {
-			var arr = copyByteArray(HEAPU8.subarray(buffer, buffer +  stride * height));
+			var arr = copyByteArray(new Uint8Array(heap, buffer, stride * height));
 
 			// Trim out anything outside the visible area
 			// Protected against green stripes in some codecs (VP9)

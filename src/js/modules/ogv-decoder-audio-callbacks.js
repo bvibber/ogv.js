@@ -1,10 +1,7 @@
 /* global LibraryManager */
 /* global mergeInto */
 /* global Module */
-/* global checkMemoryGrowth */
-/* global HEAPU8 */
-/* global HEAPU32 */
-/* global HEAPF32 */
+/* global wasmMemory */
 
 mergeInto(LibraryManager.library, {
 
@@ -18,18 +15,19 @@ mergeInto(LibraryManager.library, {
 
 	ogvjs_callback_audio: function(buffers, channels, sampleCount) {
 		// buffers is an array of pointers to float arrays for each channel
-		checkMemoryGrowth();
+		var heap = wasmMemory.buffer;
+		var ptrs = new Uint32Array(heap, buffers, channels);
 		var outputBuffers = [];
 		if (buffers !== 0) {
 			var inPtr, inArray, inBuffer, outArray, i;
 			for (var channel = 0; channel < channels; channel++) {
-				inPtr = HEAPU32[buffers / 4 + channel];
-				if (HEAPF32.buffer.slice) {
-					inBuffer = HEAPF32.buffer.slice(inPtr, inPtr + sampleCount * 4);
+				inPtr = ptrs[channel];
+				if (heap.slice) {
+					inBuffer = heap.slice(inPtr, inPtr + sampleCount * 4);
 					outArray = new Float32Array(inBuffer);
 				} else {
-					// IE 10
-					inArray = HEAPF32.subarray(inPtr / 4, inPtr / 4 + sampleCount);
+					// IE 10 - use copy constructor
+					inArray = new Float32Array(heap, inPtr, sampleCount);
 					outArray = new Float32Array(inArray);
 				}
 				outputBuffers.push(outArray);
