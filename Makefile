@@ -212,9 +212,8 @@ $(JS_ROOT_BUILD_DIR)/lib/libnestegg.a : $(BUILDSCRIPTS_DIR)/configureNestEgg.sh 
 	./$(BUILDSCRIPTS_DIR)/configureNestEgg.sh
 	./$(BUILDSCRIPTS_DIR)/compileNestEggJs.sh
 
-$(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/configureVpx.sh $(BUILDSCRIPTS_DIR)/compileVpxJs.sh
+$(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/configureVpx.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
 
