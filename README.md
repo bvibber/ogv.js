@@ -16,6 +16,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * Significant speed boost when available.
     * Available with and without multithreading.
     * Must enable explicitly with `simd: true` in `options`.
+* Updated libvpx to 1.8.1
 
 1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
