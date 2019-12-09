@@ -42,6 +42,7 @@ JS_ROOT_BUILD_DIR:=build/js/root
 WASM_ROOT_BUILD_DIR:=build/wasm/root
 WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
+WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
 .PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
 
@@ -217,7 +218,7 @@ $(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
 
-$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(JS_ROOT_BUILD_DIR)/lib/libvpx.a $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
+$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 
@@ -229,15 +230,15 @@ $(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 
-$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
+$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
+$(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
 
-$(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
+$(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
 
