@@ -46,6 +46,46 @@ void do_destroy(void)
 	// should tear instance down, but meh
 }
 
+static void copy_plane(vpx_image_t *dest, vpx_image_t *src, int plane, int width, int height) {
+	int stride_src = src->stride[plane];
+	int stride_dest = dest->stride[plane];
+	for (int y = 0; y < height; y++) {
+		memcpy(&dest->planes[plane][y * stride_dest],
+		       &src->planes[plane][y * stride_src],
+			   width);
+	}
+}
+
+static vpx_image_t* copy_image(vpx_image_t *src) {
+	// Note the outside edges will be filled by a copy on the JS side.
+	// This may change in future.
+	int width = ((src->d_w + 1) & ~1);
+	int height = ((src->d_h + 1) & ~1);
+	int chromaWidth, chromaHeight;
+	switch(src->fmt) {
+		case VPX_IMG_FMT_I420:
+			chromaWidth = width >> 1;
+			chromaHeight = height >> 1;
+			break;
+		case VPX_IMG_FMT_I422:
+			chromaWidth = width >> 1;
+			chromaHeight = height;
+			break;
+		case VPX_IMG_FMT_I444:
+			chromaWidth = width;
+			chromaHeight = height;
+			break;
+		default:
+			return NULL;
+	}
+
+	vpx_image_t* dest = vpx_img_alloc(NULL, src->fmt, src->d_w, src->d_h, 16);
+	copy_plane(dest, src, 0, width, height);
+	copy_plane(dest, src, 1, chromaWidth, chromaHeight);
+	copy_plane(dest, src, 2, chromaWidth, chromaHeight);
+	return dest;
+}
+
 static void process_frame_decode(const char *data, size_t data_len) {
 	if (!data) {
 		// NULL data signals syncing the decoder state
@@ -57,23 +97,29 @@ static void process_frame_decode(const char *data, size_t data_len) {
 	// @todo check return value
 	vpx_codec_decode(&vpxContext, NULL, 0, NULL, 1);
 
-	// one-in, one-out. send back to the main thread for extraction.
-	call_main_return(NULL, 1);
-}
-
-static int process_frame_return(void *user_data) {
 	vpx_codec_iter_t iter = NULL;
 	vpx_image_t *image = NULL;
 	int foundImage = 0;
 	while ((image = vpx_codec_get_frame(&vpxContext, &iter))) {
-		// is it possible to get more than one at a time? ugh
-		// @fixme can we have multiples really? how does this worky
-		if (foundImage) {
-			// skip for now
-			continue;
-		}
+		// send back to the main thread for extraction.
 		foundImage = 1;
+#ifdef __EMSCRIPTEN_PTHREADS__
+		// Copy off main thread and send asynchronously...
+		// This allows decoding to continue without waiting
+		// for the main thread.
+		call_main_return(copy_image(image), 0);
+#else
+		call_main_return(image, 1);
+#endif
+	}
+	if (!foundImage) {
+		call_main_return(NULL, 0);
+	}
+}
 
+static int process_frame_return(void *user_data) {
+	vpx_image_t *image = (vpx_image_t*)user_data;
+	if (image) {
 		// image->h is inexplicably large for small sizes.
 		// don't both copying the extra, but make sure it's chroma-safe.
 		int height = image->d_h;
@@ -110,6 +156,14 @@ static int process_frame_return(void *user_data) {
 							 image->d_w, image->d_h, // crop size
 							 0, 0, // crop pos
 							 image->r_w, image->r_h); // render size
+#ifdef __EMSCRIPTEN_PTHREADS__
+		// We were given a copy, so free it.
+		vpx_img_free(image);
+#else
+		// Image will be freed implicitly by next decode call.
+#endif
+		return 1;
+	} else {
+		return 0;
 	}
-	return foundImage;
 }
