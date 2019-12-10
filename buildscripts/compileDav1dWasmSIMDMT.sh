@@ -19,9 +19,9 @@ LDFLAGS=-pthread \
   meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-wasm-simd-mt-cross.txt \
   --prefix="$dir/build/wasm-simd-mt/root" \
-  -Dbuild_asm=true \
-  -Dbuild_tests=false \
-  -Dbuild_tools=false \
+  -Denable_asm=true \
+  -Denable_tests=false \
+  -Denable_tools=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
   --buildtype release && \

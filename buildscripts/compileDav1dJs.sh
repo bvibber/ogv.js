@@ -17,9 +17,9 @@ cd dav1d
 meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-asmjs-cross.txt \
   --prefix="$dir/build/js/root" \
-  -Dbuild_asm=false \
-  -Dbuild_tests=false \
-  -Dbuild_tools=false \
+  -Denable_asm=false \
+  -Denable_tests=false \
+  -Denable_tools=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
   -Dfake_atomics=true \

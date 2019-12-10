@@ -17,9 +17,9 @@ cd dav1d
 meson ../../../dav1d \
   --cross-file=../../../buildscripts/dav1d-wasm-simd-cross.txt \
   --prefix="$dir/build/wasm-simd/root" \
-  -Dbuild_asm=true \
-  -Dbuild_tests=false \
-  -Dbuild_tools=false \
+  -Denable_asm=true \
+  -Denable_tests=false \
+  -Denable_tools=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
   -Dfake_atomics=true \
