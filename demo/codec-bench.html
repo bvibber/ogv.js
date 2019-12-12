@@ -170,7 +170,7 @@
             let lastFrames = 0;
             let checksum = new crc32();
             let framesInFlight = 0;
-            let framesBuffered = threading ? 12 : 1;
+            let framesBuffered = threading ? (navigator.hardwareConcurrency + 1) : 1;
 
             function updateChecksumRow(row) {
                 checksum.update(row);
