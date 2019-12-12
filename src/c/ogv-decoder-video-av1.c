@@ -21,7 +21,7 @@ static void do_init(void) {
     dav1d_default_settings(&settings);
 
 #ifdef __EMSCRIPTEN_PTHREADS__
-	const int max_cores = 8; // max threads for UHD tiled decoding
+	const int max_cores = 16; // max threads for UHD tiled decoding, plus some extra for frame threading
 	int cores = emscripten_num_logical_cores();
 	if (cores > max_cores) {
 		cores = max_cores;
@@ -49,12 +49,7 @@ static void do_init(void) {
     // buffer up frames and release them later, so don't forget the JS side
     // needs to occasionally sync the state to force a frame early, such as
     // after a seek or after the end of input.
-    if (cores >= 4) {
-        // Don't use more than 4 or it will eat a ton of memory.
-        settings.n_frame_threads = 4;
-    } else {
-        settings.n_frame_threads = cores;
-    }
+    settings.n_frame_threads = cores;
 #endif
 
     dav1d_open(&context, &settings);
