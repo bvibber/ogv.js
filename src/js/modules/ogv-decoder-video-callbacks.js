@@ -2,6 +2,7 @@
 /* global mergeInto */
 /* global Module */
 /* global wasmMemory */
+/* global trident */
 
 mergeInto(LibraryManager.library, {
 
@@ -41,7 +42,18 @@ mergeInto(LibraryManager.library, {
 		var format = Module['videoFormat'];
 
 		function copyAndTrim(arr, buffer, stride, height, picX, picY, picWidth, picHeight, fill) {
-			arr.set(new Uint8Array(heap, buffer, stride * height));
+			if (trident) {
+				// On IE 10/11, copying with TypedArray 'set' method is crazy slow
+				// with Uint8Array or Uint32Array; Float64Array is much faster
+				// and comes closer to the speed of a copy with 'slice'.
+				//
+				// Assumes that stride is divisible by 8.
+				var dest64 = new Float64Array(arr.buffer);
+				var src64 = new Float64Array(heap, buffer, stride * height >> 3);
+				dest64.set(src64);
+			} else {
+				arr.set(new Uint8Array(heap, buffer, stride * height));
+			}
 
 			// Trim out anything outside the visible area
 			// Protected against green stripes in some codecs (VP9)

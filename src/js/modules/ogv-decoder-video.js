@@ -163,3 +163,7 @@ Module['recycleFrame'] = function(frame) {
 		arr.shift();
 	}
 };
+
+// We need to check for IE's rendering engine because of its
+// terrible TypedArray 'set' method performance.
+var trident = typeof navigator === 'object' && navigator.userAgent.match(/Trident/);
