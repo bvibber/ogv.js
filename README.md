@@ -17,6 +17,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * Available with and without multithreading.
     * Must enable explicitly with `simd: true` in `options`.
 * Updated libvpx to 1.8.1
+* Updated dav1d
+* Reduced amount of memory used between GC runs by reusing frame buffers
 
 1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
