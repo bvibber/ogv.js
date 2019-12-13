@@ -1177,6 +1177,10 @@ class OGVPlayer extends OGVJSElement {
 			this._lastTimeUpdate = newFrameTimestamp;
 			this._fireEventAsync('timeupdate');
 		}
+
+		if (this._codec && data.yCbCrBuffer) {
+			this._codec.recycleFrame(data.yCbCrBuffer);
+		}
 	}
 
 	_seekStream(offset) {
@@ -1368,7 +1372,7 @@ class OGVPlayer extends OGVJSElement {
 		if (this._codec.hasVideo && this._decodedFrames.length) {
 			// We landed between frames. Show the last frame.
 			let frame = this._decodedFrames.shift();
-			this._drawFrame(frame.yCbCrBuffer)
+			this._drawFrame(frame.yCbCrBuffer);
 			finishedSeeking();
 		} else if (this._codec.hasVideo && this._codec.frameReady) {
 			// Exact seek, no decoded frames.

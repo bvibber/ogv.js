@@ -374,6 +374,12 @@ class OGVWrapperCodec {
 		}
 	}
 
+	recycleFrame(frame) {
+		if (this.videoDecoder) {
+			this.videoDecoder.recycleFrame(frame);
+		}
+	}
+
 	getKeypointOffset(timeSeconds, callback) {
 		this.demuxer.getKeypointOffset(timeSeconds, callback);
 	}

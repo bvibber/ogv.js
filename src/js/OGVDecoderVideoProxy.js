@@ -23,7 +23,15 @@ class OGVDecoderVideoProxy extends OGVProxyClass({
 	}
 
 	sync() {
-		this.proxy('sync', [], () => {})
+		this.proxy('sync', [], () => {});
+	}
+
+	recycleFrame(frame) {
+		this.proxy('recycleFrame', [frame], () => {}, [
+			frame.y.bytes.buffer,
+			frame.u.bytes.buffer,
+			frame.v.bytes.buffer
+		]);
 	}
 }
 

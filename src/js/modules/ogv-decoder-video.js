@@ -33,18 +33,6 @@ function time(func) {
 	return ret;
 }
 
-function copyByteArray(bytes) {
-	var heap = bytes.buffer;
-	if (typeof heap.slice === 'function') {
-		var extract = heap.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-		return new Uint8Array(extract);
-	} else {
-		// Hella slow in IE 10/11!
-		// But only game in town on IE 10.
-		return new Uint8Array(bytes);
-	}
-}
-
 // - Properties
 
 /**
@@ -160,4 +148,18 @@ Module['sync'] = function() {
 			Module['_ogv_video_decoder_process_frame'](0, 0)
 		});
 	}
-}
+};
+
+Module['recycledFrames'] = [];
+
+/**
+ * Recycle a YUVBuffer object for later use.
+ * @param YUVBuffer frame
+ */
+Module['recycleFrame'] = function(frame) {
+	var arr = Module['recycledFrames'];
+	arr.push(frame);
+	if (arr.length > 16) {
+		arr.shift();
+	}
+};

@@ -25,6 +25,11 @@ let proxy = new OGVWorkerSupport([
 	sync: function(args, callback) {
 		this.target.sync();
 		callback();
+	},
+
+	recycleFrame: function(args, callback) {
+		this.target.recycleFrame(args[0]);
+		callback();
 	}
 });
 
