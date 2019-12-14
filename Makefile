@@ -296,7 +296,8 @@ build/ogv-decoder-audio-opus.js : $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
                                   $(JS_ROOT_BUILD_DIR)/lib/libogg.a \
                                   $(JS_ROOT_BUILD_DIR)/lib/libopus.a \
                                   $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
+                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh \
+                                  $(BUILDSCRIPTS_DIR)/strip-imul.js
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
 
