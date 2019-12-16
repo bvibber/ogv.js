@@ -26,6 +26,7 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
 
 ifdef SIMD
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-mt-wasm.js
 endif
@@ -154,6 +155,11 @@ dist: js README.md COPYING
 		      build/ogv-decoder-video-av1-simd-mt-wasm.js \
 	          build/ogv-decoder-video-av1-simd-mt-wasm.wasm \
 		      build/ogv-decoder-video-av1-simd-mt-wasm.worker.js \
+		      build/ogv-decoder-video-vp9-simd-wasm.js \
+	          build/ogv-decoder-video-vp9-simd-wasm.wasm \
+		      build/ogv-decoder-video-vp9-simd-mt-wasm.js \
+	          build/ogv-decoder-video-vp9-simd-mt-wasm.wasm \
+		      build/ogv-decoder-video-vp9-simd-mt-wasm.worker.js \
 		      dist/ \
 			  ; \
 	fi
@@ -221,6 +227,14 @@ $(JS_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxJs.sh
 $(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
+
+$(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMD.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileVpxWasmSIMD.sh
+
+$(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMDMT.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileVpxWasmSIMDMT.sh
 
 $(JS_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dJs.sh
 	test -d build || mkdir -p build
@@ -395,6 +409,19 @@ build/ogv-decoder-video-av1-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1MT.sh
 
+build/ogv-decoder-video-vp9-simd-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+                                           $(C_SRC_DIR)/ogv-decoder-video.h \
+                                           $(C_SRC_DIR)/ogv-thread-support.h \
+                                           $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                           $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                           $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                           $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+						                   $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                           $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                           $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
+
 build/ogv-decoder-video-av1-simd-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                            $(C_SRC_DIR)/ogv-decoder-video.h \
                                            $(C_SRC_DIR)/ogv-thread-support.h \
@@ -407,6 +434,19 @@ build/ogv-decoder-video-av1-simd-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c 
                                            $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
+
+build/ogv-decoder-video-vp9-simd-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+                                              $(C_SRC_DIR)/ogv-decoder-video.h \
+                                              $(C_SRC_DIR)/ogv-thread-support.h \
+                                              $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
+                                              $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+						                      $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                              $(BUILDSCRIPTS_DIR)/compile-options.sh \
+                                              $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
 
 build/ogv-decoder-video-av1-simd-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
                                               $(C_SRC_DIR)/ogv-decoder-video.h \

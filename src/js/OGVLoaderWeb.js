@@ -28,6 +28,7 @@ const proxyTypes = {
 	OGVDecoderVideoVP8W: 'video',
 	OGVDecoderVideoVP9: 'video',
 	OGVDecoderVideoVP9W: 'video',
+	OGVDecoderVideoVP9SIMDW: 'video',
 	OGVDecoderVideoAV1: 'video',
 	OGVDecoderVideoAV1W: 'video',
 	OGVDecoderVideoAV1SIMDW: 'video',

@@ -426,7 +426,11 @@ class OGVWrapperCodec {
 			let videoClassMap = {
 				theora: wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
 				vp8: wasm ? (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W') : 'OGVDecoderVideoVP8',
-				vp9: wasm ? (threading ? 'OGVDecoderVideoVP9MTW' : 'OGVDecoderVideoVP9W') : 'OGVDecoderVideoVP9',
+				vp9: wasm ? (threading ? (simd ? 'OGVDecoderVideoVP9SIMDMTW'
+											   : 'OGVDecoderVideoVP9MTW')
+									   : (simd ? 'OGVDecoderVideoVP9SIMDW'
+									           : 'OGVDecoderVideoVP9W'))
+						  : 'OGVDecoderVideoVP9',
 				av1: wasm ? (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
 				                               : 'OGVDecoderVideoAV1MTW')
 				                       : (simd ? 'OGVDecoderVideoAV1SIMDW'
