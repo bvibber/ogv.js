@@ -26,6 +26,7 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt-wasm.js
 
 ifdef SIMD
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-mt-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-wasm.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-mt-wasm.js
