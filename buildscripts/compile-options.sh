@@ -29,3 +29,13 @@ EMCC_THREADED_OPTIONS="
 -s PTHREAD_POOL_SIZE=1
 -s WASM_MEM_MAX=1073741824
 "
+
+EMCC_SWF_OPTIONS="
+-s WASM=1
+-s STANDALONE_WASM=1
+--profiling
+"
+
+#WASM2SWF="npx wasm2swf"
+WASM2SWF="node ../../wasm2swf/index.js"
+WASM2SWF_OPTIONS="--sprite"
