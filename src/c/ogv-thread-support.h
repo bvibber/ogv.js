@@ -119,15 +119,18 @@ static void call_main_return(void *user_data, int sync) {
 
 #else
 
+static int process_frame_status = 0;
+
 // Single-threaded
 int ogv_video_decoder_process_frame(const char *data, size_t data_len) {
+	process_frame_status = 0;
 	process_frame_decode(data, data_len);
-	return 1;
+	return process_frame_status;
 }
 
 static void call_main_return(void *user_data, int sync) {
 	(void)sync;
-	process_frame_return(user_data);
+	process_frame_status = process_frame_return(user_data);
 }
 
 #endif
