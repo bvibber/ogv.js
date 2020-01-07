@@ -241,7 +241,7 @@ static long tellCallback(void *user_handle)
 	return (long)bq_tell(bq);
 }
 
-void ogv_demuxer_init() {
+void ogv_demuxer_init(void) {
     appState = STATE_BEGIN;
 	bufferQueue = bq_init();
 	oggz = oggz_new(OGGZ_READ | OGGZ_AUTO);
@@ -256,7 +256,7 @@ void ogv_demuxer_receive_input(char *buffer, int bufsize) {
 	bq_append(bufferQueue, buffer, bufsize);
 }
 
-int ogv_demuxer_process() {
+int ogv_demuxer_process(void) {
 	do {
 		// read at most this many bytes in one go
 		// should be enough to resync ogg stream
@@ -287,7 +287,7 @@ int ogv_demuxer_process() {
 	return 0;
 }
 
-void ogv_demuxer_destroy() {
+void ogv_demuxer_destroy(void) {
 	oggskel_destroy(skeleton);
     oggz_close(oggz);
 	bq_free(bufferQueue);
@@ -297,7 +297,7 @@ void ogv_demuxer_destroy() {
 /**
  * @return segment length in bytes, or -1 if unknown
  */
-long ogv_demuxer_media_length() {
+long ogv_demuxer_media_length(void) {
     ogg_int64_t segment_len = -1;
     if (skeletonHeadersComplete) {
         oggskel_get_segment_len(skeleton, &segment_len);
@@ -308,7 +308,7 @@ long ogv_demuxer_media_length() {
 /**
  * @return segment duration in seconds, or -1 if unknown
  */
-float ogv_demuxer_media_duration() {
+float ogv_demuxer_media_duration(void) {
     if (skeletonHeadersComplete) {
         ogg_uint16_t ver_maj = -1, ver_min = -1;
         oggskel_get_ver_maj(skeleton, &ver_maj);
@@ -352,7 +352,7 @@ float ogv_demuxer_media_duration() {
     return -1;
 }
 
-int ogv_demuxer_seekable()
+int ogv_demuxer_seekable(void)
 {
 	// even if we don't have the skeleton tracks, we allow bisection
 	return 1;
@@ -379,7 +379,7 @@ int ogv_demuxer_seek_to_keypoint(long time_ms)
 	return 0;
 }
 
-void ogv_demuxer_flush()
+void ogv_demuxer_flush(void)
 {
 	oggz_purge(oggz);
 

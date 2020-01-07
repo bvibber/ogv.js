@@ -16,7 +16,7 @@ typedef struct {
     int64_t lastSeekTarget;
 } BufferQueue;
 
-extern BufferQueue *bq_init();
+extern BufferQueue *bq_init(void);
 
 extern int64_t bq_start(BufferQueue *queue);
 extern int64_t bq_end(BufferQueue *queue);

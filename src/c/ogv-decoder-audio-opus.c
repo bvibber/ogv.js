@@ -28,7 +28,7 @@ int               opusStreams;
 /* 120ms at 48000 */
 #define OPUS_MAX_FRAME_SIZE (960*6)
 
-void ogv_audio_decoder_init() {
+void ogv_audio_decoder_init(void) {
 }
 
 int ogv_audio_decoder_process_header(const char *data, size_t data_len) {
@@ -97,5 +97,5 @@ int ogv_audio_decoder_process_audio(const char *data, size_t data_len) {
 	return ret;
 }
 
-void ogv_audio_decoder_destroy() {
+void ogv_audio_decoder_destroy(void) {
 }

@@ -93,9 +93,16 @@ static void process_frame_decode(const char *data, size_t data_len) {
 		return;
 	}
 
-	vpx_codec_decode(&vpxContext, (const uint8_t *)data, data_len, NULL, 1);
-	// @todo check return value
-	vpx_codec_decode(&vpxContext, NULL, 0, NULL, 1);
+	int ret = vpx_codec_decode(&vpxContext, (const uint8_t *)data, data_len, NULL, 1);
+	if (ret != VPX_CODEC_OK) {
+		call_main_return(NULL, 0);
+		return;
+	}
+	ret = vpx_codec_decode(&vpxContext, NULL, 0, NULL, 1);
+	if (ret != VPX_CODEC_OK) {
+		call_main_return(NULL, 0);
+		return;
+	}
 
 	vpx_codec_iter_t iter = NULL;
 	vpx_image_t *image = NULL;
@@ -114,6 +121,7 @@ static void process_frame_decode(const char *data, size_t data_len) {
 	}
 	if (!foundImage) {
 		call_main_return(NULL, 0);
+		return;
 	}
 }
 
