@@ -24,7 +24,7 @@ vorbis_dsp_state  vorbisDspState;
 vorbis_block      vorbisBlock;
 vorbis_comment    vorbisComment;
 
-void ogv_audio_decoder_init() {
+void ogv_audio_decoder_init(void) {
     /* init supporting Vorbis structures needed in header parsing */
     vorbis_info_init(&vorbisInfo);
     vorbis_comment_init(&vorbisComment);
@@ -85,7 +85,7 @@ int ogv_audio_decoder_process_audio(const char *data, size_t data_len) {
 	return foundSome;
 }
 
-void ogv_audio_decoder_destroy() {
+void ogv_audio_decoder_destroy(void) {
     if (vorbisHeaders) {
         vorbis_info_clear(&vorbisInfo);
         vorbis_dsp_clear(&vorbisDspState);

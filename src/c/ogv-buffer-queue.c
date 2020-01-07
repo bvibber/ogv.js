@@ -3,7 +3,7 @@
 
 #include "ogv-buffer-queue.h"
 
-BufferQueue *bq_init() {
+BufferQueue *bq_init(void) {
     BufferQueue *queue = malloc(sizeof(BufferQueue));
     queue->pos = 0;
     queue->len = 0;

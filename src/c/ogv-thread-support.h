@@ -32,7 +32,7 @@ static void do_destroy(void);
 static void process_frame_decode(const char *data, size_t data_len);
 static int process_frame_return(void *user_data);
 
-void ogv_video_decoder_init() {
+void ogv_video_decoder_init(void) {
 #ifdef __EMSCRIPTEN_PTHREADS__
 	pthread_mutex_init(&decode_mutex, NULL);
 	pthread_cond_init(&ping_cond, NULL);
@@ -45,15 +45,15 @@ void ogv_video_decoder_init() {
 #endif
 }
 
-int ogv_video_decoder_async() {
+int ogv_video_decoder_async(void) {
 #ifdef __EMSCRIPTEN_PTHREADS__
 	return 1;
 #else
-  return 0;
+	return 0;
 #endif
 }
 
-void ogv_video_decoder_destroy() {
+void ogv_video_decoder_destroy(void) {
 	do_destroy();
 #ifdef __EMSCRIPTEN_PTHREADS__
 	pthread_exit(NULL);

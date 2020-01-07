@@ -38,7 +38,7 @@ enum AppState {
     STATE_SEEKING
 } appState;
 
-void ogv_demuxer_init() {
+void ogv_demuxer_init(void) {
     appState = STATE_BEGIN;
     bufferQueue = bq_init();
 }
@@ -146,7 +146,7 @@ static int read_ebml_int64(BufferQueue *bufferQueue, int64_t *val, int keep_mask
     return byteCount;
 }
 
-static int readyForNextPacket()
+static int readyForNextPacket(void)
 {
     int64_t pos = bq_tell(bufferQueue);
     int ok = 0;
@@ -180,7 +180,7 @@ static int readyForNextPacket()
     return ok;
 }
 
-static int processBegin() {
+static int processBegin(void) {
 	// This will read through headers, hopefully we have enough data
 	// or else it may fail and explode.
     ioCallbacks.userdata = (void *)bufferQueue;
@@ -285,7 +285,7 @@ static int processBegin() {
 	return 1;
 }
 
-static int processDecoding() {
+static int processDecoding(void) {
 	//printf("webm processDecoding: reading next packet...\n");
 
 	// Do the nestegg_read_packet dance until it fails to read more data,
@@ -332,7 +332,7 @@ static int processDecoding() {
 	}
 }
 
-static int processSeeking()
+static int processSeeking(void)
 {
     bufferQueue->lastSeekTarget = -1;
     int r;
@@ -373,7 +373,7 @@ void ogv_demuxer_receive_input(const char *buffer, int bufsize) {
     }
 }
 
-int ogv_demuxer_process() {
+int ogv_demuxer_process(void) {
 	if (appState == STATE_BEGIN) {
         return processBegin();
     } else if (appState == STATE_DECODING) {
@@ -393,13 +393,13 @@ int ogv_demuxer_process() {
 	}
 }
 
-void ogv_demuxer_destroy() {
+void ogv_demuxer_destroy(void) {
 	// should probably tear stuff down, eh
     bq_free(bufferQueue);
     bufferQueue = NULL;
 }
 
-void ogv_demuxer_flush() {
+void ogv_demuxer_flush(void) {
     bq_flush(bufferQueue);
     // we may not need to handle the packet queue because this only
     // happens after seeking and nestegg handles that internally
@@ -409,7 +409,7 @@ void ogv_demuxer_flush() {
 /**
  * @return segment length in bytes, or -1 if unknown
  */
-long ogv_demuxer_media_length() {
+long ogv_demuxer_media_length(void) {
 	// @todo check if this is needed? maybe an ogg-specific thing
 	return -1;
 }
@@ -417,7 +417,7 @@ long ogv_demuxer_media_length() {
 /**
  * @return segment duration in seconds, or -1 if unknown
  */
-float ogv_demuxer_media_duration() {
+float ogv_demuxer_media_duration(void) {
 	uint64_t duration_ns;
     if (nestegg_duration(demuxContext, &duration_ns) < 0) {
     	return -1;
@@ -426,7 +426,7 @@ float ogv_demuxer_media_duration() {
 	}
 }
 
-int ogv_demuxer_seekable()
+int ogv_demuxer_seekable(void)
 {
   // Audio WebM files often have no cues; allow brute-force seeking
   // by linear demuxing through hopefully-cached data.
