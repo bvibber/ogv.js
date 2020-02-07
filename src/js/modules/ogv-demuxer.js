@@ -158,7 +158,7 @@ Module['receiveInput'] = function(data, callback) {
  * are more packets to be processed in the queued data,
  * or 'false' if there aren't.
  *
- * @param {function(more:Boolean)} callback on completion
+ * @param function callback on completion
  */
 Module['process'] = function(callback) {
 	var ret = time(function() {
@@ -190,8 +190,8 @@ Module['dequeueAudioPacket'] = function(callback) {
  * just before the given presentation timestamp
  *
  * @param number timeSeconds
- * @param function(number) callback
- *        takes the calculated byte offset
+ * @param function callback
+ *        takes the calculated byte offset as a Number
  */
 Module['getKeypointOffset'] = function(timeSeconds, callback) {
 	var offset = time(function() {
@@ -206,8 +206,8 @@ Module['getKeypointOffset'] = function(timeSeconds, callback) {
  * it may take some time before processing returns more packets.
  *
  * @param number timeSeconds
- * @param function(boolean) callback
- *        indicates whether seeking was initiated or not.
+ * @param function callback
+ *        boolean param indicates whether seeking was initiated or not.
  */
 Module['seekToKeypoint'] = function(timeSeconds, callback) {
 	var ret = time(function() {
