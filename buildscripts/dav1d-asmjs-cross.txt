@@ -7,7 +7,7 @@ install_name_tool = 'echo'
 exe_wrapper = 'echo'
 
 [properties]
-c_args = ['-s', 'WASM=0', '-s', 'WASM_OBJECT_FILES=0']
+c_args = ['-s', 'WASM=0']
 c_link_args = []
 needs_exe_wrapper = true
 
