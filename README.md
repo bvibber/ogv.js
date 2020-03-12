@@ -7,18 +7,19 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.7.x - 2019-??-??
+1.7.0 - 2020-03-??
 * Builds with emscripten's LLVM upstream backend
+* Reduced amount of memory used between GC runs by reusing frame buffers
 * Removed `memoryLimit` option
     * JS, Wasm, and threaded Wasm builds now all use dynamic memory growth
+* Updated dav1d
+* Updated libvpx to 1.8.1
 * Experimental SIMD builds of AV1 decoder optional, with `make SIMD=1`
     * These work in Chrome with the "WebAssembly SIMD" flag enabled in chrome://flags/
     * Significant speed boost when available.
     * Available with and without multithreading.
     * Must enable explicitly with `simd: true` in `options`.
-* Updated libvpx to 1.8.1
-* Updated dav1d
-* Reduced amount of memory used between GC runs by reusing frame buffers
+* Experimental SIMD work for VP9 as well, incomplete.
 
 1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
