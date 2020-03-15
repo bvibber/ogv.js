@@ -9,6 +9,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 1.7.0 - 2020-03-??
 * Builds with emscripten's LLVM upstream backend
+    * Updated to build with emscripten 1.39.10
 * Reduced amount of memory used between GC runs by reusing frame buffers
 * Removed `memoryLimit` option
     * JS, Wasm, and threaded Wasm builds now all use dynamic memory growth
