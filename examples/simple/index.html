@@ -4,6 +4,9 @@
   <title>Simple Player Example</title>
 </head>
 <body>
+  <button id=play>Play</button>
+  <button id=pause disabled>Pause</button>
+
   <script src="/build/ogv.js"></script>
   <script type="text/javascript">
 
@@ -17,13 +20,26 @@
 
 	document.body.appendChild(container);
 
+	play.addEventListener( 'click', function() {
+		play.disabled = true;
+		player.play();
+	});
+
+	pause.addEventListener( 'click', function() {
+		pause.disabled = true;
+		player.pause();
+	});
+
 	player.src = '/demo/media/curiosity.ogv';
 
-	player.play();
+	player.addEventListener('playing', function() {
+		play.disabled = true;
+		pause.disabled = false;
+	});
 
-	player.addEventListener('ended', function() {
-		// Do something that actually exists, this is a sample :)
-		setupFrameByFrameSwipe();
+	player.addEventListener('pause', function() {
+		play.disabled = false;
+		pause.disabled = true;
 	});
 
   </script>
