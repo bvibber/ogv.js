@@ -7,15 +7,8 @@
   <script src="/build/ogv.js"></script>
   <script type="text/javascript">
 
-	window.OGVVersion = "1.0.0";
-	window.OGVPlayer = ogv.Player;
-	window.OGVWrapperCodec = ogv.WrapperCodec;
-	window.OGVDecoderVideoProxy = ogv.DecoderVideoProxy;
-	window.OGVDecoderAudioProxy = ogv.DecoderAudioProxy;
-
 	var player = new OGVPlayer({
-					forceWebGL: true,
-					enableWebM: true // experimental
+					forceWebGL: true
 				});
 
 	var container = document.createElement('div');
@@ -29,6 +22,7 @@
 	player.play();
 
 	player.addEventListener('ended', function() {
+		// Do something that actually exists, this is a sample :)
 		setupFrameByFrameSwipe();
 	});
 
