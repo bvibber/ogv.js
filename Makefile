@@ -46,9 +46,20 @@ WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
 WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
-.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server build-docker-image
 
 DEFAULT : all
+
+# Docker
+
+# first remove the previous image, if any
+# then create a new image
+build-docker-image :
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" != "" ]; then\
+  		docker rmi $(shell docker images --filter=reference='build-ogv' --format "{{.ID}}");\
+	fi
+	docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.
+
 
 # Runners
 
