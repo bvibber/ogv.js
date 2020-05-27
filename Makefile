@@ -46,17 +46,16 @@ WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
 WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
+#inspired by https://medium.com/@vbehar/makefile-tip-of-the-day-run-with-or-without-docker-9c00ad84a700
 ifeq ($(WITH_DOCKER),true)
-	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
-		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
-	fi
-	if [ "$(shell docker ps -aqf 'name=ogvjs')" == "" ]; then\
-  		docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION)
-	fi
-	docker start ogvjs
+	START_DOCKER_CMD:=docker exec -i -t -w /ogvjs ogvjs bash -c "
+	END_DOCKER_CMD:="
+endif
+ifeq ($(origin WITH_DOCKER),undefined)
+	WITH_DOCKER:=false
 endif
 
-.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server build-docker-image build-docker-container start-docker-container clean-docker-image clean-docker-container
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
 
 DEFAULT : all
 
@@ -64,7 +63,7 @@ DEFAULT : all
 
 build-docker-image :
 	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
-  		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.
+  		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
 	fi
 
 clean-docker-image :
@@ -73,18 +72,24 @@ clean-docker-image :
 	fi
 
 build-docker-container : build-docker-image
-	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
-		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
-	fi
+	if [ "$(shell docker ps -aqf 'name=ogvjs')" == "" ]; then\
+  		docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION);\
+	fi 
 
 clean-docker-container :
 	if [ "$(shell docker ps -aqf 'name=ogvjs')" != "" ]; then\
   		docker rm -f $(shell docker ps -aqf "name=ogvjs");\
 	fi
 
-start-docker-container:
-	docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION)
-	docker start ogvjs
+start-docker-container: build-docker-container
+	if [ "$(shell docker ps -aq -f 'name=ogvjs' -f 'status=running')" == "" ]; then\
+  		docker start ogvjs;\
+	fi
+
+provision-docker-container:
+	if [[ $(WITH_DOCKER) == true ]]; then\
+		$(MAKE) start-docker-container;\
+	fi
 
 # Runners
 
@@ -112,8 +117,8 @@ demo : build/demo/index.html
 
 tests : build/tests/index.html
 
-lint :
-	npm run lint
+lint : provision-docker-container
+	$(START_DOCKER_CMD) npm run lint $(END_DOCKER_CMD)
 
 package.json :
 	npm install
