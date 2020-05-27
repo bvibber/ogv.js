@@ -46,36 +46,45 @@ WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
 WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
-.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server build-docker-image build-docker-container
+ifeq ($(WITH_DOCKER),true)
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
+		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
+	fi
+	if [ "$(shell docker ps -aqf 'name=ogvjs')" == "" ]; then\
+  		docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION)
+	fi
+	docker start ogvjs
+endif
+
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server build-docker-image build-docker-container start-docker-container clean-docker-image clean-docker-container
 
 DEFAULT : all
 
 # Docker
 
-# first remove any container using the previous image, if any
-# then remove the previous image, if any
-# then create a new image
 build-docker-image :
-	if [ "$(shell docker ps -aqf 'name=ogvjs')" != "" ]; then\
-  		docker rm -f $(shell docker ps -aqf "name=ogvjs");\
-	fi 
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
+  		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.
+	fi
+
+clean-docker-image :
 	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" != "" ]; then\
   		docker rmi -f $(shell docker images --filter=reference='build-ogv' --format "{{.ID}}");\
 	fi
-	docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.
 
-# first remove any container, if any
-# then check an image exists, otherwise create into
-# then build the container
-build-docker-container :
+build-docker-container : build-docker-image
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
+		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
+	fi
+
+clean-docker-container :
 	if [ "$(shell docker ps -aqf 'name=ogvjs')" != "" ]; then\
   		docker rm -f $(shell docker ps -aqf "name=ogvjs");\
-	fi 
-	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
-		build-docker-image;\
 	fi
-	docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION)
 
+start-docker-container:
+	docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION)
+	docker start ogvjs
 
 # Runners
 
