@@ -46,11 +46,6 @@ WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
 WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
-#inspired by https://medium.com/@vbehar/makefile-tip-of-the-day-run-with-or-without-docker-9c00ad84a700
-ifeq ($(WITH_DOCKER),true)
-	START_DOCKER_CMD:=docker exec -i -t -w /ogvjs ogvjs bash -c "
-	END_DOCKER_CMD:="
-endif
 ifeq ($(origin WITH_DOCKER),undefined)
 	WITH_DOCKER:=false
 endif
@@ -91,7 +86,7 @@ provision-docker-container :
 		$(MAKE) start-docker-container;\
 	fi
 
-#dockerized: demo lint
+#dockerized: demo democlean tests lint
 
 # Runners
 
@@ -124,7 +119,13 @@ demo : provision-docker-container
 	fi  
 	
 
-tests : build/tests/index.html
+tests : provision-docker-container
+	if [[ $(WITH_DOCKER) == true ]]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/tests/index.html";\
+	else\
+		$(MAKE) build/tests/index.html;\
+	fi 
 
 lint : provision-docker-container
 	if [[ $(WITH_DOCKER) == true ]]; then\
