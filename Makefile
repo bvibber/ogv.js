@@ -81,15 +81,17 @@ clean-docker-container :
   		docker rm -f $(shell docker ps -aqf "name=ogvjs");\
 	fi
 
-start-docker-container: build-docker-container
+start-docker-container : build-docker-container
 	if [ "$(shell docker ps -aq -f 'name=ogvjs' -f 'status=running')" == "" ]; then\
   		docker start ogvjs;\
 	fi
 
-provision-docker-container:
+provision-docker-container :
 	if [[ $(WITH_DOCKER) == true ]]; then\
 		$(MAKE) start-docker-container;\
 	fi
+
+#dockerized: lint
 
 # Runners
 
@@ -113,12 +115,18 @@ all : dist \
 
 js : build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)
 
-demo : build/demo/index.html
+demo : 
+	$(MAKE) build/demo/index.html
 
 tests : build/tests/index.html
 
 lint : provision-docker-container
-	$(START_DOCKER_CMD) npm run lint $(END_DOCKER_CMD)
+	if [[ $(WITH_DOCKER) == true ]]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "npm run lint";\
+	else\
+		npm run lint;\
+	fi
 
 package.json :
 	npm install
