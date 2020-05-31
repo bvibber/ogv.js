@@ -55,7 +55,7 @@ ifeq ($(origin WITH_DOCKER),undefined)
 	WITH_DOCKER:=false
 endif
 
-.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server clean-docker-container clean-docker-image
 
 DEFAULT : all
 
@@ -91,7 +91,7 @@ provision-docker-container :
 		$(MAKE) start-docker-container;\
 	fi
 
-#dockerized: lint
+#dockerized: demo lint
 
 # Runners
 
@@ -115,8 +115,14 @@ all : dist \
 
 js : build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)
 
-demo : 
-	$(MAKE) build/demo/index.html
+demo : provision-docker-container
+	if [[ $(WITH_DOCKER) == true ]]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/demo/index.html";\
+	else\
+		$(MAKE) build/demo/index.html;\
+	fi  
+	
 
 tests : build/tests/index.html
 
