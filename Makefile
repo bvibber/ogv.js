@@ -86,7 +86,7 @@ provision-docker-container :
 		$(MAKE) start-docker-container;\
 	fi
 
-#dockerized: demo democlean tests lint
+#dockerized: clean cleanswf??? swf??? demo democlean tests lint
 
 # Runners
 
@@ -108,7 +108,14 @@ all : dist \
       demo \
       tests
 
-js : build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)
+js : provision-docker-container
+	if [[ $(WITH_DOCKER) == true ]]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)";\
+	else\
+		$(MAKE) build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS);\
+	fi 
+	
 
 demo : provision-docker-container
 	if [[ $(WITH_DOCKER) == true ]]; then\
