@@ -52,7 +52,13 @@ endif
 
 .PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server clean-docker-container clean-docker-image
 
-DEFAULT : all
+DEFAULT : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make all";\
+	else\
+		$(MAKE) all;\
+	fi
 
 # Docker
 
@@ -86,8 +92,6 @@ provision-docker-container :
 		$(MAKE) start-docker-container;\
 	fi
 
-#dockerized: clean cleanswf??? swf??? js demo democlean tests dist zip lint
-
 # Runners
 
 run-demo : package.json demo
@@ -103,10 +107,13 @@ run-dev-server : package.json
 
 # Build all
 
-all : dist \
-      zip \
-      demo \
-      tests
+all : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make dist zip demo tests";\
+	else\
+		$(MAKE) dist zip demo tests;\
+	fi
 
 js : provision-docker-container
 	if [ $(WITH_DOCKER) = true ]; then\
