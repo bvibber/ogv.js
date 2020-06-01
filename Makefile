@@ -57,7 +57,7 @@ DEFAULT : all
 # Docker
 
 build-docker-image :
-	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" == "" ]; then\
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" = "" ]; then\
   		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
 	fi
 
@@ -67,7 +67,7 @@ clean-docker-image :
 	fi
 
 build-docker-container : build-docker-image
-	if [ "$(shell docker ps -aqf 'name=ogvjs')" == "" ]; then\
+	if [ "$(shell docker ps -aqf 'name=ogvjs')" = "" ]; then\
   		docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION);\
 	fi 
 
@@ -82,11 +82,11 @@ start-docker-container : build-docker-container
 	fi
 
 provision-docker-container :
-	if [[ $(WITH_DOCKER) == true ]]; then\
+	if [ $(WITH_DOCKER) = true ]; then\
 		$(MAKE) start-docker-container;\
 	fi
 
-#dockerized: clean cleanswf??? swf??? demo democlean tests lint
+#dockerized: clean cleanswf??? swf??? js demo democlean tests dist zip lint
 
 # Runners
 
@@ -109,7 +109,7 @@ all : dist \
       tests
 
 js : provision-docker-container
-	if [[ $(WITH_DOCKER) == true ]]; then\
+	if [ $(WITH_DOCKER) = true ]; then\
 		WITH_DOCKER=false;\
 		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)";\
 	else\
@@ -118,7 +118,7 @@ js : provision-docker-container
 	
 
 demo : provision-docker-container
-	if [[ $(WITH_DOCKER) == true ]]; then\
+	if [ $(WITH_DOCKER) = true ]; then\
 		WITH_DOCKER=false;\
 		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/demo/index.html";\
 	else\
@@ -127,7 +127,7 @@ demo : provision-docker-container
 	
 
 tests : provision-docker-container
-	if [[ $(WITH_DOCKER) == true ]]; then\
+	if [ $(WITH_DOCKER) = true ]; then\
 		WITH_DOCKER=false;\
 		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/tests/index.html";\
 	else\
@@ -135,7 +135,7 @@ tests : provision-docker-container
 	fi 
 
 lint : provision-docker-container
-	if [[ $(WITH_DOCKER) == true ]]; then\
+	if [ $(WITH_DOCKER) = true ]; then\
 		WITH_DOCKER=false;\
 		docker exec -i -t -w /ogvjs ogvjs bash -c "npm run lint";\
 	else\
@@ -164,7 +164,14 @@ clean:
 
 # Build everything and copy the result into dist folder
 
-dist: js README.md COPYING
+dist: provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make js README.md COPYING";\
+	else\
+		$(MAKE) js README.md COPYING;\
+	fi 
+
 	rm -rf dist
 	mkdir -p dist
 	cp -p build/ogv.js \
@@ -239,7 +246,14 @@ dist: js README.md COPYING
 
 # Zip up the dist folder for non-packaged release
 
-zip: dist
+zip: provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make dist";\
+	else\
+		$(MAKE) dist;\
+	fi  
+
 	rm -rf zip
 	mkdir -p zip/ogvjs-$(VERSION)
 	cp -pr dist/* zip/ogvjs-$(VERSION)
