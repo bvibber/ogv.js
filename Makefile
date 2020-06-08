@@ -74,7 +74,7 @@ clean-docker-image :
 
 build-docker-container : build-docker-image
 	if [ "$(shell docker ps -aqf 'name=ogvjs')" = "" ]; then\
-  		docker create -t -i -v $(shell pwd):/ogvjs --name ogvjs build-ogv:$(VERSION);\
+  		docker create -t -i -v $(shell pwd):/ogvjs -p 8080:8080 --name ogvjs build-ogv:$(VERSION);\
 	fi 
 
 clean-docker-container :
@@ -94,7 +94,13 @@ provision-docker-container :
 
 # Runners
 
-run-demo : package.json demo
+run-demo : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make package.json demo";\
+	else\
+		$(MAKE) package.json demo;\
+	fi
 	npm run demo
 
 # This uses webpack dev server so we don't need to re-compile anything upon change - just reload the page
@@ -102,8 +108,14 @@ run-demo : package.json demo
 # 1. Run ``make run-dev-server
 # 2. Go to http://localhost:8080/examples/simple/ in your browser to look at a simple example player
 # 3. Reload the page to get the latest re-build
-run-dev-server : package.json
-	npm run server
+run-dev-server : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make package.json";\
+	else\
+		$(MAKE) package.json;\
+	fi
+	npm run start
 
 # Build all
 
