@@ -1,18 +1,15 @@
 [submodule "libogg"]
 	path = libogg
-	url = https://git.xiph.org/ogg.git
+	url = https://gitlab.xiph.org/xiph/ogg.git
 [submodule "libvorbis"]
 	path = libvorbis
-	url = https://git.xiph.org/vorbis.git
+	url = https://gitlab.xiph.org/xiph/vorbis.git
 [submodule "libtheora"]
 	path = libtheora
 	url = https://github.com/brion/theora.git
 [submodule "libopus"]
 	path = libopus
-	url = https://git.xiph.org/opus.git
-[submodule "glsl2agal"]
-	path = glsl2agal
-	url = https://github.com/adobe/glsl2agal.git
+	url = https://gitlab.xiph.org/xiph/opus.git
 [submodule "libskeleton"]
 	path = libskeleton
 	url = https://github.com/brion/libskeleton.git
