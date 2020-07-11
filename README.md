@@ -224,7 +224,7 @@ Windows on 32-bit ARM platforms is similar... IE 11 on Windows RT 8.1 on a Surfa
 In both cases, a native application looms as a possibly better alternative. See [OGVKit](https://github.com/brion/OGVKit) and [OgvRt](https://github.com/brion/OgvRT) projects for experiments in those directions.
 
 
-Note that at these lower resolutions, Vorbis audio and Theora video decoding are about equally expensive operations -- dual-core phones and tablets should be able to eek out a little parallelism here thanks to audio and video being in separate Worker threads.
+Note that at these lower resolutions, Vorbis audio and Theora video decoding are about equally expensive operations -- dual-core phones and tablets should be able to eke out a little parallelism here thanks to audio and video being in separate Worker threads.
 
 
 *WebGL drawing acceleration*
