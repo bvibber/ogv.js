@@ -7,9 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.7.0 - 2020-05-??
+1.7.0 - 2020-09-28
 * Builds with emscripten's LLVM upstream backend
-    * Updated to build with emscripten 1.39.16
+    * Updated to build with emscripten 2.0.4
 * Reduced amount of memory used between GC runs by reusing frame buffers
 * Removed `memoryLimit` option
     * JS, Wasm, and threaded Wasm builds now all use dynamic memory growth
@@ -21,7 +21,6 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * Available with and without multithreading.
     * Must enable explicitly with `simd: true` in `options`.
 * Experimental SIMD work for VP9 as well, incomplete.
-
 1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
 * updated audio-feeder to 0.4.21;
