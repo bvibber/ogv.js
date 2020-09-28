@@ -7,6 +7,14 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+2.0.0 - ????-??-??
+* Dropping IE support and Flash audio backend
+    * Note the old IE 10/11 support in 1.7.0 will _no longer work_ once Flash support is removed in a planned Windows Update at the end of 2020. Until then, 1.7.0 remains available.
+* Drop es6-promise
+* Work in progress:
+    * Better plugin API
+    * MSE streaming APIs
+
 1.7.0 - 2020-09-28
 * Builds with emscripten's LLVM upstream backend
     * Updated to build with emscripten 2.0.4
@@ -21,6 +29,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * Available with and without multithreading.
     * Must enable explicitly with `simd: true` in `options`.
 * Experimental SIMD work for VP9 as well, incomplete.
+
 1.6.1 - 2019-06-18
 * playbackSpeed attribute now supported
 * updated audio-feeder to 0.4.21;

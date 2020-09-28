@@ -1,7 +1,7 @@
 {
   "name": "ogv",
-  "version": "1.7.0",
-  "description": "JavaScript media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
+  "version": "2.0.0",
+  "description": "WebAssembly media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
     "index.js",
@@ -52,13 +52,11 @@
     "@babel/core": "^7.2.2",
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.3.1",
-    "ast-types": "^0.11.5",
     "audio-feeder": "^0.4.21",
     "babel-loader": "^8.0.5",
     "eslint": "^5.16.0",
     "file-loader": "^3.0.1",
     "node-static": "^0.7.7",
-    "recast": "^0.15.0",
     "stream-file": "^0.2.4",
     "strip-sourcemap-loader": "0.0.1",
     "webpack": "^4.34.0",
@@ -67,8 +65,7 @@
     "yuv-canvas": "^1.2.6"
   },
   "dependencies": {
-    "@babel/runtime": "^7.3.1",
-    "es6-promise": "^4.2.5"
+    "@babel/runtime": "^7.3.1"
   },
-  "browserslist": "> 5%, IE 11"
+  "browserslist": "> 5%"
 }

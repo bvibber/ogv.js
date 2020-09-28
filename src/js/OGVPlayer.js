@@ -4,7 +4,6 @@
 import YUVCanvas from 'yuv-canvas';
 import StreamFile from 'stream-file';
 import AudioFeeder from 'audio-feeder';
-import dynamicaudio_swf from 'audio-feeder/dist/dynamicaudio.swf';
 
 // Internal deps
 import OGVLoader from './OGVLoaderWeb.js';
@@ -89,7 +88,7 @@ OGVJSElement.prototype = Object.create(HTMLElement.prototype, {});
  * which has a similar interface to the HTML audio/video elements.
  *
  * @param options: optional dictionary of options:
- *                 'base': string; base URL for additional resources, such as Flash audio shim
+ *                 'base': string; base URL for additional resources, such as codec libraries
  *                 'webGL': bool; pass true to use WebGL acceleration if available
  *                 'forceWebGL': bool; pass true to require WebGL even if not detected
  */
@@ -110,12 +109,8 @@ class OGVPlayer extends OGVJSElement {
 			this._enableWorker = !!window.Worker;
 		}
 
-		// Use the WebAssembly build by default if available;
-		// it should load and compile faster than asm.js.
-		if (typeof options.wasm !== 'undefined') {
-			this._enableWASM = !!options.wasm;
-		} else {
-			this._enableWASM = OGVLoader.wasmSupported();
+		if (!OGVLoader.wasmSupported()) {
+			throw new Error('WebAssembly not supported');
 		}
 
 		// Experimental pthreads multithreading mode, if built.
@@ -908,9 +903,6 @@ class OGVPlayer extends OGVJSElement {
 	_initAudioFeeder() {
 		let options = this._options;
 		let audioOptions = {
-			// Pass the resource dir down to AudioFeeder, so it can load the dynamicaudio.swf
-			base: options.base || OGVLoader.base,
-
 			// Buffer in largeish chunks to survive long CPU spikes on slow CPUs (eg, 32-bit iOS)
 			bufferSize: 8192,
 		};
@@ -2149,7 +2141,7 @@ class OGVPlayer extends OGVJSElement {
 								let buffer = this._codec.audioBuffer;
 								if (buffer) {
 									// Keep track of how much time we spend queueing audio as well
-									// This is slow when using the Flash shim on IE 10/11
+									// This used to be slow when using the Flash shim on IE 10/11
 									this._bufferTime += this._time(() => {
 										if (this._audioFeeder) {
 											this._audioFeeder.bufferData(buffer);
@@ -2384,7 +2376,6 @@ class OGVPlayer extends OGVJSElement {
 			base: this._options.base,
 			worker: this._enableWorker,
 			threading: this._enableThreading,
-			wasm: this._enableWASM,
 			simd: this._enableSIMD,
 		};
 		if (this._detectedType) {

@@ -903,26 +903,6 @@
                     debug: !!debugFilter,
                     debugFilter: debugFilter,
                 });
-            } else if (playerBackend == 'js') {
-                player = new OGVPlayer({
-                    debug: !!debugFilter,
-                    debugFilter: debugFilter,
-                    wasm: false
-                });
-            } else if (playerBackend == 'js-cpu') {
-                player = new OGVPlayer({
-                    debug: !!debugFilter,
-                    debugFilter: debugFilter,
-                    webGL: false, // force 2d canvas
-                    wasm: false
-                });
-            } else if (playerBackend == 'js-noworker') {
-                player = new OGVPlayer({
-                    debug: !!debugFilter,
-                    debugFilter: debugFilter,
-                    worker: false, // experimental
-                    wasm: false
-                });
             } else if (playerBackend == 'wasm') {
                 player = new OGVPlayer({
                     debug: !!debugFilter,
@@ -971,12 +951,6 @@
                     debugFilter: debugFilter,
                     wasm: true,
                     video: true // experimental
-                });
-            } else if (playerBackend == 'webgl') {
-                player = new OGVPlayer({
-                    debug: !!debugFilter,
-                    debugFilter: debugFilter,
-                    forceWebGL: true
                 });
             } else if (playerBackend == 'native') {
                 player = document.createElement('video');

@@ -18,18 +18,12 @@ const proxyInfo = {
 
 // @fixme make this less awful
 const proxyTypes = {
-	OGVDecoderAudioOpus: 'audio',
 	OGVDecoderAudioOpusW: 'audio',
-	OGVDecoderAudioVorbis: 'audio',
 	OGVDecoderAudioVorbisW: 'audio',
-	OGVDecoderVideoTheora: 'video',
 	OGVDecoderVideoTheoraW: 'video',
-	OGVDecoderVideoVP8: 'video',
 	OGVDecoderVideoVP8W: 'video',
-	OGVDecoderVideoVP9: 'video',
 	OGVDecoderVideoVP9W: 'video',
 	OGVDecoderVideoVP9SIMDW: 'video',
-	OGVDecoderVideoAV1: 'video',
 	OGVDecoderVideoAV1W: 'video',
 	OGVDecoderVideoAV1SIMDW: 'video',
 };

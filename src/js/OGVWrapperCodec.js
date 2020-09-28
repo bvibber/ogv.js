@@ -169,9 +169,9 @@ class OGVWrapperCodec {
 		this.processing = true;
 		let demuxerClassName;
 		if (this.options.type === 'video/webm' || this.options.type === 'audio/webm') {
-			demuxerClassName = this.options.wasm ? 'OGVDemuxerWebMW' : 'OGVDemuxerWebM';
+			demuxerClassName = 'OGVDemuxerWebMW';
 		} else {
-			demuxerClassName = this.options.wasm ? 'OGVDemuxerOggW' : 'OGVDemuxerOgg';
+			demuxerClassName = 'OGVDemuxerOggW';
 		}
 		OGVLoader.loadClass(demuxerClassName, (demuxerClass) => {
 			demuxerClass().then((demuxer) => {
@@ -390,10 +390,9 @@ class OGVWrapperCodec {
 	
 	loadAudioCodec(callback) {
 		if (this.demuxer.audioCodec) {
-			let wasm = !!this.options.wasm;
 			let audioClassMap = {
-				vorbis: wasm ? 'OGVDecoderAudioVorbisW' : 'OGVDecoderAudioVorbis',
-				opus: wasm ? 'OGVDecoderAudioOpusW' : 'OGVDecoderAudioOpus'
+				vorbis: 'OGVDecoderAudioVorbisW',
+				opus: 'OGVDecoderAudioOpusW'
 			};
 			let className = audioClassMap[this.demuxer.audioCodec];
 			this.processing = true;
@@ -420,22 +419,19 @@ class OGVWrapperCodec {
 
 	loadVideoCodec(callback) {
 		if (this.demuxer.videoCodec) {
-			let wasm = !!this.options.wasm,
-				simd = !!this.options.simd,
+			let simd = !!this.options.simd,
 				threading = !!this.options.threading;
 			let videoClassMap = {
-				theora: wasm ? 'OGVDecoderVideoTheoraW' : 'OGVDecoderVideoTheora',
-				vp8: wasm ? (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W') : 'OGVDecoderVideoVP8',
-				vp9: wasm ? (threading ? (simd ? 'OGVDecoderVideoVP9SIMDMTW'
-											   : 'OGVDecoderVideoVP9MTW')
-									   : (simd ? 'OGVDecoderVideoVP9SIMDW'
-									           : 'OGVDecoderVideoVP9W'))
-						  : 'OGVDecoderVideoVP9',
-				av1: wasm ? (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
-				                               : 'OGVDecoderVideoAV1MTW')
-				                       : (simd ? 'OGVDecoderVideoAV1SIMDW'
-										       : 'OGVDecoderVideoAV1W'))
-						  : 'OGVDecoderVideoAV1',
+				theora: 'OGVDecoderVideoTheoraW',
+				vp8: (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W'),
+				vp9: (threading ? (simd ? 'OGVDecoderVideoVP9SIMDMTW'
+									   : 'OGVDecoderVideoVP9MTW')
+							    : (simd ? 'OGVDecoderVideoVP9SIMDW'
+							           : 'OGVDecoderVideoVP9W')),
+				av1: (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
+										: 'OGVDecoderVideoAV1MTW')
+								: (simd ? 'OGVDecoderVideoAV1SIMDW'
+										: 'OGVDecoderVideoAV1W')),
 			};
 			let className = videoClassMap[this.demuxer.videoCodec];
 			this.processing = true;

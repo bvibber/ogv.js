@@ -10,18 +10,6 @@ EMCC_COMMON_OPTIONS="
 -s ALLOW_MEMORY_GROWTH=1
 "
 
-EMCC_ASMJS_OPTIONS="
--s WASM=0
--s POLYFILL_OLD_MATH_FUNCTIONS=1
--s MIN_EDGE_VERSION=12
---memory-init-file 0
-"
-# Should use:
-# -s MIN_IE_VERSION=10
-# but this includes the Promise polyfill
-# which breaks closure compiler for now.
-
-
 EMCC_WASM_OPTIONS="
 -s WASM=1
 "

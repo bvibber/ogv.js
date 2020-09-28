@@ -28,9 +28,6 @@
 				Player backend:
 				<select height=1 id="player-backend">
 					<option value="auto" id="auto-select">Auto</option>
-					<option value="js">JavaScript</option>
-					<option value="js-noworker">&nbsp;&nbsp;JS no Worker</option>
-					<option value="js-cpu">&nbsp;&nbsp;JS no WebGL</option>
 					<option value="wasm">Web Assembly</option>
 					<option value="wasm-noworker">&nbsp;&nbsp;WASM no Worker</option>
 					<option value="wasm-cpu">&nbsp;&nbsp;WASM no WebGL</option>
