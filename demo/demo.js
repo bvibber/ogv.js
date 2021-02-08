@@ -77,46 +77,6 @@
     }
 
     /**
-     * Guesstimate the transcoded resource URL from the original.
-     *
-     * It would be preferable to get this direct from API,
-     * filed request as https://bugzilla.wikimedia.org/show_bug.cgi?id=55622
-     *
-     * @param String url
-     * @param number height
-     * @param String format
-     */
-    function transcodeUrl(url, height, format) {
-        var matches = url.match(/^(.*)\/(.\/..)\/(.*?)$/),
-            baseUrl = matches[1],
-            hash = matches[2],
-            filename = matches[3],
-            sourceMode = document.querySelector('#media-source').value;
-        if (sourceMode == 'clean') {
-            baseUrl = 'https://media-streaming.wmflabs.org/clean';
-        }
-        return baseUrl + '/transcoded/' + hash + '/' + filename + '/' + filename + '.' + height + 'p.' + format;
-    }
-
-    var av1base = 'https://media-streaming.wmflabs.org/clean/av1-2/';
-    window.av1map = {
-        "File:Caminandes- Llama Drama - Short Movie.ogv":
-            av1base + 'caminandes-llama-drama.ogv',
-        "File:Caminandes, Gran Dillama - Blender Foundation.webm":
-            av1base + 'caminandes-gran-dillama.webm',
-        "File:Caminandes 3 - Llamigos - Blender Animated Short.webm":
-            av1base + 'caminandes-llamigos.webm',
-        "File:Curiosity's Seven Minutes of Terror.ogv":
-            av1base + 'curiosity.ogv',
-        "File:Mosquitoes vs painted turtle (Chrysemys picta).webm":
-            av1base + 'mosquitos.webm',
-        "File:Spring Morning over a Frog Pond at the base of a face of Okanagan Mountain.webm":
-            av1base + 'spring-morning.webm',
-        "File:Tears of Steel in 4k - Official Blender Foundation release.webm":
-            av1base + 'tears.webm',
-    };
-
-    /**
      * @param String media
      * @param function({duration}, [{format, title, width, height, url}]) callback
      */
@@ -164,103 +124,58 @@
             };
 
             // Build entries for the transcodes
-            var sourceMode = document.querySelector('#media-source').value;
-            if (sourceMode == 'clean') {
-                var sizes = [160, 240, 360, 480, 720, 1080, 1440, 2160],
-                    widths = [284, 426, 640, 854, 1280, 1920, 2560, 3840],
-                    formats = ['ogv', 'webm', 'vp9.webm'];
-                sizes.forEach(function(size, i) {
-                    formats.forEach(function(format) {
-                        // fixme: tweak if necessary
-                        var width = widths[i],
-                            aspect = imageinfo.width / imageinfo.height,
-                            height = Math.round(width / aspect);
-                        if (width <= imageinfo.width) {
-                            sources.push({
-                                key: size + 'p.' + format,
-                                format: format,
-                                width: width,
-                                height: height,
-                                url: transcodeUrl(imageinfo.url, size, format),
-                            });
-                        }
-                    });
-                });
-            } else if (sourceMode == 'av1') {
-                var sizes = [120, 180, 240, 360, 480, 720, 1080],
-                    widths = [213, 320, 426, 640, 854, 1280, 1920],
-                    formats = ['av1.webm'];
-                sizes.forEach(function(size, i) {
-                    formats.forEach(function(format) {
-                        // fixme: tweak if necessary
-                        var width = widths[i],
-                            aspect = imageinfo.width / imageinfo.height,
-                            height = Math.round(width / aspect);
-                        if (width <= imageinfo.width) {
-                            sources.push({
-                                key: size + 'p.' + format,
-                                format: format,
-                                width: width,
-                                height: height,
-                                url: av1map[media] + '.' + width + 'x' + size + '.' + format,
-                            });
-                        }
-                    });
-                });
+            // Build an entry for the original media
+            var ext = getExtension(imageinfo.url),
+                format,
+                useOriginal = true;
+            if (ext == 'ogg') {
+                format = 'ogv'; // todo: check video/audioness
+            } else if (ext == 'ogv') {
+                format = 'ogv';
+            } else if (ext == 'oga') {
+                // uhhhh.
+                format = 'oga';
+            } else if (ext == 'opus') {
+                format = 'opus';
+            } else if (ext == 'webm') {
+                format = 'webm';
             } else {
-                // Build an entry for the original media
-                var ext = getExtension(imageinfo.url),
-                    format,
-                    useOriginal = true;
-                if (ext == 'ogg') {
-                    format = 'ogv'; // todo: check video/audioness
-                } else if (ext == 'ogv') {
-                    format = 'ogv';
-                } else if (ext == 'oga') {
-                  // uhhhh.
-                  format = 'oga';
-                } else if (ext == 'opus') {
-                  format = 'opus';
-                } else if (ext == 'webm') {
-                    format = 'webm';
-                } else {
-                    console.log("Unexpected file extension " + ext);
-                    format = ext;
-                    useOriginal = false;
-                }
-                if (useOriginal) {
-                    sources.push({
-                        key: 'original',
-                        format: format,
-                        width: imageinfo.width,
-                        height: imageinfo.height,
-                        url: imageinfo.url,
-                        size: imageinfo.size,
-                        bitrate: imageinfo.size * 8 / mediaInfo.duration
-                    });
-                }
-                if (derivatives) {
-                    for (var i = 0; i < derivatives.length; i++) {
-                        var transcode = derivatives[i];
-                        if ('transcodekey' in transcode) {
-                            var key = transcode.transcodekey;
-                            var format, height, matches;
-                            matches = key.match(/^(\d+)p\.(.*?)$/);
-                            if (matches) {
-                                format = matches[2];
-                            } else {
-                                format = key;
-                            }
-                            sources.push({
-                                key: key,
-                                format: format,
-                                width: transcode.height,
-                                height: transcode.width,
-                                url: transcode.src,
-                                size: Math.round(transcode.bandwidth * mediaInfo.duration / 8),
-                                bitrate: transcode.bandwidth
-                            });
+                console.log("Unexpected file extension " + ext);
+                format = ext;
+                useOriginal = false;
+            }
+            if (useOriginal) {
+                sources.push({
+                    key: 'original',
+                    format: format,
+                    width: imageinfo.width,
+                    height: imageinfo.height,
+                    url: imageinfo.url,
+                    size: imageinfo.size,
+                    bitrate: imageinfo.size * 8 / mediaInfo.duration
+                });
+            }
+            if (derivatives) {
+                for (var i = 0; i < derivatives.length; i++) {
+                    var transcode = derivatives[i];
+                    if ('transcodekey' in transcode) {
+                        var key = transcode.transcodekey;
+                        var format, height, matches;
+                        matches = key.match(/^(\d+)p\.(.*?)$/);
+                        if (matches) {
+                            format = matches[2];
+                        } else {
+                            format = key;
                         }
+                        sources.push({
+                            key: key,
+                            format: format,
+                            width: transcode.height,
+                            height: transcode.width,
+                            url: transcode.src,
+                            size: Math.round(transcode.bandwidth * mediaInfo.duration / 8),
+                            bitrate: transcode.bandwidth
+                        });
                     }
                 }
             }
@@ -270,7 +185,6 @@
     }
 
     var container = document.getElementById('player'),
-        videoChooser = document.getElementById('video-chooser'),
         selectedTitle = null,
         selectedUrl = null,
         skipAudio = false,
@@ -400,189 +314,6 @@
             searchQuery = 'filetype:video ' + filterString;
         } else if (sourceMode == 'commons-audio') {
           searchQuery = 'filetype:audio ' + filterString;
-        } else if (sourceMode == 'clean') {
-          var shortlist = [
-              // Space stuff
-              [
-                  "File:Curiosity's Seven Minutes of Terror.ogv",
-                  '720p23.98',
-                  'live-action with CG elements'
-              ],
-              [
-                  "File:RED 4K Video of Colorful Liquid in Space.webm",
-                  '2160p23.98',
-                  'UHD, modest motion'
-              ],
-              [
-                  "File:Ultra High Definition Video from the International Space Station (Reel 1).webm",
-                  '2160p23.98',
-                  'UHD, mix of low and high motion'
-              ],
-              [
-                  "File:Here's to Engineering.webm",
-                  '2160p23.98',
-                  'UHD, low motion'
-              ],
-
-              // Blender movies
-              [
-                  "File:Caminandes - Gran Dillama - Blender Foundation's new Open Movie.webm",
-                  '1080p24',
-                  '3d animated'
-              ],
-              [
-                  "File:Glass Half - 3D animation with OpenGL cartoon rendering.webm",
-                  '2160p24',
-                  'cartoon; some motion spikes'
-              ],
-              [
-                  "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
-                  '2160p24',
-                  'sci-fi; mix of scene types'
-              ],
-
-              // Wikipedia stuff
-              [
-                  "File:Women in botany and Wikipedia.webm",
-                  '2160p24',
-                  'UHD source'
-              ],
-              [
-                  "File:Art and Feminism Wikipedia Edit-a-thon, February 1, 2014.webm",
-                  '1080p23.98',
-                  'low motion with some spikes'
-              ],
-              [
-                  "File:How Open Access Empowered a 16-Year-Old to Make Cancer Breakthrough.ogv",
-                  '1080p23.98',
-                  'talking heads; modest motion'
-              ],
-              [
-                  "File:Knowledge for Everyone (short cut).webm",
-                  '1080p23.98',
-                  'mix of scenes'
-              ],
-              [
-                  "File:Share-a-Fact on the Official Wikipedia Android app.webm",
-                  '1080p29.97',
-                  'short animation, some motion spikes'
-              ],
-              [
-                  "File:The Impact Of Wikipedia.webm",
-                  '1080p23.98',
-                  'low motion'
-              ],
-              [
-                  "File:WikiArabia tech meetup in Ramallah 2016.webm",
-                  '1080p24',
-                  'modest motion'
-              ],
-              [
-                  "File:Wikipedia Edit 2015.webm",
-                  '1080p24',
-                  'animated, many dupe frames'
-              ],
-              [
-                  "File:Wiki Makes Video Intro 4 26.webm",
-                  '720p59.94',
-                  'high fps, mix of scenes'
-              ],
-
-              // Misc stuff
-              [
-                  "File:Tawakkol Karman (English).ogv",
-                  '1080p50',
-                  'high fps, modest motion'
-              ],
-              [
-                  "File:Eisbach surfen v1.ogv",
-                  '1080p30',
-                  'high motion'
-              ],
-              [
-                  "File:FEZ trial gameplay HD.webm",
-                  '720p30',
-                  'animation'
-              ],
-              [
-                  "File:Red-tailed Hawk Eating a Rodent 1080p 60fps.ogv",
-                  '1080p59.94',
-                  'high fps, moderate motion'
-              ],
-              [
-                  "File:Snowdonia by drone.webm",
-                  '1080p30',
-                  'mix of high and low motion scenes'
-              ],
-              [
-                  "File:Stugl,aerial video.webm",
-                  '1080p60',
-                  'high fps, high motion'
-              ],
-              [
-                  "File:President Obama Sings \"Sweet Home Chicago\".webm",
-                  '720p59.94',
-                  'live action'
-              ],
-              [
-                  "File:Inside the White House- The Kitchen Garden.webm",
-                  '720p59.94',
-                  'live action, mix of sources'
-              ],
-              [
-                  "File:Spectator Mode for Job Simulator - a new way to display social VR footage.webm",
-                  '1080p60',
-                  'VR game footage'
-              ],
-              [
-                  "File:Project CARS - Game of the Year Edition Launch Trailer.webm",
-                  '1080p60',
-                  'game footage'
-              ]
-          ];
-          processList(shortlist);
-        } else if (sourceMode === 'av1') {
-            var shortlist = [
-                [
-                    "File:Caminandes- Llama Drama - Short Movie.ogv",
-                    '1080p24',
-                    'animation'
-                ],
-                [
-                    "File:Caminandes, Gran Dillama - Blender Foundation.webm",
-                    '1080p24',
-                    'animation'
-                ],
-                [
-                    "File:Caminandes 3 - Llamigos - Blender Animated Short.webm",
-                    '1080p24',
-                    'animation'
-                ],
-                [
-                    "File:Curiosity's Seven Minutes of Terror.ogv",
-                    '720p23.98',
-                    'live-action with CG elements'
-                ],
-                [
-                    "File:Mosquitoes vs painted turtle (Chrysemys picta).webm",
-                    '1080p29.97',
-                    'live-action nature'
-                ],
-                /*
-                [
-                    // Currently generated at wrong resolutions. whoops!
-                    "File:Tears of Steel in 4k - Official Blender Foundation release.webm",
-                    '2160p23.98',
-                    'sci-fi live action with CGI'
-                ],
-                */
-                [
-                    "File:Spring Morning over a Frog Pond at the base of a face of Okanagan Mountain.webm",
-                    '720p29.97',
-                    'live action drone nature footage'
-                ]
-            ];
-            processList(shortlist);
         } else {
             throw new Error('unexpected sourceMode');
         }
@@ -760,7 +491,7 @@
         hash += '&size=' + sizeKey;
 
         var mode = document.getElementById('media-source').value;
-        if (mode == 'clean') {
+        if (mode == 'motd') {
             // nothin
         } else {
             hash += '&source=' + mode;

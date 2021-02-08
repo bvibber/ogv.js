@@ -7,10 +7,15 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-2.0.0 - ????-??-??
+2.0.0 - 2021-02-??
 * Dropping IE support and Flash audio backend
-    * Note the old IE 10/11 support in 1.7.0 will _no longer work_ once Flash support is removed in a planned Windows Update at the end of 2020. Until then, 1.7.0 remains available.
-* Drop es6-promise
+    * The old IE 10/11 support _no longer works_ due to the Flash plugin being disabled, and so is being removed
+* Drop es6-promise shim
+    * Now requires WebAssembly, which requires native Promise support
+* Build & fixes
+    * Demo fixed (removed test files that are now offline)
+    * Builds with emscripten 2.0.13
+    * Requires latest meson from git pending a fix hitting release
 * Work in progress:
     * Better plugin API
     * MSE streaming APIs
