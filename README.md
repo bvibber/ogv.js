@@ -98,15 +98,13 @@ The API isn't quite complete, but works pretty well.
 
 ## Compatibility
 
-ogv.js requires a fast JS engine with typed arrays, and either Web Audio or Flash for audio playback.
+ogv.js requires a fast JS engine with typed arrays, and Web Audio for audio playback.
 
 The primary target browsers are (testing 360p/30fps and up):
 * Safari 6.1-12 on Mac OS X 10.7-10.14
 * Safari on iOS 10-11 64-bit
-* Edge on Windows 10 desktop/tablet
-* Internet Explorer 10-11 on Windows 7-10 (desktop/tablet)
 
-Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arrays.
+Older versions of Safari have flaky JIT compilers. IE 9 and below lack typed arrays, and IE 10/11 no longer support an audio channel since the Flash plugin was sunset.
 
 (Note that Windows and Mac OS X can support Ogg and WebM by installing codecs or alternate browsers with built-in support, but this is not possible on iOS where all browsers are really Safari.)
 
@@ -119,12 +117,12 @@ Testing browsers (these support .ogv and .webm natively):
 
 Pre-built releases of ogv.js are available as [.zip downloads from the GitHub releases page](https://github.com/brion/ogv.js/releases) and through the npm package manager.
 
-You can load the `ogv.js` main entry point directly in a script tag, or bundle it through whatever build process you like. The other .js files and the .swf file (for audio in IE) must be made available for runtime loading, together in the same directory.
+You can load the `ogv.js` main entry point directly in a script tag, or bundle it through whatever build process you like. The other .js files must be made available for runtime loading, together in the same directory.
 
 ogv.js will try to auto-detect the path to its resources based on the script element that loads ogv.js or ogv-support.js. If you load ogv.js through another bundler (such as browserify or MediaWiki's ResourceLoader) you may need to override this manually before instantiating players:
 
 ```
-  // Path to ogv-demuxer-ogg.js, ogv-worker-audio.js, dynamicaudio.swf etc
+  // Path to ogv-demuxer-ogg.js, ogv-worker-audio.js, etc
   OGVLoader.base = '/path/to/resources';
 ```
 
@@ -178,7 +176,7 @@ To check for compatibility before creating a player, include `ogv-support.js` an
   }
 ```
 
-This will check for typed arrays, audio/Flash, blacklisted iOS versions, and super-slow/broken JIT compilers.
+This will check for typed arrays, web audio, blacklisted iOS versions, and super-slow/broken JIT compilers.
 
 If you need a URL versioning/cache-buster parameter for dynamic loading of `ogv.js`, you can use the `OGVVersion` symbol provided by `ogv-support.js` or the even tinier `ogv-version.js`:
 
@@ -208,7 +206,6 @@ Dynamically loaded assets:
 * `ogv-decoder-video-vp8.js` and `ogv-decoder-video-vp9.js` are used in playing .webm video files.
 * `*-wasm.js` and `*-wasm.wasm` files are the Web Assembly versions of the above modules.
 * `*-mt.js` are the multithreaded versions of some of the above modules, if built. They have additional support files.
-* `dynamicaudio.swf` is the Flash audio shim, used for Internet Explorer 10/11.
 
 If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
 
@@ -274,11 +271,11 @@ As with chunked streaming, cross-site playback requires CORS support for the Ran
 
 *Audio output*
 
-Audio output is handled through the [AudioFeeder](https://github.com/brion/audio-feeder) library, which encapsulates use of Web Audio API or Flash depending on browser support:
+Audio output is handled through the [AudioFeeder](https://github.com/brion/audio-feeder) library, which encapsulates use of Web Audio API:
 
 Firefox, Safari, Chrome, and Edge support the W3C Web Audio API.
 
-IE doesn't support Web Audio, but does bundle the Flash player in Windows 8/8.1/RT. A small Flash shim is included here and used as a fallback -- thanks to Maik Merten for hacking some pieces together and getting this working!
+IE is no longer supported; the workaround using Flash no longer works due to sunsetting of the Flash plugin.
 
 A/V synchronization is performed on files with both audio and video, and seems to actually work. Yay!
 
@@ -368,7 +365,5 @@ If you did all the setup above, just run `make demo` or `make`. Look in build/de
 libogg, libvorbis, libtheora, libopus, nestegg, libvpx, and dav1d are available under their respective licenses, and the JavaScript and C wrapper code in this repo is licensed under MIT.
 
 Based on build scripts from https://github.com/devongovett/ogg.js
-
-[AudioFeeder](https://github.com/brion/audio-feeder)'s dynamicaudio.as and other Flash-related bits are based on code under BSD license, (c) 2010 Ben Firshman.
 
 See [AUTHORS.md](https://github.com/brion/ogv.js/blob/master/AUTHORS.md) and/or the git history for a list of contributors.
