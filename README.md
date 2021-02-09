@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-2.0.0 - 2021-02-??
+1.8.0 - 2021-02-09
 * Dropping IE support and Flash audio backend
     * Updated to stream-file 0.3.0
     * Updated to audio-feeder 0.5.0
@@ -18,9 +18,6 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * Demo fixed (removed test files that are now offline)
     * Builds with emscripten 2.0.13
     * Requires latest meson from git pending a fix hitting release
-* Work in progress:
-    * Better plugin API
-    * MSE streaming APIs
 
 1.7.0 - 2020-09-28
 * Builds with emscripten's LLVM upstream backend

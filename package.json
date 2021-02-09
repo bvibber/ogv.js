@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "2.0.0",
+  "version": "1.8.0",
   "description": "WebAssembly media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
@@ -10,7 +10,7 @@
     "dist/"
   ],
   "scripts": {
-    "prepublish": "make dist",
+    "prepublish": "make -j4 dist",
     "build": "npx webpack --optimize-dedupe",
     "lint": "npx eslint src/js",
     "test": "make tests && npx static build/tests",
