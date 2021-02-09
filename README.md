@@ -9,6 +9,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 2.0.0 - 2021-02-??
 * Dropping IE support and Flash audio backend
+    * Updated to stream-file 0.3.0
+    * Updated to audio-feeder 0.5.0
     * The old IE 10/11 support _no longer works_ due to the Flash plugin being disabled, and so is being removed
 * Drop es6-promise shim
     * Now requires WebAssembly, which requires native Promise support
