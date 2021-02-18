@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.1 - 2021-02-18
+* Fixed OGVCompat APIs to correctly return false without WebAssembly and Web Audio
+
 1.8.0 - 2021-02-09
 * Dropping IE support and Flash audio backend
     * Updated to stream-file 0.3.0
@@ -198,19 +201,20 @@ These entry points may be loaded directly from a script element, or concatenated
 Further code modules are loaded at runtime, which must be available with their defined names together in a directory. If the files are not hosted same-origin to the web page that includes them, you will need to set up appropriate CORS headers to allow loading of the worker JS modules.
 
 Dynamically loaded assets:
-* `ogv-worker-audio.js`, `ogv-worker-video.js`, and `pthread-main.js` are Worker entry points, used to run video and audio decoders in the background.
-* `ogv-demuxer-ogg.js` is used in playing .ogg, .oga, and .ogv files.
-* `ogv-demuxer-webm.js` is used in playing .webm files.
-* `ogv-decoder-audio-vorbis.js` and `ogv-decoder-audio-opus.js` are used in playing both Ogg and WebM files containing audio.
-* `ogv-decoder-video-theora.js` is used in playing .ogg and .ogv video files.
-* `ogv-decoder-video-vp8.js` and `ogv-decoder-video-vp9.js` are used in playing .webm video files.
-* `*-wasm.js` and `*-wasm.wasm` files are the Web Assembly versions of the above modules.
-* `*-mt.js` are the multithreaded versions of some of the above modules, if built. They have additional support files.
+* `ogv-worker-audio.js`, `ogv-worker-video.js`, and `*.worker.js` are Worker entry points, used to run video and audio decoders in the background.
+* `ogv-demuxer-ogg-wasm.js/.wasm` are used in playing .ogg, .oga, and .ogv files.
+* `ogv-demuxer-webm-wasm.js/.wasm` are used in playing .webm files.
+* `ogv-decoder-audio-vorbis-wasm.js/.wasm` and `ogv-decoder-audio-opus-wasm.js/.wasm` are used in playing both Ogg and WebM files containing audio.
+* `ogv-decoder-video-theora-wasm.js/.wasm` are used in playing .ogg and .ogv video files.
+* `ogv-decoder-video-vp8-wasm.js/.wasm` and `ogv-decoder-video-vp9-wasm.js/.wasm` are used in playing .webm video files.
+* `*-mt.js/.wasm` are the multithreaded versions of some of the above modules. They have additional support files.
 
-If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm.js` or `ogv-decoder-video-vp8.js` which are only used for WebM.
+If you know you will never use particular formats or codecs you can skip bundling them; for instance if you only need to play Ogg files you don't need `ogv-demuxer-webm-wasm.js` or `ogv-decoder-video-vp8-wasm.js` which are only used for WebM.
 
 
 ## Performance
+
+(This section is somewhat out of date.)
 
 As of 2015, for SD-or-less resolution basic Ogg Theora decoding speed is reliable on desktop and newer high-end mobile devices; current high-end desktops and laptops can even reach HD resolutions. Older and low-end mobile devices may have difficulty on any but audio and the lowest-resolution video files.
 
@@ -322,13 +326,9 @@ The Ogg Skeleton library (libskeleton) is a bit ... unfinished and is slightly m
 libvpx is slightly modified to work around emscripten threading limitations in the VP8 decoder.
 
 
-## Web Assembly
+## WebAssembly
 
-Web Assembly (WASM) versions of the emscripten cross-compiled modules are also included, used by default if WebAssembly support is available in the browser.
-
-The WASM versions of the modules are more compact than the cross-compiled asm.js-style JavaScript, and should download and parse faster. Some browsers may also compile the module differently, providing more consistent performance at the beginning of playback.
-
-Safari 12 and Edge 16 include WASM support, as do current versions of Firefox and Chrome.
+WebAssembly (Wasm) builds are used exclusively as of 1.8.0, as Safari's Wasm support is pretty well established now and IE no longer works due to the Flash plugin deprecation.
 
 
 ## Multithreading
@@ -348,8 +348,8 @@ If you are making a slim build and will not use the `threading` option, you can 
 
 Building ogv.js is known to work on Mac OS X and Linux (tested Fedora 29 and Ubuntu 18.10 with Meson manually updated).
 
-1. You will need autoconf, automake, libtool, pkg-config, meson, ninja, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux. For meson, you may need a newer version than your distro packages -- install it manually with `pip3`.
-2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently building with 1.38.27.
+1. You will need autoconf, automake, libtool, pkg-config, meson, ninja, and node (nodejs). These can be installed through Homebrew on Mac OS X, or through distribution-specific methods on Linux. For meson, you may need a newer version than your distro packages -- install it manually with `pip3` or from source.
+2. Install [Emscripten](http://kripken.github.io/emscripten-site/docs/getting_started/Tutorial.html); currently building with 2.0.13.
 3. `git submodule update --init`
 4. Run `npm install` to install build utilities
 5. Run `make js` to configure and build the libraries and the C wrapper

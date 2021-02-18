@@ -1,13 +1,12 @@
-import BogoSlow from './BogoSlow.js';
-
 let OGVCompat = new class {
-	constructor() {
-		this.benchmark = new BogoSlow();
-	}
-
 	hasTypedArrays() {
+		// obsolete, kept only for back-compat
 		// emscripten-compiled code requires typed arrays
 		return !!window.Uint32Array;
+	}
+
+	hasWebAssembly() {
+		return !!window.WebAssembly;
 	}
 
 	hasWebAudio() {
@@ -15,54 +14,35 @@ let OGVCompat = new class {
 	}
 
 	hasFlash() {
-		if (navigator.userAgent.indexOf('Trident') !== -1) {
-			// We only do the ActiveX test because we only need Flash in
-			// Internet Explorer 10/11. Other browsers use Web Audio directly
-			// (Edge, Safari) or native playback, so there's no need to test
-			// other ways of loading Flash.
-			try {
-				let obj = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
-				return true;
-			} catch(e) {
-				return false;
-			}
-		}
+		// obsolete, kept only for back-compat
 		return false;
 	}
 
 	hasAudio() {
-		return this.hasWebAudio() || this.hasFlash();
+		return this.hasWebAudio();
 	}
 
 	isBlacklisted(userAgent) {
-		// JIT bugs in old Safari versions
-		let blacklist = [
-			/\(i.* OS [6789]_.* like Mac OS X\).* Mobile\/.* Safari\//,
-			/\(Macintosh.* Version\/6\..* Safari\/\d/
-		];
-		let blacklisted = false;
-		blacklist.forEach((regex) => {
-			if (userAgent.match(regex)) {
-				blacklisted = true;
-			}
-		});
-		return blacklisted;
+		// obsolete, kept only for back-compat
+		return false;
 	}
 
 	isSlow() {
-		return this.benchmark.slow;
+		// obsolete, kept only for back-compat
+		return false;
 	}
 
 	isTooSlow() {
-		return this.benchmark.tooSlow;
+		// obsolete, kept only for back-compat
+		return false;
 	}
 
 	supported(component) {
 		if (component === 'OGVDecoder') {
-			return (this.hasTypedArrays() && !this.isBlacklisted(navigator.userAgent));
+			return this.hasWebAssembly();
 		}
 		if (component === 'OGVPlayer') {
-			return (this.supported('OGVDecoder') && this.hasAudio() && !this.isTooSlow());
+			return this.supported('OGVDecoder') && this.hasAudio();
 		}
 		return false;
 	}
