@@ -45,13 +45,61 @@ WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
 WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
-.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server
+ifeq ($(origin WITH_DOCKER),undefined)
+	WITH_DOCKER:=false
+endif
 
-DEFAULT : all
+.PHONY : DEFAULT all clean cleanswf swf js demo democlean tests dist zip lint run-demo run-dev-server clean-docker-container clean-docker-image
+
+DEFAULT : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make all";\
+	else\
+		$(MAKE) all;\
+	fi
+
+# Docker
+
+build-docker-image :
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" = "" ]; then\
+  		docker build --tag build-ogv:$(VERSION) ./$(BUILDSCRIPTS_DIR)/.;\
+	fi
+
+clean-docker-image :
+	if [ "$(shell docker images -q build-ogv:$(VERSION) 2> /dev/null)" != "" ]; then\
+  		docker rmi -f $(shell docker images --filter=reference='build-ogv' --format "{{.ID}}");\
+	fi
+
+build-docker-container : build-docker-image
+	if [ "$(shell docker ps -aqf 'name=ogvjs')" = "" ]; then\
+  		docker create -t -i -v $(shell pwd):/ogvjs -p 8080:8080 --name ogvjs build-ogv:$(VERSION);\
+	fi 
+
+clean-docker-container :
+	if [ "$(shell docker ps -aqf 'name=ogvjs')" != "" ]; then\
+  		docker rm -f $(shell docker ps -aqf "name=ogvjs");\
+	fi
+
+start-docker-container : build-docker-container
+	if [ "$(shell docker ps -aq -f 'name=ogvjs' -f 'status=running')" == "" ]; then\
+  		docker start ogvjs;\
+	fi
+
+provision-docker-container :
+	if [ $(WITH_DOCKER) = true ]; then\
+		$(MAKE) start-docker-container;\
+	fi
 
 # Runners
 
-run-demo : package.json demo
+run-demo : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make package.json demo";\
+	else\
+		$(MAKE) package.json demo;\
+	fi
 	npm run demo
 
 # This uses webpack dev server so we don't need to re-compile anything upon change - just reload the page
@@ -59,24 +107,58 @@ run-demo : package.json demo
 # 1. Run ``make run-dev-server
 # 2. Go to http://localhost:8080/examples/simple/ in your browser to look at a simple example player
 # 3. Reload the page to get the latest re-build
-run-dev-server : package.json
-	npm run server
+run-dev-server : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make package.json";\
+	else\
+		$(MAKE) package.json;\
+	fi
+	npm run start
 
 # Build all
 
-all : dist \
-      zip \
-      demo \
-      tests
+all : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make dist zip demo tests";\
+	else\
+		$(MAKE) dist zip demo tests;\
+	fi
 
-js : build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)
+js : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS)";\
+	else\
+		$(MAKE) build/ogv.js $(EMSCRIPTEN_MODULE_TARGETS);\
+	fi 
+	
 
-demo : build/demo/index.html
+demo : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/demo/index.html";\
+	else\
+		$(MAKE) build/demo/index.html;\
+	fi  
+	
 
-tests : build/tests/index.html
+tests : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make build/tests/index.html";\
+	else\
+		$(MAKE) build/tests/index.html;\
+	fi 
 
-lint :
-	npm run lint
+lint : provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "npm run lint";\
+	else\
+		npm run lint;\
+	fi
 
 package.json :
 	npm install
@@ -100,7 +182,14 @@ clean:
 
 # Build everything and copy the result into dist folder
 
-dist: js README.md COPYING
+dist: provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make js README.md COPYING";\
+	else\
+		$(MAKE) js README.md COPYING;\
+	fi 
+
 	rm -rf dist
 	mkdir -p dist
 	cp -p build/ogv.js \
@@ -166,7 +255,14 @@ dist: js README.md COPYING
 
 # Zip up the dist folder for non-packaged release
 
-zip: dist
+zip: provision-docker-container
+	if [ $(WITH_DOCKER) = true ]; then\
+		WITH_DOCKER=false;\
+		docker exec -i -t -w /ogvjs ogvjs bash -c "make dist";\
+	else\
+		$(MAKE) dist;\
+	fi  
+
 	rm -rf zip
 	mkdir -p zip/ogvjs-$(VERSION)
 	cp -pr dist/* zip/ogvjs-$(VERSION)
