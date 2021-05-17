@@ -32,7 +32,6 @@ player = new OGVPlayer();
 document.getElementById("videoarea").appendChild(player);
 
 function play(src) {
-	//player = new OgvSwfPlayer();
 	//player = document.createElement('video');
 	player.src = src;
 	player.play();	

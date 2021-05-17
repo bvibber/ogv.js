@@ -92,13 +92,6 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        {
-          test: /\.swf$/,
-          loader: 'file-loader',
-          options: {
-            'name': '[name].[ext]?version=[hash]'
-          }
-        },
         babelRuleModule
       ]
     },
@@ -118,13 +111,6 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        {
-          test: /\.swf$/,
-          loader: 'file-loader',
-          options: {
-            'name': '[name].[ext]?version=[hash]'
-          }
-        },
         babelRuleES5
       ]
     },
