@@ -125,12 +125,15 @@ class OGVLoaderWeb extends OGVLoaderBase {
 
             function completionCheck() {
                 if ((codecLoaded == true) && (workerLoaded == true)) {
+                    // Include the base URL so we can load .wasm binaries from a CDN
+                    var workerSource = codecResponse + " " + workerResponse +
+                        "\nOGVLoader.base = " + JSON.stringify(OGVLoader.base);
                     try {
-                        blob = new Blob([codecResponse + " " + workerResponse], {type: 'application/javascript'});
+                        blob = new Blob([workerSource], {type: 'application/javascript'});
                     } catch (e) { // Backwards-compatibility
                         window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
                         blob = new BlobBuilder();
-                        blob.append(codecResponse + " " + workerResponse);
+                        blob.append(workerSource);
                         blob = blob.getBlob();
                     }
                     // Create the web worker
