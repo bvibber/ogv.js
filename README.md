@@ -7,10 +7,13 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.8.2 - 2021-07-02
-* Fix for build with emscripten 2.0.25
+1.8.3 - 2021-07-02
+* Fixes for build with emscripten 2.0.25
+* Fix for nextTick/setImmediate-style polyfill in front-end
 * Provisional fix for OGVLoader.base not working with CDNs
     * the fallback code for loading a non-local worker had been broken with WebAssembly for some time, sorry!
+
+1.8.2 - errored out
 
 1.8.1 - 2021-02-18
 * Fixed OGVCompat APIs to correctly return false without WebAssembly and Web Audio

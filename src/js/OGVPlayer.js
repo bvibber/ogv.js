@@ -14,6 +14,23 @@ import OGVMediaType from './OGVMediaType.js';
 import OGVTimeRanges from './OGVTimeRanges.js';
 import OGVWrapperCodec from './OGVWrapperCodec.js';
 
+const nextTick = (() => {
+	if (typeof setImmediate === 'function') {
+		return setImmediate;
+	} else {
+		const channel = new MessageChannel();
+		const callbacks = [];
+		channel.port1.onmessage = (_event) => {
+			const callback = callbacks.shift();
+			callback();
+		};
+		return function nextTick(callback) {
+			callbacks.push(callback);
+			channel.port2.postMessage({});
+		};
+	}
+})();
+
 const constants = {
 	/**
 	 * Constants for networkState
@@ -891,7 +908,7 @@ class OGVPlayer extends OGVJSElement {
 
 	_fireEventAsync(eventName, props={}) {
 		this._log('fireEventAsync ' + eventName);
-		setImmediate(() => {
+		nextTick(() => {
 			this._fireEvent(eventName, props);
 		});
 	}
@@ -1108,7 +1125,7 @@ class OGVPlayer extends OGVJSElement {
 		if (this._startedPlaybackInDocument && !document.body.contains(this)) {
 			// We've been de-parented since we last ran
 			// Stop playback at next opportunity!
-			setImmediate(() => {
+			nextTick(() => {
 				this.stop();
 			});
 		}
@@ -2780,7 +2797,7 @@ if (OGVPlayer.supportsObjectFit) {
 	};
 	var fullResizeVideo = function() {
 		// fullscreens may ping us before the resize happens
-		setImmediate(OGVPlayer.updatePositionOnResize);
+		nextTick(OGVPlayer.updatePositionOnResize);
 	};
 
 	window.addEventListener('resize', OGVPlayer.updatePositionOnResize);

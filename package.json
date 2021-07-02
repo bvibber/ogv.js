@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "description": "WebAssembly media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
