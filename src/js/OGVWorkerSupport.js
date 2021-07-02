@@ -2,6 +2,10 @@
 
 import OGVLoader from './OGVLoaderWorker.js';
 
+// Re-export OGVLoader so the base URL can be inserted
+// when using CDN compatibility blob loading.
+global.OGVLoader = OGVLoader;
+
 /**
  * Web Worker wrapper for codec fun
  */

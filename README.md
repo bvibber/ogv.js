@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.4 - 2021-07-02
+* Fix for fix for OGVLoader.base fix
+
 1.8.3 - 2021-07-02
 * Fixes for build with emscripten 2.0.25
 * Fix for nextTick/setImmediate-style polyfill in front-end
