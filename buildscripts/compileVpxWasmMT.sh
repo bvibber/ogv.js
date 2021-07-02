@@ -22,7 +22,7 @@ LDFLAGS=-pthread \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/wasm-mt/root" \
     --target=generic-gnu \
-    --extra-cflags=-pthread\ -s\ USE_PTHREADS=1\ -s\ WASM=1\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
+    --extra-cflags=-pthread\ -s\ USE_PTHREADS=1\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
     --enable-multithread \
     --enable-vp9-decoder \
     --disable-vp8-encoder \
