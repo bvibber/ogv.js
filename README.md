@@ -7,6 +7,11 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.2 - 2021-07-02
+* Fix for build with emscripten 2.0.25
+* Provisional fix for OGVLoader.base not working with CDNs
+    * the fallback code for loading a non-local worker had been broken with WebAssembly for some time, sorry!
+
 1.8.1 - 2021-02-18
 * Fixed OGVCompat APIs to correctly return false without WebAssembly and Web Audio
 
@@ -72,6 +77,8 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 See more details and history in [CHANGES.md](https://github.com/brion/ogv.js/blob/master/CHANGES.md)
 
 ## Current status
+
+Note that as of 2021 ogv.js works pretty nicely but may still have some packagine oddities with tools like webpack. It should work via CDNs again as of 1.8.2 if you can't or don't want to package locally, but this is not documented well yet. Improved documentation will come with the next major update & code cleanup!
 
 Since August 2015, ogv.js can be seen in action [on Wikipedia and Wikimedia Commons](https://commons.wikimedia.org/wiki/Commons:Video) in Safari and IE/Edge where native Ogg and WebM playback is not available. (See [technical details on MediaWiki integration](https://www.mediawiki.org/wiki/Extension:TimedMediaHandler/ogv.js).)
 
