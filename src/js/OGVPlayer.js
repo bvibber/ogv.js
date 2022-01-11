@@ -144,23 +144,11 @@ class OGVPlayer extends OGVJSElement {
 		this._canvas = document.createElement('canvas');
 		this._frameSink = null;
 
-		if (options.video && this._canvas.captureStream) {
-			this._mediaStream = new MediaStream();
-			this._video = (typeof options.video === 'object') ? options.video : document.createElement('video');
-			this._video.playsInline = true; // for iOS to not fullscreen it
-			this._video.srcObject = this._mediaStream;
-		} else {
-			this._video = null;
-		}
-		this._videoTrack = null;
-		this._audioTrack = null;
-		this._canvasStream = null;
-
 		this.className = this._instanceId;
 
 		extend(this, constants);
 
-		this._view = this._video || this._canvas;
+		this._view = this._canvas;
 		this._view.style.position = 'absolute';
 		this._view.style.top = '0';
 		this._view.style.left = '0';
@@ -933,23 +921,6 @@ class OGVPlayer extends OGVJSElement {
 			audioOptions.backendFactory = options.audioBackendFactory;
 		}
 
-		if (this._video && !audioOptions.output) {
-			// Set up an audio route...
-			if (!audioOptions.audioContext) {
-				// We need the AudioContext first to create the capture node
-				audioOptions.audioContext = AudioFeeder.initSharedAudioContext();
-			}
-			let dest = audioOptions.audioContext.createMediaStreamDestination();
-
-			this._audioTrack = dest.stream.getAudioTracks()[0];
-			this._mediaStream.addTrack(this._audioTrack);
-			// Safari drops after we change the stream, so reconnect it.
-			this._video.src = this._mediaStream;
-			this._video.play();
-
-			audioOptions.output = dest;
-		}
-
 		let audioFeeder = this._audioFeeder = new AudioFeeder(audioOptions);
 		audioFeeder.init(this._audioInfo.channels, this._audioInfo.rate);
 
@@ -1403,29 +1374,6 @@ class OGVPlayer extends OGVJSElement {
 			this._thumbnail = null;
 		}
 		this._frameSink.drawFrame(buffer);
-
-		if (this._video) {
-			if (!this._canvasStream) {
-				this._canvasStream = this._canvas.captureStream(0);
-				this._videoTrack = this._canvasStream.getVideoTracks()[0];
-				this._mediaStream.addTrack(this._videoTrack);
-
-				if (navigator.userAgent.match(/WebKit/)) {
-					// Safari drops when we change tracks, so reconnect.
-					this._video.src = this._mediaStream;
-					this._video.play();
-				}
-			}
-
-			// Update the media stream with the new frame, so we don't
-			// have to fake a constant frame rate that might be too high
-			// or too low.
-			if (this._videoTrack && this._videoTrack.requestFrame) {
-				this._videoTrack.requestFrame();
-			} else if (this._canvasStream && this._canvasStream.requestFrame) {
-				this._canvasStream.requestFrame();
-			}
-		}
 	}
 
 	/**
@@ -2611,10 +2559,6 @@ class OGVPlayer extends OGVJSElement {
 				}
 			}
 		}
-
-		if (this._video && this._video.paused) {
-			this._video.play();
-		}
 	}
 
 	/**
@@ -2666,8 +2610,11 @@ class OGVPlayer extends OGVJSElement {
 		return this._canvas;
 	}
 
+	/**
+	 * @deprecated
+	 */
 	getVideo() {
-		return this._video;
+		return null;
 	}
 
 	/**
