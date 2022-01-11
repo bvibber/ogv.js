@@ -431,7 +431,6 @@ class OGVPlayer extends OGVJSElement {
 									width: thumbnail.naturalWidth + 'px',
 									height: thumbnail.naturalHeight + 'px'
 								});
-								OGVPlayer.updatePositionOnResize();
 								thumbnail.style.visibility = 'visible';
 							}
 						});
@@ -521,7 +520,6 @@ class OGVPlayer extends OGVJSElement {
 				set: function setWidth(val) {
 					this._width = parseInt(val, 10);
 					this.style.width = this._width + 'px';
-					OGVPlayer.updatePositionOnResize();
 				}
 			},
 
@@ -536,7 +534,6 @@ class OGVPlayer extends OGVJSElement {
 				set: function setHeight(val) {
 					this._height = parseInt(val, 10);
 					this.style.height = this._height + 'px';
-					OGVPlayer.updatePositionOnResize();
 				}
 			},
 
@@ -946,10 +943,8 @@ class OGVPlayer extends OGVJSElement {
 
 			this._audioTrack = dest.stream.getAudioTracks()[0];
 			this._mediaStream.addTrack(this._audioTrack);
-			if (navigator.userAgent.match(/WebKit/)) {
-				// Safari drops after we change the stream, so reconnect it.
-				this._video.src = this._mediaStream;
-			}
+			// Safari drops after we change the stream, so reconnect it.
+			this._video.src = this._mediaStream;
 			this._video.play();
 
 			audioOptions.output = dest;
@@ -1619,7 +1614,6 @@ class OGVPlayer extends OGVJSElement {
 			width: this._videoInfo.displayWidth + 'px',
 			height: this._videoInfo.displayHeight + 'px'
 		});
-		OGVPlayer.updatePositionOnResize();
 
 		let canvasOptions = {};
 		if (this._options.webGL !== undefined) {
@@ -2740,73 +2734,5 @@ function StyleManager() {
 	};
 }
 OGVPlayer.styleManager = new StyleManager();
-
-// IE 10/11 and Edge 12 don't support object-fit.
-// Also just for fun, IE 10 doesn't support 'auto' sizing on canvas. o_O
-OGVPlayer.supportsObjectFit = (typeof document.createElement('canvas').style.objectFit === 'string');
-if (OGVPlayer.supportsObjectFit && navigator.userAgent.match(/iPhone|iPad|iPod Touch/)) {
-	// Safari for iOS 8/9 supports it but positions our <canvas> incorrectly when using WebGL >:(
-	OGVPlayer.supportsObjectFit = false;
-}
-if (OGVPlayer.supportsObjectFit && navigator.userAgent.match(/Edge/)) {
-	// Edge 16 supports it but it doesn't actually work on <canvas>
-	OGVPlayer.supportsObjectFit = false;
-}
-if (OGVPlayer.supportsObjectFit) {
-	OGVPlayer.updatePositionOnResize = function() {
-		// no-op
-	};
-} else {
-	OGVPlayer.updatePositionOnResize = function() {
-		function fixup(el, width, height) {
-			var container = el.offsetParent || el.parentNode,
-				containerAspect = container.offsetWidth / container.offsetHeight,
-				intrinsicAspect = width / height;
-			if (intrinsicAspect > containerAspect) {
-				var vsize = container.offsetWidth / intrinsicAspect,
-					vpad = (container.offsetHeight - vsize) / 2;
-				el.style.width = '100%';
-				el.style.height = vsize + 'px';
-				el.style.marginLeft = 0;
-				el.style.marginRight = 0;
-				el.style.marginTop = vpad + 'px';
-				el.style.marginBottom = vpad + 'px';
-			} else {
-				var hsize = container.offsetHeight * intrinsicAspect,
-					hpad = (container.offsetWidth - hsize) / 2;
-				el.style.width = hsize + 'px';
-				el.style.height = '100%';
-				el.style.marginLeft = hpad + 'px';
-				el.style.marginRight = hpad + 'px';
-				el.style.marginTop = 0;
-				el.style.marginBottom = 0;
-			}
-		}
-		function queryOver(selector, callback) {
-			var nodeList = document.querySelectorAll(selector),
-				nodeArray = Array.prototype.slice.call(nodeList);
-			nodeArray.forEach(callback);
-		}
-
-		queryOver('ogvjs > canvas', function(canvas) {
-			fixup(canvas, canvas.width, canvas.height);
-		});
-		queryOver('ogvjs > img', function(poster) {
-			fixup(poster, poster.naturalWidth, poster.naturalHeight);
-		});
-	};
-	var fullResizeVideo = function() {
-		// fullscreens may ping us before the resize happens
-		nextTick(OGVPlayer.updatePositionOnResize);
-	};
-
-	window.addEventListener('resize', OGVPlayer.updatePositionOnResize);
-	window.addEventListener('orientationchange', OGVPlayer.updatePositionOnResize);
-
-	document.addEventListener('fullscreenchange', fullResizeVideo);
-	document.addEventListener('mozfullscreenchange', fullResizeVideo);
-	document.addEventListener('webkitfullscreenchange', fullResizeVideo);
-	document.addEventListener('MSFullscreenChange', fullResizeVideo);
-}
 
 export default OGVPlayer;

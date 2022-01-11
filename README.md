@@ -7,6 +7,10 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.5 - 2022-01-11
+* Remove unnecessary user-agent checks
+* Remove flaky, obsolete support for faking CSS `object-fit`
+
 1.8.4 - 2021-07-02
 * Fix for fix for OGVLoader.base fix
 
