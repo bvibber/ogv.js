@@ -676,13 +676,6 @@
                     threading: true, // experimental
                     simd: true // experimental
                 });
-            } else if (playerBackend == 'wasm-video') {
-                player = new OGVPlayer({
-                    debug: !!debugFilter,
-                    debugFilter: debugFilter,
-                    wasm: true,
-                    video: true // experimental
-                });
             } else if (playerBackend == 'native') {
                 player = document.createElement('video');
             } else {

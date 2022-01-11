@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "description": "WebAssembly media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
@@ -49,21 +49,21 @@
   },
   "homepage": "https://github.com/brion/ogv.js#readme",
   "devDependencies": {
-    "@babel/core": "^7.14.2",
-    "@babel/plugin-transform-runtime": "^7.14.2",
-    "@babel/preset-env": "^7.14.2",
+    "@babel/core": "^7.16.7",
+    "@babel/plugin-transform-runtime": "^7.16.8",
+    "@babel/preset-env": "^7.16.8",
     "audio-feeder": "^0.5.0",
-    "babel-loader": "^8.2.2",
-    "eslint": "^7.26.0",
+    "babel-loader": "^8.2.3",
+    "eslint": "^7.32.0",
     "file-loader": "^6.2.0",
     "stream-file": "^0.3.0",
-    "webpack": "^5.3.0",
-    "webpack-cli": "^4.7.0",
-    "webpack-dev-server": "^3.11.2",
-    "yuv-canvas": "^1.2.6"
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^3.11.3",
+    "yuv-canvas": "^1.2.8"
   },
   "dependencies": {
-    "@babel/runtime": "^7.3.1"
+    "@babel/runtime": "^7.16.7"
   },
   "browserslist": "> 5%"
 }
