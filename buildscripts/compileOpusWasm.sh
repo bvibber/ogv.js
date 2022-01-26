@@ -21,6 +21,7 @@ emconfigure ../../../libopus/configure \
   --disable-extra-programs \
   --prefix="$dir/build/wasm/root" \
   --disable-shared \
+  --disable-stack-protector \
   CFLAGS="-O3" || exit 1
 
 # compile libopus
