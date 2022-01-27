@@ -1,6 +1,6 @@
 {
   "name": "ogv",
-  "version": "1.8.6",
+  "version": "1.8.7",
   "description": "WebAssembly media player using Ogg/Vorbis/Theora/Opus/WebM libs compiled with Emscripten",
   "main": "index.js",
   "files": [
@@ -60,7 +60,7 @@
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^3.11.3",
-    "yuv-canvas": "^1.2.8"
+    "yuv-canvas": "^1.2.9"
   },
   "dependencies": {
     "@babel/runtime": "^7.16.7"
