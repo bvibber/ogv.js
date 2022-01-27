@@ -449,9 +449,10 @@ build/ogv-decoder-video-av1-simd-mt-wasm.js : $(C_SRC_DIR)/ogv-decoder-video-av1
 
 # The player demo, with the JS build
 # NOTE: This is pretty much only about copying files around
-#		Might be possible to simplify, but not clear yet why index.html needs to be a template
+# Note index.html.in is a template to force a cache-clear timestamp on the JS URL.
 
 build/demo/index.html : $(DEMO_DIR)/index.html.in \
+                        build/demo/threaded.php \
                         build/demo/demo.css \
                         build/demo/ajax-loader.gif \
                         build/demo/demo.js \
@@ -466,6 +467,10 @@ build/demo/index.html : $(DEMO_DIR)/index.html.in \
                         build/demo/lib/ogv.js
 	test -d build/demo || mkdir -p build/demo
 	sed 's/OGV_VERSION/$(FULLVER)/g' < $(DEMO_DIR)/index.html.in > build/demo/index.html
+
+build/demo/threaded.php : $(DEMO_DIR)/threaded.php.in
+	test -d build/demo || mkdir -p build/demo
+	cat $(DEMO_DIR)/threaded.php.in > build/demo/threaded.php
 
 build/demo/demo.css : $(DEMO_DIR)/demo.css $(DEMO_DIR)/controls.css
 	test -d build/demo || mkdir -p build/demo

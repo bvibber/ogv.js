@@ -14,6 +14,10 @@
 	var auto = OGVLoader.wasmSupported() ? 'wasm' : 'js';
 	document.getElementById('auto-select').text += ' (' + auto + ')';
 
+    if (window.crossOriginIsolated) {
+        OGVLoader.base = 'threaded.php';
+    }
+
     var player;
 
     /**
@@ -433,6 +437,7 @@
         item.className = 'media-item';
 
         img.className = 'thumb';
+        img.crossOrigin = 'anonymous';
         img.src = imageinfo.thumburl;
         img.title = "Play video"
         img.width = imageinfo.thumbwidth / devicePixelRatio;
@@ -725,6 +730,9 @@
                 benchmark.recordPoint(info);
             });
 
+            if (window.crossOriginIsolated) {
+                player.crossOrigin = 'anonymous';
+            }
             if (startTime == 0) {
                 player.poster = mediaInfo.thumburl;
             }

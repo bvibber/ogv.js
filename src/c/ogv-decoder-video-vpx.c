@@ -29,7 +29,11 @@ static void do_init(void) {
 #ifdef __EMSCRIPTEN_PTHREADS__
 	const int max_cores = 8; // max threads for UHD tiled decoding
 	int cores = emscripten_num_logical_cores();
-	if (cores > max_cores) {
+	if (cores == 0) {
+		// Safari 15 does not report navigator.hardwareConcurrency...
+		// Assume at least two fast cores are available.
+		cores = 2;
+	} else if (cores > max_cores) {
 		cores = max_cores;
 	}
 	cfg.threads = cores;

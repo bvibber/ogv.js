@@ -7,10 +7,11 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.8.7 - 2022-01-26
+1.8.7 - 2022-01-27
 * Bump emscripten compatibility to 3.1.2
 * Bump Opus to 1.3.1
 * Bump yuv-canvas to 1.2.9, fixes WebGL performance regressions on some browsers
+* demo/threaded.php provides a COOP-COEP-CORP environment for testing threaded decoders (top-level frame and all worker JS must opt in to COOP-COEP; CORP or CORS required for most loaded resources)
 
 1.8.6 - 2022-01-12
 * Bump to yuv-canvas

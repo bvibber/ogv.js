@@ -173,6 +173,7 @@ class OGVPlayer extends OGVJSElement {
 
 
 		this._currentSrc = '';
+		this._crossOrigin = null;
 		this._streamEnded = false;
 		this._mediaError = null;
 		this._dataEnded = false;
@@ -404,6 +405,7 @@ class OGVPlayer extends OGVJSElement {
 							this.removeChild(this._thumbnail);
 						}
 						let thumbnail = new Image();
+						thumbnail.crossOrigin = this.crossOrigin;
 						thumbnail.src = this._poster;
 						thumbnail.className = 'ogvjs-poster';
 						thumbnail.style.position = 'absolute';
@@ -568,16 +570,31 @@ class OGVPlayer extends OGVJSElement {
 			},
 
 			/**
-			 * @property crossOrigin {string|null} stub prop
-			 * @todo reflect to the crossorigin attribute?
-			 * @todo implement actual behavior
+			 * @property crossOrigin {string|null}
+			 * @todo properly pass through to underlying file
 			 */
 			crossOrigin: {
 				get: function getCrossOrigin() {
-					return null;
+					return this._crossOrigin;
 				},
 				set: function setCrossOrigin(val) {
-					// ignore
+					switch (val) {
+					case null:
+						this._crossOrigin = val;
+						this.removeAttribute('crossorigin');
+						break;
+					default:
+						val = 'anonymous';
+						// fall through
+					case '':
+					case 'anonymous':
+					case 'use-credentials':
+						this._crossOrigin = val;
+						this.setAttribute('crossorigin', val);
+					}
+					if (this._thumbnail) {
+						this._thumbnail.crossOrigin = val;
+					}
 				}
 			},
 
