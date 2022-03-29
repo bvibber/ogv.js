@@ -7,7 +7,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
-1.8.7 - 2022-03-04
+1.8.7 - 2022-??-?? (not yet released)
 * Bump emscripten compatibility to 3.1.6
 * Bump Opus to 1.3.1
 * Bump yuv-canvas to 1.2.9, fixes WebGL performance regressions on some browsers
