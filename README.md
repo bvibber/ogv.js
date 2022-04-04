@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.8 - 2022-04-04
+* Bump yuv-canvas to 1.2.10, fixes WebGL scaling bug in Netscape/macOS; adjustment to prior performance tweaks.
+
 1.8.7 - 2022-03-29
 * Bump emscripten compatibility to 3.1.8
 * Bump Opus to 1.3.1
