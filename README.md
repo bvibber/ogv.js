@@ -7,6 +7,9 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.9 - ????-??-??
+* Bump yuv-canvas to 1.2.11, further perf improvments for frame drawing
+
 1.8.8 - 2022-04-04
 * Bump yuv-canvas to 1.2.10, fixes WebGL scaling bug in Netscape/macOS; adjustment to prior performance tweaks.
 
