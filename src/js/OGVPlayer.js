@@ -14,6 +14,9 @@ import OGVMediaType from './OGVMediaType.js';
 import OGVTimeRanges from './OGVTimeRanges.js';
 import OGVWrapperCodec from './OGVWrapperCodec.js';
 
+// Media resources
+import silence from '../media/silence.mp3';
+
 const nextTick = (() => {
 	if (typeof setImmediate === 'function') {
 		return setImmediate;
@@ -916,6 +919,13 @@ class OGVPlayer extends OGVJSElement {
 	}
 
 	static initSharedAudioContext() {
+		// Workaround for iOS audio output channel issue
+		// If there's no <audio> or <video> Safari puts Web Audio onto
+		// the ringer channel instead of the media channel!
+		var el = document.createElement('audio');
+		el.src = silence;
+		el.play();
+
 		AudioFeeder.initSharedAudioContext();
 	}
 

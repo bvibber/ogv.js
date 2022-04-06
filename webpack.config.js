@@ -67,6 +67,19 @@ var babelRuleES5 = {
   }
 };
 
+var urlLoader = {
+  test: /\.(png|gif|jpg|jpeg|mp3|mp4|webm|ogg)$/,
+  exclude: /node_modules/,
+  use: [
+    {
+      loader: 'url-loader',
+      options: {
+        limit: 8192,
+      },
+    },
+  ],
+};
+
 var optopts = {
   minimizer: [
     new TerserPlugin({
@@ -92,7 +105,8 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleModule
+        babelRuleModule,
+        urlLoader
       ]
     },
     optimization: optopts,
@@ -111,7 +125,8 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5
+        babelRuleES5,
+        urlLoader
       ]
     },
     optimization: optopts,
@@ -128,7 +143,8 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5
+        babelRuleES5,
+        urlLoader
       ]
     }
   },
@@ -144,7 +160,8 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5
+        babelRuleES5,
+        urlLoader
       ]
     },
     optimization: optopts,
@@ -160,7 +177,8 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5
+        babelRuleES5,
+        urlLoader
       ]
     },
     optimization: optopts,
@@ -176,7 +194,8 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5
+        babelRuleES5,
+        urlLoader
       ]
     },
     optimization: optopts,

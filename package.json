@@ -57,6 +57,7 @@
     "eslint": "^7.32.0",
     "file-loader": "^6.2.0",
     "stream-file": "^0.3.0",
+    "url-loader": "^4.1.1",
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^3.11.3",
