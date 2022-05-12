@@ -1,5 +1,4 @@
-ogv.js
-======
+# ogv.js
 
 Media decoder and player for Ogg Vorbis/Opus/Theora and WebM VP8/VP9/AV1 video.
 
@@ -7,100 +6,66 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+1.8.10 - 2022-??-??
+
+* Bump emscripten compatibility to 3.1.10
+
 1.8.9 - 2022-04-06
+
 * Bump yuv-canvas to 1.2.11, further perf improvments for frame drawing
 * Workaround gets audio working when ringer is disabled by iOS hardware switch
 
 1.8.8 - 2022-04-04
+
 * Bump yuv-canvas to 1.2.10, fixes WebGL scaling bug in Netscape/macOS; adjustment to prior performance tweaks.
 
 1.8.7 - 2022-03-29
+
 * Bump emscripten compatibility to 3.1.8
 * Bump Opus to 1.3.1
 * Bump yuv-canvas to 1.2.9, fixes WebGL performance regressions on some browsers
 * experimental demo/threaded.php provides a COOP-COEP-CORP environment for testing threaded decoders (top-level frame and all worker JS must opt in to COOP-COEP; CORP or CORS required for most loaded resources)
 
 1.8.6 - 2022-01-12
+
 * Bump to yuv-canvas
 * Fix demo for removal of video-canvas mode
 
 1.8.5 - 2022-01-11
+
 * Remove unnecessary user-agent checks
 * Remove flaky, obsolete support for faking CSS `object-fit`
 * Remove experimental support for streaming `<canvas>` into `<video>`
 
 1.8.4 - 2021-07-02
+
 * Fix for fix for OGVLoader.base fix
 
 1.8.3 - 2021-07-02
+
 * Fixes for build with emscripten 2.0.25
 * Fix for nextTick/setImmediate-style polyfill in front-end
 * Provisional fix for OGVLoader.base not working with CDNs
-    * the fallback code for loading a non-local worker had been broken with WebAssembly for some time, sorry!
+  * the fallback code for loading a non-local worker had been broken with WebAssembly for some time, sorry!
 
 1.8.2 - errored out
 
 1.8.1 - 2021-02-18
+
 * Fixed OGVCompat APIs to correctly return false without WebAssembly and Web Audio
 
 1.8.0 - 2021-02-09
+
 * Dropping IE support and Flash audio backend
-    * Updated to stream-file 0.3.0
-    * Updated to audio-feeder 0.5.0
-    * The old IE 10/11 support _no longer works_ due to the Flash plugin being disabled, and so is being removed
+  * Updated to stream-file 0.3.0
+  * Updated to audio-feeder 0.5.0
+  * The old IE 10/11 support _no longer works_ due to the Flash plugin being disabled, and so is being removed
 * Drop es6-promise shim
-    * Now requires WebAssembly, which requires native Promise support
+  * Now requires WebAssembly, which requires native Promise support
 * Build & fixes
-    * Demo fixed (removed test files that are now offline)
-    * Builds with emscripten 2.0.13
-    * Requires latest meson from git pending a fix hitting release
-
-1.7.0 - 2020-09-28
-* Builds with emscripten's LLVM upstream backend
-    * Updated to build with emscripten 2.0.4
-* Reduced amount of memory used between GC runs by reusing frame buffers
-* Removed `memoryLimit` option
-    * JS, Wasm, and threaded Wasm builds now all use dynamic memory growth
-* Updated dav1d
-* Updated libvpx to 1.8.1
-* Experimental SIMD builds of AV1 decoder optional, with `make SIMD=1`
-    * These work in Chrome with the "WebAssembly SIMD" flag enabled in chrome://flags/
-    * Significant speed boost when available.
-    * Available with and without multithreading.
-    * Must enable explicitly with `simd: true` in `options`.
-* Experimental SIMD work for VP9 as well, incomplete.
-
-1.6.1 - 2019-06-18
-* playbackSpeed attribute now supported
-* updated audio-feeder to 0.4.21;
-    * mono audio is now less loud, matching native playback better
-    * audio resampling now uses linear interpolation for upscaling
-    * fix for IE in bundling scenarios that use strict mode
-    * tempo change support thanks to a great patch from velochy!
-* updated yuv-canvas to 1.2.6;
-    * fixes for capturing WebGL canvas as MediaStream
-* fixes for seeks on low frame rate video
-* updated emscripten toolchain to 1.38.36
-    * drop OUTLINING_LIMIT from AV1 JS build; doesn't work in newer emscripten and not really needed
-
-1.6.0 - 2019-02-26
-* experimental support for AV1 video in WebM
-* update buildchain to emscripten 1.38.28
-* fix a stray global
-* starting to move to ES6 classes and modules
-* building with babel for ES5/IE11 compat
-* updated eslint
-* updated yuv-canvas to 1.2.4; fixes for software GL rendering
-* updated audio-feeder to 0.4.15; fixes for resampling and Flash perf
-* retooled buffer copies
-* sync fix for audio packets with discard padding
-* clients can pass a custom `StreamFile` instance as `{stream:foo}` in options. This can be useful for custom streaming until MSE interfaces are ready.
-* refactored WebM keyframe detection
-* prefill the frame pipeline as well as the audio pipeline before starting audio
-* removed BINARYEN_IGNORE_IMPLICIT_TRAPS=1 option which can cause intermittent breakages
-* changed download streaming method to avoid data corruption problem on certain files
-* fix for seek on very short WebM files
-* fix for replay-after-end-of-playback in WebM
+  * Demo fixed (removed test files that are now offline)
+  * Builds with emscripten 2.0.13
+  * Requires latest meson from git pending a fix hitting release
 
 See more details and history in [CHANGES.md](https://github.com/brion/ogv.js/blob/master/CHANGES.md)
 
