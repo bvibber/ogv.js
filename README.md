@@ -8,7 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 1.8.10 - 2022-??-??
 
-* Bump emscripten compatibility to 3.1.10
+* Bump emscripten compatibility to 3.1.17
 
 1.8.9 - 2022-04-06
 
