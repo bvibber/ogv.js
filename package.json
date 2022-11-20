@@ -10,7 +10,7 @@
     "dist/"
   ],
   "scripts": {
-    "prepublish": "make -j4 dist",
+    "prepack": "make -j4 dist",
     "build": "webpack",
     "lint": "eslint src/js",
     "test": "make tests && npx static build/tests",
