@@ -98,8 +98,10 @@ module.exports = [
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
       filename: 'ogv-es2017.js',
-      libraryTarget: 'umd',
-      library: 'ogvjs'
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -117,8 +119,10 @@ module.exports = [
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
       filename: 'ogv.js',
-      libraryTarget: 'umd',
-      library: 'ogvjs'
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -135,7 +139,11 @@ module.exports = [
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
-      filename: 'ogv-support.js'
+      filename: 'ogv-support.js',
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -151,7 +159,11 @@ module.exports = [
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
-      filename: 'ogv-version.js'
+      filename: 'ogv-version.js',
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
