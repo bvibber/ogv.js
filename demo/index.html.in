@@ -34,6 +34,7 @@
 					<option value="wasm-simd">&nbsp;&nbsp;WASM with SIMD</option>
 					<option value="wasm-mt">&nbsp;&nbsp;WASM threaded</option>
 					<option value="wasm-simd-mt">&nbsp;&nbsp;WASM SIMD+threads</option>
+					<option value="webcodecs">Web Codecs</option>
 					<option value="native">native</option>
 				</select>
 			</div>

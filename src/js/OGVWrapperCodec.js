@@ -8,6 +8,7 @@
  * @license MIT-style
  */
 import OGVLoader from './OGVLoaderWeb.js';
+import {OGVDecoderVideoWebCodecs} from './OGVWebCodecs.js';
 
 class OGVWrapperCodec {
 	constructor(options) {
@@ -318,6 +319,10 @@ class OGVWrapperCodec {
 					fb.keyframeTimestamp = keyframeTimestamp;
 				}
 				cb(ok);
+			}, {
+				timestamp: timestamp * 1000000,
+				duration: 20 * 1000, // hack
+				type: keyframeTimestamp === timestamp ? 'key' : 'delta'
 			});
 		});
 	}
@@ -419,31 +424,41 @@ class OGVWrapperCodec {
 
 	loadVideoCodec(callback) {
 		if (this.demuxer.videoCodec) {
-			let simd = !!this.options.simd,
-				threading = !!this.options.threading;
-			let videoClassMap = {
-				theora: 'OGVDecoderVideoTheoraW',
-				vp8: (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W'),
-				vp9: (threading ? (simd ? 'OGVDecoderVideoVP9SIMDMTW'
-									   : 'OGVDecoderVideoVP9MTW')
-							    : (simd ? 'OGVDecoderVideoVP9SIMDW'
-							           : 'OGVDecoderVideoVP9W')),
-				av1: (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
-										: 'OGVDecoderVideoAV1MTW')
-								: (simd ? 'OGVDecoderVideoAV1SIMDW'
-										: 'OGVDecoderVideoAV1W')),
-			};
-			let className = videoClassMap[this.demuxer.videoCodec];
-			this.processing = true;
-			OGVLoader.loadClass(className, (videoCodecClass) => {
-				let videoOptions = {};
-				if (this.demuxer.videoFormat) {
-					videoOptions.videoFormat = this.demuxer.videoFormat;
+			let codec = this.demuxer.videoCodec;
+			let format = this.demuxer.videoFormat;
+
+			let webcodecs = this.options.webcodecs
+				? OGVDecoderVideoWebCodecs.isCodecSupported(codec)
+				: Promise.resolve(false);
+			webcodecs.then((supported) => {
+				if (supported) {
+					return OGVDecoderVideoWebCodecs.factory(codec);
 				}
-				if (threading) {
-					// Hack around multiple-instantiation pthreads/modularize bug
-					// in emscripten 1.38.27
-					delete window.ENVIRONMENT_IS_PTHREAD;
+				let simd = !!this.options.simd,
+				threading = !!this.options.threading;
+				let videoClassMap = {
+					theora: 'OGVDecoderVideoTheoraW',
+					vp8: (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W'),
+					vp9: (threading ? (simd ? 'OGVDecoderVideoVP9SIMDMTW'
+										: 'OGVDecoderVideoVP9MTW')
+									: (simd ? 'OGVDecoderVideoVP9SIMDW'
+										: 'OGVDecoderVideoVP9W')),
+					av1: (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
+											: 'OGVDecoderVideoAV1MTW')
+									: (simd ? 'OGVDecoderVideoAV1SIMDW'
+											: 'OGVDecoderVideoAV1W')),
+				};
+				let className = videoClassMap[codec];
+				this.processing = true;
+				return new Promise((resolve, reject) => {
+					OGVLoader.loadClass(className, resolve, {
+						worker: this.options.worker && !this.options.threading
+					});
+				});
+			}).then((videoCodecClass) => {
+				let videoOptions = {};
+				if (format) {
+					videoOptions.videoFormat = format;
 				}
 				videoCodecClass(videoOptions).then((decoder) => {
 					this.videoDecoder = decoder;
@@ -453,8 +468,6 @@ class OGVWrapperCodec {
 						callback();
 					});
 				});
-			}, {
-				worker: this.options.worker && !this.options.threading
 			});
 		} else {
 			callback();

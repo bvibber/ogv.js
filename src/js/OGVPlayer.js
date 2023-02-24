@@ -139,6 +139,9 @@ class OGVPlayer extends OGVJSElement {
 		// Experimental SIMD mode, if built.
 		this._enableSIMD = !!options.simd;
 
+		// Experimental WebCodecs mode.
+		this._webcodecs = !!options.webcodecs;
+
 		this._state = State.INITIAL;
 		this._seekState = SeekState.NOT_SEEKING;
 
@@ -2363,6 +2366,7 @@ class OGVPlayer extends OGVJSElement {
 			worker: this._enableWorker,
 			threading: this._enableThreading,
 			simd: this._enableSIMD,
+			webcodecs: this._webcodecs
 		};
 		if (this._detectedType) {
 			codecOptions.type = this._detectedType;

@@ -681,6 +681,12 @@
                     threading: true, // experimental
                     simd: true // experimental
                 });
+            } else if (playerBackend == 'webcodecs') {
+                player = new OGVPlayer({
+                    debug: !!debugFilter,
+                    debugFilter: debugFilter,
+                    webcodecs: true // experimental
+                });
             } else if (playerBackend == 'native') {
                 player = document.createElement('video');
             } else {

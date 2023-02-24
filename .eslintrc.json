@@ -17,6 +17,9 @@
         "Float32Array": true,
         "Uint8Array": true,
         "Uint32Array": true,
-        "setImmediate": true
+        "setImmediate": true,
+        "Promise": true,
+        "VideoDecoder": true,
+        "ArrayBuffer": true
     }
 }
