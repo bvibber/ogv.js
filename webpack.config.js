@@ -94,13 +94,14 @@ module.exports = [
   {
     // Main entry point! - ES Module
     entry: './src/js/ogv.js',
-    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
       filename: 'ogv-es2017.js',
-      libraryTarget: 'umd',
-      library: 'ogvjs'
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -114,13 +115,14 @@ module.exports = [
   {
     // Main entry point! - ES5
     entry: './src/js/ogv.js',
-    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
       filename: 'ogv.js',
-      libraryTarget: 'umd',
-      library: 'ogvjs'
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -134,11 +136,14 @@ module.exports = [
   {
     // Alt limited entry point for compat testing before loading
     entry: './src/js/ogv-support.js',
-    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
-      filename: 'ogv-support.js'
+      filename: 'ogv-support.js',
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -151,11 +156,14 @@ module.exports = [
   {
     // Alt limited entry point for just exposting the version marker string
     entry: './src/js/ogv-version.js',
-    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
-      filename: 'ogv-version.js'
+      filename: 'ogv-version.js',
+      library: {
+        // `library.name` is omitted, since we want exports to be assigned directly to the root object
+        type: 'umd'
+      }
     },
     plugins: plugins,
     module: {
@@ -168,7 +176,6 @@ module.exports = [
   },
 	{
 	  entry: './src/js/workers/ogv-worker-audio.js',
-    mode: 'production',
 	  output: {
 	    path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),
@@ -185,7 +192,6 @@ module.exports = [
 	},
   {
     entry: './src/js/workers/ogv-worker-video.js',
-    mode: 'production',
     output: {
       path: path.resolve(__dirname, BUILD_DIR),
       publicPath: publicPath(),

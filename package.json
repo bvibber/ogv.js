@@ -10,12 +10,12 @@
     "dist/"
   ],
   "scripts": {
-    "prepublish": "make -j4 dist",
-    "build": "webpack",
+    "prepack": "make -j4 dist",
+    "build": "webpack --mode=production",
     "lint": "eslint src/js",
     "test": "make tests && npx static build/tests",
-    "demo": "webpack serve --open-page=build/demo",
-    "start": "webpack serve"
+    "demo": "webpack serve --mode=development --open-page=build/demo",
+    "start": "webpack serve --mode=development"
   },
   "repository": {
     "type": "git",
