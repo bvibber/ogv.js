@@ -17,55 +17,12 @@ export class OGVDecoderVideoWebCodecs {
         this._callbackQueue = [];
         this.videoDecoder = new VideoDecoder({
             output: (videoFrame) => {
-                let format = {
-                    width: videoFrame.codedWidth,
-                    height: videoFrame.codedHeight,
-                    chromaWidth: videoFrame.codedWidth,
-                    chromaHeight: videoFrame.codedHeight,
-                    cropLeft: videoFrame.visibleRect.x,
-                    cropTop: videoFrame.visibleRect.y,
-                    cropWidth: videoFrame.visibleRect.width,
-                    cropHeight: videoFrame.visibleRect.height,
-                    displayWidth: videoFrame.displayWidth,
-                    displayHeight: videoFrame.displayHeight
+                // Caller will be responsible for calling close()
+                this.frameBuffer = {
+                    videoFrame
                 };
-                if (videoFrame.format === 'I420') {
-                    format.chromaWidth = format.width >> 1;
-                    format.chromaHeight = format.height >> 1;
-                }
-                if (videoFrame.format === 'I422') {
-                    format.chromaWidth = format.width >> 1;
-                }
-                if (videoFrame.format === 'NV12') {
-                    throw new Error('NV12 not yet supported');
-                }
-                let options = {
-                    rect: {
-                        x: 0,
-                        y: 0,
-                        width: format.width,
-                        height: format.height
-                    }
-                };
-                let size = videoFrame.allocationSize(options);
-                let buffer = new ArrayBuffer(size);
-                let plane = (layout, height) => {
-                    return {
-                        stride: layout.stride,
-                        bytes: new Uint8Array(buffer, layout.offset, layout.stride * height)
-                    }
-                };
-                videoFrame.copyTo(buffer, options).then((layout) => {
-                    this.frameBuffer = {
-                        format,
-                        y: plane(layout[0], format.height),
-                        u: plane(layout[1], format.chromaHeight),
-                        v: plane(layout[2], format.chromaHeight),
-                    };
-                    videoFrame.close();
-                    let callback = this._callbackQueue.shift();
-                    callback(1);
-                });
+                let callback = this._callbackQueue.shift();
+                callback(1);
             },
             error: (error) => {
                 console.log(error);
@@ -144,6 +101,6 @@ export class OGVDecoderVideoWebCodecs {
     }
 
     recycleFrame(frame) {
-        //
+        frame.videoFrame.close();
     }
 }

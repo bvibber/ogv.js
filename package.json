@@ -61,7 +61,7 @@
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
     "webpack-dev-server": "^3.11.3",
-    "yuv-canvas": "^1.2.11"
+    "yuv-canvas": "../yuv-canvas"
   },
   "dependencies": {
     "@babel/runtime": "^7.16.7"

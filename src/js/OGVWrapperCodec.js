@@ -320,8 +320,8 @@ class OGVWrapperCodec {
 				}
 				cb(ok);
 			}, {
-				timestamp: timestamp * 1000000,
-				duration: 20 * 1000, // hack
+				timestamp: Math.round(timestamp * 1000000),
+				duration: 0, // hack, get duration from the packets
 				type: keyframeTimestamp === timestamp ? 'key' : 'delta'
 			});
 		});

@@ -1403,7 +1403,8 @@ class OGVPlayer extends OGVJSElement {
 			this.removeChild(this._thumbnail);
 			this._thumbnail = null;
 		}
-		this._frameSink.drawFrame(buffer);
+		let frame = buffer.videoFrame;
+		this._frameSink.drawFrame(frame || buffer);
 	}
 
 	/**
