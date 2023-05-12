@@ -89,9 +89,7 @@ class OGVWorkerSupport {
 						// so transfer the small buffers.
 						props[propName] = propVal;
 						if (propVal) {
-							transfers.push(propVal.y.bytes.buffer);
-							transfers.push(propVal.u.bytes.buffer);
-							transfers.push(propVal.v.bytes.buffer);
+							transfers.push(propVal.buffer);
 						}
 					} else {
 						props[propName] = propVal;

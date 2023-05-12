@@ -67,8 +67,13 @@ mergeInto(LibraryManager.library, {
 			return arr;
 		}
 
-		var outPicX = picX & ~1; // round down to divisible by 2
-		var outPicY = picY & ~1; // round down to divisible by 2
+		// round down to divisible by 2
+		function evenDown(x) {
+			return x & ~1;
+		}
+
+		var outPicX = evenDown(picX);
+		var outPicY = evenDown(picY);
 		var chromaPicX = outPicX * chromaWidth / width;
 		var chromaPicY = outPicY * chromaHeight / height;
 		var chromaPicWidth = picWidth * chromaWidth / width;
@@ -94,9 +99,13 @@ mergeInto(LibraryManager.library, {
 		// between garbage collection cycles.
 		var recycled = Module['recycledFrames'],
 			frame,
-			lenY = height * strideY,
-			lenCb = chromaHeight * strideCb,
-			lenCr = chromaHeight * strideCr;
+			lenY = height * width,
+			lenCb = chromaHeight * chromaWidth,
+			lenCr = chromaHeight * chromaWidth,
+			lenBuffer = lenY + lenCb + lenCr,
+			offsetY = 0,
+			offsetCb = offsetY + lenY,
+			offsetCr = offsetCb + lenCb;
 		while (recycled.length > 0) {
 			var next = recycled.shift(),
 				format = next['format'];
@@ -110,6 +119,7 @@ mergeInto(LibraryManager.library, {
 				format['cropHeight'] === picHeight &&
 				format['displayWidth'] === displayWidth &&
 				format['displayHeight'] === displayHeight &&
+				next['buffer'].byteLength === lenBuffer &&
 				next['y']['bytes'].length === lenY &&
 				next['u']['bytes'].length === lenCb &&
 				next['v']['bytes'].length === lenCr
@@ -119,6 +129,7 @@ mergeInto(LibraryManager.library, {
 			}
 		}
 		if (!frame) {
+			var buffer = new ArrayBuffer(lenBuffer);
 			frame = {
 				'format': {
 					'width': width,
@@ -132,23 +143,24 @@ mergeInto(LibraryManager.library, {
 					'displayWidth': displayWidth,
 					'displayHeight': displayHeight
 				},
+				'buffer': buffer,
 				'y': {
-					'bytes': new Uint8Array(lenY),
-					'stride': strideY
+					'bytes': new Uint8Array(buffer, offsetY),
+					'stride': width
 				},
 				'u': {
-					'bytes': new Uint8Array(lenCb),
-					'stride': strideCb
+					'bytes': new Uint8Array(buffer, offsetCb),
+					'stride': chromaWidth
 				},
 				'v': {
-					'bytes': new Uint8Array(lenCr),
-					'stride': strideCr
+					'bytes': new Uint8Array(buffer, offsetCr),
+					'stride': chromaWidth
 				}
 			};
 		}
-		copyAndTrim(frame['y']['bytes'], bufferY, strideY, height, picX, picY, picWidth, picHeight, 0);
-		copyAndTrim(frame['u']['bytes'], bufferCb, strideCb, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
-		copyAndTrim(frame['v']['bytes'], bufferCr, strideCr, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
+		copyAndTrim(frame['y']['bytes'], bufferY, width, height, picX, picY, picWidth, picHeight, 0);
+		copyAndTrim(frame['u']['bytes'], bufferCb, chromaWidth, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
+		copyAndTrim(frame['v']['bytes'], bufferCr, chromaWidth, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
 
 		// And queue up the output buffer!
 		Module['frameBuffer'] = frame;
