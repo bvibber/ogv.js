@@ -40,22 +40,24 @@ mergeInto(LibraryManager.library, {
 		var heap = wasmMemory.buffer;
 		var format = Module['videoFormat'];
 
-		function copyAndTrim(arr, buffer, stride, height, picX, picY, picWidth, picHeight, fill) {
-			arr.set(new Uint8Array(heap, buffer, stride * height));
-
+		function copyAndTrim(arr, buffer, stride, width, height, picX, picY, picWidth, picHeight, fill) {
 			// Trim out anything outside the visible area
 			// Protected against green stripes in some codecs (VP9)
-			var x, y, ptr;
+			var inbuf = new Uint8Array(heap, buffer, stride * height);
+			var x, y, ptr, inptr;
 			for (ptr = 0, y = 0; y < picY; y++, ptr += stride) {
 				for (x = 0; x < stride; x++) {
 					arr[ptr + x] = fill;
 				}
 			}
-			for (; y < picY + picHeight; y++, ptr += stride) {
+			for (inptr = stride * picY; y < picY + picHeight; y++, ptr += width, inptr += stride) {
 				for (x = 0; x < picX; x++) {
 					arr[ptr + x] = fill;
 				}
-				for (x = picX + picWidth; x < stride; x++) {
+				for (; x < picWidth; x++) {
+					arr[ptr + x] = inbuf[inptr + x];
+				}
+				for (; x < width; x++) {
 					arr[ptr + x] = fill;
 				}
 			}
@@ -72,8 +74,31 @@ mergeInto(LibraryManager.library, {
 			return x & ~1;
 		}
 
-		var outPicX = evenDown(picX);
-		var outPicY = evenDown(picY);
+		function evenUp(x) {
+			return evenDown( x + 1 );
+		}
+
+
+		// Hackety hack! We don't need to keep anything in the coded area outside the picture.
+		// Reorganize so the origin is as close as possible to the picture area
+		var outPicX = picX - evenDown(picX);
+		var outPicY = picY - evenDown(picY);
+		var horizRatio = width / chromaWidth;
+		var vertRatio = height / chromaHeight;
+		width = evenUp( outPicX + picWidth );
+		height = evenUp( outPicY + picHeight );
+		chromaWidth = width / horizRatio;
+		chromaHeight = height / vertRatio;
+
+		var offsetX = picX - outPicY;
+		var offsetY = picY - outPicY;
+
+		bufferY  += strideY  * offsetY             + offsetX;
+		bufferCb += strideCb * offsetY / vertRatio + offsetX / horizRatio;
+		bufferCr += strideCr * offsetY / vertRatio + offsetX / horizRatio;
+		picY = outPicY;
+		picX = outPicX;
+
 		var chromaPicX = outPicX * chromaWidth / width;
 		var chromaPicY = outPicY * chromaHeight / height;
 		var chromaPicWidth = picWidth * chromaWidth / width;
@@ -145,22 +170,22 @@ mergeInto(LibraryManager.library, {
 				},
 				'buffer': buffer,
 				'y': {
-					'bytes': new Uint8Array(buffer, offsetY),
+					'bytes': new Uint8Array(buffer, offsetY, lenY),
 					'stride': width
 				},
 				'u': {
-					'bytes': new Uint8Array(buffer, offsetCb),
+					'bytes': new Uint8Array(buffer, offsetCb, lenCb),
 					'stride': chromaWidth
 				},
 				'v': {
-					'bytes': new Uint8Array(buffer, offsetCr),
+					'bytes': new Uint8Array(buffer, offsetCr, lenCr),
 					'stride': chromaWidth
 				}
 			};
 		}
-		copyAndTrim(frame['y']['bytes'], bufferY, width, height, picX, picY, picWidth, picHeight, 0);
-		copyAndTrim(frame['u']['bytes'], bufferCb, chromaWidth, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
-		copyAndTrim(frame['v']['bytes'], bufferCr, chromaWidth, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
+		copyAndTrim(frame['y']['bytes'], bufferY, strideY, width, height, picX, picY, picWidth, picHeight, 0);
+		copyAndTrim(frame['u']['bytes'], bufferCb, strideCb, chromaWidth, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
+		copyAndTrim(frame['v']['bytes'], bufferCr, strideCr, chromaWidth, chromaHeight, chromaPicX, chromaPicY, chromaPicWidth, chromaPicHeight, 128);
 
 		// And queue up the output buffer!
 		Module['frameBuffer'] = frame;
