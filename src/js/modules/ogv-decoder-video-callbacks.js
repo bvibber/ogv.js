@@ -85,6 +85,7 @@ mergeInto(LibraryManager.library, {
 		var outPicY = picY - evenDown(picY);
 		var horizRatio = width / chromaWidth;
 		var vertRatio = height / chromaHeight;
+		// comment out next four lines to break safari
 		width = evenUp( outPicX + picWidth );
 		height = evenUp( outPicY + picHeight );
 		chromaWidth = width / horizRatio;
