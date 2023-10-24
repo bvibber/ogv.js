@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # configure libnestegg
 dir=`pwd`

@@ -219,7 +219,6 @@ $(WASM_ROOT_BUILD_DIR)/lib/liboggz.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUI
 	./$(BUILDSCRIPTS_DIR)/compileOggzWasm.sh
 
 $(WASM_ROOT_BUILD_DIR)/lib/libvorbis.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureVorbis.sh $(BUILDSCRIPTS_DIR)/compileVorbisWasm.sh
-	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureVorbis.sh
 	./$(BUILDSCRIPTS_DIR)/compileVorbisWasm.sh
 

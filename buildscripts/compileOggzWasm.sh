@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 dir=`pwd`
 
@@ -9,7 +10,9 @@ cd build
 mkdir -p wasm
 cd wasm
 
-mkdir -p root
+mkdir -p root/bin
+mkdir -p root/lib
+mkdir -p root/include
 mkdir -p liboggz
 cd liboggz
 

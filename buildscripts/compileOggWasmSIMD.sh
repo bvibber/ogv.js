@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 dir=`pwd`
 
@@ -15,7 +16,7 @@ cd libogg
 
 # finally, run configuration script
 emconfigure ../../../libogg/configure \
-    --prefix="$dir/build/wasm/root" \
+    --prefix="$dir/build/wasm-simd/root" \
     --disable-shared \
     CFLAGS=-msimd128 \
 || exit 1

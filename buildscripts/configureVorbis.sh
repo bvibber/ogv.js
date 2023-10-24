@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # configure libvorbis
 dir=`pwd`

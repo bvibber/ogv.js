@@ -1,6 +1,7 @@
 #!/bin/bash
 
 dir=`pwd`
+set -e
 
 # set up the build directory
 mkdir -p build

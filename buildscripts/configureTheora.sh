@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # configure libtheora
 dir=`pwd`
