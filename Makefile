@@ -22,11 +22,18 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
 
+SIMD=1
+MT=0
+
 ifdef SIMD
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora-simd.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-simd.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-mt.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd.js
+ifdef MT
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-mt.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-mt.js
+endif
 endif
 
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
@@ -41,9 +48,49 @@ WASM_ROOT_BUILD_DIR:=build/wasm/root
 WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
 WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
 
-.PHONY : DEFAULT all clean js demo democlean tests dist zip lint run-demo run-dev-server
+COMMON_DEPS:=$(JS_SRC_DIR)/modules/ogv-module-pre.js \
+			 $(BUILDSCRIPTS_DIR)/compile-options.sh
+
+DEMUX_DEPS:=$(COMMON_DEPS) \
+			$(C_SRC_DIR)/ogv-demuxer.h \
+			$(C_SRC_DIR)/ogv-buffer-queue.c \
+			$(C_SRC_DIR)/ogv-buffer-queue.h \
+			$(JS_SRC_DIR)/modules/ogv-demuxer.js \
+			$(JS_SRC_DIR)/modules/ogv-demuxer-callbacks.js \
+			$(JS_SRC_DIR)/modules/ogv-demuxer-exports.json
+
+AUDIO_DEPS:=$(COMMON_DEPS) \
+			$(C_SRC_DIR)/ogv-decoder-audio.h \
+            $(JS_SRC_DIR)/modules/ogv-decoder-audio.js \
+            $(JS_SRC_DIR)/modules/ogv-decoder-audio-callbacks.js \
+            $(JS_SRC_DIR)/modules/ogv-decoder-audio-exports.json
+
+VIDEO_DEPS:=$(COMMON_DEPS) \
+			$(C_SRC_DIR)/ogv-thread-support.h \
+			$(JS_SRC_DIR)/modules/ogv-decoder-video.js \
+			$(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
+			$(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json
+
+
+
+.PHONY : DEFAULT all clean js demo democlean tests dist zip lint run-demo run-dev-server ogg webm vorbis opus theora theora-simd vp8 vp8-simd vp9 vp9-simd vp9-simd-mt av1 av1-simd av1-simd-mt
 
 DEFAULT : all
+
+ogg : build/ogv-demuxer-ogg.js
+webm : build/ogv-demuxer-webm.js
+vorbis : build/ogv-decoder-audio-vorbis.js 
+opus : build/ogv-decoder-audio-opus.js 
+theora : build/ogv-decoder-video-theora.js 
+theora-simd : build/ogv-decoder-video-theora-simd.js 
+vp8 : build/ogv-decoder-video-vp8.js 
+vp8-simd : build/ogv-decoder-video-vp8-simd.js 
+vp9 : build/ogv-decoder-video-vp9.js 
+vp9-simd : build/ogv-decoder-video-vp9-simd.js 
+vp9-simd-mt : build/ogv-decoder-video-vp9-simd-mt.js 
+av1 : build/ogv-decoder-video-av1.js
+av1-simd : build/ogv-decoder-video-av1-simd.js
+av1-simd-mt : build/ogv-decoder-video-av1-simd-mt.js
 
 # Runners
 
@@ -120,14 +167,22 @@ dist: js README.md COPYING
 	if [ "x$(SIMD)x" = "xx" ]; then \
 		echo "Skipping SIMD, compile with 'make SIMD=1' if desired."; \
 	else \
-		cp -p build/ogv-decoder-video-av1-simd.js \
-		      build/ogv-decoder-video-av1-simd-mt.js \
-		      build/ogv-decoder-video-av1-simd-mt.worker.js \
+		cp -p build/ogv-decoder-video-theora-simd.js \
+		      build/ogv-decoder-video-vp8-simd.js \
 		      build/ogv-decoder-video-vp9-simd.js \
-		      build/ogv-decoder-video-vp9-simd-mt.js \
-		      build/ogv-decoder-video-vp9-simd-mt.worker.js \
+		      build/ogv-decoder-video-av1-simd.js \
 		      dist/ \
 			  ; \
+		if [ "x$(MT)x" = "xx" ]; then \
+			echo "Skipping MT, compile with 'make SIMD=1 MT=1' if desired."; \
+		else \
+			cp -p build/ogv-decoder-video-vp9-simd-mt.js \
+		    	  build/ogv-decoder-video-vp9-simd-mt.worker.js \
+		    	  build/ogv-decoder-video-av1-simd-mt.js \
+		    	  build/ogv-decoder-video-av1-simd-mt.worker.js \
+		    	  dist/ \
+				  ; \
+		fi \
 	fi
 
 	cp -p libogg/COPYING dist/COPYING-ogg.txt
@@ -155,6 +210,9 @@ $(WASM_ROOT_BUILD_DIR)/lib/libogg.a : $(BUILDSCRIPTS_DIR)/configureOgg.sh $(BUIL
 	./$(BUILDSCRIPTS_DIR)/configureOgg.sh
 	./$(BUILDSCRIPTS_DIR)/compileOggWasm.sh
 
+$(WASMSIMD_ROOT_BUILD_DIR)/lib/libogg.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/compileOggWasmSIMD.sh
+	./$(BUILDSCRIPTS_DIR)/compileOggWasmSIMD.sh
+
 $(WASM_ROOT_BUILD_DIR)/lib/liboggz.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOggz.sh $(BUILDSCRIPTS_DIR)/compileOggzWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureOggz.sh
@@ -180,6 +238,9 @@ $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a 
 	./$(BUILDSCRIPTS_DIR)/configureTheora.sh
 	./$(BUILDSCRIPTS_DIR)/compileTheoraWasm.sh
 
+$(WASMSIMD_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a $(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
+	./$(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
+
 $(WASM_ROOT_BUILD_DIR)/lib/libnestegg.a : $(BUILDSCRIPTS_DIR)/configureNestEgg.sh $(BUILDSCRIPTS_DIR)/compileNestEggWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureNestEgg.sh
@@ -188,10 +249,6 @@ $(WASM_ROOT_BUILD_DIR)/lib/libnestegg.a : $(BUILDSCRIPTS_DIR)/configureNestEgg.s
 $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
-
-$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 
 $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMD.sh
 	test -d build || mkdir -p build
@@ -205,10 +262,6 @@ $(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 
-$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
-
 $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
@@ -219,164 +272,108 @@ $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWa
 
 # Compile our Emscripten modules
 
-build/ogv-demuxer-ogg.js : $(C_SRC_DIR)/ogv-demuxer-ogg.c \
-                           $(C_SRC_DIR)/ogv-demuxer.h \
-                           $(C_SRC_DIR)/ogv-buffer-queue.c \
-                           $(C_SRC_DIR)/ogv-buffer-queue.h \
-                           $(JS_SRC_DIR)/modules/ogv-demuxer.js \
-                           $(JS_SRC_DIR)/modules/ogv-demuxer-callbacks.js \
-                           $(JS_SRC_DIR)/modules/ogv-demuxer-exports.json \
-                           $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+build/ogv-demuxer-ogg.js : $(DEMUX_DEPS) \
+						   $(C_SRC_DIR)/ogv-demuxer-ogg.c \
                            $(WASM_ROOT_BUILD_DIR)/lib/libogg.a \
                            $(WASM_ROOT_BUILD_DIR)/lib/liboggz.a \
                            $(WASM_ROOT_BUILD_DIR)/lib/libskeleton.a \
-                           $(BUILDSCRIPTS_DIR)/compile-options.sh \
                            $(BUILDSCRIPTS_DIR)/compileOgvDemuxerOgg.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerOgg.sh
 
-build/ogv-demuxer-webm.js : $(C_SRC_DIR)/ogv-demuxer-webm.c \
-                            $(C_SRC_DIR)/ogv-demuxer.h \
-                            $(C_SRC_DIR)/ogv-buffer-queue.c \
-                            $(C_SRC_DIR)/ogv-buffer-queue.h \
-                            $(JS_SRC_DIR)/modules/ogv-demuxer.js \
-                            $(JS_SRC_DIR)/modules/ogv-demuxer-callbacks.js \
-                            $(JS_SRC_DIR)/modules/ogv-demuxer-exports.json \
-                            $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+build/ogv-demuxer-webm.js : $(DEMUX_DEPS) \
+							$(C_SRC_DIR)/ogv-demuxer-webm.c \
                             $(WASM_ROOT_BUILD_DIR)/lib/libnestegg.a \
                             $(BUILDSCRIPTS_DIR)/compile-options.sh \
                             $(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDemuxerWebM.sh
 
-build/ogv-decoder-audio-vorbis.js : $(C_SRC_DIR)/ogv-decoder-audio-vorbis.c \
-                                    $(C_SRC_DIR)/ogv-decoder-audio.h \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-audio.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-audio-callbacks.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-audio-exports.json \
-                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+build/ogv-decoder-audio-vorbis.js : $(AUDIO_DEPS) \
+									$(C_SRC_DIR)/ogv-decoder-audio-vorbis.c \
                                     $(WASM_ROOT_BUILD_DIR)/lib/libogg.a \
                                     $(WASM_ROOT_BUILD_DIR)/lib/libvorbis.a \
-                                    $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                     $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioVorbis.sh
 
-build/ogv-decoder-audio-opus.js : $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
-                                  $(C_SRC_DIR)/ogv-decoder-audio.h \
-                                  $(JS_SRC_DIR)/modules/ogv-decoder-audio.js \
-                                  $(JS_SRC_DIR)/modules/ogv-decoder-audio-callbacks.js \
-                                  $(JS_SRC_DIR)/modules/ogv-decoder-audio-exports.json \
-                                  $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+build/ogv-decoder-audio-opus.js : $(AUDIO_DEPS) \
+								  $(C_SRC_DIR)/ogv-decoder-audio-opus.c \
                                   $(WASM_ROOT_BUILD_DIR)/lib/libogg.a \
                                   $(WASM_ROOT_BUILD_DIR)/lib/libopus.a \
-                                  $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                   $(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderAudioOpus.sh
 
-build/ogv-decoder-video-theora.js : $(C_SRC_DIR)/ogv-decoder-video-theora.c \
-                                    $(C_SRC_DIR)/ogv-decoder-video.h \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                    $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                    $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+build/ogv-decoder-video-theora.js : $(VIDEO_DEPS) \
+									$(C_SRC_DIR)/ogv-decoder-video-theora.c \
                                     $(WASM_ROOT_BUILD_DIR)/lib/libogg.a \
                                     $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a \
-                                    $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                     $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
 
-build/ogv-decoder-video-vp8.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                 $(C_SRC_DIR)/ogv-decoder-video.h \
-								 $(C_SRC_DIR)/ogv-thread-support.h \
-                                 $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                 $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                 $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                 $(JS_SRC_DIR)/modules/ogv-module-pre.js \
+build/ogv-decoder-video-theora-simd.js : $(VIDEO_DEPS) \
+									$(C_SRC_DIR)/ogv-decoder-video-theora.c \
+                                    $(WASMSIMD_ROOT_BUILD_DIR)/lib/libogg.a \
+                                    $(WASMSIMD_ROOT_BUILD_DIR)/lib/libtheoradec.a \
+                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheoraSIMD.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheoraSIMD.sh
+
+build/ogv-decoder-video-vp8.js : $(VIDEO_DEPS) \
+								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                 $(BUILDSCRIPTS_DIR)/compile-options.sh \
                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 
-build/ogv-decoder-video-vp9.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                      $(C_SRC_DIR)/ogv-decoder-video.h \
-     								 $(C_SRC_DIR)/ogv-thread-support.h \
-                                      $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                      $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                      $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                      $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                      $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                      $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                      $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
+build/ogv-decoder-video-vp8-simd.js : $(VIDEO_DEPS) \
+								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+                                 $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8SIMD.sh
+	test -d build || mkdir -p build
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8SIMD.sh
+
+build/ogv-decoder-video-vp9.js : $(VIDEO_DEPS) \
+								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+								 $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a \
+								 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9.sh
 
-build/ogv-decoder-video-av1.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
-                                      $(C_SRC_DIR)/ogv-decoder-video.h \
-                                      $(C_SRC_DIR)/ogv-thread-support.h \
-                                      $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                      $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                      $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                      $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-                                      $(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a \
-                                      $(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a \
-                                      $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                      $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
+build/ogv-decoder-video-av1.js : $(VIDEO_DEPS) \
+								 $(C_SRC_DIR)/ogv-decoder-video-av1.c \
+								 $(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a \
+								 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
 
-build/ogv-decoder-video-vp9-simd.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                           $(C_SRC_DIR)/ogv-decoder-video.h \
-                                           $(C_SRC_DIR)/ogv-thread-support.h \
-                                           $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                           $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                           $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                           $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-						                   $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                           $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                           $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
+build/ogv-decoder-video-vp9-simd.js : $(VIDEO_DEPS) \
+									  $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+									  $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a \
+									  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
 
-build/ogv-decoder-video-av1-simd.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
-                                           $(C_SRC_DIR)/ogv-decoder-video.h \
-                                           $(C_SRC_DIR)/ogv-thread-support.h \
-                                           $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                           $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                           $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                           $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-						                   $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a \
-                                           $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                           $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
+build/ogv-decoder-video-av1-simd.js : $(VIDEO_DEPS) \
+									  $(C_SRC_DIR)/ogv-decoder-video-av1.c \
+						              $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a \
+                                      $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
 
-build/ogv-decoder-video-vp9-simd-mt.js : $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                              $(C_SRC_DIR)/ogv-decoder-video.h \
-                                              $(C_SRC_DIR)/ogv-thread-support.h \
-                                              $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                              $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-						                      $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                              $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                              $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
+build/ogv-decoder-video-vp9-simd-mt.js : $(VIDEO_DEPS) \
+										 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+										 $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+										 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
 
-build/ogv-decoder-video-av1-simd-mt.js : $(C_SRC_DIR)/ogv-decoder-video-av1.c \
-                                              $(C_SRC_DIR)/ogv-decoder-video.h \
-                                              $(C_SRC_DIR)/ogv-thread-support.h \
-                                              $(JS_SRC_DIR)/modules/ogv-decoder-video.js \
-                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-callbacks.js \
-                                              $(JS_SRC_DIR)/modules/ogv-decoder-video-exports.json \
-                                              $(JS_SRC_DIR)/modules/ogv-module-pre.js \
-						                      $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a \
-                                              $(BUILDSCRIPTS_DIR)/compile-options.sh \
-                                              $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
+build/ogv-decoder-video-av1-simd-mt.js : $(VIDEO_DEPS) \
+										 $(C_SRC_DIR)/ogv-decoder-video-av1.c \
+										 $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a \
+										 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMDMT.sh
 

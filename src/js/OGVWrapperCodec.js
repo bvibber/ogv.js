@@ -22,6 +22,8 @@ const videoClassMap = {
 };
 
 const videoSimdClassMap = {
+	theora: 'OGVDecoderVideoTheoraSIMD',
+	vp8: 'OGVDecoderVideoVP8SIMD',
 	vp9: 'OGVDecoderVideoVP9SIMD',
 	av1: 'OGVDecoderVideoAV1SIMD',
 };

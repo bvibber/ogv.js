@@ -6,10 +6,9 @@ install_name_tool = 'echo'
 # disable exe_wrapper for the "sanity check" file which is an .exe so doesn't get made as JS/wasm
 exe_wrapper = 'echo'
 
-[properties]
+[built-in options]
 c_args = ['-msimd128']
 c_link_args = []
-needs_exe_wrapper = true
 
 [host_machine]
 system = 'linux'
