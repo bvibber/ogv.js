@@ -7,7 +7,7 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
-  -s EXPORT_NAME="'OGVDemuxerOggW'" \
+  -s EXPORT_NAME="'OGVDemuxerOgg'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-demuxer-exports.json`" \
   -Ibuild/wasm/root/include \
   --js-library src/js/modules/ogv-demuxer-callbacks.js \
@@ -19,4 +19,4 @@ emcc \
   -lskeleton \
   -loggz \
   -logg \
-  -o build/ogv-demuxer-ogg-wasm.js
+  -o build/ogv-demuxer-ogg.js

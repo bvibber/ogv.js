@@ -7,7 +7,7 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
-  -s EXPORT_NAME="'OGVDecoderVideoTheoraW'" \
+  -s EXPORT_NAME="'OGVDecoderVideoTheora'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/wasm/root/include \
   --js-library src/js/modules/ogv-decoder-video-callbacks.js \
@@ -18,4 +18,4 @@ emcc \
   -Lbuild/wasm/root/lib \
   -ltheora \
   -logg \
-  -o build/ogv-decoder-video-theora-wasm.js
+  -o build/ogv-decoder-video-theora.js

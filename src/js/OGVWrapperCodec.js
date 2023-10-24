@@ -9,6 +9,28 @@
  */
 import OGVLoader from './OGVLoaderWeb.js';
 
+const audioClassMap = {
+	vorbis: 'OGVDecoderAudioVorbis',
+	opus: 'OGVDecoderAudioOpus'
+};
+
+const videoClassMap = {
+	theora: 'OGVDecoderVideoTheora',
+	vp8: 'OGVDecoderVideoVP8',
+	vp9: 'OGVDecoderVideoVP9',
+	av1: 'OGVDecoderVideoAV1',
+};
+
+const videoSimdClassMap = {
+	vp9: 'OGVDecoderVideoVP9SIMD',
+	av1: 'OGVDecoderVideoAV1SIMD',
+};
+
+const videoThreadedClassMap = {
+	vp9: 'OGVDecoderVideoVP9SIMDMT',
+	av1: 'OGVDecoderVideoAV1SIMDMT',
+};
+
 class OGVWrapperCodec {
 	constructor(options) {
 		this.options = options || {};
@@ -169,9 +191,9 @@ class OGVWrapperCodec {
 		this.processing = true;
 		let demuxerClassName;
 		if (this.options.type === 'video/webm' || this.options.type === 'audio/webm') {
-			demuxerClassName = 'OGVDemuxerWebMW';
+			demuxerClassName = 'OGVDemuxerWebM';
 		} else {
-			demuxerClassName = 'OGVDemuxerOggW';
+			demuxerClassName = 'OGVDemuxerOgg';
 		}
 		OGVLoader.loadClass(demuxerClassName, (demuxerClass) => {
 			demuxerClass().then((demuxer) => {
@@ -389,12 +411,9 @@ class OGVWrapperCodec {
 	}
 	
 	loadAudioCodec(callback) {
-		if (this.demuxer.audioCodec) {
-			let audioClassMap = {
-				vorbis: 'OGVDecoderAudioVorbisW',
-				opus: 'OGVDecoderAudioOpusW'
-			};
-			let className = audioClassMap[this.demuxer.audioCodec];
+		let codec = this.demuxer.audioCodec;
+		if (codec) {
+			let className = audioClassMap[codec];
 			this.processing = true;
 			OGVLoader.loadClass(className, (audioCodecClass) => {
 				let audioOptions = {};
@@ -418,32 +437,22 @@ class OGVWrapperCodec {
 	}
 
 	loadVideoCodec(callback) {
-		if (this.demuxer.videoCodec) {
+		const codec = this.demuxer.videoCodec;
+		if (codec) {
 			let simd = !!this.options.simd,
 				threading = !!this.options.threading;
-			let videoClassMap = {
-				theora: 'OGVDecoderVideoTheoraW',
-				vp8: (threading ? 'OGVDecoderVideoVP8MTW' : 'OGVDecoderVideoVP8W'),
-				vp9: (threading ? (simd ? 'OGVDecoderVideoVP9SIMDMTW'
-									   : 'OGVDecoderVideoVP9MTW')
-							    : (simd ? 'OGVDecoderVideoVP9SIMDW'
-							           : 'OGVDecoderVideoVP9W')),
-				av1: (threading ? (simd ? 'OGVDecoderVideoAV1SIMDMTW'
-										: 'OGVDecoderVideoAV1MTW')
-								: (simd ? 'OGVDecoderVideoAV1SIMDW'
-										: 'OGVDecoderVideoAV1W')),
-			};
-			let className = videoClassMap[this.demuxer.videoCodec];
+			let className = videoClassMap[codec];
+			if (simd && videoSimdClassMap[codec]) {
+				className = videoSimdClassMap[codec];
+			}
+			if (simd && threading && videoThreadedClassMap[codec]) {
+				className = videoThreadedClassMap[codec];
+			}
 			this.processing = true;
 			OGVLoader.loadClass(className, (videoCodecClass) => {
 				let videoOptions = {};
 				if (this.demuxer.videoFormat) {
 					videoOptions.videoFormat = this.demuxer.videoFormat;
-				}
-				if (threading) {
-					// Hack around multiple-instantiation pthreads/modularize bug
-					// in emscripten 1.38.27
-					delete window.ENVIRONMENT_IS_PTHREAD;
 				}
 				videoCodecClass(videoOptions).then((decoder) => {
 					this.videoDecoder = decoder;

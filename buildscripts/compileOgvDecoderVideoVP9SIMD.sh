@@ -8,7 +8,7 @@ emcc \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
   -msimd128 \
-  -s EXPORT_NAME="'OGVDecoderVideoVP9SIMDW'" \
+  -s EXPORT_NAME="'OGVDecoderVideoVP9SIMD'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/wasm-simd/root/include \
   --js-library src/js/modules/ogv-decoder-video-callbacks.js \
@@ -18,4 +18,4 @@ emcc \
   src/c/ogv-decoder-video-vpx.c \
   -Lbuild/wasm-simd/root/lib \
   -lvpx \
-  -o build/ogv-decoder-video-vp9-simd-wasm.js
+  -o build/ogv-decoder-video-vp9-simd.js

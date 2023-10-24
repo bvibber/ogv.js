@@ -2,19 +2,18 @@ const fs = require('fs');
 const crc32 = require('./crc32.js');
 
 const OGVDemuxerWebM = require('../dist/ogv-demuxer-webm.js');
-const OGVDemuxerWebMW = require('../dist/ogv-demuxer-webm-wasm.js');
 const OGVDecoderVideoVP8 = require('../dist/ogv-decoder-video-vp8.js');
-const OGVDecoderVideoVP8W = require('../dist/ogv-decoder-video-vp8-wasm.js');
 const OGVDecoderVideoVP9 = require('../dist/ogv-decoder-video-vp9.js');
-const OGVDecoderVideoVP9W = require('../dist/ogv-decoder-video-vp9-wasm.js');
 const OGVDecoderVideoAV1 = require('../dist/ogv-decoder-video-av1.js');
-const OGVDecoderVideoAV1W = require('../dist/ogv-decoder-video-av1-wasm.js');
+const OGVDecoderVideoVP8SIMD = require('../dist/ogv-decoder-video-vp8-simd.js');
+const OGVDecoderVideoVP9SIMD = require('../dist/ogv-decoder-video-vp9-simd.js');
+const OGVDecoderVideoAV1SIMD = require('../dist/ogv-decoder-video-av1-simd.js');
 
-let demuxerClass = OGVDemuxerWebMW;
+let demuxerClass = OGVDemuxerWebM;
 let decoderClass = {
-  'vp8': OGVDecoderVideoVP8W,
-  'vp9': OGVDecoderVideoVP9W,
-  'av1': OGVDecoderVideoAV1W
+  'vp8': OGVDecoderVideoVP8,
+  'vp9': OGVDecoderVideoVP9,
+  'av1': OGVDecoderVideoAV1
 };
 let checksum = false;
 
@@ -142,20 +141,12 @@ function decodeFile(filename) {
 
 let args = process.argv.slice(2);
 while (args.length >= 1) {
-  if (args[0] == '--js') {
+  if (args[0] == '--simd') {
     demuxerClass = OGVDemuxerWebM;
     decoderClass = {
-      'vp8': OGVDecoderVideoVP8,
-      'vp9': OGVDecoderVideoVP9,
-      'av1': OGVDecoderVideoAV1
-    };
-    args.shift();
-  } else if (args[0] == '--wasm') {
-    demuxerClass = OGVDemuxerWebMW;
-    decoderClass = {
-      'vp8': OGVDecoderVideoVP8W,
-      'vp9': OGVDecoderVideoVP9W,
-      'av1': OGVDecoderVideoAV1W
+      'vp8': OGVDecoderVideoVP8SIMD,
+      'vp9': OGVDecoderVideoVP9SIMD,
+      'av1': OGVDecoderVideoAV1SIMD
     };
     args.shift();
   } else if (args[0] == '--checksum') {

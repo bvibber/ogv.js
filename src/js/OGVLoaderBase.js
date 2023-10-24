@@ -3,21 +3,19 @@ const OGVVersion = __OGV_FULL_VERSION__;
 import WebAssemblyCheck from './WebAssemblyCheck.js';
 
 const scriptMap = {
-	OGVDemuxerOggW: 'ogv-demuxer-ogg-wasm.js',
-	OGVDemuxerWebMW: 'ogv-demuxer-webm-wasm.js',
-	OGVDecoderAudioOpusW: 'ogv-decoder-audio-opus-wasm.js',
-	OGVDecoderAudioVorbisW: 'ogv-decoder-audio-vorbis-wasm.js',
-	OGVDecoderVideoTheoraW: 'ogv-decoder-video-theora-wasm.js',
-	OGVDecoderVideoVP8W: 'ogv-decoder-video-vp8-wasm.js',
-	OGVDecoderVideoVP8MTW: 'ogv-decoder-video-vp8-mt-wasm.js',
-	OGVDecoderVideoVP9W: 'ogv-decoder-video-vp9-wasm.js',
-	OGVDecoderVideoVP9SIMDW: 'ogv-decoder-video-vp9-simd-wasm.js',
-	OGVDecoderVideoVP9MTW: 'ogv-decoder-video-vp9-mt-wasm.js',
-	OGVDecoderVideoVP9SIMDMTW: 'ogv-decoder-video-vp9-simd-mt-wasm.js',
-	OGVDecoderVideoAV1W: 'ogv-decoder-video-av1-wasm.js',
-	OGVDecoderVideoAV1SIMDW: 'ogv-decoder-video-av1-simd-wasm.js',
-	OGVDecoderVideoAV1MTW: 'ogv-decoder-video-av1-mt-wasm.js',
-	OGVDecoderVideoAV1SIMDMTW: 'ogv-decoder-video-av1-simd-mt-wasm.js',
+	OGVDemuxerOgg: 'ogv-demuxer-ogg.js',
+	OGVDemuxerWebM: 'ogv-demuxer-webm.js',
+	OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',
+	OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
+	OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',
+	OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
+	OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js',
+	OGVDecoderVideoVP9SIMD: 'ogv-decoder-video-vp9-simd.js',
+	OGVDecoderVideoVP9SIMDMT: 'ogv-decoder-video-vp9-simd-mt.js',
+	OGVDecoderVideoAV1: 'ogv-decoder-video-av1.js',
+	OGVDecoderVideoAV1SIMD: 'ogv-decoder-video-av1-simd.js',
+	OGVDecoderVideoAV1MT: 'ogv-decoder-video-av1-mt.js',
+	OGVDecoderVideoAV1SIMDMT: 'ogv-decoder-video-av1-simd-mt.js',
 };
 
 class OGVLoaderBase {

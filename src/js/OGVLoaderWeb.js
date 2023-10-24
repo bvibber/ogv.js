@@ -18,14 +18,14 @@ const proxyInfo = {
 
 // @fixme make this less awful
 const proxyTypes = {
-	OGVDecoderAudioOpusW: 'audio',
-	OGVDecoderAudioVorbisW: 'audio',
-	OGVDecoderVideoTheoraW: 'video',
-	OGVDecoderVideoVP8W: 'video',
-	OGVDecoderVideoVP9W: 'video',
-	OGVDecoderVideoVP9SIMDW: 'video',
-	OGVDecoderVideoAV1W: 'video',
-	OGVDecoderVideoAV1SIMDW: 'video',
+	OGVDecoderAudioOpus: 'audio',
+	OGVDecoderAudioVorbis: 'audio',
+	OGVDecoderVideoTheora: 'video',
+	OGVDecoderVideoVP8: 'video',
+	OGVDecoderVideoVP9: 'video',
+	OGVDecoderVideoVP9SIMD: 'video',
+	OGVDecoderVideoAV1: 'video',
+	OGVDecoderVideoAV1SIMD: 'video',
 };
 
 class OGVLoaderWeb extends OGVLoaderBase {

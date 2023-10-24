@@ -7,7 +7,7 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
-  -s EXPORT_NAME="'OGVDecoderVideoAV1W'" \
+  -s EXPORT_NAME="'OGVDecoderVideoAV1'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \
   -Ibuild/wasm/root/include \
   --js-library src/js/modules/ogv-decoder-video-callbacks.js \
@@ -16,4 +16,4 @@ emcc \
   src/c/ogv-decoder-video-av1.c \
   -Lbuild/wasm/root/lib \
   -ldav1d \
-  -o build/ogv-decoder-video-av1-wasm.js
+  -o build/ogv-decoder-video-av1.js

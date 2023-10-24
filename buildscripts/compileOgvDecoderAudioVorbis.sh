@@ -7,7 +7,7 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
-  -s EXPORT_NAME="'OGVDecoderAudioVorbisW'" \
+  -s EXPORT_NAME="'OGVDecoderAudioVorbis'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-audio-exports.json`" \
   -Ibuild/wasm/root/include \
   --js-library src/js/modules/ogv-decoder-audio-callbacks.js \
@@ -18,4 +18,4 @@ emcc \
   -Lbuild/wasm/root/lib \
   -lvorbis \
   -logg \
-  -o build/ogv-decoder-audio-vorbis-wasm.js \
+  -o build/ogv-decoder-audio-vorbis.js \
