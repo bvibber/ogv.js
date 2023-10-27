@@ -25,7 +25,11 @@ var babelRuleES6 = {
           '@babel/preset-env',
           {
             targets: {
-              esmodules: true
+              "chrome": 84,
+              "edge": 16,
+              "safari": 11.1,
+              "firefox": 78,
+              "opera": 103,
             }
           }
         ]
