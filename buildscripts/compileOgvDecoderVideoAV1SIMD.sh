@@ -8,6 +8,7 @@ emcc \
   $EMCC_COMMON_OPTIONS \
   $EMCC_WASM_OPTIONS \
   $EMCC_NOTHREAD_OPTIONS \
+  -s STACK_SIZE=5MB \
   -msimd128 \
   -s EXPORT_NAME="'OGVDecoderVideoAV1SIMD'" \
   -s EXPORTED_FUNCTIONS="`< src/js/modules/ogv-decoder-video-exports.json`" \

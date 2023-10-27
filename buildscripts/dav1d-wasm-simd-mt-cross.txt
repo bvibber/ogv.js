@@ -7,7 +7,7 @@ install_name_tool = 'echo'
 exe_wrapper = 'echo'
 
 [built-in options]
-c_args = ['-msimd128', '-s', 'USE_PTHREADS=1']
+c_args = ['-msimd128', '-sUSE_PTHREADS=1']
 c_link_args = []
 
 [host_machine]
