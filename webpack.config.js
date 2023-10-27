@@ -14,7 +14,7 @@ var plugins = [
   }),
 ];
 
-var babelRuleModule = {
+var babelRuleES6 = {
   test: /\.m?js$/,
   exclude: /node_modules/,
   use: {
@@ -26,35 +26,6 @@ var babelRuleModule = {
           {
             targets: {
               esmodules: true
-            }
-          }
-        ]
-      ],
-      plugins: [
-        '@babel/plugin-transform-modules-commonjs',
-        '@babel/plugin-transform-runtime'
-      ]
-    }
-  }
-};
-
-var babelRuleES5 = {
-  test: /\.m?js$/,
-  exclude: /node_modules/,
-  use: {
-    loader: 'babel-loader',
-    options: {
-      presets: [
-        [
-          '@babel/preset-env',
-          {
-            targets: {
-              firefox: '4',
-              chrome: '7',
-              ie: '11',
-              edge: '12',
-              safari: '6',
-              ios: '10'
             }
           }
         ]
@@ -92,27 +63,7 @@ var optopts = {
 
 module.exports = [
   {
-    // Main entry point! - ES Module
-    entry: './src/js/ogv.js',
-    mode: 'production',
-    output: {
-      path: path.resolve(__dirname, BUILD_DIR),
-      publicPath: publicPath(),
-      filename: 'ogv-es2017.js',
-      libraryTarget: 'umd',
-      library: 'ogvjs'
-    },
-    plugins: plugins,
-    module: {
-      rules: [
-        babelRuleModule,
-        urlLoader
-      ]
-    },
-    optimization: optopts,
-  },
-  {
-    // Main entry point! - ES5
+    // Main entry point! - ES6
     entry: './src/js/ogv.js',
     mode: 'production',
     output: {
@@ -125,7 +76,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5,
+        babelRuleES6,
         urlLoader
       ]
     },
@@ -143,7 +94,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5,
+        babelRuleES6,
         urlLoader
       ]
     }
@@ -160,7 +111,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5,
+        babelRuleES6,
         urlLoader
       ]
     },
@@ -177,7 +128,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5,
+        babelRuleES6,
         urlLoader
       ]
     },
@@ -194,7 +145,7 @@ module.exports = [
     plugins: plugins,
     module: {
       rules: [
-        babelRuleES5,
+        babelRuleES6,
         urlLoader
       ]
     },

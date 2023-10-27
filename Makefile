@@ -147,7 +147,6 @@ dist: js README.md COPYING
 	rm -rf dist
 	mkdir -p dist
 	cp -p build/ogv.js \
-	      build/ogv-es2017.js \
 	      build/ogv-support.js \
 	      build/ogv-version.js \
 	      build/ogv-demuxer-ogg.js \

@@ -173,8 +173,7 @@
 
 	</div>
 
-	<script src="lib/ogv-es2017.js?version=OGV_VERSION" module></script>
-	<script src="lib/ogv.js?version=OGV_VERSION" nomodule></script>
+	<script src="lib/ogv.js?version=OGV_VERSION"></script>
 	<script src="demo.js?version=OGV_VERSION"></script>
 
 </body>
