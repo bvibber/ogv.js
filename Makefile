@@ -157,6 +157,14 @@ dist: js README.md COPYING
 	      build/ogv-decoder-video-vp8.js \
 	      build/ogv-decoder-video-vp9.js \
 	      build/ogv-decoder-video-av1.js \
+	      build/ogv-demuxer-ogg.wasm \
+	      build/ogv-demuxer-webm.wasm \
+	      build/ogv-decoder-audio-opus.wasm \
+	      build/ogv-decoder-audio-vorbis.wasm \
+	      build/ogv-decoder-video-theora.wasm \
+	      build/ogv-decoder-video-vp8.wasm \
+	      build/ogv-decoder-video-vp9.wasm \
+	      build/ogv-decoder-video-av1.wasm \
 	      build/ogv-worker-audio.js \
 	      build/ogv-worker-video.js \
 	      README.md \
@@ -170,17 +178,23 @@ dist: js README.md COPYING
 		      build/ogv-decoder-video-vp8-simd.js \
 		      build/ogv-decoder-video-vp9-simd.js \
 		      build/ogv-decoder-video-av1-simd.js \
+		      build/ogv-decoder-video-theora-simd.wasm \
+		      build/ogv-decoder-video-vp8-simd.wasm \
+		      build/ogv-decoder-video-vp9-simd.wasm \
+		      build/ogv-decoder-video-av1-simd.wasm \
 		      dist/ \
-			  ; \
+		      ; \
 		if [ "x$(MT)x" = "xx" ]; then \
 			echo "Skipping MT, compile with 'make SIMD=1 MT=1' if desired."; \
 		else \
 			cp -p build/ogv-decoder-video-vp9-simd-mt.js \
-		    	  build/ogv-decoder-video-vp9-simd-mt.worker.js \
-		    	  build/ogv-decoder-video-av1-simd-mt.js \
-		    	  build/ogv-decoder-video-av1-simd-mt.worker.js \
-		    	  dist/ \
-				  ; \
+		          build/ogv-decoder-video-vp9-simd-mt.wasm \
+		          build/ogv-decoder-video-vp9-simd-mt.worker.js \
+		          build/ogv-decoder-video-av1-simd-mt.js \
+		          build/ogv-decoder-video-av1-simd-mt.wasm \
+		          build/ogv-decoder-video-av1-simd-mt.worker.js \
+		          dist/ \
+			      ; \
 		fi \
 	fi
 
