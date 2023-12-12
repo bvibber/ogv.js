@@ -23,7 +23,6 @@ meson ../../../dav1d \
   -Denable_tools=false \
   -Dbitdepths='["8"]' \
   -Ddefault_library=static \
-  -Dfake_atomics=true \
   --buildtype release && \
 ninja -v && \
 mkdir -p "$dir/build/wasm/root/lib" && \
