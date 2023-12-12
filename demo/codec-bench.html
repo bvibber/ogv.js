@@ -117,20 +117,17 @@
         }
 
         let next = null;
-        function nextTick(callback) {
-            if (typeof setImmediate === 'function') {
-                next = callback;
-                setImmediate(() => {
-                    let was = next;
-                    next = null;
-                    if (was) {
-                        was();
-                    }
-                });
-            } else {
-                // we have a polyfill already
-                throw new Error('need setImmediate');
+        let {port1, port2} = new MessageChannel();
+        let nextTicks = [];
+        port2.onmessage = function() {
+            let callback = nextTicks.shift();
+            if (callback) {
+                callback();
             }
+        };
+        function nextTick(callback) {
+            nextTicks.push(callback);
+            port1.postMessage("tick");
         }
 
         function log(msg) {
