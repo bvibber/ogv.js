@@ -6,7 +6,7 @@
 	url = https://gitlab.xiph.org/xiph/vorbis.git
 [submodule "libtheora"]
 	path = libtheora
-	url = https://github.com/brion/theora.git
+	url = https://gitlab.xiph.org/xiph/theora.git
 [submodule "libopus"]
 	path = libopus
 	url = https://gitlab.xiph.org/xiph/opus.git
