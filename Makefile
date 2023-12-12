@@ -250,7 +250,7 @@ $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a 
 	./$(BUILDSCRIPTS_DIR)/configureTheora.sh
 	./$(BUILDSCRIPTS_DIR)/compileTheoraWasm.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a $(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
+$(WASMSIMD_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a $(WASMSIMD_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
 	./$(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
 
 $(WASM_ROOT_BUILD_DIR)/lib/libnestegg.a : $(BUILDSCRIPTS_DIR)/configureNestEgg.sh $(BUILDSCRIPTS_DIR)/compileNestEggWasm.sh
