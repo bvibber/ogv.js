@@ -126,21 +126,19 @@ Object.defineProperty(Module, 'seekable', {
 
 // - public methods
 
-Module['init'] = function(callback) {
+Module['init'] = function() {
 	time(function() {
 		Module['_ogv_demuxer_init']();
 	});
-	callback();
 };
 
 /**
  * Queue up some data for later processing...
  *
  * @param ArrayBuffer data
- * @param function callback on completion
  */
-Module['receiveInput'] = function(data, callback) {
-	var ret = time(function() {
+Module['receiveInput'] = function(data) {
+	time(function() {
 		// Map the ArrayBuffer into emscripten's runtime heap
 		var len = data.byteLength;
 		var buffer = reallocInputBuffer(len);
@@ -148,41 +146,28 @@ Module['receiveInput'] = function(data, callback) {
 		dest.set(new Uint8Array(data));
 		Module['_ogv_demuxer_receive_input'](buffer, len);
 	});
-	callback();
 };
 
 /**
  * Process previously queued data into packets.
  *
- * 'more' parameter to callback function is 'true' if there
+ * return value is 'true' if there
  * are more packets to be processed in the queued data,
  * or 'false' if there aren't.
- *
- * @param function callback on completion
  */
-Module['process'] = function(callback) {
+Module['process'] = function() {
 	var ret = time(function() {
 		return Module['_ogv_demuxer_process']();
 	});
-	callback(!!ret);
+	return ret;
 };
 
-Module['dequeueVideoPacket'] = function(callback) {
-	if (Module['videoPackets'].length) {
-		var packet = Module['videoPackets'].shift()['data'];
-		callback(packet);
-	} else {
-		callback(null);
-	}
+Module['dequeueVideoPacket'] = function() {
+	return Module['videoPackets'].shift();
 };
 
-Module['dequeueAudioPacket'] = function(callback) {
-	if (Module['audioPackets'].length) {
-		var packet = Module['audioPackets'].shift();
-		callback(packet['data'], packet['discardPadding']);
-	} else {
-		callback(null);
-	}
+Module['dequeueAudioPacket'] = function() {
+	return Module['audioPackets'].shift();
 };
 
 /**
@@ -190,14 +175,13 @@ Module['dequeueAudioPacket'] = function(callback) {
  * just before the given presentation timestamp
  *
  * @param number timeSeconds
- * @param function callback
- *        takes the calculated byte offset as a Number
+ * @return number byte offset
  */
-Module['getKeypointOffset'] = function(timeSeconds, callback) {
+Module['getKeypointOffset'] = function(timeSeconds) {
 	var offset = time(function() {
 		return Module['_ogv_demuxer_keypoint_offset'](timeSeconds * 1000);
 	});
-	callback(offset);
+	return offset;
 };
 
 /**
@@ -206,10 +190,9 @@ Module['getKeypointOffset'] = function(timeSeconds, callback) {
  * it may take some time before processing returns more packets.
  *
  * @param number timeSeconds
- * @param function callback
- *        boolean param indicates whether seeking was initiated or not.
+ * @return boolean indicates whether seeking was initiated or not.
  */
-Module['seekToKeypoint'] = function(timeSeconds, callback) {
+Module['seekToKeypoint'] = function(timeSeconds) {
 	var ret = time(function() {
 		return Module['_ogv_demuxer_seek_to_keypoint'](timeSeconds * 1000);
 	});
@@ -217,16 +200,15 @@ Module['seekToKeypoint'] = function(timeSeconds, callback) {
 		Module['audioPackets'].splice(0, Module['audioPackets'].length);
 		Module['videoPackets'].splice(0, Module['videoPackets'].length);
 	}
-	callback(!!ret);
+	return Boolean(ret);
 };
 
-Module['flush'] = function(callback) {
+Module['flush'] = function() {
 	time(function() {
 		Module['audioPackets'].splice(0, Module['audioPackets'].length);
 		Module['videoPackets'].splice(0, Module['videoPackets'].length);
 		Module['_ogv_demuxer_flush']();
 	});
-	callback();
 };
 
 /**

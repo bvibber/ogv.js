@@ -197,7 +197,8 @@
                     if (stream.eof) {
                         eof = true;
                     }
-                    demuxer.receiveInput(buf, callback);
+                    demuxer.receiveInput(buf);
+                    callback();
                 }).catch(function(e) {
                     log(e);
                 });
@@ -206,7 +207,7 @@
 
             function nextFrame() {
                 while (demuxer.audioReady) {
-                    demuxer.dequeueAudioPacket((packet) => {});
+                    let packet = demuxer.dequeueAudioPacket();
                 }
                 if (framesInFlight >= framesBuffered) {
                     return;
@@ -214,34 +215,33 @@
                 if (demuxer.frameReady) {
                     var timestamp = demuxer.frameTimestamp;
                     let async = true;
-                    demuxer.dequeueVideoPacket((packet) => {
-                        frames++;
-                        let frameNo = frames;
-                        framesInFlight++;
-                        decoder.processFrame(packet, (ok) => {
-                            if (ok) {
-                                const now = Date.now();
-                                const delta = (now - last) / 1000;
-                                if (frames % checkin == 0) {
-                                    //const fps = (frames - lastFrames) / delta;
-                                    //log(fps + ' fps decoding');
-                                    lastFrames = frames;
-                                    last = now;
+                    let {data} = demuxer.dequeueVideoPacket();
+                    frames++;
+                    let frameNo = frames;
+                    framesInFlight++;
+                    decoder.processFrame(data, (ok) => {
+                        if (ok) {
+                            const now = Date.now();
+                            const delta = (now - last) / 1000;
+                            if (frames % checkin == 0) {
+                                //const fps = (frames - lastFrames) / delta;
+                                //log(fps + ' fps decoding');
+                                lastFrames = frames;
+                                last = now;
 
-                                    var prog = document.getElementById('prog');
-                                    prog.value = 100 * timestamp / demuxer.duration;
-                                }
-                                if (document.getElementById('checksum').checked) {
-                                    updateChecksum(decoder.frameBuffer);
-                                }
+                                var prog = document.getElementById('prog');
+                                prog.value = 100 * timestamp / demuxer.duration;
                             }
-
-                            if (--framesInFlight < framesBuffered) {
-                                nextTick(processData);
+                            if (document.getElementById('checksum').checked) {
+                                updateChecksum(decoder.frameBuffer);
                             }
+                        }
 
-                            async = false;
-                        });
+                        if (--framesInFlight < framesBuffered) {
+                            nextTick(processData);
+                        }
+
+                        async = false;
                     });
                     if (async && framesInFlight < framesBuffered) {
                         nextTick(processData);
@@ -255,36 +255,35 @@
                 if (demuxer.frameReady) {
                     nextFrame();
                 } else {
-                    demuxer.process((more) => {
-                        if (more) {
-                            nextTick(processData);
-                        } else if (eof && framesInFlight) {
-                            decoder.sync();
-                            nextTick(processData);
-                        } else if (eof && !framesInFlight) {
-                            log('done and done');
+                    let more = demuxer.process();
+                    if (more) {
+                        nextTick(processData);
+                    } else if (eof && framesInFlight) {
+                        decoder.sync();
+                        nextTick(processData);
+                    } else if (eof && !framesInFlight) {
+                        log('done and done');
 
-                            var delta = (Date.now() - start) / 1000;
-                            var fps = frames / delta;
-                            log(fps + ' fps decoding average');
-                            log(delta + ' seconds total (elapsed)');
+                        var delta = (Date.now() - start) / 1000;
+                        var fps = frames / delta;
+                        log(fps + ' fps decoding average');
+                        log(delta + ' seconds total (elapsed)');
 
-                            var delta2 = decoder.cpuTime / 1000;
-                            log(delta2 + ' seconds total (codec only)');
+                        var delta2 = decoder.cpuTime / 1000;
+                        log(delta2 + ' seconds total (codec only)');
 
-                            if (document.getElementById('checksum').checked) {
-                                var hex = hex32(checksum.finalize());
-                                log('crc32 checksum: ' + hex);
-                            }
-
-                            // end!
-                            ondone();
-                        } else {
-                            nextTick(() => {
-                                getData(processData);
-                            });
+                        if (document.getElementById('checksum').checked) {
+                            var hex = hex32(checksum.finalize());
+                            log('crc32 checksum: ' + hex);
                         }
-                    });
+
+                        // end!
+                        ondone();
+                    } else {
+                        nextTick(() => {
+                            getData(processData);
+                        });
+                    }
                 }
             }
 

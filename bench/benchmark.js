@@ -54,7 +54,8 @@ function decodeFile(filename) {
       //console.log('(eof)');
     }
     //console.log('reading ' + buf.byteLength + ' bytes');
-    demuxer.receiveInput(buf, callback);
+    demuxer.receiveInput(buf);
+    callback();
   }
 
   function nextFrame() {
@@ -69,35 +70,35 @@ function decodeFile(filename) {
 
     //console.log('frameReady is ' + demuxer.frameReady);
     while (demuxer.audioReady) {
-      demuxer.dequeueAudioPacket((packet) => {});
+      let packet = demuxer.dequeueAudioPacket();
     }
     if (demuxer.frameReady) {
-      demuxer.dequeueVideoPacket((packet) => {
-        //console.log(packet);
-        //if (!checksum) {
-          //console.log('processing frame ' + frames);
-        //}
-        frames++;
-        decoder.processFrame(packet, (ok) => {
-          if (ok) {
-            //console.log('frame decoded');
-            if (checksum) {
-              console.log(frameChecksum(decoder.frameBuffer));
-            } else {
-              const now = Date.now();
-              const delta = (now - last) / 1000;
-              if (frames % checkin == 0) {
-                const fps = (frames - lastFrames) / delta;
-                console.log(fps + ' fps decoding');
-                lastFrames = frames;
-                last = now;
-              }
-            }
+      let packet = demuxer.dequeueVideoPacket();
+      
+      //console.log(packet);
+      //if (!checksum) {
+        //console.log('processing frame ' + frames);
+      //}
+      frames++;
+      decoder.processFrame(packet.data, (ok) => {
+        if (ok) {
+          //console.log('frame decoded');
+          if (checksum) {
+            console.log(frameChecksum(decoder.frameBuffer));
           } else {
-            //console.log('frame failed');
+            const now = Date.now();
+            const delta = (now - last) / 1000;
+            if (frames % checkin == 0) {
+              const fps = (frames - lastFrames) / delta;
+              console.log(fps + ' fps decoding');
+              lastFrames = frames;
+              last = now;
+            }
           }
-          process.nextTick(processData);
-        });
+        } else {
+          //console.log('frame failed');
+        }
+        process.nextTick(processData);
       });
     } else {
       process.nextTick(processData);
@@ -109,33 +110,31 @@ function decodeFile(filename) {
       nextFrame();
     } else {
       //console.log('no frame; process()ing');
-      demuxer.process((more) => {
-        //console.log('process() returned ' + more);
+      let more = demuxer.process();
+      //console.log('process() returned ' + more);
 
-        if (more) {
-          //console.log('more ok?');
-          process.nextTick(processData);
-        } else if (eof) {
-          console.log('done and done');
-          const delta = (Date.now() - start) / 1000;
-          const fps = frames / delta;
-          console.log(fps + ' fps decoding average');
-          process.exit(0);
-        } else {
-          //console.log('loading more data');
-          process.nextTick(() => {
-            getData(processData);
-          });
-        }
-      });
+      if (more) {
+        //console.log('more ok?');
+        process.nextTick(processData);
+      } else if (eof) {
+        console.log('done and done');
+        const delta = (Date.now() - start) / 1000;
+        const fps = frames / delta;
+        console.log(fps + ' fps decoding average');
+        process.exit(0);
+      } else {
+        //console.log('loading more data');
+        process.nextTick(() => {
+          getData(processData);
+        });
+      }
     }
   }
 
   demuxerClass({locateFile}).then((dem) => {
     demuxer = dem;
-    demuxer.init(() => {
-      getData(processData);
-    });
+    demuxer.init();
+    getData(processData);
   });
 }
 

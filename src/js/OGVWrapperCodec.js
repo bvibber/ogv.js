@@ -205,10 +205,9 @@ class OGVWrapperCodec {
 						this.onseek(offset);
 					}
 				};
-				demuxer.init(() => {
-					this.processing = false;
-					callback();
-				});
+				demuxer.init();
+				this.processing = false;
+				callback();
 			});
 		});
 	}
@@ -229,7 +228,8 @@ class OGVWrapperCodec {
 	}
 
 	receiveInput(data, callback) {
-		this.demuxer.receiveInput(data, callback);
+		this.demuxer.receiveInput(data);
+		callback();
 	}
 
 	process(callback) {
@@ -244,7 +244,8 @@ class OGVWrapperCodec {
 		}
 
 		let doProcessData = () => {
-			this.demuxer.process(finish);
+			let result = this.demuxer.process();
+			finish(result);
 		}
 
 		if (this.demuxer.loadedMetadata && !this.loadedDemuxerMetadata) {
@@ -270,11 +271,10 @@ class OGVWrapperCodec {
 
 			} else if (this.demuxer.audioReady) {
 
-				this.demuxer.dequeueAudioPacket((packet, _discardPadding) => {
-					this.audioBytes += packet.byteLength;
-					this.audioDecoder.processHeader(packet, (ret) => {
-						finish(true);
-					});
+				let {data} = this.demuxer.dequeueAudioPacket();
+				this.audioBytes += data.byteLength;
+				this.audioDecoder.processHeader(data, (ret) => {
+					finish(true);
 				});
 
 			} else {
@@ -294,11 +294,10 @@ class OGVWrapperCodec {
 			} else if (this.demuxer.frameReady) {
 
 				this.processing = true;
-				this.demuxer.dequeueVideoPacket((packet) => {
-					this.videoBytes += packet.byteLength;
-					this.videoDecoder.processHeader(packet, () => {
-						finish(true);
-					});
+				let {data} = this.demuxer.dequeueVideoPacket();
+				this.videoBytes += data.byteLength;
+				this.videoDecoder.processHeader(data, () => {
+					finish(true);
 				});
 
 			} else {
@@ -332,64 +331,61 @@ class OGVWrapperCodec {
 		let cb = this.flushSafe(callback),
 			timestamp = this.frameTimestamp,
 			keyframeTimestamp = this.keyframeTimestamp;
-		this.demuxer.dequeueVideoPacket((packet) => {
-			this.videoBytes += packet.byteLength;
-			this.videoDecoder.processFrame(packet, (ok) => {
-				// hack
-				let fb = this.videoDecoder.frameBuffer;
-				if (fb) {
-					fb.timestamp = timestamp;
-					fb.keyframeTimestamp = keyframeTimestamp;
-				}
-				cb(ok);
-			});
+		let {data} = this.demuxer.dequeueVideoPacket();
+		this.videoBytes += data.byteLength;
+		this.videoDecoder.processFrame(data, (ok) => {
+			// hack
+			let fb = this.videoDecoder.frameBuffer;
+			if (fb) {
+				fb.timestamp = timestamp;
+				fb.keyframeTimestamp = keyframeTimestamp;
+			}
+			cb(ok);
 		});
 	}
 
 	decodeAudio(callback) {
 		let cb = this.flushSafe(callback);
-		this.demuxer.dequeueAudioPacket((packet, discardPadding) => {
-			this.audioBytes += packet.byteLength;
-			this.audioDecoder.processAudio(packet, (ret) => {
-				if (discardPadding) {
-					// discardPadding is in nanoseconds
-					// negative value trims from beginning
-					// positive value trims from end
-					let samples = this.audioDecoder.audioBuffer;
-					let trimmed = [];
-					for (let channel of samples) {
-						let trim = Math.round(discardPadding * this.audioFormat.rate / 1000000000);
-						if (trim > 0) {
-							trimmed.push(channel.subarray(0, channel.length - Math.min(trim, channel.length)));
-						} else {
-							trimmed.push(channel.subarray(Math.min(Math.abs(trim), channel.length), channel.length));
-						}
+		let {data, discardPadding} = this.demuxer.dequeueAudioPacket();
+		this.audioBytes += data.byteLength;
+		this.audioDecoder.processAudio(data, (ret) => {
+			if (discardPadding) {
+				// discardPadding is in nanoseconds
+				// negative value trims from beginning
+				// positive value trims from end
+				let samples = this.audioDecoder.audioBuffer;
+				let trimmed = [];
+				for (let channel of samples) {
+					let trim = Math.round(discardPadding * this.audioFormat.rate / 1000000000);
+					if (trim > 0) {
+						trimmed.push(channel.subarray(0, channel.length - Math.min(trim, channel.length)));
+					} else {
+						trimmed.push(channel.subarray(Math.min(Math.abs(trim), channel.length), channel.length));
 					}
-					// kinda hacky for now
-					this.audioDecoder.audioBuffer = trimmed;
 				}
-				return cb(ret);
-			});
+				// kinda hacky for now
+				this.audioDecoder.audioBuffer = trimmed;
+			}
+			return cb(ret);
 		});
 	}
 
 	discardFrame(callback) {
-		this.demuxer.dequeueVideoPacket((packet) => {
-			this.videoBytes += packet.byteLength;
-			callback();
-		});
+		let {data} = this.demuxer.dequeueVideoPacket();
+		this.videoBytes += data.byteLength;
+		callback();
 	}
 
 	discardAudio(callback) {
-		this.demuxer.dequeueAudioPacket((packet, _discardPadding) => {
-			this.audioBytes += packet.byteLength;
-			callback();
-		});
+		let {data} = this.demuxer.dequeueAudioPacket();
+		this.audioBytes += data.byteLength;
+		callback();
 	}
 
 	flush(callback) {
 		this.flushIter++;
-		this.demuxer.flush(callback);
+		this.demuxer.flush();
+		callback();
 	}
 
 	sync() {
@@ -405,11 +401,14 @@ class OGVWrapperCodec {
 	}
 
 	getKeypointOffset(timeSeconds, callback) {
-		this.demuxer.getKeypointOffset(timeSeconds, callback);
+		let ret = this.demuxer.getKeypointOffset(timeSeconds);
+		callback(ret);
 	}
 
 	seekToKeypoint(timeSeconds, callback) {
-		this.demuxer.seekToKeypoint(timeSeconds, this.flushSafe(callback));
+		callback = this.flushSafe(callback);
+		let ret = this.demuxer.seekToKeypoint(timeSeconds);
+		callback(ret);
 	}
 	
 	loadAudioCodec(callback) {

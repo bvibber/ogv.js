@@ -61,12 +61,8 @@ mergeInto(LibraryManager.library, {
 	},
 
 	ogvjs_callback_video_packet: function(buffer, len, frameTimestamp, keyframeTimestamp, isKeyframe) {
-		// Note IE 10 doesn't have ArrayBuffer.slice
-		var heap = wasmMemory.buffer;
 		Module['videoPackets'].push({
-			'data': heap.slice
-				? heap.slice(buffer, buffer + len)
-				: (new Uint8Array(new Uint8Array(heap, buffer, len))).buffer,
+			'data': wasmMemory.buffer.slice(buffer, buffer + len),
 			'timestamp': frameTimestamp,
 			'keyframeTimestamp': keyframeTimestamp,
 			'isKeyframe': !!isKeyframe
@@ -74,12 +70,8 @@ mergeInto(LibraryManager.library, {
 	},
 
 	ogvjs_callback_audio_packet: function(buffer, len, audioTimestamp, discardPadding) {
-		// Note IE 10 doesn't have ArrayBuffer.slice
-		var heap = wasmMemory.buffer;
 		Module['audioPackets'].push({
-			'data': heap.slice
-				? heap.slice(buffer, buffer + len)
-				: (new Uint8Array(new Uint8Array(heap, buffer, len))).buffer,
+			'data': wasmMemory.buffer.slice(buffer, buffer + len),
 			'timestamp': audioTimestamp,
 			'discardPadding': discardPadding
 		});
