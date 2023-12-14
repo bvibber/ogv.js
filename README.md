@@ -6,6 +6,19 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 ## Updates
 
+2.0.0 - 202?-??-??
+
+* internal API restructuring
+* file restructuring
+* es6 only
+* updated codec library releases
+    * dav1d 1.3.0
+    * libvpx 1.13.1
+    * ogg 1.3.5
+    * opus 1.4
+    * vorbis 1.3.7
+    * theora git master
+
 1.8.10 - 2022-??-??
 
 * Bump emscripten compatibility to 3.1.17
