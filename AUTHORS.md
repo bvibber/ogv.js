@@ -1,4 +1,4 @@
-* Brion Vibber (ogv.js)
+* Brooke Vibber (ogv.js)
 * Devon Govett (ogg.js original build scripst)
 * Ben Firschman (old Flash audio dynamicaudio.swf base code)
 * Maik Merten (Flash audio integration and other elements)

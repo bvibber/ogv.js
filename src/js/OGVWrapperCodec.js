@@ -3,8 +3,8 @@
  *
  * Used by the high-level player interface.
  *
- * @author Brion Vibber <brion@pobox.com>
- * @copyright 2015-2019 Brion Vibber
+ * @author Brooke Vibber <bvibber@pobox.com>
+ * @copyright 2015-2024 Brooke Vibber
  * @license MIT-style
  */
 import OGVLoader from './OGVLoaderWeb.js';
