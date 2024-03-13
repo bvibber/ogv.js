@@ -42,7 +42,7 @@
     "Web Audio",
     "emscripten"
   ],
-  "author": "Brion Vibber <brion@pobox.com>",
+  "author": "Brooke Vibber <bvibber@pobox.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/brion/ogv.js/issues"

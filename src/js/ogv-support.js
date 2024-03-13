@@ -1,7 +1,7 @@
 //
 // -- ogv-support.js
 // https://github.com/brion/ogv.js
-// Copyright (c) 2013-2019 Brion Vibber
+// Copyright (c) 2013-2024 Brooke Vibber
 //
 
 import OGVCompat from './OGVCompat.js';
