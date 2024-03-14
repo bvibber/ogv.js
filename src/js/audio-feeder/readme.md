@@ -1,0 +1,313 @@
+audio-feeder
+============
+
+The AudioFeeder class abstracts a buffered output pipe for uncompressed PCM
+audio in the browser, supporting the standard W3C Web Audio API.
+
+AudioFeeder was written for the [ogv.js in-browser Ogg/WebM media player](https://github.com/brion/ogv.js),
+and is suitable for use in custom audio and video playback.
+
+## Copyright and license
+
+* main AudioFeeder & Web Audio code path under MIT license, (c) 2013-2021 Brion Vibber
+
+## Updates
+* 0.5.0 - 2021-02-08
+    * Removed now non-functional Flash-based IE 10/11 support
+* 0.4.22 - 2019-06-05
+    * Allow passing a custom backend in for testing and advanced usage via `options.backendFactory`.
+* 0.4.21 - 2019-05-28
+    * Included audio-tempo-changer to allow changing tempo of audio via .tempo attribute
+* 0.4.20 - 2019-05-17
+    * Fix for running Flash path when embedded into strict mode
+* 0.4.19 - 2019-03-24
+    * Fixes to fixes to resampling
+* 0.4.18 - 2019-03-22
+    * Fixes to resampling improvements
+* 0.4.17 - 2019-03-22
+    * Resampling improvements
+    * Mono input is now adjusted for loudness, matching native media playback better
+* 0.4.16 - 2019-03-21
+    * Use linear interpolation when upsampling audio
+* 0.4.15 - 2019-02-09
+    * Flash: replace flush timer with a buffer size limit
+* 0.4.14 - 2019-02-08
+    * Flash: fix clicking regression from 0.4.13
+* 0.4.13 - 2019-02-08
+    * Flash: reduce string copies on buffer shift
+* 0.4.12 - 2019-02-07
+    * Flash: update cached playback state on buffer append
+* 0.4.11 - 2019-02-06
+    * Flash: use binary string instead of hex, half the bytes
+* 0.4.10 - 2019-02-05
+    * Avoid possible clock drift when resampling
+* 0.4.9 - 2018-02-12
+    * Flash: full 32-bit float precision now used
+* 0.4.8 - 2018-02-10
+    * Flash: volume changes now apply immediately
+    * Flash: update build to flex sdk 4.16.1
+* 0.4.7 - 2017-03-17
+    * Flash: cleaner behavior if stopped from onstarved handler
+* 0.4.6 - 2017-03-16
+    * Flash: frequent small buffer flushes to Flash are coalesced better
+* 0.4.5 - 2016-06-12
+    * Flash: extra security precautions on cross-domain mode
+* 0.4.4 - 2016-06-12
+    * Web Audio: fix regression in `initSharedAudioContext`
+* 0.4.3 - 2016-06-11
+    * Flash: now works cross-domain
+    * Web Audio: `audioNode` option allows attaching to non-default destination
+* 0.4.2 - 2016-06-03
+    * Flash: fixed sample count in cached playback data
+    * Web Audio: partial fixes to `stop()`/`start()` buffered audio recovery
+* 0.4.1 - 2016-06-02
+    * Flash: Cleaned up internal buffering
+    * Flash: `stop()`/`start()` more reliable, doesn't drop audio
+    * Flash: `playbackPosition` no longer advances while paused
+    * Now builds on Windows 10
+* 0.4.0 - 2016-05-14
+    * more precise recovery of playback position after `stop()`/`start()`
+    * addded `flush()` method; use to clear buffers after a stop when seeking etc
+* 0.3.0 - 2016-05-03
+    * Implemented `onstarved` callback for Flash backend
+    * Added `onbufferlow` callback when buffered data gets low, but not yet empty
+    * Added `bufferThreshold` property to get/set the threshold in seconds
+    * Added `durationBuffered` property to track amount of data left to play
+    * Added `playbackPosition` property mirroring getPlaybackState().playbackPosition
+    * Retooled Flash plugin setup to use a callback instead of timer-based polling
+* 0.2.1 - 2016-04-28
+    * Fixed regression in Flash build makefile
+* 0.2.0 - 2016-04-27
+    * Refactored build to use Grunt instead of make for JS build
+    * Pre-built JS included in npm package instead of webpack-specific sources
+    * Webpack projects now responsible for including dynamicaudio.swf
+* 0.1.0 - 2016-04-16
+    * Refactored code paths and build process!
+    * Can now be imported directly into a webpack-based project
+    * 'make build' to pre-build standalone .js to use in other build processes
+* 0.0.2 - 2016-03-27
+    * Broken out from ogv.js, cleaning up to publish as npm module
+
+## Installing with webpack or browserify
+
+If your project is built with webpack or browserify, it's easy to bundle up
+AudioFeeder's JavaScript classes; you will have to manually ensure that the
+Flash shim for IE is bundled alongside it.
+
+Add to your npm dependencies:
+
+```
+npm install audio-feeder
+```
+
+and in your using code, set up the class like so:
+
+```
+var AudioFeeder = require('audio-feeder');
+```
+
+## Including AudioFeeder manually in a project
+
+Grab AudioFeeder.js or AudioFeeder.min.js (minified) from the ZIP download or
+from dist/ subdir in the npm module.
+
+Include either as a module (CommonJS or AMD) or a standalone script.
+
+## Usage
+
+```js
+// Create a feeder object
+var feeder = new AudioFeeder();
+
+// Set up 2-channel stereo, 48 kHz sampling rate
+feeder.init(2, 48000);
+
+// Flash mode for IE 10/11 requires waiting.
+feeder.waitUntilReady(function() {
+
+  // Buffer some data before we start playback...
+  //
+  // Each channel gets its own 32-bit float array of samples;
+  // this will be 0.25 seconds of silence at 2ch/48kHz.
+  //
+  // Note it's ok for each bufferData() call to have a different
+  // number of samples, such as when working with a data format
+  // with variable packet size (Vorbis).
+  //
+  feeder.bufferData([
+    new Float32Array(12000),
+    new Float32Array(12000)
+  ]);
+
+  // Start playback...
+  feeder.start();
+
+  document.querySelector('button.stop').addEventListener('click', function() {
+    // You can pause output at any time:
+    feeder.stop();
+    // to release resources, call feeder.close() instead.
+  });
+
+  // Callback when buffered data runs below feeder.bufferThreshold seconds:
+  feeder.onbufferlow = function() {
+    while (feeder.durationBuffered < feeder.bufferThreshold) {
+      feeder.bufferData([
+        new Float32Array(12000),
+        new Float32Array(12000)
+      ]);
+    }
+  };
+
+});
+```
+
+See also the included demo.html file for a live sample web page.
+
+## Options  
+
+WebAudio-specific:
+* `audioContext`: an `AudioContext` object to be use instead of creating a new one
+* `output`: an `AudioNode` object to attach output to instead of the default
+
+General:
+* `backendFactory`: a function to call to provide a custom backend, for testing or advanced usage. Should take params `numChannels`, `sampleRate`, and `options` and return an object conforming to the internal backend class protocol. This is not considered a stable API at this time.
+
+
+## Data format
+
+AudioFeeder works with 32-bit floating point PCM audio. Data packets are
+represented as an array containing a separate Float32Array for each channel.
+
+Warning: this may change to use a wrapper class before 1.0.
+
+## Status and audio/video synchronization
+
+The current playback position in seconds, and the duration of buffered but not
+yet played data, are available through the `playbackPosition` and
+`durationBuffered` properties.
+
+Additional playback state can be retrieved from the getPlaybackState() method:
+
+```js
+{
+  playbackPosition: Float /* seconds of sample data that have played back so far */,
+  samplesQueued: Float /* samples remaining before the buffer empties out, approximate */,
+  dropped: Integer /* count of buffer underrun events */,
+  delayed: Float /* total seconds of silence played to cover underruns */
+}
+```
+
+Warning: this structure may change before 1.0.
+
+playbackPosition tracks the time via actual samples output, corrected for drops
+and underruns. This value is suitable for use in scheduling output of synchronized
+video frames.
+
+This high-level pseudocode shows a simplified version of the playback sync logic
+from the [ogv.js video player](https://github.com/brion/ogv.js):
+
+```js
+function processMediaData() {
+  while (codec.audioReady && audioFeeder.durationBuffered < audioFeeder.bufferThreshold) {
+    // When our audio buffer gets low, feed it some more audio data.
+    audioFeeder.bufferData(decodeAudioPacket());
+  }
+
+  if (codec.frameReady && audioFeeder.playbackPosition >= codec.nextFrameTimestamp) {
+    // When the audio playback has reached the scheduled time position
+    // of the next frame, decode and draw it.
+    player.drawFrame(codec.decodeVideoPacket());
+  }
+
+  // And check back in before the next frame!
+  if (codec.dataPending) {
+    requestAnimationFrame(processMediaData);
+  }
+}
+
+// Fire off an animation-based loop...
+requestAnimationFrame(processMediaData);
+
+// If in a background thread, animation loops will be throttled.
+// Also fire when audio gets low!
+audioFeeder.onbufferlow = processMediaData;
+```
+
+The caller is responsible for maintaining a loop and scheduling any decoding,
+frame drawing, etc.
+
+## Performance considerations
+
+Beware that setTimeout, setInterval, and requestAnimationFrame may be throttled
+on background tabs, leading to spotty performance if scheduling decoding
+based on them.
+
+To avoid background tab throttling, use the `onbufferlow` event callback
+to run additional decoding/buffering. This is fired asynchronously when
+the available buffered data runs below `bufferThreshold` seconds.
+
+You can buffer an arbitrarily large amount of audio data, but for non-trivial
+examples it's best to decode or generate audio in smallish chunks and buffer
+them over time. Pre-buffering will eat more memory, and could lead to slowness
+on the main thread if you process a lot of data on the main thread in one
+function call.
+
+Performing other slow tasks on the foreground thread may also prevent the
+Web Audio API callbacks from being called in a timely fashion, resulting in
+audio underruns even if lots of data has been buffered up.
+
+## Events
+
+There are currently two supported events, set via the 'onstarved' and
+'onbufferlow' properties.
+
+'onstarved' is called when buffered data runs out during playback,
+giving a last-chance opportunity to buffer more data. This is a synchronous
+call in the audio path, and may not be enough to guarantee good performance.
+
+'onbufferlow' is called asynchronously when the buffered data runs
+lower than a configurable threshold, which is more flexible. This
+threshold is available for get and set via the `bufferThreshold` property,
+defaulting to twice the low-level buffer duration.
+
+You can use these events to buffer additional data at the last minute,
+or to trigger a close-out of the feeder when no more data is available.
+
+Todo:
+* add events for beginning of playback?
+* add event for scheduled end of playback
+
+## Flash and Internet Explorer 10/11
+
+An earlier version of AudioFeeder supported a Flash backend for supporting
+Internet Explorer 10/11. This is no longer possible since the Flash plugin
+was disabled by Adobe in 2021.
+
+## Rate control
+
+As of 0.4.21, the tempo or playback rate can be modified without altering pitch, suitable for use in implementing video playback control.
+
+Set the `tempo` property to a value larger than 1 to multiply speed, or less than 1 to decrease it. The `playbackPosition` property is returned in input units, making it fairly easy to report back a current time suitable for A/V sync; however some properties such as `durationBuffered` will return output units and should be used carefully when at non-default empos.
+
+Currently the tempo control is not applied to data that has already been buffered, which can produce a "lag time" before tempo changes take effect.
+
+Note that stereo or multi-channel input is mixed down to mono for processing when the tempo is not set at 1; see [audio-tempo-changer#1](https://github.com/velochy/audio-tempo-changer.js/issues/1).
+
+## Rebuilding pre-packed AudioFeeder.js
+
+The pre-packed AudioFeeder.js included in ZIP and npm releases can be rebuilt
+from the source files. This is known to work on Mac, Linux, and Windows.
+
+Build prerequisites:
+* node.js / npm
+
+```bash
+# Fetch build dependencies (webpack, eslint etc)
+npm install
+
+# Lint and rebuild
+npx grunt
+```
+
+This will produce a 'dist' subdirectory containing a ready to use
+AudioFeeder.js, and AudioFeeder.min.js as well as a demo.html example page.

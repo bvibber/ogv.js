@@ -3,9 +3,9 @@
 // External deps
 import YUVCanvas from 'yuv-canvas';
 import StreamFile from 'stream-file';
-import AudioFeeder from 'audio-feeder';
 
 // Internal deps
+import {AudioFeeder} from './audio-feeder/index.js';
 import OGVLoader from './OGVLoaderWeb.js';
 import Bisector from './Bisector.js';
 import extend from './extend.js';
