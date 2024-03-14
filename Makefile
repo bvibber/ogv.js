@@ -342,7 +342,7 @@ build/ogv-decoder-video-vp8.js : $(VIDEO_DEPS) \
 
 build/ogv-decoder-video-vp8-simd.js : $(VIDEO_DEPS) \
 								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                 $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a \
+                                 $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8SIMD.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8SIMD.sh
