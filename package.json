@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brion/ogv.js.git"
+    "url": "git+https://github.com/bvibber/ogv.js.git"
   },
   "keywords": [
     "multimedia",
@@ -45,9 +45,9 @@
   "author": "Brooke Vibber <bvibber@pobox.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/brion/ogv.js/issues"
+    "url": "https://github.com/bvibber/ogv.js/issues"
   },
-  "homepage": "https://github.com/brion/ogv.js#readme",
+  "homepage": "https://github.com/bvibber/ogv.js#readme",
   "devDependencies": {
     "@babel/core": "7.16.7",
     "@babel/plugin-transform-runtime": "7.16.8",

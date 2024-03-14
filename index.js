@@ -1,6 +1,6 @@
 //
 // -- ogv.js
-// https://github.com/brion/ogv.js
+// https://github.com/bvibber/ogv.js
 // Copyright (c) 2013-2024 Brooke Vibber
 //
 // Entry point for pre-built ogv.js distribution, can be pulled in
