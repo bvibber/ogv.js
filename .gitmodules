@@ -12,7 +12,7 @@
 	url = https://gitlab.xiph.org/xiph/opus.git
 [submodule "libskeleton"]
 	path = libskeleton
-	url = https://github.com/brion/libskeleton.git
+	url = https://github.com/bvibber/libskeleton.git
 [submodule "libvpx"]
 	path = libvpx
 	url = https://github.com/brion/libvpx.git
@@ -21,7 +21,7 @@
 	url = https://github.com/kinetiknz/nestegg.git
 [submodule "liboggz"]
 	path = liboggz
-	url = https://github.com/brion/liboggz.git
+	url = https://github.com/bvibber/liboggz.git
 [submodule "dav1d"]
 	path = dav1d
 	url = https://code.videolan.org/brion/dav1d.git
