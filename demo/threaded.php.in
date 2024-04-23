@@ -8,7 +8,7 @@ if ($file === $default) {
     header('Cross-Origin-Opener-Policy: same-origin');
     readfile(".$file");
 } else if (preg_match(
-    '/^\/ogv-(worker-(audio|video)|(demuxer|decoder-audio|decoder-video)-(ogg|webm|theora|vorbis|opus|vp8|vp9|av1)-(wasm|mt-wasm))\.(js|worker\.js|wasm)$/',
+    '/^\/ogv-(worker-(audio|video)|(demuxer|decoder-audio|decoder-video)-(ogg|webm|theora|vorbis|opus|vp8|vp9|av1)-(wasm|mt-wasm|simd-wasm|simd-mt-wasm))\.(js|worker\.js|wasm)$/',
     $file
 )) {
     if (preg_match('/\.js$/', $file)) {

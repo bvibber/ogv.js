@@ -103,6 +103,7 @@ clean:
 dist: js README.md COPYING
 	rm -rf dist
 	mkdir -p dist
+	chmod a-x build/*.wasm
 	cp -p build/ogv.js \
 	      build/ogv-es2017.js \
 	      build/ogv-support.js \
