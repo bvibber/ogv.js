@@ -8,6 +8,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 2.0.0 - 202?-??-??
 
+* Bump emscripten compatibility to 3.1.58
 * internal API restructuring
 * file restructuring
 * es6 only
@@ -217,7 +218,7 @@ These entry points may be loaded directly from a script element, or concatenated
 Further code modules are loaded at runtime, which must be available with their defined names together in a directory. If the files are not hosted same-origin to the web page that includes them, you will need to set up appropriate CORS headers to allow loading of the worker JS modules.
 
 Dynamically loaded assets:
-* `ogv-worker-audio.js`, `ogv-worker-video.js`, and `*.worker.js` are Worker entry points, used to run video and audio decoders in the background.
+* `ogv-worker-audio.js` and `ogv-worker-video.js` are Worker entry points, used to run video and audio decoders in the background.
 * `ogv-demuxer-ogg-wasm.js/.wasm` are used in playing .ogg, .oga, and .ogv files.
 * `ogv-demuxer-webm-wasm.js/.wasm` are used in playing .webm files.
 * `ogv-decoder-audio-vorbis-wasm.js/.wasm` and `ogv-decoder-audio-opus-wasm.js/.wasm` are used in playing both Ogg and WebM files containing audio.
