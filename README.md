@@ -91,7 +91,7 @@ Note that as of 2021 ogv.js works pretty nicely but may still have some packagin
 
 Since August 2015, ogv.js can be seen in action [on Wikipedia and Wikimedia Commons](https://commons.wikimedia.org/wiki/Commons:Video) in Safari and IE/Edge where native Ogg and WebM playback is not available. (See [technical details on MediaWiki integration](https://www.mediawiki.org/wiki/Extension:TimedMediaHandler/ogv.js).)
 
-See also a standalone demo with performance metrics at https://brionv.com/misc/ogv.js/demo/
+See also a standalone demo with performance metrics at https://brooke.vibber.net/misc/ogv.js/demo/
 
 * streaming: yes (with Range header)
 * seeking: yes for Ogg and WebM (with Range header)
