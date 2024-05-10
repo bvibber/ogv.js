@@ -140,14 +140,14 @@ You can load the `ogv.js` main entry point directly in a script tag, or bundle i
 
 ogv.js will try to auto-detect the path to its resources based on the script element that loads ogv.js or ogv-support.js. If you load ogv.js through another bundler (such as browserify or MediaWiki's ResourceLoader) you may need to override this manually before instantiating players:
 
-```
+```js
   // Path to ogv-demuxer-ogg.js, ogv-worker-audio.js, etc
   OGVLoader.base = '/path/to/resources';
 ```
 
 To fetch from npm:
 
-```
+```shell
 npm install ogv
 ```
 
@@ -155,7 +155,7 @@ The distribution-ready files will appear in 'node_modules/ogv/dist'.
 
 To load the player library into your browserify or webpack project:
 
-```
+```js
 var ogv = require('ogv');
 
 // Access public classes either as ogv.OGVPlayer or just OGVPlayer.
@@ -168,7 +168,7 @@ var player = new ogv.OGVPlayer();
 
 The `OGVPlayer` class implements a player, and supports a subset of the events, properties and methods from [HTMLMediaElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) and [HTMLVideoElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement).
 
-```
+```js
   // Create a new player with the constructor
   var player = new OGVPlayer();
 
@@ -189,7 +189,7 @@ The `OGVPlayer` class implements a player, and supports a subset of the events, 
 
 To check for compatibility before creating a player, include `ogv-support.js` and use the `OGVCompat` API:
 
-```
+```js
   if (OGVCompat.supported('OGVPlayer')) {
     // go load the full player from ogv.js and instantiate stuff
   }
@@ -199,7 +199,7 @@ This will check for typed arrays, web audio, blacklisted iOS versions, and super
 
 If you need a URL versioning/cache-buster parameter for dynamic loading of `ogv.js`, you can use the `OGVVersion` symbol provided by `ogv-support.js` or the even tinier `ogv-version.js`:
 
-```
+```js
   var script = document.createElement('script');
   script.src = 'ogv.js?version=' + encodeURIComponent(OGVVersion);
   document.querySelector('head').appendChild(script);
@@ -303,7 +303,7 @@ Note that autoplay with audio doesn't work on iOS Safari due to limitations with
 
 As of 1.1.1, muting before script-triggered playback allows things to work:
 
-```
+```js
   player = new OGVPlayer();
   player.muted = true;
   player.src = 'path/to/file-with-audio.ogv';
