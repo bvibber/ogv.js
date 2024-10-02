@@ -189,10 +189,8 @@ dist: js README.md COPYING
 		else \
 			cp -p build/ogv-decoder-video-vp9-simd-mt.js \
 		          build/ogv-decoder-video-vp9-simd-mt.wasm \
-		          build/ogv-decoder-video-vp9-simd-mt.worker.js \
 		          build/ogv-decoder-video-av1-simd-mt.js \
 		          build/ogv-decoder-video-av1-simd-mt.wasm \
-		          build/ogv-decoder-video-av1-simd-mt.worker.js \
 		          dist/ \
 			      ; \
 		fi \
