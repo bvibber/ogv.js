@@ -18,7 +18,7 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * ogg 1.3.5
     * opus 1.4
     * vorbis 1.3.7
-    * theora git master
+    * theora 1.2.0beta1
 * simd versions using stock source and autovectorization
 * mt+simd versions available experimentally
     * using SharedArrayBuffer requires special opt-in HTTP headers
