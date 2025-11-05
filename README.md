@@ -8,17 +8,18 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 2.0.0 - 202?-??-??
 
-* Bump emscripten compatibility to 3.1.58
+* Bump emscripten compatibility to 4.0.19
 * internal API restructuring
 * file restructuring
 * es6 only
+* uses BigInt 64-bit ABI
 * updated codec library releases
-    * dav1d 1.3.0
-    * libvpx 1.13.1
-    * ogg 1.3.5
-    * opus 1.4
+    * dav1d 1.5.2
+    * libvpx 1.15.2
+    * ogg 1.3.6
+    * opus 1.5.2
     * vorbis 1.3.7
-    * theora 1.2.0beta1
+    * theora 1.2.0
 * simd versions using stock source and autovectorization
 * mt+simd versions available experimentally
     * using SharedArrayBuffer requires special opt-in HTTP headers

@@ -29,7 +29,6 @@ mkdir -p "$dir/build/wasm-simd/root/lib" && \
 cp -p src/libdav1d.a "$dir/build/wasm-simd/root/lib/libdav1d.a" && \
 mkdir -p "$dir/build/wasm-simd/root/include/dav1d" && \
 cp -p ../../../dav1d/include/dav1d/* "$dir/build/wasm-simd/root/include/dav1d/" && \
-cp -p include/dav1d/version.h "$dir/build/wasm-simd/root/include/dav1d/" && \
 cd .. && \
 cd .. && \
 cd ..
