@@ -5,9 +5,6 @@ const OGVDemuxerWebM = require('../dist/ogv-demuxer-webm.js');
 const OGVDecoderVideoVP8 = require('../dist/ogv-decoder-video-vp8.js');
 const OGVDecoderVideoVP9 = require('../dist/ogv-decoder-video-vp9.js');
 const OGVDecoderVideoAV1 = require('../dist/ogv-decoder-video-av1.js');
-const OGVDecoderVideoVP8SIMD = require('../dist/ogv-decoder-video-vp8-simd.js');
-const OGVDecoderVideoVP9SIMD = require('../dist/ogv-decoder-video-vp9-simd.js');
-const OGVDecoderVideoAV1SIMD = require('../dist/ogv-decoder-video-av1-simd.js');
 
 let demuxerClass = OGVDemuxerWebM;
 let decoderClass = {
@@ -140,15 +137,7 @@ function decodeFile(filename) {
 
 let args = process.argv.slice(2);
 while (args.length >= 1) {
-  if (args[0] == '--simd') {
-    demuxerClass = OGVDemuxerWebM;
-    decoderClass = {
-      'vp8': OGVDecoderVideoVP8SIMD,
-      'vp9': OGVDecoderVideoVP9SIMD,
-      'av1': OGVDecoderVideoAV1SIMD
-    };
-    args.shift();
-  } else if (args[0] == '--checksum') {
+  if (args[0] == '--checksum') {
     checksum = true;
     args.shift();
   } else {

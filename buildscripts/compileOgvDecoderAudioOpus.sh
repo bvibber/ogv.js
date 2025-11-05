@@ -21,4 +21,4 @@ emcc \
   -Lbuild/wasm/root/lib \
   -lopus \
   -logg \
-  -o build/ogv-decoder-audio-opus.js \
+  -o build/ogv-decoder-audio-opus.js

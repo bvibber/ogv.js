@@ -8,16 +8,11 @@ const scriptMap = {
 	OGVDecoderAudioOpus: 'ogv-decoder-audio-opus.js',
 	OGVDecoderAudioVorbis: 'ogv-decoder-audio-vorbis.js',
 	OGVDecoderVideoTheora: 'ogv-decoder-video-theora.js',
-	OGVDecoderVideoTheoraSIMD: 'ogv-decoder-video-theora-simd.js',
 	OGVDecoderVideoVP8: 'ogv-decoder-video-vp8.js',
-	OGVDecoderVideoVP8SIMD: 'ogv-decoder-video-vp8-simd.js',
 	OGVDecoderVideoVP9: 'ogv-decoder-video-vp9.js',
-	OGVDecoderVideoVP9SIMD: 'ogv-decoder-video-vp9-simd.js',
-	OGVDecoderVideoVP9SIMDMT: 'ogv-decoder-video-vp9-simd-mt.js',
+	OGVDecoderVideoVP9MT: 'ogv-decoder-video-vp9-mt.js',
 	OGVDecoderVideoAV1: 'ogv-decoder-video-av1.js',
-	OGVDecoderVideoAV1SIMD: 'ogv-decoder-video-av1-simd.js',
 	OGVDecoderVideoAV1MT: 'ogv-decoder-video-av1-mt.js',
-	OGVDecoderVideoAV1SIMDMT: 'ogv-decoder-video-av1-simd-mt.js',
 };
 
 class OGVLoaderBase {

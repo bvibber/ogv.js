@@ -18,11 +18,12 @@ cd libskeleton
 emconfigure ../../../libskeleton/configure \
 	--prefix="$dir/build/wasm/root" \
 	PKG_CONFIG_PATH="$dir/build/wasm/root/lib/pkgconfig" \
-	--disable-shared
+	--disable-shared \
+    CFLAGS="-O3 -msimd128"
 
 # compile libskeleton
-emmake make -j4 || exit 1
-emmake make install || exit 1
+emmake make -j4
+emmake make install
 
 cd ..
 cd ..

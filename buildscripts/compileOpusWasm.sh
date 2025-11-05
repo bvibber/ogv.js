@@ -23,11 +23,11 @@ emconfigure ../../../libopus/configure \
   --prefix="$dir/build/wasm/root" \
   --disable-shared \
   --disable-stack-protector \
-  CFLAGS="-O3" || exit 1
+  CFLAGS="-O3 -msimd128"
 
 # compile libopus
-emmake make -j4 || exit 1
-emmake make install || exit 1
+emmake make -j4
+emmake make install
 
 cd ..
 cd ..

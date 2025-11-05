@@ -22,18 +22,11 @@ EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9.js
 EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1.js
 
-SIMD=1
 MT=0
 
-ifdef SIMD
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-theora-simd.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp8-simd.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd.js
 ifdef MT
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-simd-mt.js
-EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-simd-mt.js
-endif
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-vp9-mt.js
+EMSCRIPTEN_MODULE_TARGETS+= build/ogv-decoder-video-av1-mt.js
 endif
 
 EMSCRIPTEN_MODULE_SRC_DIR:=$(JS_SRC_DIR)/modules
@@ -45,8 +38,7 @@ C_FILES:=$(shell find $(C_SRC_DIR) -type f -name "*.c")
 C_FILES+= $(shell find $(C_SRC_DIR) -type f -name "*.h")
 
 WASM_ROOT_BUILD_DIR:=build/wasm/root
-WASMSIMD_ROOT_BUILD_DIR:=build/wasm-simd/root
-WASMSIMDMT_ROOT_BUILD_DIR:=build/wasm-simd-mt/root
+WASMMT_ROOT_BUILD_DIR:=build/wasm-mt/root
 
 COMMON_DEPS:=$(JS_SRC_DIR)/modules/ogv-module-pre.js \
 			 $(BUILDSCRIPTS_DIR)/compile-options.sh
@@ -73,7 +65,7 @@ VIDEO_DEPS:=$(COMMON_DEPS) \
 
 
 
-.PHONY : DEFAULT all clean js demo democlean tests dist zip lint run-demo run-dev-server ogg webm vorbis opus theora theora-simd vp8 vp8-simd vp9 vp9-simd vp9-simd-mt av1 av1-simd av1-simd-mt
+.PHONY : DEFAULT all clean js demo democlean tests dist zip lint run-demo run-dev-server ogg webm vorbis opus theora vp8 vp9 vp9-mt av1 av1-mt
 
 DEFAULT : all
 
@@ -82,15 +74,11 @@ webm : build/ogv-demuxer-webm.js
 vorbis : build/ogv-decoder-audio-vorbis.js 
 opus : build/ogv-decoder-audio-opus.js 
 theora : build/ogv-decoder-video-theora.js 
-theora-simd : build/ogv-decoder-video-theora-simd.js 
 vp8 : build/ogv-decoder-video-vp8.js 
-vp8-simd : build/ogv-decoder-video-vp8-simd.js 
 vp9 : build/ogv-decoder-video-vp9.js 
-vp9-simd : build/ogv-decoder-video-vp9-simd.js 
-vp9-simd-mt : build/ogv-decoder-video-vp9-simd-mt.js 
+vp9-mt : build/ogv-decoder-video-vp9-mt.js
 av1 : build/ogv-decoder-video-av1.js
-av1-simd : build/ogv-decoder-video-av1-simd.js
-av1-simd-mt : build/ogv-decoder-video-av1-simd-mt.js
+av1-mt : build/ogv-decoder-video-av1-mt.js
 
 # Runners
 
@@ -171,30 +159,16 @@ dist: js README.md COPYING
 	      COPYING \
 	      dist/
 
-	if [ "x$(SIMD)x" = "xx" ]; then \
-		echo "Skipping SIMD, compile with 'make SIMD=1' if desired."; \
+	if [ "x$(MT)x" = "xx" ]; then \
+		echo "Skipping MT, compile with 'make MT=1' if desired."; \
 	else \
-		cp -p build/ogv-decoder-video-theora-simd.js \
-		      build/ogv-decoder-video-vp8-simd.js \
-		      build/ogv-decoder-video-vp9-simd.js \
-		      build/ogv-decoder-video-av1-simd.js \
-		      build/ogv-decoder-video-theora-simd.wasm \
-		      build/ogv-decoder-video-vp8-simd.wasm \
-		      build/ogv-decoder-video-vp9-simd.wasm \
-		      build/ogv-decoder-video-av1-simd.wasm \
-		      dist/ \
-		      ; \
-		if [ "x$(MT)x" = "xx" ]; then \
-			echo "Skipping MT, compile with 'make SIMD=1 MT=1' if desired."; \
-		else \
-			cp -p build/ogv-decoder-video-vp9-simd-mt.js \
-		          build/ogv-decoder-video-vp9-simd-mt.wasm \
-		          build/ogv-decoder-video-av1-simd-mt.js \
-		          build/ogv-decoder-video-av1-simd-mt.wasm \
-		          dist/ \
-			      ; \
-		fi \
-	fi
+		cp -p build/ogv-decoder-video-vp9-mt.js \
+				build/ogv-decoder-video-vp9-mt.wasm \
+				build/ogv-decoder-video-av1-mt.js \
+				build/ogv-decoder-video-av1-mt.wasm \
+				dist/ \
+				; \
+	fi \
 
 	cp -p libogg/COPYING dist/COPYING-ogg.txt
 	cp -p libvorbis/COPYING dist/COPYING-vorbis.txt
@@ -221,9 +195,6 @@ $(WASM_ROOT_BUILD_DIR)/lib/libogg.a : $(BUILDSCRIPTS_DIR)/configureOgg.sh $(BUIL
 	./$(BUILDSCRIPTS_DIR)/configureOgg.sh
 	./$(BUILDSCRIPTS_DIR)/compileOggWasm.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libogg.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/compileOggWasmSIMD.sh
-	./$(BUILDSCRIPTS_DIR)/compileOggWasmSIMD.sh
-
 $(WASM_ROOT_BUILD_DIR)/lib/liboggz.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/configureOggz.sh $(BUILDSCRIPTS_DIR)/compileOggzWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureOggz.sh
@@ -248,9 +219,6 @@ $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libogg.a 
 	./$(BUILDSCRIPTS_DIR)/configureTheora.sh
 	./$(BUILDSCRIPTS_DIR)/compileTheoraWasm.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libtheoradec.a : $(WASM_ROOT_BUILD_DIR)/lib/libtheoradec.a $(WASMSIMD_ROOT_BUILD_DIR)/lib/libogg.a $(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
-	./$(BUILDSCRIPTS_DIR)/compileTheoraWasmSIMD.sh
-
 $(WASM_ROOT_BUILD_DIR)/lib/libnestegg.a : $(BUILDSCRIPTS_DIR)/configureNestEgg.sh $(BUILDSCRIPTS_DIR)/compileNestEggWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/configureNestEgg.sh
@@ -260,25 +228,17 @@ $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileVpxWasm.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMD.sh
+$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileVpxWasmSIMD.sh
-
-$(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a : $(BUILDSCRIPTS_DIR)/compileVpxWasmSIMDMT.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileVpxWasmSIMDMT.sh
+	./$(BUILDSCRIPTS_DIR)/compileVpxWasmMT.sh
 
 $(WASM_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileDav1dWasm.sh
 
-$(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
+$(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMD.sh
-
-$(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a : $(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmSIMDMT.sh
+	./$(BUILDSCRIPTS_DIR)/compileDav1dWasmMT.sh
 
 # Compile our Emscripten modules
 
@@ -323,27 +283,12 @@ build/ogv-decoder-video-theora.js : $(VIDEO_DEPS) \
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheora.sh
 
-build/ogv-decoder-video-theora-simd.js : $(VIDEO_DEPS) \
-									$(C_SRC_DIR)/ogv-decoder-video-theora.c \
-                                    $(WASMSIMD_ROOT_BUILD_DIR)/lib/libogg.a \
-                                    $(WASMSIMD_ROOT_BUILD_DIR)/lib/libtheoradec.a \
-                                    $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheoraSIMD.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoTheoraSIMD.sh
-
 build/ogv-decoder-video-vp8.js : $(VIDEO_DEPS) \
 								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
                                  $(WASM_ROOT_BUILD_DIR)/lib/libvpx.a \
                                  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8.sh
-
-build/ogv-decoder-video-vp8-simd.js : $(VIDEO_DEPS) \
-								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-                                 $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a \
-                                 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8SIMD.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP8SIMD.sh
 
 build/ogv-decoder-video-vp9.js : $(VIDEO_DEPS) \
 								 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
@@ -359,33 +304,19 @@ build/ogv-decoder-video-av1.js : $(VIDEO_DEPS) \
 	test -d build || mkdir -p build
 	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
 
-build/ogv-decoder-video-vp9-simd.js : $(VIDEO_DEPS) \
-									  $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-									  $(WASMSIMD_ROOT_BUILD_DIR)/lib/libvpx.a \
-									  $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
+build/ogv-decoder-video-vp9-mt.js : $(VIDEO_DEPS) \
+									$(C_SRC_DIR)/ogv-decoder-video-vpx.c \
+									$(WASMMT_ROOT_BUILD_DIR)/lib/libvpx.a \
+									$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMD.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9MT.sh
 
-build/ogv-decoder-video-av1-simd.js : $(VIDEO_DEPS) \
-									  $(C_SRC_DIR)/ogv-decoder-video-av1.c \
-						              $(WASMSIMD_ROOT_BUILD_DIR)/lib/libdav1d.a \
-                                      $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
-
-build/ogv-decoder-video-vp9-simd-mt.js : $(VIDEO_DEPS) \
-										 $(C_SRC_DIR)/ogv-decoder-video-vpx.c \
-										 $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libvpx.a \
-										 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
-	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoVP9SIMDMT.sh
-
-build/ogv-decoder-video-av1-simd-mt.js : $(VIDEO_DEPS) \
+build/ogv-decoder-video-av1-mt.js : $(VIDEO_DEPS) \
 										 $(C_SRC_DIR)/ogv-decoder-video-av1.c \
-										 $(WASMSIMDMT_ROOT_BUILD_DIR)/lib/libdav1d.a \
-										 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMD.sh
+										 $(WASMMT_ROOT_BUILD_DIR)/lib/libdav1d.a \
+										 $(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1.sh
 	test -d build || mkdir -p build
-	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1SIMDMT.sh
+	./$(BUILDSCRIPTS_DIR)/compileOgvDecoderVideoAV1MT.sh
 
 
 # Install dev dependencies

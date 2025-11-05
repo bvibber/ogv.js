@@ -19,4 +19,4 @@ emcc \
   -Lbuild/wasm/root/lib \
   -lvorbis \
   -logg \
-  -o build/ogv-decoder-audio-vorbis.js \
+  -o build/ogv-decoder-audio-vorbis.js

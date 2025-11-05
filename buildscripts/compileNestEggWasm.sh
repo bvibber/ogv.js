@@ -19,7 +19,7 @@ EMCONFIGURE_JS=2 NM=/usr/bin/nm emconfigure \
     ../../../libnestegg/configure \
     --prefix="$dir/build/wasm/root" \
     --disable-shared \
-|| exit 1
+    CFLAGS="-O3 -msimd128"
 
 # compile libnestegg
 emmake make -j4 || exit 1

@@ -19,11 +19,11 @@ emconfigure ../../../libvorbis/configure \
     --disable-oggtest \
     --prefix="$dir/build/wasm/root" \
     --disable-shared \
-|| exit 1
+    CFLAGS="-O3 -msimd128"
 
 # compile libvorbis
-emmake make -j4 || exit 1
-emmake make install || exit 1
+emmake make -j4
+emmake make install
 
 cd ..
 cd ..

@@ -21,16 +21,9 @@ const videoClassMap = {
 	av1: 'OGVDecoderVideoAV1',
 };
 
-const videoSimdClassMap = {
-	theora: 'OGVDecoderVideoTheoraSIMD',
-	vp8: 'OGVDecoderVideoVP8SIMD',
-	vp9: 'OGVDecoderVideoVP9SIMD',
-	av1: 'OGVDecoderVideoAV1SIMD',
-};
-
 const videoThreadedClassMap = {
-	vp9: 'OGVDecoderVideoVP9SIMDMT',
-	av1: 'OGVDecoderVideoAV1SIMDMT',
+	vp9: 'OGVDecoderVideoVP9MT',
+	av1: 'OGVDecoderVideoAV1MT',
 };
 
 class OGVWrapperCodec {
@@ -440,13 +433,9 @@ class OGVWrapperCodec {
 	loadVideoCodec(callback) {
 		const codec = this.demuxer.videoCodec;
 		if (codec) {
-			let simd = !!this.options.simd,
-				threading = !!this.options.threading;
+			let threading = !!this.options.threading;
 			let className = videoClassMap[codec];
-			if (simd && videoSimdClassMap[codec]) {
-				className = videoSimdClassMap[codec];
-			}
-			if (simd && threading && videoThreadedClassMap[codec]) {
+			if (threading && videoThreadedClassMap[codec]) {
 				className = videoThreadedClassMap[codec];
 			}
 			this.processing = true;

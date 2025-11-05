@@ -22,7 +22,7 @@ STRIP=./buildscripts/fake-strip.sh \
   emconfigure ../../../libvpx/configure \
     --prefix="$dir/build/wasm/root" \
     --target=generic-gnu \
-    --extra-cflags=-DWASM\ -I`dirname \`which emcc\``/system/lib/libcxxabi/include/ \
+    --extra-cflags='-O3 -msimd128 -I'`dirname \`which emcc\``'/system/lib/libcxxabi/include/' \
     --disable-multithread \
     --enable-vp9-decoder \
     --disable-vp8-encoder \
@@ -31,12 +31,11 @@ STRIP=./buildscripts/fake-strip.sh \
     --disable-docs \
     --disable-examples \
     --disable-tools \
-    --disable-unit-tests \
-|| exit 1
+    --disable-unit-tests
 
 # compile libvpx
-emmake make -j4 || exit 1
-emmake make install || exit 1
+emmake make -j4
+emmake make install
 
 cd ..
 cd ..

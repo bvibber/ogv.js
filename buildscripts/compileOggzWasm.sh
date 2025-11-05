@@ -21,7 +21,7 @@ emconfigure ../../../liboggz/configure \
     --prefix="$dir/build/wasm/root" \
     --disable-write \
     --disable-shared \
-|| exit 1
+    CFLAGS="-O3 -msimd128"
 
 # compile liboggz
 emmake make -j4 || exit 1

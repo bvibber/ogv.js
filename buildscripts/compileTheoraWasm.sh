@@ -23,11 +23,11 @@ emconfigure ../../../libtheora/configure \
     --disable-examples \
     --disable-encode \
     --disable-shared \
-|| exit 1
+    CFLAGS="-O3 -msimd128"
 
 # compile libtheora
-emmake make -j4 || exit 1
-emmake make install || exit 1
+emmake make -j4
+emmake make install
 
 cd ..
 cd ..

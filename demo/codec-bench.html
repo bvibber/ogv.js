@@ -16,7 +16,6 @@
         <input type=checkbox name=wasm id=wasm checked>&nbsp;<label for=wasm>WebAssembly</label>
         <input type=checkbox name=worker id=worker>&nbsp;<label for=worker>Worker</label>
         <input type=checkbox name=threading id=threading>&nbsp;<label for=threading>Threading</label>
-        <input type=checkbox name=simd id=simd>&nbsp;<label for=simd>SIMD</label>
         <input type=checkbox name=checksum id=checksum checked>&nbsp;<label for=checksum>Checksum</label>
     </div>
     <div>
@@ -154,7 +153,6 @@
                 wasm: document.getElementById('wasm').checked,
                 worker: document.getElementById('worker').checked,
                 threading: threading,
-                simd: document.getElementById('simd').checked,
             });
             let eof = false;
             let buf;

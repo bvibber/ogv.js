@@ -18,7 +18,7 @@ cd libogg
 emconfigure ../../../libogg/configure \
     --prefix="$dir/build/wasm/root" \
     --disable-shared \
-|| exit 1
+    CFLAGS="-O3 -msimd128"
 
 # compile libogg
 emmake make -j4 || exit 1

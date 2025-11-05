@@ -136,9 +136,6 @@ class OGVPlayer extends OGVJSElement {
 		// Experimental pthreads multithreading mode, if built.
 		this._enableThreading = !!options.threading;
 
-		// Experimental SIMD mode, if built.
-		this._enableSIMD = !!options.simd;
-
 		this._state = State.INITIAL;
 		this._seekState = SeekState.NOT_SEEKING;
 
@@ -2362,7 +2359,6 @@ class OGVPlayer extends OGVJSElement {
 			base: this._options.base,
 			worker: this._enableWorker,
 			threading: this._enableThreading,
-			simd: this._enableSIMD,
 		};
 		if (this._detectedType) {
 			codecOptions.type = this._detectedType;

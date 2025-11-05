@@ -8,6 +8,13 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
 
 2.0.0 - 202?-??-??
 
+* All libraries using stock source and 128-bit autovectorization
+* Requires modern browsers with BigInt, SIMD etc
+* Multithreaded versions available experimentally
+    * using SharedArrayBuffer requires special opt-in HTTP headers
+    * see `threaded.php` in the demo
+
+Internal updates:
 * Bump emscripten compatibility to 4.0.19
 * internal API restructuring
 * file restructuring
@@ -20,9 +27,6 @@ Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d
     * opus 1.5.2
     * vorbis 1.3.7
     * theora 1.2.0
-* simd versions using stock source and autovectorization
-* mt+simd versions available experimentally
-    * using SharedArrayBuffer requires special opt-in HTTP headers
 
 1.8.10 - 2022-??-??
 
