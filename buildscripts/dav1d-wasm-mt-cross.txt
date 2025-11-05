@@ -1,0 +1,17 @@
+[binaries]
+c = 'emcc'
+ar = 'emar'
+install_name_tool = 'echo'
+#exe_wrapper = 'node'
+# disable exe_wrapper for the "sanity check" file which is an .exe so doesn't get made as JS/wasm
+exe_wrapper = 'echo'
+
+[built-in options]
+c_args = ['-O3', '-msimd128', '-sUSE_PTHREADS=1']
+c_link_args = []
+
+[host_machine]
+system = 'linux'
+cpu_family = 'wasm32'
+cpu = 'wasm32'
+endian = 'little'
