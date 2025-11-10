@@ -86,7 +86,7 @@ mergeInto(LibraryManager.library, {
 	},
 
 	/**
-	 * @param {BigNum} offset
+	 * @param {BigInt} offset
 	 */
 	ogvjs_callback_seek: function(offset) {
 		if (Module['onseek']) {
