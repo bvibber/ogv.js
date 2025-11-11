@@ -1,76 +1,76 @@
 import {
-    BytestreamReader,
-    BufferQueueReader
+	BytestreamReader,
+	BufferQueueReader
 } from '../../src/js/BytestreamReader.js';
 
 function reader(...byteArrays) {
-    const input = new BufferQueueReader();
-    for (const arr of byteArrays) {
-        const data = new Uint8Array(arr);
-        input.appendData(data, [data.buffer]);
-    }
-    return input;
+	const input = new BufferQueueReader();
+	for (const arr of byteArrays) {
+		const data = new Uint8Array(arr);
+		input.appendData(data, [data.buffer]);
+	}
+	return input;
 }
 
 test('available() reports expected read availability', () => {
-    const zero = [];
-    expect(reader(zero).available(0)).toBe(true);
-    expect(reader(zero).available(1)).toBe(false);
+	const zero = [];
+	expect(reader(zero).available(0)).toBe(true);
+	expect(reader(zero).available(1)).toBe(false);
 
-    const one = [1];
-    expect(reader(one).available(0)).toBe(true);
-    expect(reader(one).available(1)).toBe(true);
-    expect(reader(one).available(2)).toBe(false);
+	const one = [1];
+	expect(reader(one).available(0)).toBe(true);
+	expect(reader(one).available(1)).toBe(true);
+	expect(reader(one).available(2)).toBe(false);
 
-    const two = [1, 2];
-    expect(reader(two).available(0)).toBe(true);
-    expect(reader(two).available(1)).toBe(true);
-    expect(reader(two).available(2)).toBe(true);
-    expect(reader(two).available(3)).toBe(false);
+	const two = [1, 2];
+	expect(reader(two).available(0)).toBe(true);
+	expect(reader(two).available(1)).toBe(true);
+	expect(reader(two).available(2)).toBe(true);
+	expect(reader(two).available(3)).toBe(false);
 
-    expect(reader(one, two).available(0)).toBe(true);
-    expect(reader(one, two).available(1)).toBe(true);
-    expect(reader(one, two).available(2)).toBe(true);
-    expect(reader(one, two).available(3)).toBe(true);
-    expect(reader(one, two).available(4)).toBe(false);
+	expect(reader(one, two).available(0)).toBe(true);
+	expect(reader(one, two).available(1)).toBe(true);
+	expect(reader(one, two).available(2)).toBe(true);
+	expect(reader(one, two).available(3)).toBe(true);
+	expect(reader(one, two).available(4)).toBe(false);
 });
 
 test('reserveRead() throws beyond expected read availability', () => {
-    const zero = [];
-    reader(zero).available(0);
-    expect(() => reader(zero).reserveRead(1)).toThrow();
+	const zero = [];
+	reader(zero).available(0);
+	expect(() => reader(zero).reserveRead(1)).toThrow();
 
-    const one = [1];
-    reader(one).reserveRead(0);
-    reader(one).reserveRead(1);
-    expect(() => reader(one).reserveRead(2)).toThrow();
+	const one = [1];
+	reader(one).reserveRead(0);
+	reader(one).reserveRead(1);
+	expect(() => reader(one).reserveRead(2)).toThrow();
 
-    const two = [1, 2];
-    reader(two).reserveRead(0);
-    reader(two).reserveRead(1);
-    reader(two).reserveRead(2);
-    expect(() => reader(two).reserveRead(3)).toThrow();
+	const two = [1, 2];
+	reader(two).reserveRead(0);
+	reader(two).reserveRead(1);
+	reader(two).reserveRead(2);
+	expect(() => reader(two).reserveRead(3)).toThrow();
 
-    reader(one, two).reserveRead(0);
-    reader(one, two).reserveRead(1);
-    reader(one, two).reserveRead(2);
-    reader(one, two).reserveRead(3);
-    expect(() => reader(one, two).reserveRead(4)).toThrow();
+	reader(one, two).reserveRead(0);
+	reader(one, two).reserveRead(1);
+	reader(one, two).reserveRead(2);
+	reader(one, two).reserveRead(3);
+	expect(() => reader(one, two).reserveRead(4)).toThrow();
 });
 
 const bytes = [
-    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-    0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
+	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+	0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
 ];
 const sliced = [bytes.slice(0, 5), bytes.slice(5)];
 
 function derive(nbytes, method, littleEndian=false) {
-    let source = new DataView(new Uint8Array(bytes).buffer);
-    let dest = [];
-    for (let i = 0; i < bytes.length / nbytes; i++) {
-        dest[i] = source[method](i * nbytes, littleEndian);
-    }
-    return dest;
+	let source = new DataView(new Uint8Array(bytes).buffer);
+	let dest = [];
+	for (let i = 0; i < bytes.length / nbytes; i++) {
+		dest[i] = source[method](i * nbytes, littleEndian);
+	}
+	return dest;
 }
 
 const uint8s = derive(1, 'getUint8');
@@ -80,36 +80,36 @@ const uint16les = derive(2, 'getUint16', true);
 const int16bes = derive(2, 'getInt16');
 const int16les = derive(2, 'getInt16', true);
 const uint24bes = [
-    0x001122,
-    0x334455,
-    0x667788,
-    0x99aabb,
-    0xccddee,
-    Error
+	0x001122,
+	0x334455,
+	0x667788,
+	0x99aabb,
+	0xccddee,
+	Error
 ];
 const uint24les = [
-    0x221100,
-    0x554433,
-    0x887766,
-    0xbbaa99,
-    0xeeddcc,
-    Error
+	0x221100,
+	0x554433,
+	0x887766,
+	0xbbaa99,
+	0xeeddcc,
+	Error
 ];
 const int24bes = [
-    0x001122 << 8 >> 8,
-    0x334455 << 8 >> 8,
-    0x667788 << 8 >> 8,
-    0x99aabb << 8 >> 8,
-    0xccddee << 8 >> 8,
-    Error
+	0x001122 << 8 >> 8,
+	0x334455 << 8 >> 8,
+	0x667788 << 8 >> 8,
+	0x99aabb << 8 >> 8,
+	0xccddee << 8 >> 8,
+	Error
 ];
 const int24les = [
-    0x221100 << 8 >> 8,
-    0x554433 << 8 >> 8,
-    0x887766 << 8 >> 8,
-    0xbbaa99 << 8 >> 8,
-    0xeeddcc << 8 >> 8,
-    Error
+	0x221100 << 8 >> 8,
+	0x554433 << 8 >> 8,
+	0x887766 << 8 >> 8,
+	0xbbaa99 << 8 >> 8,
+	0xeeddcc << 8 >> 8,
+	Error
 ];
 const uint32bes = derive(4, 'getUint32');
 const uint32les = derive(4, 'getUint32', true);
@@ -121,34 +121,34 @@ const bigint64bes = derive(8, 'getBigInt64');
 const bigint64les = derive(8, 'getBigInt64', true);
 
 function readTest(method, expected, expectedLittleEndian=false) {
-    const doTest = (input, expectedResults, littleEndian) => {
-        let threw = false;
-        for (const val of expectedResults) {
-            if (typeof val === 'function') {
-                threw = true;
-                expect(() => input[method](littleEndian)).toThrow();
-            } else {
-                expect(input[method](littleEndian)).toBe(val);
-            }
-        }
-        if (!threw) {
-            expect(input.available(1)).toBe(false);
-        }
-    }
-    const run = (expectedResults, littleEndian=false) => {
-        test(`${method}(${littleEndian}) works on single buffer`, () => {
-            doTest(reader(bytes), expectedResults, littleEndian);
-        });
+	const doTest = (input, expectedResults, littleEndian) => {
+		let threw = false;
+		for (const val of expectedResults) {
+			if (typeof val === 'function') {
+				threw = true;
+				expect(() => input[method](littleEndian)).toThrow();
+			} else {
+				expect(input[method](littleEndian)).toBe(val);
+			}
+		}
+		if (!threw) {
+			expect(input.available(1)).toBe(false);
+		}
+	}
+	const run = (expectedResults, littleEndian=false) => {
+		test(`${method}(${littleEndian}) works on single buffer`, () => {
+			doTest(reader(bytes), expectedResults, littleEndian);
+		});
 
-        test(`${method}(${littleEndian}) works on a split buffer`, () => {
-            doTest(reader(...sliced), expectedResults, littleEndian);
-        });
-    };
+		test(`${method}(${littleEndian}) works on a split buffer`, () => {
+			doTest(reader(...sliced), expectedResults, littleEndian);
+		});
+	};
 
-    run(expected);
-    if (expectedLittleEndian) {
-        run(expectedLittleEndian, true);
-    }
+	run(expected);
+	if (expectedLittleEndian) {
+		run(expectedLittleEndian, true);
+	}
 }
 
 readTest('readByte', bytes);
@@ -164,21 +164,21 @@ readTest('readBigUint64', biguint64bes, biguint64les);
 readTest('readBigInt64', bigint64bes, bigint64les);
 
 test(`readBytes() works on single buffer`, () => {
-    const input = reader(bytes);
-    let result = input.readBytes(bytes.length);
-    expect(result.length).toBe(bytes.length);
-    for (let i = 0; i < result.length; i++) {
-        expect(result[i]).toBe(bytes[i]);
-    }
-    expect(input.available(1)).toBe(false);
+	const input = reader(bytes);
+	let result = input.readBytes(bytes.length);
+	expect(result.length).toBe(bytes.length);
+	for (let i = 0; i < result.length; i++) {
+		expect(result[i]).toBe(bytes[i]);
+	}
+	expect(input.available(1)).toBe(false);
 });
 
 test(`readBytes() works on a split buffer`, () => {
-    const input = reader(...sliced);
-    let result = input.readBytes(bytes.length);
-    expect(result.length).toBe(bytes.length);
-    for (let i = 0; i < result.length; i++) {
-        expect(result[i]).toBe(bytes[i]);
-    }
-    expect(input.available(1)).toBe(false);
+	const input = reader(...sliced);
+	let result = input.readBytes(bytes.length);
+	expect(result.length).toBe(bytes.length);
+	for (let i = 0; i < result.length; i++) {
+		expect(result[i]).toBe(bytes[i]);
+	}
+	expect(input.available(1)).toBe(false);
 });
