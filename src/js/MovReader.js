@@ -312,30 +312,38 @@ const boxParsers = {
 	},
 
 	stts(box) {
-		const version = box.readUint8();
-		const flags = box.readUint24();
+		box.readUint8(); // version
+		box.readUint24(); // flags
+
 		const entries = box.readUint32();
-		const samples = [];
+
+		const sampleCounts = new Uint32Array(entries);
+		const sampleDurations = new Uint32Array(entries);
 		let totalSamples = 0;
 		let totalDuration = 0;
+
 		for (let i = 0; i < entries; i++) {
-			const sampleCount = box.readUint32();
-			const sampleDuration = box.readUint32();
-			samples.push({
-				sampleCount,
-				sampleDuration
-			});
+			const count = box.readUint32();
+			const duration = box.readUint32();
+
 			// ffmpeg warns of negative offsets stored for dts offsets sometimes
 			// if this comes up explode later
-
+			//
 			// ffmpeg also warns of invalid durations of 0 which can break
-			totalSamples += sampleCount;
-			totalDuration += sampleDuration * sampleCount;
+
+			sampleCounts[i] = count;
+			sampleDurations[i] = duration;
+
+			totalSamples += count;
+			totalDuration += duration * count;
 		}
 		return {
 			totalSamples,
 			totalDuration,
-			samples
+			sampleCounts,
+			sampleDurations,
+			totalSamples,
+			totalDuration,
 		};
 	},
 };
