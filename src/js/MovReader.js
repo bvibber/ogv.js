@@ -1,5 +1,85 @@
 import {BytestreamReader, BufferQueueReader} from './BytestreamReader.js';
 
+const maxUint32 = 0xffffff;
+const maxBigUint64 = 0xffffffffffffffffn;
+const maxSafeBigInt = BigInt(Number.MAX_SAFE_INTEGER);
+
+// Heavily inspired by ffmpeg's libavformat mov.c
+const boxParsers = {
+    ftyp(box) {
+        const ftyp = {
+            major: box.readASCII(4),
+            minor: box.readUint32(),
+            compatibleBrands: [],
+        };
+        const nbrands = box.remaining >> 2;
+        for (let i = 0; i < nbrands; i++) {
+            ftyp.compatibleBrands.push(box.readASCII(4));
+        }
+        return ftyp;
+    },
+
+    moov(box) {
+        return box.readRemainingBoxes();
+    },
+
+    mdat(box) {
+        return box.readRemainingBytes();
+    },
+
+    mvhd(box) {
+        const version = box.readUint8();
+        const flags = box.readUint24();
+        if (version === 1) {
+            // creation time
+            box.readBigInt64();
+            // modification time
+            box.readBigInt64();
+        } else {
+            // creation time
+            box.readInt32();
+            // modification time
+            box.readInt32();
+        }
+        const timeScale = box.readInt32();
+        if (timeScale <= 0) {
+            throw new RangeError("Invalid time scale");
+        }
+
+        let duration;
+        if (version === 1) {
+            duration = box.readBigUint64();
+            if (duration >= maxSafeBigInt) {
+                // Working with time in seconds is easier if we use
+                // JavaScript numbers.
+                throw new RangeError('Duration does not fit in double');
+            }
+            duration = Number(duration);
+        } else {
+            duration = box.readUint32();
+        }
+
+        // remaining fields not yet used
+
+        return {
+            version,
+            flags,
+            timeScale,
+            duration
+        }
+    }
+};
+
+function parseBox(box) {
+    const parser = boxParsers[box.type];
+    let result = null;
+    if (parser) {
+        result = parser(box);
+    }
+    box.advanceRemaining();
+    return result;
+}
+
 export class Box extends BytestreamReader {
     #input
     #pos
@@ -64,14 +144,25 @@ export class Box extends BytestreamReader {
         return this.readBytes(this.remaining);
     }
 
-    openBox() {
-        return new Box(this);
+    readBox() {
+        const box = new Box(this);
+        return {
+            type: box.type,
+            size: box.size,
+            data: parseBox(box)
+        };
     }
 
-    readBox() {
-        const box = this.openBox();
-        this.reserveRead( box.remaining );
-        return box;
+    /**
+     * Read and parse any remaining boxes into an array.
+     * @returns {Object[]}
+     */
+    readRemainingBoxes() {
+        const results = [];
+        while (this.available(8)) {
+            results.push(this.readBox());
+        }
+        return results;
     }
 }
 
@@ -87,7 +178,6 @@ export class MovReader {
 
     // Internal state
     #input
-    #boxParsers
     #processing
 
     constructor(options={}) {
@@ -102,13 +192,6 @@ export class MovReader {
 
         this.#input = new BufferQueueReader();
         this.#processing = false;
-
-        this.#boxParsers = {
-            ftyp: this.#ftypBox,
-            mdat: this.#mdatBox,
-            moov: this.#moovBox,
-            mvhd: this.#mvhdBox,
-        }
     }
 
     /**
@@ -136,14 +219,15 @@ export class MovReader {
 
                 // Need enough for a box header.
                 await this.#input.waitForData(8);
-                const box = this.#readBox();
+                const box = this.#openBox();
                 console.log(`${box.size} ${box.type}`);
 
                 // @fixme mdat can stream contents sensibly
                 // if sample data is already available
                 await this.#input.waitForData(box.remaining);
 
-                this.#parseBox(box);
+                let parsed = parseBox(box);
+                console.log(JSON.stringify(parsed));
 
                 box.advanceRemaining();
             }
@@ -152,43 +236,8 @@ export class MovReader {
         }
     }
 
-    #readBox() {
+    #openBox() {
         return new Box(this.#input);
-    }
-
-    #parseBox(box) {
-        let val = null;
-        if (this.#boxParsers[box.type]) {
-            val = this.#boxParsers[box.type](box);
-            console.log(val);
-        }
-        box.advanceRemaining();
-        return val;
-    }
-
-    #ftypBox(box) {
-        const ftyp = {
-            major: box.readASCII(4),
-            minor: box.readUint32(),
-            compatibleBrands: [],
-        };
-        const nbrands = box.remaining >> 2;
-        for (let i = 0; i < nbrands; i++) {
-            ftyp.compatibleBrands.push(box.readASCII(4));
-        }
-        return ftyp;
-    }
-
-    #mdatBox(box) {
-        //
-    }
-
-    #moovBox(box) {
-        //
-    }
-
-    #mvhdBox(box) {
-        //
     }
 
 }

@@ -79,6 +79,38 @@ const uint16bes = derive(2, 'getUint16');
 const uint16les = derive(2, 'getUint16', true);
 const int16bes = derive(2, 'getInt16');
 const int16les = derive(2, 'getInt16', true);
+const uint24bes = [
+    0x001122,
+    0x334455,
+    0x667788,
+    0x99aabb,
+    0xccddee,
+    Error
+];
+const uint24les = [
+    0x221100,
+    0x554433,
+    0x887766,
+    0xbbaa99,
+    0xeeddcc,
+    Error
+];
+const int24bes = [
+    0x001122 << 8 >> 8,
+    0x334455 << 8 >> 8,
+    0x667788 << 8 >> 8,
+    0x99aabb << 8 >> 8,
+    0xccddee << 8 >> 8,
+    Error
+];
+const int24les = [
+    0x221100 << 8 >> 8,
+    0x554433 << 8 >> 8,
+    0x887766 << 8 >> 8,
+    0xbbaa99 << 8 >> 8,
+    0xeeddcc << 8 >> 8,
+    Error
+];
 const uint32bes = derive(4, 'getUint32');
 const uint32les = derive(4, 'getUint32', true);
 const int32bes = derive(4, 'getInt32');
@@ -89,21 +121,27 @@ const bigint64bes = derive(8, 'getBigInt64');
 const bigint64les = derive(8, 'getBigInt64', true);
 
 function readTest(method, expected, expectedLittleEndian=false) {
-    const run = (expectedResults, littleEndian=false) => {
-        test(`${method}(${littleEndian}) works on single buffer`, () => {
-            const input = reader(bytes);
-            for (let val of expectedResults) {
+    const doTest = (input, expectedResults, littleEndian) => {
+        let threw = false;
+        for (const val of expectedResults) {
+            if (typeof val === 'function') {
+                threw = true;
+                expect(() => input[method](littleEndian)).toThrow();
+            } else {
                 expect(input[method](littleEndian)).toBe(val);
             }
+        }
+        if (!threw) {
             expect(input.available(1)).toBe(false);
+        }
+    }
+    const run = (expectedResults, littleEndian=false) => {
+        test(`${method}(${littleEndian}) works on single buffer`, () => {
+            doTest(reader(bytes), expectedResults, littleEndian);
         });
 
         test(`${method}(${littleEndian}) works on a split buffer`, () => {
-            const input = reader(...sliced);
-            for (let val of expectedResults) {
-                expect(input[method](littleEndian)).toBe(val);
-            }
-            expect(input.available(1)).toBe(false);
+            doTest(reader(...sliced), expectedResults, littleEndian);
         });
     };
 
@@ -118,6 +156,8 @@ readTest('readUint8', uint8s);
 readTest('readInt8', int8s);
 readTest('readUint16', uint16bes, uint16les);
 readTest('readInt16', int16bes, int16les);
+readTest('readUint24', uint24bes, uint24les);
+readTest('readInt24', int24bes, int24les);
 readTest('readUint32', uint32bes, uint32les);
 readTest('readInt32', int32bes, int32les);
 readTest('readBigUint64', biguint64bes, biguint64les);

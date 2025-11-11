@@ -77,6 +77,34 @@ export class BytestreamReader {
     }
 
     /**
+     * Read unsigned 24-bit number. Throws on insufficient input.
+     * @param {boolean} littleEndian
+     * @return number
+     */
+    readUint24(littleEndian=false) {
+        this.reserveRead(3);
+        let first, second;
+        if (littleEndian) {
+            first = this.readUint16(littleEndian);
+            second = this.readUint8(littleEndian);
+            return (first | second << 16) >>> 0;
+        } else {
+            first = this.readUint8();
+            second = this.readUint16();
+            return (first << 16 | second) >>> 0;
+        }
+    }
+
+    /**
+     * Read signed 24-bit number. Throws on insufficient input.
+     * @param {boolean} littleEndian
+     * @return number
+     */
+    readInt24(littleEndian=false) {
+        return this.readUint24(littleEndian) << 8 >> 8;
+    }
+
+    /**
      * Read unsigned 32-bit number. Throws on insufficient input.
      * @param {boolean} littleEndian
      * @return number
@@ -316,18 +344,6 @@ export class BufferQueueReader extends BytestreamReader {
     }
 
     /** @inheritdoc */
-    readInt16(littleEndian=false) {
-        this.reserveRead(2);
-        if (this.#buffer.length - this.#pos >= 2) {
-            const n = this.#view.getInt16(this.#pos, littleEndian);
-            this.advance(2);
-            return n;
-        } else {
-            return super.readInt16(littleEndian);
-        }
-    }
-
-    /** @inheritdoc */
     readUint32(littleEndian=false) {
         this.reserveRead(4);
         if (this.#buffer.length - this.#pos >= 4) {
@@ -340,18 +356,6 @@ export class BufferQueueReader extends BytestreamReader {
     }
 
     /** @inheritdoc */
-    readInt32(littleEndian=false) {
-        this.reserveRead(4);
-        if (this.#buffer.length - this.#pos >= 4) {
-            const n = this.#view.getInt32(this.#pos, littleEndian);
-            this.advance(4);
-            return n;
-        } else {
-            return super.readInt32(littleEndian);
-        }
-    }
-
-    /** @inheritdoc */
     readBigUint64(littleEndian=false) {
         this.reserveRead(8);
         if (this.#buffer.length - this.#pos >= 8) {
@@ -360,18 +364,6 @@ export class BufferQueueReader extends BytestreamReader {
             return n;
         } else {
             return super.readBigUint64(littleEndian);
-        }
-    }
-
-    /** @inheritdoc */
-    readBigInt64(littleEndian=false) {
-        this.reserveRead(8);
-        if (this.#buffer.length - this.#pos >= 8) {
-            const n = this.#view.getBigInt64(this.#pos, littleEndian);
-            this.advance(8);
-            return n;
-        } else {
-            return super.readBigInt64(littleEndian);
         }
     }
 
