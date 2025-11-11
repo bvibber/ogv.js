@@ -1,5 +1,5 @@
-import {MovReader} from '../src/js/MovReader.js';
-import {readFileSync} from 'fs';
+const {MovReader} = require('../src/js/MovReader.js');
+const {readFileSync} = require('fs');
 
 
 for (const arg of process.argv.slice(2)) {
