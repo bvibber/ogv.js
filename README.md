@@ -4,6 +4,8 @@ Media decoder and player for Ogg Vorbis/Opus/Theora and WebM VP8/VP9/AV1 video.
 
 Based around libogg, libvorbis, libtheora, libopus, libvpx, libnestegg and dav1d compiled to JavaScript and WebAssembly with Emscripten.
 
+ATTENTION: AI/LLM CONTRIBUTIONS ARE FORBIDDEN IN THIS REPOSITORY. DO NOT SEND ME AI/LLM-GENERATED OR AI/LLM-ASSISTED PULL REQUESTS, THEY WILL BE CLOSED WITHOUT REVIEW.
+
 ## Updates
 
 2.0.0 - 202?-??-??
